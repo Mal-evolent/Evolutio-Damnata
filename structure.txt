@@ -1,0 +1,37 @@
+Folder PATH listing for volume Windows
+Volume serial number is EA2A-5316
+C:.
+³   .gitattributes
+³   .gitignore
+³   README.md
+³   structure.txt
+³   
+ÃÄÄÄdocumentation
+³   ÃÄÄÄpresentations
+³   ³       presentations_here.txt
+³   ³       
+³   ÃÄÄÄproject_documents
+³   ³   ÀÄÄÄdesign_work
+³   ³       ÀÄÄÄFlow charts
+³   ³               Damnatio Flowchart.drawio
+³   ³               
+³   ÃÄÄÄverification_validation
+³   ³       test_results_here.txt
+³   ³       
+³   ÀÄÄÄvideo
+³           trailer_walkthroughs_here.txt
+³           
+ÃÄÄÄindividual_contribution
+³       contribution_forms_here.txt
+³       
+ÀÄÄÄprototype
+    ÃÄÄÄassets
+    ³   ÀÄÄÄthird_party
+    ³           assets_and_licences_here.txt
+    ³           
+    ÃÄÄÄbuild
+    ³       exe_build_here.txt
+    ³       
+    ÀÄÄÄproject_folder
+            project_here.txt
+            
