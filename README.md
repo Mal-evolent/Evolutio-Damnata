@@ -1,2 +1,2 @@
 # comp3013
-This is Myles checking he has permissions to commit, push, and create pull requests.
+Unity project is in "./prototype/project_folder" directory
