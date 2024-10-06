@@ -15,26 +15,59 @@ public class MonsterScript : MonoBehaviour
     }
 
     GameObject room; //<--- set on generateMonster, gets passed in;
-    GameObject RoomID;
+    int ID; //ID is the position the moster is in in the rooms enetits array
 
     GameObject enemyImg; //<--- this has been set in the editor
     _monsterType monsterType;//<--- set on generateMonster;
 
-    float damage;//<--- set on generateMonster;
-    float damageMulti = 1;
+    float health;//<--- set on generateMonster;
+
+    float atkDamage;//<--- set on generateMonster;
+    float atkdamageMulti = 1;
 
     //monster needs room passed so they can get information on what going on
-    public void generateMonster(GameObject room) { }
+    public void generateMonster(GameObject roomObj, int monsterID) {
+        ID = monsterID;
+        room = roomObj;
+    }
 
-    //    \/ tabed to be able to attach script to objs 
-    //public int getMonsterID() { }
-
-
-    //used the rooms attackEvent
-    public void attack(int attackedID, float damage) { }
+    //---------------functions to get the moster different attributes-------------------
+    //returns monsters total Attack
+    public float getAttackDamage() {
+        return atkDamage * atkdamageMulti;
+    }
+    //returns mosters health
+    public float getHealth() {
+        return health;
+    }
+    //returns the mosters room ID
+    public int getMonsterID() {
+        return ID;
+    }
     
+    //--------------------functions that affect the current monster(mainly used by room)-------------
+    //monster take damage by damageAmount
+    public void damage(float damageAmount) {
+        health -= damageAmount;
+    }
+    //heal the monster by healAmount
+    public void heal(float healAmount) {
+        health += healAmount;
+    }
     //used to buff this monster
-    public void buff(float buff) { }
+    public void attackBuff(float buff) {
+        atkDamage += buff;
+    }
+
+    //-------------------functions to send events to room to damage/heal/buff other monsters------------
+    //send attack event to room to attack an enemy
+    public void attack(int attackedID) {
+        room.GetComponent<RoomScript>().attackEvent(ID, attackedID, getAttackDamage());
+    }
+    
+
+
+
 
     // Start is called before the first frame update
     void Start()

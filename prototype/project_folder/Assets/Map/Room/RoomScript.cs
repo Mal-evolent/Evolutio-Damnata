@@ -1,5 +1,7 @@
+using JetBrains.Annotations;
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
 using UnityEngine;
 
 public class RoomScript : MonoBehaviour
@@ -29,13 +31,39 @@ public class RoomScript : MonoBehaviour
 
     public void unloadRoom() { }
 
-    public void attackEvent(int AttackingID, int AttackedID, float Damage) { }
-    public void buffEvent(int BuffingID, float buff) { }
+    //----------events used by monsters to affect other monsters-----------------
+    public void attackEvent(int AttackingID, int AttackedID, float Damage) {
+        float atkDamage = entities[AttackedID].GetComponent<MonsterScript>().getAttackDamage();
+        entities[AttackedID].GetComponent<MonsterScript>().damage(atkDamage);
+    }
+    public void attackBuffEvent(int BuffingID, float buff) {
+        entities[BuffingID].GetComponent<MonsterScript>().attackBuff(buff);
+    }
+    public void healEvent(int healingID, float health)
+    {
+        entities[healingID].GetComponent<MonsterScript>().heal(health);
+    }
 
-    //will be used by monsters do direct attacks
-    //    \/ tabed to be able to attach script to objs 
-    //public GameObject[] returnEnemys() { }
-    //public GameObject[] returnPlayerMonsters() { }
+    //---------------------------fucntions used by mosnters to get information about other monsters
+    //returns array with all of enemy monsters
+    public GameObject[] returnEnemys() {
+        int size = entities.Length;
+        GameObject[] enemysObj = new GameObject[(size - 2) / 2];
+        for (int i = ((size - 2) / 2) + 1; i < size - 2; i++) {
+            enemysObj[i - ((size - 2) / 2) + 1] = entities[i];
+        }
+        return enemysObj;
+    }
+    //returns array with all of the player's spawned monsters
+    public GameObject[] returnPlayerMonsters() {
+        int size = entities.Length;
+        GameObject[] playerMonsters = new GameObject[(size - 2) / 2];
+        for (int i = 1; i < (size - 2) / 2; i++)
+        {
+            playerMonsters[i - 1] = entities[i];
+        }
+        return playerMonsters;
+    }
 
     // Start is called before the first frame update
     void Start()
