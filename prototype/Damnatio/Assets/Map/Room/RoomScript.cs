@@ -21,6 +21,7 @@ public class RoomScript : MonoBehaviour
     //the rest are monsters split evenyl
     //  \-so player side monster are 1 -> (size-2)/2
     //  |-enemys are ((size-2)/2)+1 -> size size - 2
+    [SerializeField]
     GameObject[] entities; 
 
     //this is a self setup function, use enemy generate

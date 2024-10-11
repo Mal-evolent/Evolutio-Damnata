@@ -1,0 +1,7 @@
+- Discussion on placeholder assets:
+Explored the unity asset store and settled on a wizard pixel art pack and a dungeon background pack.
+
+
+- Discussed Room function to enemy relationships:
+Enemies hold all their stats while the room contains the enemy information.
+
