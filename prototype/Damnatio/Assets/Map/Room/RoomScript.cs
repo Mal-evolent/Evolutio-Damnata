@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using UnityEngine;
-
 public class RoomScript : MonoBehaviour
 {
     enum _objectives{ 
@@ -35,7 +34,7 @@ public class RoomScript : MonoBehaviour
     //----------events used by monsters to affect other monsters-----------------
     public void attackEvent(int AttackingID, int AttackedID, float Damage) {
         float atkDamage = entities[AttackedID].GetComponent<MonsterScript>().getAttackDamage();
-        entities[AttackedID].GetComponent<MonsterScript>().damage(atkDamage);
+        entities[AttackedID].GetComponent<MonsterScript>().takeDamage(atkDamage);
     }
     public void attackBuffEvent(int BuffingID, float buff) {
         entities[BuffingID].GetComponent<MonsterScript>().attackBuff(buff);
