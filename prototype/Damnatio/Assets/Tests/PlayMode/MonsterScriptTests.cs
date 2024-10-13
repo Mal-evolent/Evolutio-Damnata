@@ -18,13 +18,13 @@ public class MonsterScriptTests
         stubObject.AddComponent<MonsterScript>();
         MonsterScript monsterScript = stubObject.GetComponent<MonsterScript>();
         GameObject stubRoom = new GameObject();
-        monsterScript.GenerateMonster(stubRoom, 0);
+        monsterScript.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
         yield return null;
 
         // Act
         int monsterID = monsterScript.getID();
 
         // Assert
-        Assert.Equals(0, monsterID);
+        Assert.AreEqual(0, monsterID);
     }
 }
