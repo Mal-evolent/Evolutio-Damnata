@@ -11,8 +11,9 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
     [SerializeField]
     GameObject img;
 
-    enum _monsterType
+    public enum _monsterType
     {
+        player,
         Friendly, // <-- player's side
         Enemy,
         Boss
@@ -20,27 +21,24 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
 
     GameObject room; //<--- set on generateMonster, gets passed in
     int ID; // ID is the position of the monster in the room's entities array
+    _monsterType monsterType; //<--- set on generateMonster, passed in from room(determins how attributes are assigned)
 
     float health; //<--- set on generateMonster
     float atkDamage; //<--- set on generateMonster
-    float atkdamageMulti = 1.0f;
+    float atkDamageMulti = 1.0f;
 
     // Monster needs room passed so they can get information on what's going on
-    public void GenerateMonster(GameObject roomObj, int monsterID)
+    public void GenerateMonster(GameObject roomObj, int monsterID, _monsterType monsterType)
     {
         ID = monsterID;
         room = roomObj;
-    }
-
-    //returns monsters total attack
-    public float getAttackDamage()
-    {
-        return atkDamage * atkdamageMulti;
+        this.monsterType = monsterType;
     }
 
 
 
     //-------------------- IDamageable Implementation --------------------//
+    
     public void takeDamage(float damageAmount)
     {
         health -= damageAmount;
@@ -51,37 +49,43 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
         }
     }
 
+    //heals the monster by amount
     public void heal(float healAmount)
     {
         health += healAmount;
     }
 
+    //returns monsters current health
     public float getHealth()
     {
         return health;
     }
 
     //-------------------- IAttacker Implementation --------------------//
-    public float attackDamage()
+    //returns monsters total attack
+    public float getAttackDamage()
     {
-        return atkDamage * atkdamageMulti; // Total attack damage calculation
+        return atkDamage * atkDamageMulti; // Total attack damage calculation
     }
 
+    //buffs monster attakc by amount (additive not replacment)
     public void attackBuff(float buffAmount)
     {
         atkDamage += buffAmount;
     }
 
+    //same as attackBuff but remove instead of adds
     public void attackDebuff(float buffAmount)
     {
         atkDamage -= buffAmount;
     }
 
+    //send attack event to room to apply damage
     public void attack(int targetID)
     {
         if (room != null && room.GetComponent<RoomScript>() != null)
         {
-            room.GetComponent<RoomScript>().attackEvent(ID, targetID, attackDamage());
+            room.GetComponent<RoomScript>().attackEvent(ID, targetID, getAttackDamage());
         }
         else
         {
@@ -90,6 +94,7 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
     }
 
     //-------------------- IIdentifiable Implementation --------------------//
+    //returns ID for the current monster
     public int getID()
     {
         return ID;

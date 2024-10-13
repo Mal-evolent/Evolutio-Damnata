@@ -11,7 +11,6 @@ public interface IDamageable
 
 public interface IAttacker
 {
-    float attackDamage();
     void attackBuff(float buffAmount);
     void attackDebuff(float buffAmount);
     void attack(int targetID);
