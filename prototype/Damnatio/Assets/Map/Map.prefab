@@ -44,3 +44,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f5273296d7bbe644d8d560722a5dd6aa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  roomPrefab: {fileID: 5287051519036827522, guid: 7b99896047a7a314b8b422de9ee8e9fe, type: 3}
+  panel: {fileID: 0}
+  mapwidth: 0

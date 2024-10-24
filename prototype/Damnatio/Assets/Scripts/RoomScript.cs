@@ -5,13 +5,21 @@ using System.Drawing;
 using UnityEngine;
 public class RoomScript : MonoBehaviour
 {
-    enum _objectives{ 
+    public enum _roomsType {
+        standard,
+        shop,
+        boss
+    }
+
+    enum _objectives
+    { 
         clear,
         boss
     }
 
     [SerializeField]
     GameObject backgroundImg; //<--- this has been set in the editor
+    public _roomsType roomsType;
 
     //this needs to be set in generate room, need to be even
     //also used to show where the monster is on the map reference design doc
@@ -25,7 +33,10 @@ public class RoomScript : MonoBehaviour
 
     //this is a self setup function, use enemy generate
     //will need to somehow scale the backgroun obj with the screen size
-    public void generateRoom() { }
+    public void generateRoom(_roomsType roomType) {
+        this.roomsType = roomType;
+
+    }
 
     public void loadRoom() { }
 
