@@ -35,7 +35,15 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
         this.monsterType = monsterType;
     }
 
+    public GameObject getRoom()
+    {
+        return room;
+    }
 
+    public _monsterType getMonsterType()
+    {
+        return monsterType;
+    }
 
     //-------------------- IDamageable Implementation --------------------//
     
