@@ -390,7 +390,7 @@ public class MapScript : MonoBehaviour
         panel.GetComponent<Image>().sprite = textTex;
 
         generateRooms();
-        generateConnections();
+        generateConnectionsAndRooms();
 
         drawRoomsAndCorridors();
 
