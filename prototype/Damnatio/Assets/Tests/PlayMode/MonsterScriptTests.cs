@@ -100,10 +100,10 @@ public class MonsterScriptTests
         stubObject.AddComponent<MonsterScript>();
         MonsterScript monsterScript = stubObject.GetComponent<MonsterScript>();
         GameObject stubRoom = new GameObject();
-
-        // Act
         monsterScript.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
         yield return null;
+
+        // Act
         float healthBeforeDamage = monsterScript.getHealth();
         monsterScript.takeDamage(0);
         float healthAfterDamage = monsterScript.getHealth();
@@ -120,10 +120,10 @@ public class MonsterScriptTests
         stubObject.AddComponent<MonsterScript>();
         MonsterScript monsterScript = stubObject.GetComponent<MonsterScript>();
         GameObject stubRoom = new GameObject();
-
-        // Act
         monsterScript.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
         yield return null;
+
+        // Act
         float healthBeforeDamage = monsterScript.getHealth();
         monsterScript.takeDamage(1);
         float healthAfterDamage = monsterScript.getHealth();
@@ -140,10 +140,10 @@ public class MonsterScriptTests
         stubObject.AddComponent<MonsterScript>();
         MonsterScript monsterScript = stubObject.GetComponent<MonsterScript>();
         GameObject stubRoom = new GameObject();
-
-        // Act
         monsterScript.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
         yield return null;
+
+        // Act
         float healthBeforeHeal = monsterScript.getHealth();
         monsterScript.heal(0);
         float healthAfterHeal = monsterScript.getHealth();
@@ -160,10 +160,10 @@ public class MonsterScriptTests
         stubObject.AddComponent<MonsterScript>();
         MonsterScript monsterScript = stubObject.GetComponent<MonsterScript>();
         GameObject stubRoom = new GameObject();
-
-        // Act
         monsterScript.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
         yield return null;
+
+        // Act
         monsterScript.takeDamage(1);
         float healthBeforeHeal = monsterScript.getHealth();
         monsterScript.heal(1);
@@ -181,10 +181,10 @@ public class MonsterScriptTests
         stubObject.AddComponent<MonsterScript>();
         MonsterScript monsterScript = stubObject.GetComponent<MonsterScript>();
         GameObject stubRoom = new GameObject();
-
-        // Act
         monsterScript.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
         yield return null;
+
+        // Act
         float atkDmgBeforeBuff = monsterScript.getAttackDamage();
         monsterScript.attackBuff(0);
         float atkDmgAfterBuff = monsterScript.getAttackDamage();
@@ -201,10 +201,10 @@ public class MonsterScriptTests
         stubObject.AddComponent<MonsterScript>();
         MonsterScript monsterScript = stubObject.GetComponent<MonsterScript>();
         GameObject stubRoom = new GameObject();
-
-        // Act
         monsterScript.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
         yield return null;
+
+        // Act
         try
         {
             monsterScript.attackBuff(-1);
@@ -226,10 +226,10 @@ public class MonsterScriptTests
         stubObject.AddComponent<MonsterScript>();
         MonsterScript monsterScript = stubObject.GetComponent<MonsterScript>();
         GameObject stubRoom = new GameObject();
-
-        // Act
         monsterScript.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
         yield return null;
+
+        // Act
         float atkDmgBeforeBuff = monsterScript.getAttackDamage();
         monsterScript.attackBuff(1);
         float atkDmgAfterBuff = monsterScript.getAttackDamage();
@@ -246,10 +246,10 @@ public class MonsterScriptTests
         stubObject.AddComponent<MonsterScript>();
         MonsterScript monsterScript = stubObject.GetComponent<MonsterScript>();
         GameObject stubRoom = new GameObject();
-
-        // Act
         monsterScript.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
         yield return null;
+
+        // Act
         float atkDmgBeforeBuff = monsterScript.getAttackDamage();
         monsterScript.attackDebuff(0);
         float atkDmgAfterBuff = monsterScript.getAttackDamage();
@@ -266,10 +266,10 @@ public class MonsterScriptTests
         stubObject.AddComponent<MonsterScript>();
         MonsterScript monsterScript = stubObject.GetComponent<MonsterScript>();
         GameObject stubRoom = new GameObject();
-
-        // Act
         monsterScript.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
         yield return null;
+
+        // Act
         try
         {
             monsterScript.attackDebuff(-1);
@@ -291,15 +291,70 @@ public class MonsterScriptTests
         stubObject.AddComponent<MonsterScript>();
         MonsterScript monsterScript = stubObject.GetComponent<MonsterScript>();
         GameObject stubRoom = new GameObject();
-
-        // Act
         monsterScript.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
         yield return null;
+
+        // Act
         float atkDmgBeforeBuff = monsterScript.getAttackDamage();
         monsterScript.attackDebuff(1);
         float atkDmgAfterBuff = monsterScript.getAttackDamage();
 
         // Assert
         Assert.True(atkDmgBeforeBuff > atkDmgAfterBuff);
+    }
+
+    [UnityTest]
+    public IEnumerator attack_NonexistentTarget_ThrowsError() // Check if nonexistent target can be attacked
+    {
+        // Arrange
+        GameObject stubObject = new GameObject();
+        stubObject.AddComponent<MonsterScript>();
+        MonsterScript monsterScript = stubObject.GetComponent<MonsterScript>();
+        GameObject stubRoom = new GameObject();
+        monsterScript.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
+        yield return null;
+
+        // Act
+        try
+        {
+            monsterScript.attack(-1);
+        }
+        // Assert
+        catch
+        {
+            Assert.Pass();
+        }
+        Assert.Fail();
+    }
+
+    [UnityTest]
+    public IEnumerator attack_ValidTarget_RunsSuccessfully() // Check if a valid target can be attacked
+    {
+        // Arrange
+        GameObject stubObjectDamager = new GameObject();
+        stubObjectDamager.AddComponent<MonsterScript>();
+        MonsterScript monsterScriptDamager = stubObjectDamager.GetComponent<MonsterScript>();
+        GameObject stubRoom = new GameObject();
+        monsterScriptDamager.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
+        yield return null;
+
+        GameObject stubObjectVictim = new GameObject();
+        stubObjectVictim.AddComponent<MonsterScript>();
+        MonsterScript monsterScriptVictim = stubObjectVictim.GetComponent<MonsterScript>();
+        monsterScriptVictim.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
+        yield return null;
+        int victimId = monsterScriptVictim.getID();
+
+        // Act
+        try
+        {
+            monsterScriptDamager.attack(victimId);
+        }
+        // Assert
+        catch
+        {
+            Assert.Fail();
+        }
+        Assert.Pass();
     }
 }
