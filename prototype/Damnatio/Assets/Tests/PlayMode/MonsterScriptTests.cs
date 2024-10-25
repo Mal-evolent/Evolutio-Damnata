@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.UIElements.Experimental;
 
 public class MonsterScriptTests
 {
@@ -52,5 +53,62 @@ public class MonsterScriptTests
         yield return null;
 
         Assert.Fail();
+    }
+
+    [UnityTest]
+    public IEnumerator getRoom_ValidParams_ReturnsRoom() // Check if room is set correctly
+    {
+        // Arrange
+        GameObject stubObject = new GameObject();
+        stubObject.AddComponent<MonsterScript>();
+        MonsterScript monsterScript = stubObject.GetComponent<MonsterScript>();
+        GameObject mockRoom = new GameObject();
+
+        // Act
+        monsterScript.GenerateMonster(mockRoom, 0, MonsterScript._monsterType.player);
+        yield return null;
+        GameObject monsterScriptRoom = monsterScript.getRoom();
+
+        // Assert
+        Assert.AreEqual(mockRoom, monsterScriptRoom);
+    }
+
+    [UnityTest]
+    public IEnumerator getMonsterType_ValidParams_ReturnsMonsterType() // Check if monster type is set correctly
+    {
+        // Arrange
+        GameObject stubObject = new GameObject();
+        stubObject.AddComponent<MonsterScript>();
+        MonsterScript monsterScript = stubObject.GetComponent<MonsterScript>();
+        GameObject stubRoom = new GameObject();
+        MonsterScript._monsterType monsterTypeMock = MonsterScript._monsterType.player;
+
+        // Act
+        monsterScript.GenerateMonster(stubRoom, 0, monsterTypeMock);
+        yield return null;
+        MonsterScript._monsterType monsterScriptType = monsterScript.getMonsterType();
+
+        // Assert
+        Assert.AreEqual(monsterTypeMock, monsterScriptType);
+    }
+
+    [UnityTest]
+    public IEnumerator takeDamage_ZeroDamage_HealthUnaffected() // Check if health is unaffected when taking zero damage
+    {
+        // Arrange
+        GameObject stubObject = new GameObject();
+        stubObject.AddComponent<MonsterScript>();
+        MonsterScript monsterScript = stubObject.GetComponent<MonsterScript>();
+        GameObject stubRoom = new GameObject();
+
+        // Act
+        monsterScript.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
+        float healthBeforeDamage = monsterScript.getHealth();
+        yield return null;
+        monsterScript.takeDamage(0);
+        float healthAfterDamage = monsterScript.getHealth();
+
+        // Assert
+        Assert.AreEqual(healthBeforeDamage, healthAfterDamage);
     }
 }
