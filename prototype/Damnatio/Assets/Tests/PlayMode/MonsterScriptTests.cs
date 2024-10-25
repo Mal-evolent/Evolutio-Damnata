@@ -172,4 +172,69 @@ public class MonsterScriptTests
         // Assert
         Assert.True(healthBeforeHeal < healthAfterHeal);
     }
+
+    [UnityTest]
+    public IEnumerator attackBuff_ZeroAmount_AttackDmgUnaffected() // Check if attack damage is unaffected when buffing by zero amount
+    {
+        // Arrange
+        GameObject stubObject = new GameObject();
+        stubObject.AddComponent<MonsterScript>();
+        MonsterScript monsterScript = stubObject.GetComponent<MonsterScript>();
+        GameObject stubRoom = new GameObject();
+
+        // Act
+        monsterScript.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
+        yield return null;
+        float atkDmgBeforeBuff = monsterScript.getAttackDamage();
+        monsterScript.attackBuff(0);
+        float atkDmgAfterBuff = monsterScript.getAttackDamage();
+
+        // Assert
+        Assert.AreEqual(atkDmgBeforeBuff, atkDmgAfterBuff);
+    }
+
+    [UnityTest]
+    public IEnumerator attackBuff_NegativeAmount_ThrowsError() // Check if attack damage can be buffed by negative amount
+    {
+        // Arrange
+        GameObject stubObject = new GameObject();
+        stubObject.AddComponent<MonsterScript>();
+        MonsterScript monsterScript = stubObject.GetComponent<MonsterScript>();
+        GameObject stubRoom = new GameObject();
+
+        // Act
+        monsterScript.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
+        yield return null;
+        try
+        {
+            monsterScript.attackBuff(-1);
+
+        }
+        // Assert
+        catch
+        {
+            Assert.Pass();
+        }
+        Assert.Fail();
+    }
+
+    [UnityTest]
+    public IEnumerator attackBuff_PositiveAmount_AttackDmgIncreases() // Check if health increases when healing by one amount
+    {
+        // Arrange
+        GameObject stubObject = new GameObject();
+        stubObject.AddComponent<MonsterScript>();
+        MonsterScript monsterScript = stubObject.GetComponent<MonsterScript>();
+        GameObject stubRoom = new GameObject();
+
+        // Act
+        monsterScript.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
+        yield return null;
+        float atkDmgBeforeBuff = monsterScript.getAttackDamage();
+        monsterScript.attackBuff(1);
+        float atkDmgAfterBuff = monsterScript.getAttackDamage();
+
+        // Assert
+        Assert.True(atkDmgBeforeBuff < atkDmgAfterBuff);
+    }
 }
