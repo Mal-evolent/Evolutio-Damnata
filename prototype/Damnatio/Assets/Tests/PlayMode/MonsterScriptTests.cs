@@ -111,4 +111,24 @@ public class MonsterScriptTests
         // Assert
         Assert.AreEqual(healthBeforeDamage, healthAfterDamage);
     }
+
+    [UnityTest]
+    public IEnumerator takeDamage_NonZeroDamage_HealthDecreases() // Check if health is unaffected when taking zero damage
+    {
+        // Arrange
+        GameObject stubObject = new GameObject();
+        stubObject.AddComponent<MonsterScript>();
+        MonsterScript monsterScript = stubObject.GetComponent<MonsterScript>();
+        GameObject stubRoom = new GameObject();
+
+        // Act
+        monsterScript.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
+        float healthBeforeDamage = monsterScript.getHealth();
+        yield return null;
+        monsterScript.takeDamage(1);
+        float healthAfterDamage = monsterScript.getHealth();
+
+        // Assert
+        Assert.True(healthBeforeDamage > healthAfterDamage);
+    }
 }
