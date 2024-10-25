@@ -219,7 +219,7 @@ public class MonsterScriptTests
     }
 
     [UnityTest]
-    public IEnumerator attackBuff_PositiveAmount_AttackDmgIncreases() // Check if health increases when healing by one amount
+    public IEnumerator attackBuff_PositiveAmount_AttackDmgIncreases() // Check if attack damage increases when buffed by positive amount
     {
         // Arrange
         GameObject stubObject = new GameObject();
@@ -236,5 +236,70 @@ public class MonsterScriptTests
 
         // Assert
         Assert.True(atkDmgBeforeBuff < atkDmgAfterBuff);
+    }
+
+    [UnityTest]
+    public IEnumerator attackDebuff_ZeroAmount_AttackDmgUnaffected() // Check if attack damage is unaffected when debuffing by zero amount
+    {
+        // Arrange
+        GameObject stubObject = new GameObject();
+        stubObject.AddComponent<MonsterScript>();
+        MonsterScript monsterScript = stubObject.GetComponent<MonsterScript>();
+        GameObject stubRoom = new GameObject();
+
+        // Act
+        monsterScript.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
+        yield return null;
+        float atkDmgBeforeBuff = monsterScript.getAttackDamage();
+        monsterScript.attackDebuff(0);
+        float atkDmgAfterBuff = monsterScript.getAttackDamage();
+
+        // Assert
+        Assert.AreEqual(atkDmgBeforeBuff, atkDmgAfterBuff);
+    }
+
+    [UnityTest]
+    public IEnumerator attackDebuff_NegativeAmount_ThrowsError() // Check if attack damage can be debuffed by negative amount
+    {
+        // Arrange
+        GameObject stubObject = new GameObject();
+        stubObject.AddComponent<MonsterScript>();
+        MonsterScript monsterScript = stubObject.GetComponent<MonsterScript>();
+        GameObject stubRoom = new GameObject();
+
+        // Act
+        monsterScript.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
+        yield return null;
+        try
+        {
+            monsterScript.attackDebuff(-1);
+
+        }
+        // Assert
+        catch
+        {
+            Assert.Pass();
+        }
+        Assert.Fail();
+    }
+
+    [UnityTest]
+    public IEnumerator attackDebuff_PositiveAmount_AttackDmgDecreases() // Check if attack damage decreases when debuffed by positive amount
+    {
+        // Arrange
+        GameObject stubObject = new GameObject();
+        stubObject.AddComponent<MonsterScript>();
+        MonsterScript monsterScript = stubObject.GetComponent<MonsterScript>();
+        GameObject stubRoom = new GameObject();
+
+        // Act
+        monsterScript.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
+        yield return null;
+        float atkDmgBeforeBuff = monsterScript.getAttackDamage();
+        monsterScript.attackDebuff(1);
+        float atkDmgAfterBuff = monsterScript.getAttackDamage();
+
+        // Assert
+        Assert.True(atkDmgBeforeBuff > atkDmgAfterBuff);
     }
 }
