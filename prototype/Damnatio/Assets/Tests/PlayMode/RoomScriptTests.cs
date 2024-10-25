@@ -26,4 +26,62 @@ public class RoomScriptTests
         // Assert
         Assert.AreEqual(roomScript.roomsType, mockRoomType);
     }
+
+    [UnityTest]
+    public IEnumerator attackEvent_InvalidAttacker_ThrowsError() // Check if monster with invalid ID can attack
+    {
+        // Arrange
+        GameObject stubRoom = new GameObject();
+        stubRoom.AddComponent<RoomScript>();
+        RoomScript roomScript = stubRoom.GetComponent<RoomScript>();
+        RoomScript._roomsType stubRoomType = RoomScript._roomsType.standard;
+        roomScript.generateRoom(stubRoomType);
+        yield return null;
+
+        GameObject stubMonsterVictim = new GameObject();
+        stubMonsterVictim.AddComponent<MonsterScript>();
+        MonsterScript monsterVictimScript = stubMonsterVictim.GetComponent<MonsterScript>();
+        monsterVictimScript.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
+
+        // Act
+        try
+        {
+            roomScript.attackEvent(-1, monsterVictimScript.getID(), 0);
+        }        
+        // Assert
+        catch
+        {
+            Assert.Pass();
+        }
+        Assert.Fail();
+    }
+
+    [UnityTest]
+    public IEnumerator attackEvent_InvalidVictim_ThrowsError() // Check if a monster can attack another with an invalid ID
+    {
+        // Arrange
+        GameObject stubRoom = new GameObject();
+        stubRoom.AddComponent<RoomScript>();
+        RoomScript roomScript = stubRoom.GetComponent<RoomScript>();
+        RoomScript._roomsType stubRoomType = RoomScript._roomsType.standard;
+        roomScript.generateRoom(stubRoomType);
+        yield return null;
+
+        GameObject stubMonsterAttacker = new GameObject();
+        stubMonsterAttacker.AddComponent<MonsterScript>();
+        MonsterScript monsterAttackerScript = stubMonsterAttacker.GetComponent<MonsterScript>();
+        monsterAttackerScript.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
+
+        // Act
+        try
+        {
+            roomScript.attackEvent(monsterAttackerScript.getID(), -1, 0);
+        }
+        // Assert
+        catch
+        {
+            Assert.Pass();
+        }
+        Assert.Fail();
+    }
 }
