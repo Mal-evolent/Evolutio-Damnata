@@ -103,8 +103,8 @@ public class MonsterScriptTests
 
         // Act
         monsterScript.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
-        float healthBeforeDamage = monsterScript.getHealth();
         yield return null;
+        float healthBeforeDamage = monsterScript.getHealth();
         monsterScript.takeDamage(0);
         float healthAfterDamage = monsterScript.getHealth();
 
@@ -123,12 +123,53 @@ public class MonsterScriptTests
 
         // Act
         monsterScript.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
-        float healthBeforeDamage = monsterScript.getHealth();
         yield return null;
+        float healthBeforeDamage = monsterScript.getHealth();
         monsterScript.takeDamage(1);
         float healthAfterDamage = monsterScript.getHealth();
 
         // Assert
         Assert.True(healthBeforeDamage > healthAfterDamage);
+    }
+
+    [UnityTest]
+    public IEnumerator heal_ZeroAmount_HealthUnaffected() // Check if health is unaffected when healing by zero amount
+    {
+        // Arrange
+        GameObject stubObject = new GameObject();
+        stubObject.AddComponent<MonsterScript>();
+        MonsterScript monsterScript = stubObject.GetComponent<MonsterScript>();
+        GameObject stubRoom = new GameObject();
+
+        // Act
+        monsterScript.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
+        yield return null;
+        float healthBeforeHeal = monsterScript.getHealth();
+        monsterScript.heal(0);
+        float healthAfterHeal = monsterScript.getHealth();
+
+        // Assert
+        Assert.AreEqual(healthBeforeHeal, healthAfterHeal);
+    }
+
+    [UnityTest]
+    public IEnumerator heal_OneAmount_HealthIncreases() // Check if health increases when healing by one amount
+    {
+        // Arrange
+        GameObject stubObject = new GameObject();
+        stubObject.AddComponent<MonsterScript>();
+        MonsterScript monsterScript = stubObject.GetComponent<MonsterScript>();
+        GameObject stubRoom = new GameObject();
+
+        // Act
+        monsterScript.GenerateMonster(stubRoom, 0, MonsterScript._monsterType.player);
+        yield return null;
+        monsterScript.takeDamage(1);
+        float healthBeforeHeal = monsterScript.getHealth();
+        monsterScript.heal(1);
+        float healthAfterHeal = monsterScript.getHealth();
+
+        // Assert
+        Assert.True(healthBeforeHeal < healthAfterHeal);
     }
 }
