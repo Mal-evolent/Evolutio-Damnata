@@ -84,4 +84,52 @@ public class RoomScriptTests
         }
         Assert.Fail();
     }
+
+    [UnityTest]
+    public IEnumerator attackBuffEvent_InvalidTarget_ThrowsError() // Check if a monster with an invalid ID can be buffed
+    {
+        // Arrange
+        GameObject stubRoom = new GameObject();
+        stubRoom.AddComponent<RoomScript>();
+        RoomScript roomScript = stubRoom.GetComponent<RoomScript>();
+        RoomScript._roomsType stubRoomType = RoomScript._roomsType.standard;
+        roomScript.generateRoom(stubRoomType);
+        yield return null;
+
+        // Act
+        try
+        {
+            roomScript.attackBuffEvent(-1, 0);
+        }
+        // Assert
+        catch
+        {
+            Assert.Pass();
+        }
+        Assert.Fail();
+    }
+
+    [UnityTest]
+    public IEnumerator healEvent_InvalidTarget_ThrowsError() // Check if a monster with an invalid ID can be healed
+    {
+        // Arrange
+        GameObject stubRoom = new GameObject();
+        stubRoom.AddComponent<RoomScript>();
+        RoomScript roomScript = stubRoom.GetComponent<RoomScript>();
+        RoomScript._roomsType stubRoomType = RoomScript._roomsType.standard;
+        roomScript.generateRoom(stubRoomType);
+        yield return null;
+
+        // Act
+        try
+        {
+            roomScript.healEvent(-1, 0);
+        }
+        // Assert
+        catch
+        {
+            Assert.Pass();
+        }
+        Assert.Fail();
+    }
 }
