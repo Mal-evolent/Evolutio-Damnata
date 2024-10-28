@@ -35,12 +35,27 @@ public class RoomScript : MonoBehaviour
     //will need to somehow scale the backgroun obj with the screen size
     public void generateRoom(_roomsType roomType) {
         this.roomsType = roomType;
+        //get room image(random background image)
+        GlobalResources globalResources = GameObject.Find("ResourceManagaer").GetComponent<GlobalResources>();
+        backgroundImg.GetComponent<SpriteRenderer>().sprite = globalResources.dungeonRooms[ Random.Range(0, globalResources.dungeonRooms.Count) ];
 
+        //add room image to resizer (all background will be resized once rooms have been generated) 
+        GameObject.Find("FitToScreen").GetComponent<BackgroundResizer>().backgroundSprites.Add(backgroundImg.GetComponent<SpriteRenderer>());
+
+        //needs to generate monsters here
+
+
+        //deactivates current room, main room will be activated by map script
+        unloadRoom();
     }
 
-    public void loadRoom() { }
+    public void loadRoom() {
+        gameObject.SetActive(true);
+    }
 
-    public void unloadRoom() { }
+    public void unloadRoom() {
+        gameObject.SetActive(false);
+    }
 
     //----------events used by monsters to affect other monsters-----------------
     public void attackEvent(int AttackingID, int AttackedID, float Damage) {
