@@ -387,6 +387,9 @@ MonoBehaviour:
   - {fileID: 21300000, guid: c5f60190248184146804b0bbe42df2cb, type: 3}
   - {fileID: 21300000, guid: b6a1ce2ad910a4bc188d2a2a02a3133a, type: 3}
   - {fileID: 21300000, guid: 85e2134e919ed4e54a76fba2a113587d, type: 3}
+  monsters:
+  - {fileID: 21300000, guid: a1bf2f7b8ae16744d8d5b499d93b1da2, type: 3}
+  wizards: []
 --- !u!4 &671977324
 Transform:
   m_ObjectHideFlags: 0
@@ -502,10 +505,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 2035973230}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 653.8696, y: 259.87836}
-  m_SizeDelta: {x: 220.2607, y: 212.2433}
+  m_AnchorMin: {x: 1, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -109, y: -106.12164}
+  m_SizeDelta: {x: 220.26068, y: 212.24329}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1434223707
 MonoBehaviour:
