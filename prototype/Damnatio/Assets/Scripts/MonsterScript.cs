@@ -33,6 +33,25 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
         ID = monsterID;
         room = roomObj;
         this.monsterType = monsterType;
+
+        //picks a random monster image from global resources
+        GlobalResources globalResources = GameObject.Find("ResourceManagaer").GetComponent<GlobalResources>();
+        img.GetComponent<SpriteRenderer>().sprite = globalResources.monsters[Random.Range(0, globalResources.monsters.Count)];
+
+        //TODO -- this needs to be updated so obejct get placed in at the correct coords for the level(minght need to hadn mpick leves images so that blaty boards are roughly the same)
+        gameObject.transform.position = new Vector3(gameObject.transform.position.x, gameObject.transform.position.y, -1);//puts inform of background
+
+        unloadMonster();
+    }
+
+    public void loadMonster()
+    {
+        gameObject.SetActive(true);
+    }
+
+    public void unloadMonster()
+    {
+        gameObject.SetActive(false);
     }
 
     public GameObject getRoom()

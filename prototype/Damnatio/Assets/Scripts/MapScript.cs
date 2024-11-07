@@ -318,7 +318,8 @@ public class MapScript : MonoBehaviour
             }
             rooms[r].setRoom(newRoom);
             if (r == 0) {
-                rooms[r].room.GetComponent<RoomScript>().loadRoom();
+                activeRoom = rooms[r].room;
+                activeRoom.GetComponent<RoomScript>().loadRoom();
             }
         }
     }
@@ -359,15 +360,15 @@ public class MapScript : MonoBehaviour
     //-----------------used for user map interaction------------------
     void mouseOnRoom(Vector2 mousepos)
     {
+        activeRoom.GetComponent<RoomScript>().unloadRoom();
         for (int c = 0; c < rooms.Length; c++)
         {
-            //unload all rooms as it goes through
-            rooms[c].room.GetComponent<RoomScript>().unloadRoom();
             if (mousepos.x > rooms[c].x && mousepos.x < rooms[c].x + rooms[c].width)
             {
                 if (mousepos.y > rooms[c].y && mousepos.y < rooms[c].y + rooms[c].height)
                 {
-                    rooms[c].room.GetComponent<RoomScript>().loadRoom(); //load room that the mouse has clicked on
+                    
+                    activeRoom = rooms[c].room;
                     rooms[c].selected = !rooms[c].selected;
                     if (rooms[c].selected) { //if its the first time clicking on room draw new room as completed
                         drawRoom(rooms[c], true);
@@ -376,6 +377,7 @@ public class MapScript : MonoBehaviour
             }
 
         }
+        activeRoom.GetComponent<RoomScript>().loadRoom(); //load room that the mouse has clicked on
         DrawOnTex.Apply();
     }
 
