@@ -1,10 +1,11 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class BackgroundResizer : MonoBehaviour
 {
     private Camera mainCamera;
 
-    public SpriteRenderer[] backgroundSprites;
+    public List<SpriteRenderer> backgroundSprites;
 
     // Custom scaling factor accessible in the Unity Inspector
     [Range(0.1f, 10f)] // Optionally limit the range for better control
@@ -34,7 +35,7 @@ public class BackgroundResizer : MonoBehaviour
 
     void ResizeSpritesToScreen()
     {
-        if (backgroundSprites.Length == 0)
+        if (backgroundSprites.Count == 0)
         {
             Debug.LogError("No SpriteRenderers assigned!");
             return;

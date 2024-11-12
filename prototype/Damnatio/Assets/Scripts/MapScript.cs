@@ -317,6 +317,10 @@ public class MapScript : MonoBehaviour
                 newRoom.GetComponent<RoomScript>().generateRoom(RoomScript._roomsType.standard);
             }
             rooms[r].setRoom(newRoom);
+            if (r == 0) {
+                activeRoom = rooms[r].room;
+                activeRoom.GetComponent<RoomScript>().loadRoom();
+            }
         }
     }
     void generateRooms()
@@ -356,26 +360,24 @@ public class MapScript : MonoBehaviour
     //-----------------used for user map interaction------------------
     void mouseOnRoom(Vector2 mousepos)
     {
+        activeRoom.GetComponent<RoomScript>().unloadRoom();
         for (int c = 0; c < rooms.Length; c++)
         {
-
             if (mousepos.x > rooms[c].x && mousepos.x < rooms[c].x + rooms[c].width)
             {
                 if (mousepos.y > rooms[c].y && mousepos.y < rooms[c].y + rooms[c].height)
                 {
+                    
+                    activeRoom = rooms[c].room;
                     rooms[c].selected = !rooms[c].selected;
-                    if (rooms[c].selected)
-                    {
+                    if (rooms[c].selected) { //if its the first time clicking on room draw new room as completed
                         drawRoom(rooms[c], true);
-                    }
-                    else
-                    {
-                        drawRoom(rooms[c], false);
                     }
                 }
             }
 
         }
+        activeRoom.GetComponent<RoomScript>().loadRoom(); //load room that the mouse has clicked on
         DrawOnTex.Apply();
     }
 
@@ -414,6 +416,20 @@ public class MapScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        if (Input.GetMouseButtonUp(0))
+        {
+            Vector3 mousePos = Input.mousePosition;
+            RectTransform rectTransform = panel.GetComponent<RectTransform>();
+            Vector3 scaleFactor = rectTransform.localScale;
+
+            Vector2 localPoint;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(rectTransform, mousePos, null, out localPoint);
+            localPoint += new Vector2((rectTransform.rect.width) / 2, (rectTransform.rect.height) / 2);
+
+
+            mouseOnRoom(localPoint);
+
+            Debug.Log(localPoint + ":location of mouse in rect --- get pixel:" + DrawOnTex.GetPixel((int)localPoint.x, (int)localPoint.y).ToString());
+        }
     }
 }

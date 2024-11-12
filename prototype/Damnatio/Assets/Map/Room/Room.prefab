@@ -46,6 +46,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   backgroundImg: {fileID: 6375143969749641600}
+  monsterPrefab: {fileID: 5269668265750498365, guid: 472084da47ee35b49a0df8541afdefc0, type: 3}
+  roomsType: 0
+  entities: []
 --- !u!1 &6375143969749641600
 GameObject:
   m_ObjectHideFlags: 0
