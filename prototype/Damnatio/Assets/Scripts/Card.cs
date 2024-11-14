@@ -60,6 +60,25 @@ public class Deck : MonoBehaviour
     public int MaxDeckSize = 30;
     public int HandSize = 5;
 
+    public CardLibrary cardLibrary;
+
+    void Start()
+    {
+        if(cardLibrary != null)
+        {
+            PopulateDeck();
+        }
+    }
+
+    public void PopulateDeck()
+    {
+        List<Card> newDeck = cardLibrary.CreateDeckFromLibrary();
+        foreach (Card card in newDeck)
+        {
+            AddCard(card);
+        }
+    }
+
     public void Shuffle()
     {
         for (int i = 0; i < Cards.Count; i++)
