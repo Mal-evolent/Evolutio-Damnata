@@ -1,9 +1,11 @@
-Website: 
+Team Name: Engima Games
 
-Release Page: 
+Website: https://sites.google.com/view/enigma-games/home
+Release Page: https://sites.google.com/view/enigma-games/games
 
-GitHub Repository: https://github.com/Ozzy-King/comp3013
-
+GitHub Repository: https://github.com/Ozzy-King/Damnatio
 Project Management (Trello): https://trello.com/invite/b/66f5eacfcdb30e35239cd83f/ATTI30a01db471d50da5b7dc90e28446252cB0A1C8A1/roguelike-card-game
 
-YouTube: 
+YouTube Trailer: 
+YouTube Walkthrough: 
+YouTube Final Presentation: 
