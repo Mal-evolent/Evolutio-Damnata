@@ -13,16 +13,7 @@ public class Deck : MonoBehaviour
 
     void Start()
     {
-        Debug.Log("game started");
 
-        if (cardLibrary != null)
-        {
-            PopulateDeck();
-        }
-        else
-        {
-            Debug.LogWarning("Card Library not assigned to Deck. Please assign a Card Library.");
-        }
     }
 
     public void PopulateDeck()

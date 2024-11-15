@@ -169,6 +169,55 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &294774778
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 294774780}
+  - component: {fileID: 294774779}
+  m_Layer: 0
+  m_Name: Deck Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &294774779
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 294774778}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8fb3d21f11feb6d40af3d29faf59a2f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Cards: []
+  Hand: []
+  MaxDeckSize: 30
+  HandSize: 5
+  cardLibrary: {fileID: 1159794893}
+--- !u!4 &294774780
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 294774778}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 322.2276, y: 294.4488, z: -2.2345278}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -434,7 +483,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 38b2a36d0ad21464c9502127b056c695, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cardDataList: []
+  playerDeck: {fileID: 294774779}
+  cardDataList:
+  - CardName: 
+    CardImage: {fileID: 0}
+    Description: 
+    ManaCost: 0
+    AttackPower: 0
+    Health: 0
+  defaultCardSprite: {fileID: 21300000, guid: 6bcc5bcd60555644a916f3bf816cc40a, type: 3}
 --- !u!4 &1159794894
 Transform:
   m_ObjectHideFlags: 0
@@ -459,7 +516,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1201594249}
-  - component: {fileID: 1201594248}
+  - component: {fileID: 1201594250}
   m_Layer: 0
   m_Name: Card Manager
   m_TagString: Untagged
@@ -467,22 +524,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1201594248
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1201594247}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fbe583efc7daf514fac8b85f4088a118, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  CardName: 
-  CardImage: {fileID: 0}
-  Description: 
-  ManaCost: 0
 --- !u!4 &1201594249
 Transform:
   m_ObjectHideFlags: 0
@@ -498,6 +539,22 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1201594250
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1201594247}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fbe583efc7daf514fac8b85f4088a118, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  CardName: 
+  CardImage: {fileID: 0}
+  Description: 
+  ManaCost: 0
 --- !u!1 &1341358587
 GameObject:
   m_ObjectHideFlags: 0
@@ -681,7 +738,7 @@ MonoBehaviour:
   m_BlockingObjects: 0
   m_BlockingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 55
 --- !u!114 &2035973228
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -823,7 +880,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5287051519036827522, guid: 7b99896047a7a314b8b422de9ee8e9fe, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6190494461127750890, guid: 7b99896047a7a314b8b422de9ee8e9fe, type: 3}
       propertyPath: m_LocalScale.x
@@ -940,3 +997,4 @@ SceneRoots:
   - {fileID: 671977324}
   - {fileID: 1201594249}
   - {fileID: 1159794894}
+  - {fileID: 294774780}
