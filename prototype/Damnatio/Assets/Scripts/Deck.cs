@@ -28,6 +28,8 @@ public class Deck : MonoBehaviour
         }
 
         Debug.Log("Deck Populated");
+
+        DrawCard();
     }
 
     public void Shuffle()
