@@ -18,6 +18,9 @@ public class Deck : MonoBehaviour
 
     public void PopulateDeck()
     {
+        Cards.Clear();
+        Hand.Clear();
+
         List<Card> newDeck = cardLibrary.CreateDeckFromLibrary();
         foreach (Card card in newDeck)
         {

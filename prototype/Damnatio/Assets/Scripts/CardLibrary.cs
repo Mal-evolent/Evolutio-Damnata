@@ -62,8 +62,6 @@ public class CardLibrary : MonoBehaviour
 
     void Start()
     {
-        //playerDeck = GetComponent<Deck>();
-
         if (defaultCardSprite == null)
         {
             Debug.LogError("Default Card Sprite is not assigned! Please assign a sprite in the Inspector.");
@@ -74,19 +72,62 @@ public class CardLibrary : MonoBehaviour
         cardDataList.Add(new CardData("Wizard", null, "A powerful wizard with fire spells", 5, 7, 10)); // Uses default sprite
         cardDataList.Add(new CardData("Warrior", null, "A brave warrior", 3, 6, 8)); // Uses default sprite
         cardDataList.Add(new CardData("Archer", null, "An expert archer", 2, 4, 6)); // Uses default sprite
+        cardDataList.Add(new CardData("", null, "Invalid card with no name", 2, 4, 6)); // Example of invalid card
 
-        // Iterate over cardDataList to check for missing sprites
+        // Iterate over cardDataList to validate each card and set default sprite if needed
+        List<CardData> validCards = new List<CardData>();
+
         foreach (var cardData in cardDataList)
         {
+            bool isValid = true;
+
+            // Validate each field
+            if (string.IsNullOrEmpty(cardData.CardName))
+            {
+                Debug.LogWarning("Card skipped due to missing name.");
+                isValid = false;
+            }
+            if (string.IsNullOrEmpty(cardData.Description))
+            {
+                Debug.LogWarning($"Card {cardData.CardName} skipped due to missing description.");
+                isValid = false;
+            }
+            if (cardData.ManaCost <= 0)
+            {
+                Debug.LogWarning($"Card {cardData.CardName} skipped due to invalid ManaCost.");
+                isValid = false;
+            }
+            if (cardData.AttackPower <= 0)
+            {
+                Debug.LogWarning($"Card {cardData.CardName} skipped due to invalid AttackPower.");
+                isValid = false;
+            }
+            if (cardData.Health <= 0)
+            {
+                Debug.LogWarning($"Card {cardData.CardName} skipped due to invalid Health.");
+                isValid = false;
+            }
+
+            // Assign default sprite if the image is missing
             if (cardData.CardImage == null)
             {
                 Debug.LogWarning($"No specific sprite for {cardData.CardName}. Using default sprite: {defaultCardSprite.name}");
                 cardData.CardImage = defaultCardSprite;
             }
+
+            // Add to validCards list only if all fields are valid
+            if (isValid)
+            {
+                validCards.Add(cardData);
+            }
         }
 
-        Debug.Log($"Card Library initialized with {cardDataList.Count} cards.");
+        // Replace cardDataList with the validated list
+        cardDataList = validCards;
 
+        Debug.Log($"Card Library initialized with {cardDataList.Count} valid cards.");
+
+        // Populate the player's deck if it's assigned and empty
         if (playerDeck != null && playerDeck.Cards.Count == 0)
         {
             playerDeck.PopulateDeck();
