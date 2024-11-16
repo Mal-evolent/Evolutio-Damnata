@@ -7,6 +7,7 @@ public class CardManager : MonoBehaviour
 {
     public Deck playerDeck;
     public Transform cardUIContainer;
+    public Sprite cardTemplate;
 
     // Displays deck in the UI
     public void DisplayDeck()
@@ -14,8 +15,14 @@ public class CardManager : MonoBehaviour
         // Loop through deck and instantiate UI for each card
         foreach (Card card in playerDeck.Cards)
         {
-            GameObject cardUI = new GameObject(card.CardName); // Placeholder for actual UI logic
+            // Parent card to cardUIContainer
+            GameObject cardUI = new GameObject(card.CardName);
             cardUI.transform.SetParent(cardUIContainer);
+
+            // Set card sprite
+            SpriteRenderer cardSprite = cardUI.AddComponent<SpriteRenderer>();
+            cardSprite.sprite = cardTemplate;
+
             Debug.Log($"Displayed {card.CardName} in the UI.");
         }
     }

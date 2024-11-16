@@ -696,6 +696,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerDeck: {fileID: 294774779}
   cardUIContainer: {fileID: 1582630654}
+  cardTemplate: {fileID: 21300000, guid: 5a112041cc08f0440b2d7cadf11cc69d, type: 3}
 --- !u!1 &1582630653
 GameObject:
   m_ObjectHideFlags: 0
