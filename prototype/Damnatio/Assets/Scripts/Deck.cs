@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class Deck : MonoBehaviour
 {
@@ -10,10 +11,11 @@ public class Deck : MonoBehaviour
     public int HandSize = 5;
 
     public CardLibrary cardLibrary;
+    public CardManager cardManager;
 
     void Start()
     {
-
+        
     }
 
     public void PopulateDeck()
@@ -30,6 +32,7 @@ public class Deck : MonoBehaviour
         Debug.Log("Deck Populated");
 
         DrawCard();
+        cardManager.RefreshUI();
     }
 
     public void Shuffle()
@@ -53,6 +56,7 @@ public class Deck : MonoBehaviour
             Cards.RemoveAt(0);
             Hand.Add(drawnCard);
             Debug.Log("Drew Card: " + drawnCard.CardName);
+            cardManager.RefreshUI();
         }
 
         if (Hand.Count >= HandSize)
@@ -90,5 +94,6 @@ public class Deck : MonoBehaviour
         Cards.Clear();
         Hand.Clear();
         Debug.Log("Deck Reset");
+        cardManager.RefreshUI();
     }
 }
