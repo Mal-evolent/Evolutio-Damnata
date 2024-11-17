@@ -72,87 +72,99 @@ public class MapScript : MonoBehaviour
     _room shopRoom;
 
     //-----------------drawing functions for minimap----------------------
-    void drawBlock(int x, int y, int width, int height, bool selected)
+    void drawBlock(int x, int y, int width, int height, bool selected, float alpha)
     {
+        Color newGrey = Color.grey; newGrey.a = alpha;
+        Color newBlack = Color.grey; newBlack.a = alpha;
+        Color newGreen = Color.green; newGreen.a = alpha;
         Color[] colours = new Color[width * height];
         for (int i = 0; i < colours.Length; i++)
         {
             if (i % width < 2 || i % width > width - 2) //for x
             {
-                colours[i] = Color.black;
+                colours[i] = newBlack;
             }
             else if (i / width < 2 || i / width > height - 2)//for y
             {
-                colours[i] = Color.black;
+                colours[i] = newBlack;
             }
             else
             {
-                colours[i] = selected ? Color.green : Color.grey;
+                colours[i] = selected ? newGreen : newGrey;
             }
         }
         DrawOnTex.SetPixels(x, y, width, height, colours);
     }
-    void drawBlockBoss(int x, int y, int width, int height, bool selected)
+    void drawBlockBoss(int x, int y, int width, int height, bool selected, float alpha)
     {
+        Color newRed = Color.red; newRed.a = alpha;
+        Color newBlack = Color.grey; newBlack.a = alpha;
+        Color newGreen = Color.green; newGreen.a = alpha;
         Color[] colours = new Color[width * height];
         for (int i = 0; i < colours.Length; i++)
         {
             if (i % width < 2 || i % width > width - 2) //for x
             {
-                colours[i] = Color.black;
+                colours[i] = newBlack;
             }
             else if (i / width < 2 || i / width > height - 2)//for y
             {
-                colours[i] = Color.black;
+                colours[i] = newBlack;
             }
             else
             {
-                colours[i] = selected ? Color.green : Color.red;
+                colours[i] = selected ? newGreen : newRed;
             }
         }
         DrawOnTex.SetPixels(x, y, width, height, colours);
     }
-    void drawBlockShop(int x, int y, int width, int height, bool selected)
+    void drawBlockShop(int x, int y, int width, int height, bool selected, float alpha)
     {
+        Color newYellow = Color.yellow; newYellow.a = alpha;
+        Color newBlack = Color.grey; newBlack.a = alpha;
+        Color newGreen = Color.green; newGreen.a = alpha;
         Color[] colours = new Color[width * height];
         for (int i = 0; i < colours.Length; i++)
         {
             if (i % width < 2 || i % width > width - 2) //for x
             {
-                colours[i] = Color.black;
+                colours[i] = newBlack;
             }
             else if (i / width < 2 || i / width > height - 2)//for y
             {
-                colours[i] = Color.black;
+                colours[i] = newBlack;
             }
             else
             {
-                colours[i] = selected ? Color.green : Color.yellow;
+                colours[i] = selected ? newGreen : newYellow;
             }
         }
         DrawOnTex.SetPixels(x, y, width, height, colours);
     }
-    void drawRoom(_room room, bool selected)
+    void drawRoom(_room room, bool selected, float alpha)
     {
         if (room.DistFromStart == 0)
         {
-            drawBlock(room.x, room.y, room.width, room.height, true);
+            drawBlock(room.x, room.y, room.width, room.height, true, alpha);
         }
         else if (room.Equals(furthestRoom))
         {
-            drawBlockBoss(room.x, room.y, room.width, room.height, selected);
+            drawBlockBoss(room.x, room.y, room.width, room.height, selected, alpha);
         }
         else if (room.Equals(shopRoom))
         {
-            drawBlockShop(room.x, room.y, room.width, room.height, selected);
+            drawBlockShop(room.x, room.y, room.width, room.height, selected, alpha);
         }
         else
         {
-            drawBlock(room.x, room.y, room.width, room.height, selected);
+            drawBlock(room.x, room.y, room.width, room.height, selected, alpha);
         }
     }
-    void drawLineBetweenRooms(_room room1, _room room2, Color colour)
+    void drawLineBetweenRooms(_room room1, _room room2, float alpha)
     {
+        Color newGrey = Color.grey; newGrey.a = alpha;
+        Color newBlack = Color.grey; newBlack.a = alpha;
+
         Vector2 p1 = new Vector2(room1.centreX, room1.centreY);
         Vector2 p2 = new Vector2(room2.centreX, room2.centreY);
         Vector2 t = p1;
@@ -163,9 +175,9 @@ public class MapScript : MonoBehaviour
         {
             t = Vector2.Lerp(p1, p2, ctr);
             ctr += frac;
-            DrawOnTex.SetPixel((int)t.x, (int)t.y, Color.grey);
-            DrawOnTex.SetPixel((int)t.x + 1, (int)t.y + 1, Color.black);
-            DrawOnTex.SetPixel((int)t.x - 1, (int)t.y - 1, Color.black);
+            DrawOnTex.SetPixel((int)t.x, (int)t.y, newGrey);
+            DrawOnTex.SetPixel((int)t.x + 1, (int)t.y + 1, newBlack);
+            DrawOnTex.SetPixel((int)t.x - 1, (int)t.y - 1, newBlack);
             //DrawOnTex.SetPixel((int)t.x, (int)t.y+1, colour);
             //DrawOnTex.SetPixel((int)t.x, (int)t.y-1, colour);
         }
@@ -186,17 +198,16 @@ public class MapScript : MonoBehaviour
         {
             for (int i = 0; i < rooms[c].connectedRooms.Count; i++)
             {
-                drawLineBetweenRooms(rooms[c], rooms[c].connectedRooms[i], Color.red);
+                drawLineBetweenRooms(rooms[c], rooms[c].connectedRooms[i], 0.5f);
             }
         }
         for (int c = 0; c < rooms.Length; c++)
         {
-            drawRoom(rooms[c], false);
+            drawRoom(rooms[c], false, 0.5f);
         }
 
         DrawOnTex.Apply();
     }
-
 
     //-----------------generation functions-----------------------
     void generateConnectionsAndRooms()
@@ -371,7 +382,7 @@ public class MapScript : MonoBehaviour
                     activeRoom = rooms[c].room;
                     rooms[c].selected = !rooms[c].selected;
                     if (rooms[c].selected) { //if its the first time clicking on room draw new room as completed
-                        drawRoom(rooms[c], true);
+                        drawRoom(rooms[c], true, 0.5f);
                     }
                 }
             }
