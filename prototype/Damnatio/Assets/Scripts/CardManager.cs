@@ -11,6 +11,7 @@ public class CardManager : MonoBehaviour
     public RectTransform cardUIContainer;
     public RectTransform deckPanelRect;
     public Sprite cardTemplate;
+    public GameObject cardPrefab;
 
     // Displays deck in the UI
     public void DisplayDeck()
@@ -40,85 +41,27 @@ public class CardManager : MonoBehaviour
         // Loop through deck and instantiate UI for each card
         foreach (Card card in playerDeck.Hand)
         {
-            // Can probably simplify below code using prefab...
             // CARD
-            // Create new Card object and parent to cardUIContainer
-            GameObject cardObject = new GameObject(card.CardName);
-            RectTransform cardRectTransform = cardObject.AddComponent<RectTransform>();
+            GameObject cardObject = Instantiate(cardPrefab, new Vector3(0.0f, 0.0f, 0.0f), Quaternion.identity);
+            RectTransform cardRectTransform = cardObject.GetComponent<RectTransform>();
             cardRectTransform.SetParent(cardUIContainer, false);
-
-            // Add Image, Canvas Renderer components and set card sprite
-            Image cardImage = cardObject.AddComponent<Image>();
-            cardObject.AddComponent<CanvasRenderer>();
-            cardImage.preserveAspect = true;
-            cardImage.sprite = cardTemplate;
+            cardObject.name = card.CardName;
 
             // IMAGE
-            // Add Image child object
-            GameObject imageObject = new GameObject("Image");
-            RectTransform imageRectTransform = imageObject.AddComponent<RectTransform>();
-            imageRectTransform.SetParent(cardRectTransform, false);
-
-            // Set image object position
-            imageRectTransform.localPosition = new Vector3(-0.05f, 27.7f, 0);
-            imageRectTransform.sizeDelta = new Vector2(72, 42f);
-
-            // Add Image, Canvas Renderer components
-            imageObject.AddComponent<CanvasRenderer>();
-            Image image = imageObject.AddComponent<Image>();
-            image.preserveAspect = true;
+            Image image = cardObject.transform.GetChild(0).GetComponent<Image>();
             image.sprite = card.CardImage;
 
             // NAME
-            // Add Name child object
-            GameObject nameObject = new GameObject("Name");
-            RectTransform nameRectTransform = nameObject.AddComponent<RectTransform>();
-            nameRectTransform.SetParent(cardRectTransform, false);
-
-            // Set name object position
-            nameRectTransform.localPosition = new Vector3(-0.05f, 2.775f, 0);
-            nameRectTransform.sizeDelta = new Vector2(72, 5.55f);
-
-            // Add TextMeshPro Text, Canvas Renderer components
-            nameObject.AddComponent<CanvasRenderer>();
-            TextMeshProUGUI nameText = nameObject.AddComponent<TextMeshProUGUI>();
-            nameText.alignment = TextAlignmentOptions.Top;
+            TextMeshProUGUI nameText = cardObject.transform.GetChild(1).GetComponent<TextMeshProUGUI>();
             nameText.text = card.CardName;
-            nameText.fontSize = 6;
 
             // DESCRIPTION
-            // Add Description child object
-            GameObject descriptionObject = new GameObject("Description");
-            RectTransform descriptionRectTransform = descriptionObject.AddComponent<RectTransform>();
-            descriptionRectTransform.SetParent(cardRectTransform, false);
-
-            // Set description object position
-            descriptionRectTransform.localPosition = new Vector3(-0.05f, -24.22f, 0);
-            descriptionRectTransform.sizeDelta = new Vector2(72, 48);
-
-            // Add TextMeshPro Text, Canvas Renderer components
-            descriptionObject.AddComponent<CanvasRenderer>();
-            TextMeshProUGUI descriptionText = descriptionObject.AddComponent<TextMeshProUGUI>();
-            descriptionText.alignment = TextAlignmentOptions.Top;
-            descriptionText.text = card.Description;
-            descriptionText.fontSize = 6;
+            TextMeshProUGUI descText = cardObject.transform.GetChild(2).GetComponent<TextMeshProUGUI>();
+            descText.text = card.Description;
 
             // MANA COST
-            // Add manaCost child object
-            GameObject manaObject = new GameObject("Mana Cost");
-            RectTransform manaRectTransform = manaObject.AddComponent<RectTransform>();
-            manaRectTransform.SetParent(cardRectTransform, false);
-
-            // Set description object position
-            manaRectTransform.localPosition = new Vector3(-31.05f, -43.45f, 0);
-            manaRectTransform.sizeDelta = new Vector2(10, 10);
-
-            // Add TextMeshPro Text, Canvas Renderer components
-            manaObject.AddComponent<CanvasRenderer>();
-            TextMeshProUGUI manaText = manaObject.AddComponent<TextMeshProUGUI>();
-            manaText.alignment = TextAlignmentOptions.BottomLeft;
+            TextMeshProUGUI manaText = cardObject.transform.GetChild(3).GetComponent<TextMeshProUGUI>();
             manaText.text = card.ManaCost.ToString();
-            manaText.fontSize = 6;
 
             Debug.Log($"Displayed {card.CardName} in the UI.");
         }
