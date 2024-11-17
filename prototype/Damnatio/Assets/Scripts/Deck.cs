@@ -32,7 +32,6 @@ public class Deck : MonoBehaviour
         Debug.Log("Deck Populated");
 
         DrawCard();
-        cardManager.RefreshUI();
     }
 
     public void Shuffle()
@@ -87,6 +86,7 @@ public class Deck : MonoBehaviour
         {
             Debug.Log("Card not found in deck");
         }
+        cardManager.RefreshUI();
     }
 
     public void Reset()
