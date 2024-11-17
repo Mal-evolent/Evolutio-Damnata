@@ -86,6 +86,7 @@ public class Deck : MonoBehaviour
         {
             Debug.Log("Card not found in deck");
         }
+        cardManager.RefreshUI();
     }
 
     public void Reset()
