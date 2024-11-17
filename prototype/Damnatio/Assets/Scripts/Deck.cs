@@ -32,7 +32,6 @@ public class Deck : MonoBehaviour
         Debug.Log("Deck Populated");
 
         DrawCard();
-        cardManager.RefreshUI();
     }
 
     public void Shuffle()
