@@ -23,6 +23,7 @@ public class RoomScript : MonoBehaviour
     GameObject monsterPrefab;
 
     public _roomsType roomsType;
+    static float _playAreaHeight = 2.62f; //<--this is the play area height
 
     //this needs to be set in generate room, need to be even
     //also used to show where the monster is on the map reference design doc
@@ -53,22 +54,30 @@ public class RoomScript : MonoBehaviour
 
         //needs to generate room monsters here
         int numMonsters = Random.Range(1, (numberOfEntites - 2) - ((numberOfEntites - 2) / 2) + 1);
+        float spaceBetweenMonsters = _playAreaHeight / numMonsters;
+
         if (roomsType == _roomsType.shop) { numMonsters = 0; }
         if (roomsType == _roomsType.boss) { numMonsters = 1; }
         for (int i = 0; i < numMonsters; i++) {
             GameObject newMonster = Instantiate(monsterPrefab);
+
+            float newy = -1.78f - (spaceBetweenMonsters * i);
+            float newx = 1.88f + 0.68f *i;
+
             if (roomsType == _roomsType.boss) {
                 newMonster.GetComponent<MonsterScript>().GenerateMonster(gameObject, entities.Length-1, MonsterScript._monsterType.Boss);//goes in thta last one so it appears centre
                 entities[numberOfEntites-1] = newMonster;
-                break; //makes sure that only one monster exists
+                break; //makes sure that only one monster, the boss, exists
             }
             else {
                 newMonster.GetComponent<MonsterScript>().GenerateMonster(gameObject, (((numberOfEntites - 2) / 2) + 1) + i, MonsterScript._monsterType.Enemy);
                 entities[(((numberOfEntites - 2) / 2) + 1) + i] = newMonster;
+                newMonster.transform.position = new Vector3(newx, newy, newMonster.transform.position.z);
             }
+            Debug.Log(newy);
         }
 
-
+       
         //need to genereate player
 
 
@@ -126,8 +135,7 @@ public class RoomScript : MonoBehaviour
     public GameObject[] returnPlayerMonsters() {
         int size = entities.Length;
         GameObject[] playerMonsters = new GameObject[(size - 2) / 2];
-        for (int i = 1; i < (size - 2) / 2; i++)
-        {
+        for (int i = 1; i < (size - 2) / 2; i++) {
             playerMonsters[i - 1] = entities[i];
         }
         return playerMonsters;
@@ -142,6 +150,6 @@ public class RoomScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        //Debug.Log(backgroundImg.transform.localScale.y / backgroundImg.GetComponent<SpriteRenderer>().sprite.bounds.size.y);
     }
 }
