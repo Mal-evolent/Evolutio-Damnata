@@ -139,7 +139,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &40693010
 RectTransform:
   m_ObjectHideFlags: 0
@@ -781,6 +781,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 874fd7ce876ffc94ea5595b7aec611fc, type: 3}
   monsters:
   - {fileID: 21300000, guid: a1bf2f7b8ae16744d8d5b499d93b1da2, type: 3}
+  - {fileID: 21300000, guid: 5ff102807d66da04090ac8cfe7367adf, type: 3}
   wizards: []
 --- !u!4 &671977324
 Transform:
@@ -1706,6 +1707,7 @@ RectTransform:
   - {fileID: 811389829}
   - {fileID: 298523279}
   - {fileID: 246061146}
+  - {fileID: 40693010}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
