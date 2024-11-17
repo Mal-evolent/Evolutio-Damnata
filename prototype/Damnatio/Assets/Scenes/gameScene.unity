@@ -271,14 +271,14 @@ RectTransform:
   m_GameObject: {fileID: 246061145}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.801797, y: 0.801797, z: 0.801797}
+  m_LocalScale: {x: 1.46793, y: 1.46793, z: 1.46793}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2123307027}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -101, y: -101}
+  m_AnchoredPosition: {x: -185, y: -183}
   m_SizeDelta: {x: 250, y: 250}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &246061147
@@ -769,13 +769,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   dungeonRooms:
-  - {fileID: 21300000, guid: 8ccf684f0ce334887b3b2fc1934a6dd2, type: 3}
-  - {fileID: 21300000, guid: e62d3351f28be4a72bdd0822ccdb2675, type: 3}
-  - {fileID: 21300000, guid: efa51402ee58b482ebb88b6a25a53eb1, type: 3}
-  - {fileID: 21300000, guid: 25346ec24f1f744d6936c9692a2e294e, type: 3}
-  - {fileID: 21300000, guid: c5f60190248184146804b0bbe42df2cb, type: 3}
-  - {fileID: 21300000, guid: b6a1ce2ad910a4bc188d2a2a02a3133a, type: 3}
-  - {fileID: 21300000, guid: 85e2134e919ed4e54a76fba2a113587d, type: 3}
+  - {fileID: 21300000, guid: 63b0c655b78fcf74198ddb5d83bcfd3e, type: 3}
+  - {fileID: 21300000, guid: 8017105c00e58d34ea0c90aebc94a2c9, type: 3}
+  - {fileID: 21300000, guid: c0a9ef091abf0bb45827271bab5c07c8, type: 3}
+  - {fileID: 21300000, guid: 227537a32a64f9c4aa5fc5ba35d18f17, type: 3}
+  - {fileID: 21300000, guid: 874fd7ce876ffc94ea5595b7aec611fc, type: 3}
   monsters:
   - {fileID: 21300000, guid: a1bf2f7b8ae16744d8d5b499d93b1da2, type: 3}
   wizards: []
