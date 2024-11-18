@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using UnityEngine;
+using UnityEngine.UI;
 public class RoomScript : MonoBehaviour
 {
     public enum _roomsType {
@@ -18,7 +19,7 @@ public class RoomScript : MonoBehaviour
     }
 
     [SerializeField]
-    GameObject backgroundImg; //<--- this has been set in the editor
+    Image backgroundImg; //<--- this has been set in the editor
     [SerializeField]
     GameObject monsterPrefab;
 
@@ -42,10 +43,10 @@ public class RoomScript : MonoBehaviour
         this.roomsType = roomType;
         //get room image(random background image)
         GlobalResources globalResources = GameObject.Find("ResourceManagaer").GetComponent<GlobalResources>();
-        backgroundImg.GetComponent<SpriteRenderer>().sprite = globalResources.dungeonRooms[ Random.Range(0, globalResources.dungeonRooms.Count) ];
+        backgroundImg.sprite = globalResources.dungeonRooms[ Random.Range(0, globalResources.dungeonRooms.Count) ];
 
         //add room image to resizer (all background will be resized once rooms have been generated) 
-        GameObject.Find("FitToScreen").GetComponent<BackgroundResizer>().backgroundSprites.Add(backgroundImg.GetComponent<SpriteRenderer>());
+        //GameObject.Find("FitToScreen").GetComponent<BackgroundResizer>().backgroundSprites.Add(backgroundImg.GetComponent<Image>());
 
         //set number of entites(make sure its even)
         numberOfEntites = Random.Range(4, 11);

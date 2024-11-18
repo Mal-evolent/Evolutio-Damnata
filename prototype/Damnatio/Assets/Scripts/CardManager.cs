@@ -27,7 +27,6 @@ public class CardManager : MonoBehaviour
             RectTransform cardRectTransform = cardObject.GetComponent<RectTransform>();
             cardRectTransform.SetParent(deckPanelRect, false);
             cardObject.name = card.CardName;
-            cardRectTransform.localPosition = new Vector3(20f, -10f, 0f);
 
             // IMAGE
             Image image = cardObject.transform.GetChild(0).GetComponent<Image>();
