@@ -44,6 +44,23 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
 
         unloadMonster();
     }
+    // Monster needs room passed so they can get information on what's going on
+    public void GenerateMonster(GameObject roomObj, int monsterID, _monsterType monsterType, Sprite EnemyImg)
+    {
+        ID = monsterID;
+        room = roomObj;
+        this.monsterType = monsterType;
+
+        //picks a random monster image from global resources
+        img.GetComponent<SpriteRenderer>().sprite = EnemyImg;
+        img.GetComponent<SpriteRenderer>().sortingOrder = 2;
+
+        //TODO -- this needs to be updated so obejct get placed in at the correct coords for the level(minght need to hadn mpick leves images so that blaty boards are roughly the same)
+        gameObject.transform.position = new Vector3(gameObject.transform.position.x, gameObject.transform.position.y, -1);//puts inform of background
+
+        unloadMonster();
+    }
+
 
     public void loadMonster()
     {
