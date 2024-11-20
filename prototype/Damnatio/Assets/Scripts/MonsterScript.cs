@@ -2,6 +2,7 @@ using JetBrains.Annotations;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 //---------------interfaces for different attributes--------------------------------//
 
@@ -36,8 +37,8 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
 
         //picks a random monster image from global resources
         GlobalResources globalResources = GameObject.Find("ResourceManagaer").GetComponent<GlobalResources>();
-        img.GetComponent<SpriteRenderer>().sprite = globalResources.monsters[Random.Range(0, globalResources.monsters.Count)];
-        img.GetComponent<SpriteRenderer>().sortingOrder = 2;
+        img.GetComponent<Image>().sprite = globalResources.monsters[Random.Range(0, globalResources.monsters.Count)];
+        //img.GetComponent<Image>().sortingOrder = 2;
 
         //TODO -- this needs to be updated so obejct get placed in at the correct coords for the level(minght need to hadn mpick leves images so that blaty boards are roughly the same)
         gameObject.transform.position = new Vector3(gameObject.transform.position.x, gameObject.transform.position.y, -1);//puts inform of background
@@ -52,8 +53,8 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
         this.monsterType = monsterType;
 
         //picks a random monster image from global resources
-        img.GetComponent<SpriteRenderer>().sprite = EnemyImg;
-        img.GetComponent<SpriteRenderer>().sortingOrder = 2;
+        img.GetComponent<Image>().sprite = EnemyImg;
+        //img.GetComponent<Image>().sortingOrder = 2;
 
         //TODO -- this needs to be updated so obejct get placed in at the correct coords for the level(minght need to hadn mpick leves images so that blaty boards are roughly the same)
         gameObject.transform.position = new Vector3(gameObject.transform.position.x, gameObject.transform.position.y, -1);//puts inform of background

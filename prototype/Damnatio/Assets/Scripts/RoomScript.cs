@@ -13,7 +13,7 @@ public class RoomScript : MonoBehaviour
     }
 
     enum _objectives
-    { 
+    {
         clear,
         boss
     }
@@ -24,7 +24,8 @@ public class RoomScript : MonoBehaviour
     GameObject monsterPrefab;
 
     public _roomsType roomsType;
-    static float _playAreaHeight = 2.62f; //<--this is the play area height
+    static float _playAreaHeight = 223f; //<--this is the play area height
+    static float _playAreaWidth = 227f; //<--this is the play area height
 
     //this needs to be set in generate room, need to be even
     //also used to show where the monster is on the map reference design doc
@@ -34,8 +35,8 @@ public class RoomScript : MonoBehaviour
     //  \-so player side monster are 1 -> (size-2)/2
     //  |-enemys are ((size-2)/2)+1 -> size size - 2
     [SerializeField]
-    GameObject[] entities;
-    int numberOfEntites = 0;
+    GameObject[] entities = new GameObject[6];
+    int numberOfEntites = 6;
 
     //this is a self setup function, use enemy generate
     //will need to somehow scale the backgroun obj with the screen size
@@ -49,21 +50,27 @@ public class RoomScript : MonoBehaviour
         //GameObject.Find("FitToScreen").GetComponent<BackgroundResizer>().backgroundSprites.Add(backgroundImg.GetComponent<Image>());
 
         //set number of entites(make sure its even)
-        numberOfEntites = Random.Range(4, 11);
-        if (numberOfEntites % 2 != 0) { numberOfEntites += 1; }
         entities = new GameObject[numberOfEntites];
 
         //needs to generate room monsters here
         int numMonsters = Random.Range(1, (numberOfEntites - 2) - ((numberOfEntites - 2) / 2) + 1);
         float spaceBetweenMonsters = _playAreaHeight / numMonsters;
+        float spaceBetweenMonstersX = _playAreaWidth / numMonsters;
 
         if (roomsType == _roomsType.shop) { numMonsters = 0; }
         if (roomsType == _roomsType.boss) { numMonsters = 1; }
         for (int i = 0; i < numMonsters; i++) {
-            GameObject newMonster = Instantiate(monsterPrefab);
 
-            float newy = -1.78f - (spaceBetweenMonsters * i);
-            float newx = 1.88f + 0.68f *i;
+            GameObject canv = GameObject.Find("Canvas");
+            RectTransform canvRect = canv.GetComponent<RectTransform>();
+            Vector2 centre = new Vector2((canvRect.rect.width / 2) * canv.transform.localScale.x, (canvRect.rect.height / 2) * canv.transform.localScale.y);
+
+            float newy = centre.y - 270f;// (270f + (spaceBetweenMonsters * i));
+            float newx = centre.x;// + 153 + (spaceBetweenMonstersX * i);
+            
+            GameObject newMonster = Instantiate(monsterPrefab, canv.transform);
+
+
 
             if (roomsType == _roomsType.boss) {
                 newMonster.GetComponent<MonsterScript>().GenerateMonster(gameObject, entities.Length-1, MonsterScript._monsterType.Boss);//goes in thta last one so it appears centre
@@ -73,9 +80,9 @@ public class RoomScript : MonoBehaviour
             else {
                 newMonster.GetComponent<MonsterScript>().GenerateMonster(gameObject, (((numberOfEntites - 2) / 2) + 1) + i, MonsterScript._monsterType.Enemy);
                 entities[(((numberOfEntites - 2) / 2) + 1) + i] = newMonster;
-                newMonster.transform.position = new Vector3(newx, newy, newMonster.transform.position.z);
+                newMonster.transform.position = new Vector3(newx, newy, 0);
             }
-            Debug.Log(newy);
+            Debug.Log(newx+ " :newx -- newy: "+newy);
         }
 
        
