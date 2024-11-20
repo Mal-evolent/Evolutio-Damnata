@@ -435,7 +435,7 @@ public class MapScript : MonoBehaviour
 
             Vector2 localPoint;
             RectTransformUtility.ScreenPointToLocalPointInRectangle(rectTransform, mousePos, null, out localPoint);
-            localPoint += new Vector2((rectTransform.rect.width) / 2, (rectTransform.rect.height) / 2);
+            localPoint += new Vector2((rectTransform.rect.width) , (rectTransform.rect.height) );//offset orgin to bottomn left of minimap istead of top right
 
 
             mouseOnRoom(localPoint);
