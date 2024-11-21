@@ -47,4 +47,6 @@ MonoBehaviour:
   backgroundImg: {fileID: 0}
   monsterPrefab: {fileID: 8760619513736324103, guid: 472084da47ee35b49a0df8541afdefc0, type: 3}
   roomsType: 0
+  _initalOffsetX: 300.02
+  _initalOffsetY: 220
   entities: []

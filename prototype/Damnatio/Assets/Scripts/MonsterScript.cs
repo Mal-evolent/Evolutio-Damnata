@@ -10,7 +10,7 @@ using UnityEngine.UI;
 public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacker
 {
     [SerializeField]
-    GameObject img;
+    public GameObject img;
 
     public enum _monsterType
     {

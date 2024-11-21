@@ -24,8 +24,12 @@ public class RoomScript : MonoBehaviour
     GameObject monsterPrefab;
 
     public _roomsType roomsType;
-    static float _playAreaHeight = 223f; //<--this is the play area height
-    static float _playAreaWidth = 227f; //<--this is the play area height
+    static float _playAreaHeight = 423f; //<--this is the play area height
+    static float _playAreaWidth = 527f; //<--this is the play area height
+    [SerializeField]
+    float _initalOffsetX = 153f;
+    [SerializeField]
+    float _initalOffsetY = 220f;
 
     //this needs to be set in generate room, need to be even
     //also used to show where the monster is on the map reference design doc
@@ -35,8 +39,8 @@ public class RoomScript : MonoBehaviour
     //  \-so player side monster are 1 -> (size-2)/2
     //  |-enemys are ((size-2)/2)+1 -> size size - 2
     [SerializeField]
-    GameObject[] entities = new GameObject[6];
-    int numberOfEntites = 6;
+    GameObject[] entities = new GameObject[8];
+    int numberOfEntites = 8;
 
     //this is a self setup function, use enemy generate
     //will need to somehow scale the backgroun obj with the screen size
@@ -65,8 +69,8 @@ public class RoomScript : MonoBehaviour
             RectTransform canvRect = canv.GetComponent<RectTransform>();
             Vector2 centre = new Vector2((canvRect.rect.width / 2) * canv.transform.localScale.x, (canvRect.rect.height / 2) * canv.transform.localScale.y);
 
-            float newy = centre.y - 270f;// (270f + (spaceBetweenMonsters * i));
-            float newx = centre.x;// + 153 + (spaceBetweenMonstersX * i);
+            float newy = centre.y - (_initalOffsetY + (spaceBetweenMonsters * i));
+            float newx = centre.x + _initalOffsetX + (spaceBetweenMonstersX * i);
             
             GameObject newMonster = Instantiate(monsterPrefab, canv.transform);
 
@@ -81,6 +85,7 @@ public class RoomScript : MonoBehaviour
                 newMonster.GetComponent<MonsterScript>().GenerateMonster(gameObject, (((numberOfEntites - 2) / 2) + 1) + i, MonsterScript._monsterType.Enemy);
                 entities[(((numberOfEntites - 2) / 2) + 1) + i] = newMonster;
                 newMonster.transform.position = new Vector3(newx, newy, 0);
+                newMonster.transform.localScale = new Vector3(-7, 7, 7);
             }
             Debug.Log(newx+ " :newx -- newy: "+newy);
         }
