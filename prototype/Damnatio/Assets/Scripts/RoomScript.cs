@@ -19,7 +19,8 @@ public class RoomScript : MonoBehaviour
     }
 
     [SerializeField]
-    Image backgroundImg; //<--- this has been set in the editor
+    GameObject backgroundImg; //<--- this has been set in the editor
+    Sprite newBackgroundImage;
     [SerializeField]
     GameObject monsterPrefab;
 
@@ -48,7 +49,9 @@ public class RoomScript : MonoBehaviour
         this.roomsType = roomType;
         //get room image(random background image)
         GlobalResources globalResources = GameObject.Find("ResourceManagaer").GetComponent<GlobalResources>();
-        backgroundImg.sprite = globalResources.dungeonRooms[ Random.Range(0, globalResources.dungeonRooms.Count) ];
+        newBackgroundImage = globalResources.dungeonRooms[Random.Range(0, globalResources.dungeonRooms.Count)];
+        backgroundImg = GameObject.Find("Canvas");
+        backgroundImg.GetComponent<Image>().sprite = newBackgroundImage;
 
         //add room image to resizer (all background will be resized once rooms have been generated) 
         //GameObject.Find("FitToScreen").GetComponent<BackgroundResizer>().backgroundSprites.Add(backgroundImg.GetComponent<Image>());
@@ -108,6 +111,7 @@ public class RoomScript : MonoBehaviour
                 a.GetComponent<MonsterScript>().loadMonster();
             }
         }
+        backgroundImg.GetComponent<Image>().sprite = newBackgroundImage;
     }
 
     public void unloadRoom() {
