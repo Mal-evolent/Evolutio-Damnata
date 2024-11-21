@@ -1,0 +1,19 @@
+COMP3013 Team Enterprise
+
+Meeting Minutes 21/11/24
+
+In attendance: Michael, Myles, Ozzy
+Notetaker: Myles
+
+What Was Done:
+- Refactored UI objects to take advantage of canvas scaling - Myles
+- Implemented Card/Deck related classes - Michael
+- Fixed minimap so it can be resized - Ozzy
+
+What do we need to do next:
+- Implement combat system - Michael/Ozzy
+- Create form for Usability test questions - Myles
+- Fix how monsters are being displayed on the screen
+
+Is anything blocking progress:
+- Unanimous no
