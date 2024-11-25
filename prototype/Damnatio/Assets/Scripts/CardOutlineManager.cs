@@ -21,8 +21,8 @@ public class CardOutlineManager : MonoBehaviour
         if (outline == null)
         {
             outline = cardObject.AddComponent<Outline>();
-            outline.effectColor = Color.red;
-            outline.effectDistance = new Vector2(5f, 5f);
+            outline.effectColor = Color.green;
+            outline.effectDistance = new Vector2(7.5f, 7.5f);
         }
 
         outline.enabled = true;

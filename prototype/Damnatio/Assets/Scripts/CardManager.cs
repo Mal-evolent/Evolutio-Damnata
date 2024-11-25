@@ -5,7 +5,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-// Card Manager for handling UI (requires Odin Inspector if used)
+// Card Manager for handling UI
 public class CardManager : MonoBehaviour
 {
     public Deck playerDeck;
@@ -14,12 +14,13 @@ public class CardManager : MonoBehaviour
     public Sprite cardTemplate;
     public GameObject cardPrefab;
 
+    public CardOutlineManager cardOutlineManager; // Assigned in the Inspector
 
     // Displays deck in the UI
     public void DisplayDeck()
     {
         // Loop through deck and instantiate UI for each card
-        for (int i = playerDeck.Cards.Count - 1; i >= 0; i--) // i is more useful for ordering
+        for (int i = playerDeck.Cards.Count - 1; i >= 0; i--) // i is useful for ordering
         {
             Card card = playerDeck.Cards[i];
 
@@ -48,10 +49,11 @@ public class CardManager : MonoBehaviour
             Debug.Log($"Displayed {card.CardName} in the UI.");
         }
     }
+
     // Displays hand in the UI
     public void DisplayHand()
     {
-        // Loop through deck and instantiate UI for each card
+        // Loop through hand and instantiate UI for each card
         foreach (Card card in playerDeck.Hand)
         {
             // CARD
@@ -78,7 +80,6 @@ public class CardManager : MonoBehaviour
 
             Debug.Log($"Displayed {card.CardName} in the UI.");
 
-
             // Add Button or Event Trigger
             Button cardButton = cardObject.GetComponent<Button>();
             if (cardButton == null)
@@ -86,10 +87,17 @@ public class CardManager : MonoBehaviour
                 cardButton = cardObject.AddComponent<Button>();
             }
 
-            // Add listener to highlight the card on click
+            // Use the assigned CardOutlineManager to highlight the card
             cardButton.onClick.AddListener(() =>
             {
-                FindObjectOfType<CardOutlineManager>().HighlightCard(cardObject);
+                if (cardOutlineManager != null)
+                {
+                    cardOutlineManager.HighlightCard(cardObject);
+                }
+                else
+                {
+                    Debug.LogError("CardOutlineManager is not assigned!");
+                }
             });
         }
     }
