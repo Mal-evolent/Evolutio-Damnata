@@ -14,6 +14,7 @@ public class CardManager : MonoBehaviour
     public Sprite cardTemplate;
     public GameObject cardPrefab;
 
+
     // Displays deck in the UI
     public void DisplayDeck()
     {
@@ -76,6 +77,20 @@ public class CardManager : MonoBehaviour
             manaText.text = card.ManaCost.ToString();
 
             Debug.Log($"Displayed {card.CardName} in the UI.");
+
+
+            // Add Button or Event Trigger
+            Button cardButton = cardObject.GetComponent<Button>();
+            if (cardButton == null)
+            {
+                cardButton = cardObject.AddComponent<Button>();
+            }
+
+            // Add listener to highlight the card on click
+            cardButton.onClick.AddListener(() =>
+            {
+                FindObjectOfType<CardOutlineManager>().HighlightCard(cardObject);
+            });
         }
     }
 
