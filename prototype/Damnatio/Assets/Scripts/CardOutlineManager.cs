@@ -22,7 +22,7 @@ public class CardOutlineManager : MonoBehaviour
         {
             outline = cardObject.AddComponent<Outline>();
             outline.effectColor = Color.green;
-            outline.effectDistance = new Vector2(7.5f, 7.5f);
+            outline.effectDistance = new Vector2(6f, 6f);
         }
 
         outline.enabled = true;
