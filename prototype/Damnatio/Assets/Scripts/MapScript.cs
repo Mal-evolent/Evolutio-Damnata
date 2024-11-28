@@ -371,24 +371,26 @@ public class MapScript : MonoBehaviour
     //-----------------used for user map interaction------------------
     void mouseOnRoom(Vector2 mousepos)
     {
-        activeRoom.GetComponent<RoomScript>().unloadRoom();
+        Debug.Log("Running mouse on room");
         for (int c = 0; c < rooms.Length; c++)
         {
             if (mousepos.x > rooms[c].x && mousepos.x < rooms[c].x + rooms[c].width)
             {
                 if (mousepos.y > rooms[c].y && mousepos.y < rooms[c].y + rooms[c].height)
                 {
-                    
+                    activeRoom.GetComponent<RoomScript>().unloadRoom();
+
                     activeRoom = rooms[c].room;
                     rooms[c].selected = !rooms[c].selected;
                     if (rooms[c].selected) { //if its the first time clicking on room draw new room as completed
                         drawRoom(rooms[c], true, 0.5f);
                     }
+                    activeRoom.GetComponent<RoomScript>().loadRoom(); //load room that the mouse has clicked on
+
                 }
             }
 
         }
-        activeRoom.GetComponent<RoomScript>().loadRoom(); //load room that the mouse has clicked on
         DrawOnTex.Apply();
     }
 
