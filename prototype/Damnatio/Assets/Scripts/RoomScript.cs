@@ -213,7 +213,10 @@ public class RoomScript : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-
+        for (int i = 0; i < Outlines.Count; i++)
+        {
+            Outlines[i].enabled = false;
+        }
     }
 
     // Update is called once per frame
