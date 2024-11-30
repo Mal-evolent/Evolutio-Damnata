@@ -38,6 +38,9 @@ public class RoomScript : MonoBehaviour
     float _initalOffsetY = 220f;
 
     [SerializeField]
+    Canvas targetCanvas;
+
+    [SerializeField]
     CardOutlineManager cardOutlineManager;
     [SerializeField]
     List<Image> Outlines;
@@ -122,14 +125,13 @@ public class RoomScript : MonoBehaviour
 
         for (int i = 0; i < placeHolderSpriteCount; i++)
         {
-            GameObject canv = GameObject.Find("Canvas");
-            RectTransform canvRect = canv.GetComponent<RectTransform>();
-            Vector2 centre = new Vector2((canvRect.rect.width / 2) * canv.transform.localScale.x, (canvRect.rect.height / 2) * canv.transform.localScale.y);
+            RectTransform canvRect = targetCanvas.GetComponent<RectTransform>();
+            Vector2 centre = new Vector2((canvRect.rect.width / 2) * targetCanvas.transform.localScale.x, (canvRect.rect.height / 2) * targetCanvas.transform.localScale.y);
 
             float newy = centre.y - (_initalOffsetY + (spaceBetweenMonsters * i));
             float newx = centre.x - _initalOffsetX - (spaceBetweenMonstersX * i);
 
-            GameObject newMonster = Instantiate(monsterPrefab, GameObject.Find("Canvas").transform);
+            GameObject newMonster = Instantiate(monsterPrefab, targetCanvas.transform);
             newMonster.GetComponent<MonsterScript>().GenerateMonster(gameObject, i, MonsterScript._monsterType.Friendly, placeHolderSprites);
             entities[i] = newMonster;
             newMonster.transform.position = new Vector3(newx, newy, 0);
