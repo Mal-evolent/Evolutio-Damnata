@@ -150,13 +150,38 @@ public class RoomScript : MonoBehaviour
         unloadRoom();
     }
 
-    public void choiceHighLight()
+    public void choiceHighlight()
     {
         for (int i = 0; i < Outlines.Count; i++)
         {
             Outlines[i].enabled = cardOutlineManager.cardIsHighlighted;
         }
     }
+
+    public void interactableHighlights()
+    {
+        for (int i = 0; i < Outlines.Count; i++)
+        {
+            if (Outlines[i] == null)
+            {
+                Debug.LogError($"Outline at index {i} is null!");
+                continue;
+            }
+
+            Button HighlightButton = Outlines[i].GetComponent<Button>();
+            if (HighlightButton == null)
+            {
+                HighlightButton = Outlines[i].gameObject.AddComponent<Button>();
+            }
+
+            HighlightButton.onClick.RemoveAllListeners(); // Prevent duplicate listeners
+            HighlightButton.onClick.AddListener(() =>
+            {
+                Debug.Log($"Outline {i} clicked!");
+            });
+        }
+    }
+
 
     public void loadRoom() {
         gameObject.SetActive(true);
@@ -220,13 +245,15 @@ public class RoomScript : MonoBehaviour
         {
             Outlines[i].enabled = false;
         }
+
+        interactableHighlights();
     }
 
     // Update is called once per frame
     void Update()
     {
         //Debug.Log(backgroundImg.transform.localScale.y / backgroundImg.GetComponent<SpriteRenderer>().sprite.bounds.size.y);
-        choiceHighLight();
+        choiceHighlight();
 
     }
 }

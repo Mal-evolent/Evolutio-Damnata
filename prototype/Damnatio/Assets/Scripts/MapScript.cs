@@ -371,7 +371,7 @@ public class MapScript : MonoBehaviour
     //-----------------used for user map interaction------------------
     void mouseOnRoom(Vector2 mousepos)
     {
-        Debug.Log("Running mouse on room");
+        //Debug.Log("Running mouse on room");
         for (int c = 0; c < rooms.Length; c++)
         {
             if (mousepos.x > rooms[c].x && mousepos.x < rooms[c].x + rooms[c].width)
@@ -442,7 +442,7 @@ public class MapScript : MonoBehaviour
 
             mouseOnRoom(localPoint);
 
-            Debug.Log(localPoint + ":location of mouse in rect --- get pixel:" + DrawOnTex.GetPixel((int)localPoint.x, (int)localPoint.y).ToString());
+            //Debug.Log(localPoint + ":location of mouse in rect --- get pixel:" + DrawOnTex.GetPixel((int)localPoint.x, (int)localPoint.y).ToString());
         }
     }
 }
