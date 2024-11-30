@@ -1527,7 +1527,11 @@ PrefabInstance:
     - target: {fileID: 1867100589820313632, guid: 7b99896047a7a314b8b422de9ee8e9fe, type: 3}
       propertyPath: backgroundImg
       value: 
-      objectReference: {fileID: 2123307028}
+      objectReference: {fileID: 0}
+    - target: {fileID: 1867100589820313632, guid: 7b99896047a7a314b8b422de9ee8e9fe, type: 3}
+      propertyPath: placeHolderSprites
+      value: 
+      objectReference: {fileID: 21300000, guid: f37c6e0e3bb934a4d85b500b2c9ee2c6, type: 3}
     - target: {fileID: 3094823144215878801, guid: 7b99896047a7a314b8b422de9ee8e9fe, type: 3}
       propertyPath: m_Name
       value: Room

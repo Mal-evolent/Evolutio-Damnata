@@ -24,6 +24,11 @@ public class RoomScript : MonoBehaviour
     [SerializeField]
     GameObject monsterPrefab;
 
+    [SerializeField]
+    Sprite placeHolderSprites;
+    [SerializeField]
+    int placeHolderSpriteCount = 3;
+
     public _roomsType roomsType;
     static float _playAreaHeight = 423f; //<--this is the play area height
     static float _playAreaWidth = 527f; //<--this is the play area height
@@ -54,7 +59,6 @@ public class RoomScript : MonoBehaviour
         backgroundImg.GetComponent<Image>().sprite = newBackgroundImage;
 
         //add room image to resizer (all background will be resized once rooms have been generated) 
-        //GameObject.Find("FitToScreen").GetComponent<BackgroundResizer>().backgroundSprites.Add(backgroundImg.GetComponent<Image>());
 
         //set number of entites(make sure its even)
         entities = new GameObject[numberOfEntites];
@@ -74,7 +78,7 @@ public class RoomScript : MonoBehaviour
 
             float newy = centre.y - (_initalOffsetY + (spaceBetweenMonsters * i));
             float newx = centre.x + _initalOffsetX + (spaceBetweenMonstersX * i);
-            
+
             GameObject newMonster = Instantiate(monsterPrefab, canv.transform);
 
 
@@ -93,8 +97,37 @@ public class RoomScript : MonoBehaviour
             Debug.Log(newx+ " :newx -- newy: "+newy);
         }
 
-       
-        //need to genereate player
+
+
+        /*
+         
+         
+         
+         
+         <---- DISPLAY CHOICE HIGHLIGHTS CODE --->
+         
+         
+         
+         
+         */
+
+
+        for (int i = 0; i < placeHolderSpriteCount; i++)
+        {
+            GameObject canv = GameObject.Find("Canvas");
+            RectTransform canvRect = canv.GetComponent<RectTransform>();
+            Vector2 centre = new Vector2((canvRect.rect.width / 2) * canv.transform.localScale.x, (canvRect.rect.height / 2) * canv.transform.localScale.y);
+
+            float newy = centre.y - (_initalOffsetY + (spaceBetweenMonsters * i));
+            float newx = centre.x - _initalOffsetX - (spaceBetweenMonstersX * i);
+
+            GameObject newMonster = Instantiate(monsterPrefab, GameObject.Find("Canvas").transform);
+            newMonster.GetComponent<MonsterScript>().GenerateMonster(gameObject, i, MonsterScript._monsterType.Friendly, placeHolderSprites);
+            entities[i] = newMonster;
+            newMonster.transform.position = new Vector3(newx, newy, 0);
+            newMonster.transform.localScale = new Vector3(7, 7, 7);
+            //newMonster.GetComponent<SpriteRenderer>().flipX = true;
+        }
 
 
 
@@ -102,6 +135,7 @@ public class RoomScript : MonoBehaviour
         //deactivates current room, main room will be activated by map script
         unloadRoom();
     }
+
 
     public void loadRoom() {
         gameObject.SetActive(true);
