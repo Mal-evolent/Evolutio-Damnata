@@ -17,6 +17,13 @@ public class CardOutlineManager : MonoBehaviour
             RemoveHighlight(currentlyHighlightedCard);
         }
 
+        //remove the outline for the card if it's already highlighted
+        if(currentlyHighlightedCard == cardObject)
+        {
+            RemoveHighlight(cardObject);
+            return;
+        }
+
         //add or enable the outline for a selected card
         Outline outline = cardObject.GetComponent<Outline>();
         if (outline == null)
