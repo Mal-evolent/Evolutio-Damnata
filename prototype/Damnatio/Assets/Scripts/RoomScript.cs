@@ -45,6 +45,9 @@ public class RoomScript : MonoBehaviour
     [SerializeField]
     List<Image> Outlines;
 
+    [SerializeField]
+    List<GameObject> playerMonsters; // <-- this is the list of player monsters. Feel free to change the type if needed.
+
     //this needs to be set in generate room, need to be even
     //also used to show where the monster is on the map reference design doc
     //index 0 == player them selves
