@@ -81,8 +81,6 @@ public class RoomScript : MonoBehaviour
 
             GameObject newMonster = Instantiate(monsterPrefab, canv.transform);
 
-
-
             if (roomsType == _roomsType.boss) {
                 newMonster.GetComponent<MonsterScript>().GenerateMonster(gameObject, entities.Length-1, MonsterScript._monsterType.Boss);//goes in thta last one so it appears centre
                 entities[numberOfEntites-1] = newMonster;
