@@ -37,6 +37,11 @@ public class RoomScript : MonoBehaviour
     [SerializeField]
     float _initalOffsetY = 220f;
 
+    [SerializeField]
+    CardOutlineManager cardOutlineManager;
+    [SerializeField]
+    List<Image> Outlines;
+
     //this needs to be set in generate room, need to be even
     //also used to show where the monster is on the map reference design doc
     //index 0 == player them selves
@@ -82,9 +87,12 @@ public class RoomScript : MonoBehaviour
             GameObject newMonster = Instantiate(monsterPrefab, canv.transform);
 
             if (roomsType == _roomsType.boss) {
-                newMonster.GetComponent<MonsterScript>().GenerateMonster(gameObject, entities.Length-1, MonsterScript._monsterType.Boss);//goes in thta last one so it appears centre
-                entities[numberOfEntites-1] = newMonster;
-                break; //makes sure that only one monster, the boss, exists
+                newMonster.GetComponent<MonsterScript>().GenerateMonster(gameObject, (((numberOfEntites - 2) / 2) + 1) + i, MonsterScript._monsterType.Enemy);
+                entities[(((numberOfEntites - 2) / 2) + 1) + i] = newMonster;
+                newMonster.transform.position = new Vector3(newx, newy, 0);
+                newMonster.transform.localScale = new Vector3(-7, 7, 7);
+
+                //guarantee the spawns of stronger the monsters below
             }
             else {
                 newMonster.GetComponent<MonsterScript>().GenerateMonster(gameObject, (((numberOfEntites - 2) / 2) + 1) + i, MonsterScript._monsterType.Enemy);
@@ -126,14 +134,24 @@ public class RoomScript : MonoBehaviour
             entities[i] = newMonster;
             newMonster.transform.position = new Vector3(newx, newy, 0);
             newMonster.transform.localScale = new Vector3(7, 7, 7);
-            //newMonster.GetComponent<SpriteRenderer>().flipX = true;
+            newMonster.name = "Outline" + i;
+            Outlines.Add(newMonster.GetComponentInChildren<Image>());
         }
+
+
 
 
         //deactivates current room, main room will be activated by map script
         unloadRoom();
     }
 
+    public void choiceHighLight()
+    {
+        for (int i = 0; i < Outlines.Count; i++)
+        {
+            Outlines[i].enabled = cardOutlineManager.cardIsHighlighted;
+        }
+    }
 
     public void loadRoom() {
         gameObject.SetActive(true);
@@ -193,12 +211,14 @@ public class RoomScript : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+
     }
 
     // Update is called once per frame
     void Update()
     {
         //Debug.Log(backgroundImg.transform.localScale.y / backgroundImg.GetComponent<SpriteRenderer>().sprite.bounds.size.y);
+        choiceHighLight();
+
     }
 }

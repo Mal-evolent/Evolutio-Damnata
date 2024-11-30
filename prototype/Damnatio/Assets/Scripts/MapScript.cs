@@ -68,7 +68,7 @@ public class MapScript : MonoBehaviour
     int mapheight;
 
     _room[] rooms;//<------ rooms hold the gameobject for the actual room
-    _room furthestRoom; //thisis boss room
+    _room furthestRoom; //this is boss room
     _room shopRoom;
 
     //-----------------drawing functions for minimap----------------------

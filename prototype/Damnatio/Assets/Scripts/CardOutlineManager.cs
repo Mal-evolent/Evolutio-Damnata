@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class CardOutlineManager : MonoBehaviour
 {
     private GameObject currentlyHighlightedCard;
+    public bool cardIsHighlighted;
 
     //highlight card
     public void HighlightCard(GameObject cardObject)
@@ -27,6 +28,7 @@ public class CardOutlineManager : MonoBehaviour
 
         outline.enabled = true;
         currentlyHighlightedCard = cardObject;
+        cardIsHighlighted = true;
     }
 
     public void RemoveHighlight(GameObject cardObject)
@@ -42,5 +44,6 @@ public class CardOutlineManager : MonoBehaviour
         {
             currentlyHighlightedCard = null;
         }
+        cardIsHighlighted = false;
     }
 }
