@@ -111,6 +111,8 @@ public class RoomScript : MonoBehaviour
          
          */
 
+        spaceBetweenMonsters = _playAreaHeight / 3;
+        spaceBetweenMonstersX = _playAreaWidth / 3;
 
         for (int i = 0; i < placeHolderSpriteCount; i++)
         {
@@ -128,8 +130,6 @@ public class RoomScript : MonoBehaviour
             newMonster.transform.localScale = new Vector3(7, 7, 7);
             //newMonster.GetComponent<SpriteRenderer>().flipX = true;
         }
-
-
 
 
         //deactivates current room, main room will be activated by map script
