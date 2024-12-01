@@ -140,7 +140,9 @@ public class RoomScript : MonoBehaviour
             newMonster.transform.position = new Vector3(newx, newy, 0);
             newMonster.transform.localScale = new Vector3(7, 7, 7);
             newMonster.name = "Outline" + i;
-            Outlines.Add(newMonster.GetComponentInChildren<Image>());
+            Image monsterImage = newMonster.GetComponentInChildren<Image>();
+            monsterImage.raycastTarget = false;
+            Outlines.Add(monsterImage);
         }
 
 
@@ -170,12 +172,12 @@ public class RoomScript : MonoBehaviour
 
             // Create a new GameObject for the Button
             GameObject buttonObject = new GameObject($"Button_Outline_{i}");
-            buttonObject.transform.SetParent(Outlines[i].transform, false); // Add as a child of the Outline
+            buttonObject.transform.SetParent(Outlines[i].gameObject.transform, false); // Add as a child of the Outline
             buttonObject.transform.localPosition = Vector3.zero; // Center the Button inside the Outline
 
             // Add required components to make it a Button
             RectTransform rectTransform = buttonObject.AddComponent<RectTransform>();
-            rectTransform.sizeDelta = new Vector2(25, 53);
+            rectTransform.sizeDelta = new Vector2(25, 53); // Why 25x53?
 
             Button buttonComponent = buttonObject.AddComponent<Button>();
 
@@ -183,16 +185,23 @@ public class RoomScript : MonoBehaviour
             Image buttonImage = buttonObject.AddComponent<Image>();
             buttonImage.color = new UnityEngine.Color(1, 1, 1, 0); // Transparent background for the Button
 
+            //buttonComponent.image = buttonImage;
+
             // Add onClick functionality
-            buttonComponent.onClick.RemoveAllListeners();
+            int temp_i = i;
+
             buttonComponent.onClick.AddListener(() =>
             {
-                Debug.Log($"Button inside Outline {i} clicked!");
+                Debug.Log($"Button inside Outline {temp_i} clicked!");
             });
+            // buttonComponent.onClick.AddListener(() => DebugLogButton(i));
         }
     }
 
-
+    public void DebugLogButton(int i)
+    {
+        Debug.Log($"Button inside Outline {i} clicked!");
+    }
 
     public void loadRoom() {
         gameObject.SetActive(true);
