@@ -168,19 +168,30 @@ public class RoomScript : MonoBehaviour
                 continue;
             }
 
-            Button HighlightButton = Outlines[i].GetComponent<Button>();
-            if (HighlightButton == null)
-            {
-                HighlightButton = Outlines[i].gameObject.AddComponent<Button>();
-            }
+            // Create a new GameObject for the Button
+            GameObject buttonObject = new GameObject($"Button_Outline_{i}");
+            buttonObject.transform.SetParent(Outlines[i].transform, false); // Add as a child of the Outline
+            buttonObject.transform.localPosition = Vector3.zero; // Center the Button inside the Outline
 
-            HighlightButton.onClick.RemoveAllListeners(); // Prevent duplicate listeners
-            HighlightButton.onClick.AddListener(() =>
+            // Add required components to make it a Button
+            RectTransform rectTransform = buttonObject.AddComponent<RectTransform>();
+            rectTransform.sizeDelta = new Vector2(25, 53);
+
+            Button buttonComponent = buttonObject.AddComponent<Button>();
+
+            // Optional: Add an Image component to visualize the Button
+            Image buttonImage = buttonObject.AddComponent<Image>();
+            buttonImage.color = new UnityEngine.Color(1, 1, 1, 0); // Transparent background for the Button
+
+            // Add onClick functionality
+            buttonComponent.onClick.RemoveAllListeners();
+            buttonComponent.onClick.AddListener(() =>
             {
-                Debug.Log($"Outline {i} clicked!");
+                Debug.Log($"Button inside Outline {i} clicked!");
             });
         }
     }
+
 
 
     public void loadRoom() {
