@@ -98,6 +98,11 @@ public class CardManager : MonoBehaviour
                 {
                     Debug.LogError("CardOutlineManager is not assigned!");
                 }
+
+                if(cardOutlineManager.cardIsHighlighted)
+                {
+                    Debug.Log($"Selected {card.CardName}.");
+                }
             });
         }
     }

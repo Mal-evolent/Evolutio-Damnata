@@ -188,8 +188,9 @@ public class RoomScript : MonoBehaviour
             buttonComponent.onClick.AddListener(() =>
             {
                 Debug.Log($"Button inside Outline {temp_i} clicked!");
+
+                //placement logic here
             });
-            // buttonComponent.onClick.AddListener(() => DebugLogButton(i));
         }
     }
 
@@ -248,6 +249,7 @@ public class RoomScript : MonoBehaviour
     public List<GameObject> returnEnemys() {
         return enemyMonsters;
     }
+
     //returns array with all of the player's spawned monsters
     public List<GameObject> returnPlayerMonsters() {
         return playerMonsters;
