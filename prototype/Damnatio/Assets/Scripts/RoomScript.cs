@@ -41,12 +41,20 @@ public class RoomScript : MonoBehaviour
     Canvas targetCanvas;
 
     [SerializeField]
+    CardManager cardManager;
+    [SerializeField]
+    CardLibrary cardLibrary;
+
+    [SerializeField]
     CardOutlineManager cardOutlineManager;
     [SerializeField]
     List<Image> Outlines;
 
+<<<<<<< Updated upstream
     List<GameObject> enemyMonsters = new List<GameObject>();
     List<GameObject> playerMonsters = new List<GameObject>();
+=======
+>>>>>>> Stashed changes
 
     //this needs to be set in generate room, need to be even
     //also used to show where the monster is on the map reference design doc
@@ -180,7 +188,6 @@ public class RoomScript : MonoBehaviour
             Image buttonImage = buttonObject.AddComponent<Image>();
             buttonImage.color = new UnityEngine.Color(1, 1, 1, 0); // Transparent background for the Button
 
-            //buttonComponent.image = buttonImage;
 
             // Add onClick functionality
             int temp_i = i;
@@ -189,9 +196,23 @@ public class RoomScript : MonoBehaviour
             {
                 Debug.Log($"Button inside Outline {temp_i} clicked!");
 
-                //placement logic here
+                if (cardManager.currentSelectedCard != null)
+                {
+                    Debug.Log($"Card {cardManager.currentSelectedCard} used on monster {temp_i}");
+                    spawnPlayerCard(cardManager.currentSelectedCard, temp_i);
+                }
+                else
+                {
+                    Debug.Log("No card selected to use on monster!");
+                }
             });
         }
+    }
+
+    public void spawnPlayerCard(string cardName, int whichOutline)
+    {
+        cardManager.currentSelectedCard = null;
+        Outlines[whichOutline].sprite = cardLibrary.cardImageGetter(cardName);
     }
 
     public void DebugLogButton(int i)

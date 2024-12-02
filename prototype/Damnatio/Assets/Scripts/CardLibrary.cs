@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -34,6 +35,8 @@ public class CardLibrary : MonoBehaviour
     [Header("Default Sprite for Cards")]
     public Sprite defaultCardSprite;
 
+    // Dictionary for fast lookups
+    private Dictionary<string, Sprite> cardImageDictionary = new Dictionary<string, Sprite>();
 
     // Use this method to create a card from the CardData
     public Card CreateCardFromData(CardData cardData)
@@ -134,6 +137,15 @@ public class CardLibrary : MonoBehaviour
 
         Debug.Log($"Card Library initialized with {cardDataList.Count} valid cards.");
 
+        // Populate the dictionary for fast lookups
+        foreach (var cardData in cardDataList)
+        {
+            if (!cardImageDictionary.ContainsKey(cardData.CardName))
+            {
+                cardImageDictionary.Add(cardData.CardName, cardData.CardImage);
+            }
+        }
+
         // Populate the player's deck if it's assigned and empty
         if (playerDeck != null && playerDeck.Cards.Count == 0)
         {
@@ -142,6 +154,20 @@ public class CardLibrary : MonoBehaviour
         else
         {
             Debug.LogWarning("Player Deck not assigned or already populated. Please assign a Player Deck.");
+        }
+    }
+
+    // Method to get a card's image by name
+    public Sprite cardImageGetter(string cardName)
+    {
+        if (cardImageDictionary.TryGetValue(cardName, out Sprite cardImage))
+        {
+            return cardImage;
+        }
+        else
+        {
+            Debug.LogWarning($"Card image for '{cardName}' not found in the library.");
+            return defaultCardSprite;
         }
     }
 }

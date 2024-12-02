@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using System.Collections;
 using System.Collections.Generic;
+using System.Resources;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -12,10 +13,13 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
     [SerializeField]
     public GameObject img;
 
+    [SerializeField]
+    ResourceManager resourceManager;
+
     public enum _monsterType
     {
         player,
-        Friendly, // <-- player's side
+        Friendly,
         Enemy,
         Boss
     }
@@ -27,6 +31,7 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
     float health; //<--- set on generateMonster
     float atkDamage; //<--- set on generateMonster
     float atkDamageMulti = 1.0f;
+
 
     // Monster needs room passed so they can get information on what's going on
     public void GenerateMonster(GameObject roomObj, int monsterID, _monsterType monsterType)
@@ -40,12 +45,13 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
         img.GetComponent<Image>().sprite = globalResources.monsters[Random.Range(0, globalResources.monsters.Count)];
         //img.GetComponent<Image>().sortingOrder = 2;
 
-        //TODO -- this needs to be updated so obejct get placed in at the correct coords for the level(minght need to hadn mpick leves images so that blaty boards are roughly the same)
-        gameObject.transform.position = new Vector3(gameObject.transform.position.x, gameObject.transform.position.y, -1);//puts inform of background
+        gameObject.transform.position = new Vector3(gameObject.transform.position.x, gameObject.transform.position.y, -1);//puts infront of background
 
         unloadMonster();
     }
-    // Monster needs room passed so they can get information on what's going on
+
+
+    //overloaded function to allow for custom image
     public void GenerateMonster(GameObject roomObj, int monsterID, _monsterType monsterType, Sprite EnemyImg)
     {
         ID = monsterID;
@@ -61,6 +67,8 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
 
         unloadMonster();
     }
+
+
 
 
     public void loadMonster()

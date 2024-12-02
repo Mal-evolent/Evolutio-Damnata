@@ -14,7 +14,9 @@ public class CardManager : MonoBehaviour
     public Sprite cardTemplate;
     public GameObject cardPrefab;
 
-    public CardOutlineManager cardOutlineManager; // Assigned in the Inspector
+    public CardOutlineManager cardOutlineManager;
+
+    public string currentSelectedCard;
 
     // Displays deck in the UI
     public void DisplayDeck()
@@ -101,7 +103,14 @@ public class CardManager : MonoBehaviour
 
                 if(cardOutlineManager.cardIsHighlighted)
                 {
-                    Debug.Log($"Selected {card.CardName}.");
+                    currentSelectedCard = card.CardName;
+                    Debug.Log($"Selected Card: {currentSelectedCard}");
+                }
+
+                if (!cardOutlineManager.cardIsHighlighted)
+                {
+                    currentSelectedCard = null;
+                    Debug.Log("Deselected Card.");
                 }
             });
         }
