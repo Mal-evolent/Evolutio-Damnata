@@ -193,8 +193,9 @@ public class RoomScript : MonoBehaviour
             buttonComponent.onClick.AddListener(() =>
             {
                 Debug.Log($"Button inside Outline {temp_i} clicked!");
+
+                //placement logic here
             });
-            // buttonComponent.onClick.AddListener(() => DebugLogButton(i));
         }
     }
 
@@ -247,15 +248,6 @@ public class RoomScript : MonoBehaviour
             enemysObj[i - ((size - 2) / 2) + 1] = entities[i];
         }
         return enemysObj;
-    }
-    //returns array with all of the player's spawned monsters
-    public GameObject[] returnPlayerMonsters() {
-        int size = entities.Length;
-        GameObject[] playerMonsters = new GameObject[(size - 2) / 2];
-        for (int i = 1; i < (size - 2) / 2; i++) {
-            playerMonsters[i - 1] = entities[i];
-        }
-        return playerMonsters;
     }
 
     // Start is called before the first frame update
