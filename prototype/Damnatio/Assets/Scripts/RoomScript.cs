@@ -45,8 +45,8 @@ public class RoomScript : MonoBehaviour
     [SerializeField]
     List<Image> Outlines;
 
-    [SerializeField]
-    List<GameObject> playerMonsters; // <-- this is the list of player monsters. Feel free to change the type if needed.
+    List<GameObject> enemyMonsters = new List<GameObject>();
+    List<GameObject> playerMonsters = new List<GameObject>();
 
     //this needs to be set in generate room, need to be even
     //also used to show where the monster is on the map reference design doc
@@ -55,9 +55,9 @@ public class RoomScript : MonoBehaviour
     //the rest are monsters split evenyl
     //  \-so player side monster are 1 -> (size-2)/2
     //  |-enemys are ((size-2)/2)+1 -> size size - 2
-    [SerializeField]
-    GameObject[] entities = new GameObject[8];
-    int numberOfEntites = 8;
+    //[SerializeField]
+    //GameObject[] entities = new GameObject[8];
+    //int numberOfEntites = 8;
 
     //this is a self setup function, use enemy generate
     //will need to somehow scale the backgroun obj with the screen size
@@ -69,13 +69,8 @@ public class RoomScript : MonoBehaviour
         backgroundImg = GameObject.Find("Canvas");
         backgroundImg.GetComponent<Image>().sprite = newBackgroundImage;
 
-        //add room image to resizer (all background will be resized once rooms have been generated) 
-
-        //set number of entites(make sure its even)
-        entities = new GameObject[numberOfEntites];
-
-        //needs to generate room monsters here
-        int numMonsters = Random.Range(1, (numberOfEntites - 2) - ((numberOfEntites - 2) / 2) + 1);
+        // Generate room enemy monsters
+        int numMonsters = Random.Range(1, 4); // Can only generate minimum of 1 monster, maximum of 3 monsters
         float spaceBetweenMonsters = _playAreaHeight / numMonsters;
         float spaceBetweenMonstersX = _playAreaWidth / numMonsters;
 
@@ -93,16 +88,16 @@ public class RoomScript : MonoBehaviour
             GameObject newMonster = Instantiate(monsterPrefab, canv.transform);
 
             if (roomsType == _roomsType.boss) {
-                newMonster.GetComponent<MonsterScript>().GenerateMonster(gameObject, (((numberOfEntites - 2) / 2) + 1) + i, MonsterScript._monsterType.Enemy);
-                entities[(((numberOfEntites - 2) / 2) + 1) + i] = newMonster;
+                newMonster.GetComponent<MonsterScript>().GenerateMonster(gameObject, enemyMonsters.Count + i, MonsterScript._monsterType.Enemy);
+                enemyMonsters.Add(newMonster);
                 newMonster.transform.position = new Vector3(newx, newy, 0);
                 newMonster.transform.localScale = new Vector3(-7, 7, 7);
 
                 //guarantee the spawns of stronger the monsters below
             }
             else {
-                newMonster.GetComponent<MonsterScript>().GenerateMonster(gameObject, (((numberOfEntites - 2) / 2) + 1) + i, MonsterScript._monsterType.Enemy);
-                entities[(((numberOfEntites - 2) / 2) + 1) + i] = newMonster;
+                newMonster.GetComponent<MonsterScript>().GenerateMonster(gameObject, enemyMonsters.Count + i, MonsterScript._monsterType.Enemy);
+                enemyMonsters.Add(newMonster);
                 newMonster.transform.position = new Vector3(newx, newy, 0);
                 newMonster.transform.localScale = new Vector3(-7, 7, 7);
             }
@@ -136,7 +131,7 @@ public class RoomScript : MonoBehaviour
 
             GameObject newMonster = Instantiate(monsterPrefab, targetCanvas.transform);
             newMonster.GetComponent<MonsterScript>().GenerateMonster(gameObject, i, MonsterScript._monsterType.Friendly, placeHolderSprites);
-            entities[i] = newMonster;
+            playerMonsters.Add(newMonster);
             newMonster.transform.position = new Vector3(newx, newy, 0);
             newMonster.transform.localScale = new Vector3(7, 7, 7);
             newMonster.name = "Outline" + i;
@@ -205,7 +200,9 @@ public class RoomScript : MonoBehaviour
 
     public void loadRoom() {
         gameObject.SetActive(true);
-        foreach ( GameObject a in entities) {
+        List<GameObject> entities = new List<GameObject>(playerMonsters);
+        entities.AddRange(enemyMonsters);
+        foreach (GameObject a in entities) {
             if (a != null)
             {
                 a.GetComponent<MonsterScript>().loadMonster();
@@ -216,6 +213,8 @@ public class RoomScript : MonoBehaviour
 
     public void unloadRoom() {
         gameObject.SetActive(false);
+        List<GameObject> entities = new List<GameObject>(playerMonsters);
+        entities.AddRange(enemyMonsters);
         foreach (GameObject a in entities)
         {
             if (a != null)
@@ -227,34 +226,30 @@ public class RoomScript : MonoBehaviour
 
     //----------events used by monsters to affect other monsters-----------------
     public void attackEvent(int AttackingID, int AttackedID, float Damage) {
+        List<GameObject> entities = new List<GameObject>(playerMonsters);
+        entities.AddRange(enemyMonsters);
         float atkDamage = entities[AttackedID].GetComponent<MonsterScript>().getAttackDamage();
         entities[AttackedID].GetComponent<MonsterScript>().takeDamage(atkDamage);
     }
     public void attackBuffEvent(int BuffingID, float buff) {
+        List<GameObject> entities = new List<GameObject>(playerMonsters);
+        entities.AddRange(enemyMonsters);
         entities[BuffingID].GetComponent<MonsterScript>().attackBuff(buff);
     }
     public void healEvent(int healingID, float health)
     {
+        List<GameObject> entities = new List<GameObject>(playerMonsters);
+        entities.AddRange(enemyMonsters);
         entities[healingID].GetComponent<MonsterScript>().heal(health);
     }
 
     //---------------------------fucntions used by mosnters to get information about other monsters
     //returns array with all of enemy monsters
-    public GameObject[] returnEnemys() {
-        int size = entities.Length;
-        GameObject[] enemysObj = new GameObject[(size - 2) / 2];
-        for (int i = ((size - 2) / 2) + 1; i < size - 2; i++) {
-            enemysObj[i - ((size - 2) / 2) + 1] = entities[i];
-        }
-        return enemysObj;
+    public List<GameObject> returnEnemys() {
+        return enemyMonsters;
     }
     //returns array with all of the player's spawned monsters
-    public GameObject[] returnPlayerMonsters() {
-        int size = entities.Length;
-        GameObject[] playerMonsters = new GameObject[(size - 2) / 2];
-        for (int i = 1; i < (size - 2) / 2; i++) {
-            playerMonsters[i - 1] = entities[i];
-        }
+    public List<GameObject> returnPlayerMonsters() {
         return playerMonsters;
     }
 
