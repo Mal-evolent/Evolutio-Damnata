@@ -29,6 +29,7 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
     _monsterType monsterType; //<--- set on generateMonster, passed in from room(determins how attributes are assigned)
 
     float health; //<--- set on generateMonster
+    float maxHealth = 10;
     float atkDamage; //<--- set on generateMonster
     float atkDamageMulti = 1.0f;
 
@@ -39,6 +40,8 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
         ID = monsterID;
         room = roomObj;
         this.monsterType = monsterType;
+        health = maxHealth;
+        //health = 0; // Remove comment as necessary, e.g. if you need to test different rooms.
 
         //picks a random monster image from global resources
         GlobalResources globalResources = GameObject.Find("ResourceManagaer").GetComponent<GlobalResources>();

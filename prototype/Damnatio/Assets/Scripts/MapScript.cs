@@ -10,6 +10,9 @@ public class MapScript : MonoBehaviour
 {
     [SerializeField]
     GameObject roomPrefab;
+    List<GameObject> clearedRooms;
+    //indexed y then x eg rooms[Y, X]. game objects useing RoomScript
+    GameObject activeRoom;
 
 
     //-------------------for minimap drawing-----------------------
@@ -371,7 +374,28 @@ public class MapScript : MonoBehaviour
     //-----------------used for user map interaction------------------
     void mouseOnRoom(Vector2 mousepos)
     {
+        // Add a check to see if the room that was clicked on is adjacent to any of the cleared rooms
         //Debug.Log("Running mouse on room");
+        bool roomChanged = false;
+        RoomScript rs = activeRoom.GetComponent<RoomScript>();
+        List<GameObject> enemies = rs.returnEnemies();
+
+        bool roomCleared = true;
+        foreach (GameObject enemy in enemies) // If any enemy monster in the room still has health, then the room has not been cleared
+        {
+            MonsterScript ms = enemy.GetComponent<MonsterScript>();
+            if (ms.getHealth() > 0)
+            {
+                roomCleared = false;
+                Debug.Log("Room hasn't been cleared.");
+                break;
+            }
+        }
+        if (!roomCleared) // If the room has not been cleared, then return early
+        {
+            return;
+        }
+
         for (int c = 0; c < rooms.Length; c++)
         {
             if (mousepos.x > rooms[c].x && mousepos.x < rooms[c].x + rooms[c].width)
@@ -386,16 +410,15 @@ public class MapScript : MonoBehaviour
                         drawRoom(rooms[c], true, 0.5f);
                     }
                     activeRoom.GetComponent<RoomScript>().loadRoom(); //load room that the mouse has clicked on
-
+                    roomChanged = true;
                 }
             }
-
         }
-        DrawOnTex.Apply();
+        if (roomChanged)
+        {
+            DrawOnTex.Apply();
+        }
     }
-
-    //indexed y then x eg rooms[Y, X]. game objects useing RoomScript
-    GameObject activeRoom;
 
     //this will decide where rooms will be place and use the room generate function
     public void generateMap() {

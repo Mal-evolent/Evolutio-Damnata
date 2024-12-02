@@ -50,11 +50,8 @@ public class RoomScript : MonoBehaviour
     [SerializeField]
     List<Image> Outlines;
 
-<<<<<<< Updated upstream
     List<GameObject> enemyMonsters = new List<GameObject>();
     List<GameObject> playerMonsters = new List<GameObject>();
-=======
->>>>>>> Stashed changes
 
     //this needs to be set in generate room, need to be even
     //also used to show where the monster is on the map reference design doc
@@ -267,7 +264,7 @@ public class RoomScript : MonoBehaviour
 
     //---------------------------fucntions used by mosnters to get information about other monsters
     //returns array with all of enemy monsters
-    public List<GameObject> returnEnemys() {
+    public List<GameObject> returnEnemies() {
         return enemyMonsters;
     }
 
