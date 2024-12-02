@@ -10,7 +10,7 @@ public class MapScript : MonoBehaviour
 {
     [SerializeField]
     GameObject roomPrefab;
-    List<GameObject> clearedRooms;
+    HashSet<GameObject> clearedRooms = new HashSet<GameObject>();
     //indexed y then x eg rooms[Y, X]. game objects useing RoomScript
     GameObject activeRoom;
 
@@ -395,6 +395,7 @@ public class MapScript : MonoBehaviour
         {
             return;
         }
+        clearedRooms.Add(activeRoom);
 
         for (int c = 0; c < rooms.Length; c++)
         {
@@ -404,7 +405,7 @@ public class MapScript : MonoBehaviour
                 {
                     foreach (_room connectedRoom in rooms[c].connectedRooms)
                     {
-                        if (activeRoom == connectedRoom.room)
+                        if (activeRoom == connectedRoom.room || clearedRooms.Contains(rooms[c].room))
                         {
                             activeRoom.GetComponent<RoomScript>().unloadRoom();
 
