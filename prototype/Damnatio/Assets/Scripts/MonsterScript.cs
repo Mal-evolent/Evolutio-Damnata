@@ -41,7 +41,7 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
         room = roomObj;
         this.monsterType = monsterType;
         health = maxHealth;
-        //health = 0; // Remove comment as necessary, e.g. if you need to test different rooms.
+        health = 0; // Remove comment as necessary, e.g. if you need to test different rooms.
 
         //picks a random monster image from global resources
         GlobalResources globalResources = GameObject.Find("ResourceManagaer").GetComponent<GlobalResources>();

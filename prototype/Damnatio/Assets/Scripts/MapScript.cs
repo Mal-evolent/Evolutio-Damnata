@@ -402,15 +402,22 @@ public class MapScript : MonoBehaviour
             {
                 if (mousepos.y > rooms[c].y && mousepos.y < rooms[c].y + rooms[c].height)
                 {
-                    activeRoom.GetComponent<RoomScript>().unloadRoom();
+                    foreach (_room connectedRoom in rooms[c].connectedRooms)
+                    {
+                        if (activeRoom == connectedRoom.room)
+                        {
+                            activeRoom.GetComponent<RoomScript>().unloadRoom();
 
-                    activeRoom = rooms[c].room;
-                    rooms[c].selected = !rooms[c].selected;
-                    if (rooms[c].selected) { //if its the first time clicking on room draw new room as completed
-                        drawRoom(rooms[c], true, 0.5f);
+                            activeRoom = rooms[c].room;
+                            rooms[c].selected = !rooms[c].selected;
+                            if (rooms[c].selected)
+                            { //if its the first time clicking on room draw new room as completed
+                                drawRoom(rooms[c], true, 0.5f);
+                            }
+                            activeRoom.GetComponent<RoomScript>().loadRoom(); //load room that the mouse has clicked on
+                            roomChanged = true;
+                        }
                     }
-                    activeRoom.GetComponent<RoomScript>().loadRoom(); //load room that the mouse has clicked on
-                    roomChanged = true;
                 }
             }
         }
