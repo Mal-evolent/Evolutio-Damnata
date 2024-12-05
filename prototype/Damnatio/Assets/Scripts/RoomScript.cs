@@ -241,6 +241,11 @@ public class RoomScript : MonoBehaviour
         Outlines[whichOutline].sprite = cardLibrary.cardImageGetter(cardName);
 
         playerMonsters[whichOutline].GetComponent<MonsterScript>().placed = true;
+
+        playerMonsters[whichOutline].GetComponent<MonsterScript>().setHealth(10);//<<<-------------------------------------------------------need to change this to monsters atucal health
+        playerMonsters[whichOutline].GetComponent<MonsterScript>().SetAttackDamage(10);//<<<-------------------------------------------------------need to change this to monsters atucal attack
+
+
         GameObject buttonObject = new GameObject($"Select_Button_{whichOutline}");
         buttonObject.transform.SetParent(playerMonsters[whichOutline].transform, false); // Add as a child of the Outline
         buttonObject.transform.localPosition = Vector3.zero; // Center the Button inside the Outline

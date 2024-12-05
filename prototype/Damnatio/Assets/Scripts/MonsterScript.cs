@@ -114,6 +114,15 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
         outlineImg.SetActive(false);
     }
 
+    public void setHealth(float hlth)
+    {
+        health = hlth;
+    }
+    public void SetAttackDamage(float dmg)
+    {
+        atkDamage = dmg;
+    }
+
     public void loadMonster()
     {
         gameObject.SetActive(true);
