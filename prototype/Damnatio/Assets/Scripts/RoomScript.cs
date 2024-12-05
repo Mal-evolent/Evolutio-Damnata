@@ -156,8 +156,10 @@ public class RoomScript : MonoBehaviour
     {
         for (int i = 0; i < Outlines.Count; i++)
         {
-            if (Outlines[i] != null)
-            {
+            if (Outlines[i].transform.parent.gameObject.GetComponent<MonsterScript>().placed){
+                Outlines[i].enabled = true;
+            }
+            else{
                 Outlines[i].enabled = cardOutlineManager.cardIsHighlighted;
             }
         }
@@ -214,9 +216,24 @@ public class RoomScript : MonoBehaviour
         cardManager.currentSelectedCard = null;
         Outlines[whichOutline].sprite = cardLibrary.cardImageGetter(cardName);
 
-        Outlines[whichOutline].transform.name = "playerMonster"+whichOutline;
-        Outlines[whichOutline].transform.parent = GameObject.Find("Canvas").transform;
-        Outlines[whichOutline] = null;
+        playerMonsters[whichOutline].GetComponent<MonsterScript>().placed = true;
+        GameObject buttonObject = new GameObject($"Select_Button_{whichOutline}");
+        buttonObject.transform.SetParent(playerMonsters[whichOutline].transform, false); // Add as a child of the Outline
+        buttonObject.transform.localPosition = Vector3.zero; // Center the Button inside the Outline
+
+        // Add required components to make it a Button
+        RectTransform rectTransform = buttonObject.AddComponent<RectTransform>();
+        rectTransform.sizeDelta = new Vector2(25, 53); // Why 25x53?
+
+        Button buttonComponent = buttonObject.AddComponent<Button>();
+
+        // Optional: Add an Image component to visualize the Button
+        Image buttonImage = buttonObject.AddComponent<Image>();
+        buttonImage.color = new UnityEngine.Color(1, 1, 1, 0); // Transparent background for the Button
+        buttonComponent.onClick.AddListener(() =>
+        {
+            playerMonsters[whichOutline].GetComponent<MonsterScript>().ShowOutline();
+        });
     }
 
     public void DebugLogButton(int i)
@@ -246,6 +263,14 @@ public class RoomScript : MonoBehaviour
             if (a != null)
             {
                 a.GetComponent<MonsterScript>().unloadMonster();
+            }
+        }
+        //unshow all outlines whne room unloads
+        for (int i = 0; i < Outlines.Count; i++)
+        {
+            if (playerMonsters[i] == null) //if the monster posiitno is null then show it as avaliable space to place maonster
+            {
+                Outlines[i].enabled = false;
             }
         }
     }

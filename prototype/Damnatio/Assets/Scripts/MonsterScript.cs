@@ -12,9 +12,11 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
 {
     [SerializeField]
     public GameObject img;
+    public GameObject outlineImg;
 
     [SerializeField]
     ResourceManager resourceManager;
+    bool selected = false;
 
     public enum _monsterType
     {
@@ -33,6 +35,8 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
     float atkDamage; //<--- set on generateMonster
     float atkDamageMulti = 1.0f;
 
+    public bool placed = false;
+
 
     // Monster needs room passed so they can get information on what's going on
     public void GenerateMonster(GameObject roomObj, int monsterID, _monsterType monsterType)
@@ -49,6 +53,11 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
         //img.GetComponent<Image>().sortingOrder = 2;
 
         gameObject.transform.position = new Vector3(gameObject.transform.position.x, gameObject.transform.position.y, -1);//puts infront of background
+
+        //remove button components if its an enemy
+        if (monsterType == MonsterScript._monsterType.Enemy) {
+            Destroy(gameObject.GetComponent<Button>());
+        }
 
         unloadMonster();
     }
@@ -72,7 +81,10 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
     }
 
 
-
+    public void ShowOutline() {
+        selected = !selected;
+        outlineImg.SetActive(selected);
+    }
 
     public void loadMonster()
     {
