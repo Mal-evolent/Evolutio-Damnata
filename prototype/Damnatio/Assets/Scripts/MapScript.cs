@@ -12,7 +12,7 @@ public class MapScript : MonoBehaviour
     GameObject roomPrefab;
     HashSet<GameObject> clearedRooms = new HashSet<GameObject>();
     //indexed y then x eg rooms[Y, X]. game objects useing RoomScript
-    GameObject activeRoom;
+    public GameObject activeRoom;
 
 
     //-------------------for minimap drawing-----------------------
@@ -395,7 +395,14 @@ public class MapScript : MonoBehaviour
         {
             return;
         }
+        //if cleared add room to cleared rooms and clear the rooms of player monsters
         clearedRooms.Add(activeRoom);
+        List<GameObject> playerMonsters = rs.returnPlayerMonsters();
+        foreach (GameObject PlMonsters in playerMonsters) //sets all monsters to dead so they wont show up on the next time you visit
+        {
+            PlMonsters.GetComponent<MonsterScript>().dead = true;
+        }
+
 
         for (int c = 0; c < rooms.Length; c++)
         {

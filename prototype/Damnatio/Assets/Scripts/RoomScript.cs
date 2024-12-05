@@ -50,6 +50,10 @@ public class RoomScript : MonoBehaviour
     [SerializeField]
     List<Image> Outlines;
 
+    [SerializeField]
+    GameObject _combatManager;
+    CombatManager combatManager;
+
     List<GameObject> enemyMonsters = new List<GameObject>();
     List<GameObject> playerMonsters = new List<GameObject>();
 
@@ -93,7 +97,7 @@ public class RoomScript : MonoBehaviour
             GameObject newMonster = Instantiate(monsterPrefab, canv.transform);
 
             if (roomsType == _roomsType.boss) {
-                newMonster.GetComponent<MonsterScript>().GenerateMonster(gameObject, enemyMonsters.Count + i, MonsterScript._monsterType.Enemy);
+                newMonster.GetComponent<MonsterScript>().GenerateMonster(gameObject, i+3, MonsterScript._monsterType.Enemy);
                 enemyMonsters.Add(newMonster);
                 newMonster.transform.position = new Vector3(newx, newy, 0);
                 newMonster.transform.localScale = new Vector3(-7, 7, 7);
@@ -101,11 +105,31 @@ public class RoomScript : MonoBehaviour
                 //guarantee the spawns of stronger the monsters below
             }
             else {
-                newMonster.GetComponent<MonsterScript>().GenerateMonster(gameObject, enemyMonsters.Count + i, MonsterScript._monsterType.Enemy);
+                newMonster.GetComponent<MonsterScript>().GenerateMonster(gameObject, i+3, MonsterScript._monsterType.Enemy);
                 enemyMonsters.Add(newMonster);
                 newMonster.transform.position = new Vector3(newx, newy, 0);
                 newMonster.transform.localScale = new Vector3(-7, 7, 7);
             }
+
+            GameObject buttonObject = new GameObject($"Select_Button_{enemyMonsters.Count + i}");
+            buttonObject.transform.SetParent(newMonster.transform, false); // Add as a child of the Outline
+            buttonObject.transform.localPosition = Vector3.zero; // Center the Button inside the Outline
+
+            // Add required components to make it a Button
+            RectTransform rectTransform = buttonObject.AddComponent<RectTransform>();
+            rectTransform.sizeDelta = new Vector2(25, 53); // Why 25x53?
+
+            Button buttonComponent = buttonObject.AddComponent<Button>();
+
+            // Optional: Add an Image component to visualize the Button
+            Image buttonImage = buttonObject.AddComponent<Image>();
+            buttonImage.color = new UnityEngine.Color(1, 1, 1, 0); // Transparent background for the Button
+            buttonComponent.onClick.AddListener(() =>
+            {
+                combatManager.EnemySelectedMonster = newMonster;
+                combatManager.TriggerAttack();
+            });
+
             Debug.Log(newx+ " :newx -- newy: "+newy);
         }
 
@@ -232,7 +256,8 @@ public class RoomScript : MonoBehaviour
         buttonImage.color = new UnityEngine.Color(1, 1, 1, 0); // Transparent background for the Button
         buttonComponent.onClick.AddListener(() =>
         {
-            playerMonsters[whichOutline].GetComponent<MonsterScript>().ShowOutline();
+            combatManager.SelectedMonster = playerMonsters[whichOutline];
+            combatManager.UpdateOutlines();
         });
     }
 
@@ -248,13 +273,17 @@ public class RoomScript : MonoBehaviour
         foreach (GameObject a in entities) {
             if (a != null)
             {
-                a.GetComponent<MonsterScript>().loadMonster();
+                if (!a.GetComponent<MonsterScript>().dead)
+                {
+                    a.GetComponent<MonsterScript>().loadMonster();
+                }
             }
         }
         backgroundImg.GetComponent<Image>().sprite = newBackgroundImage;
     }
 
-    public void unloadRoom() {
+    public void unloadRoom()
+    {
         gameObject.SetActive(false);
         List<GameObject> entities = new List<GameObject>(playerMonsters);
         entities.AddRange(enemyMonsters);
@@ -262,16 +291,21 @@ public class RoomScript : MonoBehaviour
         {
             if (a != null)
             {
-                a.GetComponent<MonsterScript>().unloadMonster();
+                a.GetComponent<MonsterScript>().unloadMonster(); 
             }
         }
-        //unshow all outlines whne room unloads
-        for (int i = 0; i < Outlines.Count; i++)
+        ////unshow all outlines whne room unloads
+        //for (int i = 0; i < Outlines.Count; i++)
+        //{
+        //    if (playerMonsters[i] == null) //if the monster posiitno is null then show it as avaliable space to place maonster
+        //    {
+        //        Outlines[i].enabled = false;
+        //    }
+        //}
+        if (combatManager != null)
         {
-            if (playerMonsters[i] == null) //if the monster posiitno is null then show it as avaliable space to place maonster
-            {
-                Outlines[i].enabled = false;
-            }
+            combatManager.SelectedMonster = null;
+            combatManager.EnemySelectedMonster = null;
         }
     }
 
@@ -312,7 +346,7 @@ public class RoomScript : MonoBehaviour
         {
             Outlines[i].enabled = false;
         }
-
+        combatManager = _combatManager.GetComponent<CombatManager>();
         interactableHighlights();
     }
 

@@ -30,11 +30,13 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
     int ID; // ID is the position of the monster in the room's entities array
     _monsterType monsterType; //<--- set on generateMonster, passed in from room(determins how attributes are assigned)
 
+    [SerializeField]
     float health; //<--- set on generateMonster
     float maxHealth = 10;
-    float atkDamage; //<--- set on generateMonster
+    float atkDamage = 10; //<--- set on generateMonster
     float atkDamageMulti = 1.0f;
 
+    public bool dead = false;
     public bool placed = false;
 
 
@@ -45,7 +47,7 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
         room = roomObj;
         this.monsterType = monsterType;
         health = maxHealth;
-        health = 0; // Remove comment as necessary, e.g. if you need to test different rooms.
+        //health = 0; // Remove comment as necessary, e.g. if you need to test different rooms.
 
         //picks a random monster image from global resources
         GlobalResources globalResources = GameObject.Find("ResourceManagaer").GetComponent<GlobalResources>();
@@ -57,6 +59,12 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
         //remove button components if its an enemy
         if (monsterType == MonsterScript._monsterType.Enemy) {
             Destroy(gameObject.GetComponent<Button>());
+
+            outlineImg.GetComponent<Image>().color = new Color(0xFF, 0x00, 0x00);
+
+        }
+        else if (monsterType == _monsterType.Friendly) {
+            outlineImg.GetComponent<Image>().color = new Color(0xB0, 0x00, 0xFF);
         }
 
         unloadMonster();
@@ -77,13 +85,33 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
         //TODO -- this needs to be updated so obejct get placed in at the correct coords for the level(minght need to hadn mpick leves images so that blaty boards are roughly the same)
         gameObject.transform.position = new Vector3(gameObject.transform.position.x, gameObject.transform.position.y, -1);//puts inform of background
 
+        if (monsterType == MonsterScript._monsterType.Enemy)
+        {
+            Destroy(gameObject.GetComponent<Button>());
+            outlineImg.GetComponent<Image>().color = new Color(0xFF, 0x00, 0x00);
+        }
+        else if (monsterType == _monsterType.Friendly)
+        {
+            outlineImg.GetComponent<Image>().color = new Color(0xB0, 0x00, 0xFF);
+        }
+
         unloadMonster();
     }
 
-
-    public void ShowOutline() {
+    //toggle switch
+    public bool OutlineSelect()
+    {
         selected = !selected;
-        outlineImg.SetActive(selected);
+        return selected;
+    }
+    public void ShowOutline() {
+        selected = true;
+        outlineImg.SetActive(true);
+    }
+    public void HideOutline()
+    {
+        selected = false;
+        outlineImg.SetActive(false);
     }
 
     public void loadMonster()
@@ -115,6 +143,9 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
         {
             Debug.Log("Monster is dead.");
             // Handle monster death logic here
+            //Destroy(gameObject);
+            gameObject.SetActive(false);
+            dead = true;
         }
     }
 

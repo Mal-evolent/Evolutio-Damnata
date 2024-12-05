@@ -728,6 +728,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &559180380 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4437213811485147936, guid: 507ba406ccdc1a043a24409f51a9f709, type: 3}
+  m_PrefabInstance: {fileID: 1136727726415671150}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &671977322
 GameObject:
   m_ObjectHideFlags: 0
@@ -1155,6 +1160,53 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1284858364}
   m_CullTransparentMesh: 1
+--- !u!1 &1394303770
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1394303772}
+  - component: {fileID: 1394303771}
+  m_Layer: 0
+  m_Name: CombatManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1394303771
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1394303770}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10f936ff672b18a43813d2a89356911b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SelectedMonster: {fileID: 0}
+  EnemySelectedMonster: {fileID: 0}
+  map: {fileID: 559180380}
+--- !u!4 &1394303772
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1394303770}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1953.5178, y: 608.39044, z: -10.945379}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1406985786
 GameObject:
   m_ObjectHideFlags: 0
@@ -1543,6 +1595,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 1867100589820313632, guid: 7b99896047a7a314b8b422de9ee8e9fe, type: 3}
+      propertyPath: _combatManager
+      value: 
+      objectReference: {fileID: 1394303770}
+    - target: {fileID: 1867100589820313632, guid: 7b99896047a7a314b8b422de9ee8e9fe, type: 3}
       propertyPath: cardOutlineManager
       value: 
       objectReference: {fileID: 210388635}
@@ -1613,3 +1669,4 @@ SceneRoots:
   - {fileID: 210388636}
   - {fileID: 2123307027}
   - {fileID: 1011744916}
+  - {fileID: 1394303772}
