@@ -156,7 +156,10 @@ public class RoomScript : MonoBehaviour
     {
         for (int i = 0; i < Outlines.Count; i++)
         {
-            Outlines[i].enabled = cardOutlineManager.cardIsHighlighted;
+            if (Outlines[i] != null)
+            {
+                Outlines[i].enabled = cardOutlineManager.cardIsHighlighted;
+            }
         }
     }
 
@@ -210,6 +213,10 @@ public class RoomScript : MonoBehaviour
     {
         cardManager.currentSelectedCard = null;
         Outlines[whichOutline].sprite = cardLibrary.cardImageGetter(cardName);
+
+        Outlines[whichOutline].transform.name = "playerMonster"+whichOutline;
+        Outlines[whichOutline].transform.parent = GameObject.Find("Canvas").transform;
+        Outlines[whichOutline] = null;
     }
 
     public void DebugLogButton(int i)
