@@ -222,10 +222,24 @@ public class RoomScript : MonoBehaviour
             {
                 Debug.Log($"Button inside Outline {temp_i} clicked!");
 
-                if (!string.IsNullOrEmpty(cardManager.currentSelectedCard))
+                if (!string.IsNullOrEmpty(cardManager.currentSelectedCard.name))
                 {
-                    Debug.Log($"Card {cardManager.currentSelectedCard} used on monster {temp_i}");
-                    spawnPlayerCard(cardManager.currentSelectedCard, temp_i);
+                    Debug.Log($"Card {cardManager.currentSelectedCard.name} used on monster {temp_i}");
+
+                    // Remove card from hand
+                    List<GameObject> handCardObjects = cardManager.getHandCardObjects();
+                    foreach (GameObject cardObject in handCardObjects)
+                    {
+                        if (cardObject == cardManager.currentSelectedCard)
+                        {
+                            handCardObjects.Remove(cardObject);
+                            Debug.Log("Removed card from hand.");
+                            break;
+                        }
+                    }
+
+                    // Spawn card on field
+                    spawnPlayerCard(cardManager.currentSelectedCard.name, temp_i);
                 }
                 else
                 {
@@ -237,8 +251,13 @@ public class RoomScript : MonoBehaviour
 
     public void spawnPlayerCard(string cardName, int whichOutline)
     {
+        // Remove outline/highlight on current card in hand
         cardOutlineManager.RemoveHighlight();
+
+        // Remove card from hand
+        Destroy(cardManager.currentSelectedCard);
         cardManager.currentSelectedCard = null;
+
         Outlines[whichOutline].sprite = cardLibrary.cardImageGetter(cardName);
 
         playerMonsters[whichOutline].GetComponent<MonsterScript>().placed = true;

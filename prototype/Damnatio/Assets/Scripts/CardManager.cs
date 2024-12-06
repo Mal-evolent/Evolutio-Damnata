@@ -16,7 +16,13 @@ public class CardManager : MonoBehaviour
 
     public CardOutlineManager cardOutlineManager;
 
-    public string currentSelectedCard;
+    private List<GameObject> deckCardObjects = new List<GameObject>();
+    private List<GameObject> handCardObjects = new List<GameObject>();
+
+    public GameObject currentSelectedCard;
+
+    public List<GameObject> getDeckCardObjects() { return deckCardObjects; }
+    public List<GameObject> getHandCardObjects() { return handCardObjects; }
 
     // Displays deck in the UI
     public void DisplayDeck()
@@ -49,6 +55,7 @@ public class CardManager : MonoBehaviour
             manaText.text = card.ManaCost.ToString();
 
             Debug.Log($"Displayed {card.CardName} in the UI.");
+            deckCardObjects.Add(cardObject);
         }
     }
 
@@ -103,8 +110,8 @@ public class CardManager : MonoBehaviour
 
                 if(cardOutlineManager.cardIsHighlighted)
                 {
-                    currentSelectedCard = card.CardName;
-                    Debug.Log($"Selected Card: {currentSelectedCard}");
+                    currentSelectedCard = cardObject;
+                    Debug.Log($"Selected Card: {currentSelectedCard.name}");
                 }
 
                 if (!cardOutlineManager.cardIsHighlighted)
@@ -113,6 +120,8 @@ public class CardManager : MonoBehaviour
                     Debug.Log("Deselected Card.");
                 }
             });
+
+            handCardObjects.Add(cardObject);
         }
     }
 
@@ -127,6 +136,8 @@ public class CardManager : MonoBehaviour
         {
             Destroy(t.gameObject);
         }
+        deckCardObjects.Clear();
+        handCardObjects.Clear();
 
         DisplayDeck(); // Reload and update UI display of cards
         DisplayHand(); // Reload and update UI display of cards
