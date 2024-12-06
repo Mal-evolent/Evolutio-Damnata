@@ -53,4 +53,18 @@ public class CardOutlineManager : MonoBehaviour
         }
         cardIsHighlighted = false;
     }
+
+    // Overloaded function to remove highlight from currentlyHighlightedCard
+    public void RemoveHighlight()
+    {
+        Outline outline = currentlyHighlightedCard.GetComponent<Outline>();
+        if (outline != null)
+        {
+            outline.enabled = false;
+        }
+
+        //clear the highlighted card reference if it matches the one being unhighlighted
+        currentlyHighlightedCard = null;
+        cardIsHighlighted = false;
+    }
 }

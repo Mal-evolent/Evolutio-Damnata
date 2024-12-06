@@ -237,6 +237,7 @@ public class RoomScript : MonoBehaviour
 
     public void spawnPlayerCard(string cardName, int whichOutline)
     {
+        cardOutlineManager.RemoveHighlight();
         cardManager.currentSelectedCard = null;
         Outlines[whichOutline].sprite = cardLibrary.cardImageGetter(cardName);
 
