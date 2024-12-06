@@ -50,7 +50,7 @@ public class CombatManager : MonoBehaviour
 
             int playerMonsterId = playerMonster.getID();
             int enemyMonsterId = enemyMonster.getID();
-            currentRoom.attackEvent(playerMonsterId, enemyMonsterId, 1000f);
+            currentRoom.attackEvent(playerMonsterId, enemyMonsterId, playerMonster.getAttackDamage());
 
             SelectedMonster = null;
             EnemySelectedMonster = null;

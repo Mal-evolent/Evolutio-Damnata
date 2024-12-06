@@ -31,14 +31,13 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
     _monsterType monsterType; //<--- set on generateMonster, passed in from room(determins how attributes are assigned)
 
     [SerializeField]
-    float health; //<--- set on generateMonster
-    float maxHealth = 10;
+    float health;
+    float maxHealth;
     float atkDamage = 10; //<--- set on generateMonster
     float atkDamageMulti = 1.0f;
 
     public bool dead = false;
     public bool placed = false;
-
 
     // Monster needs room passed so they can get information on what's going on
     public void GenerateMonster(GameObject roomObj, int monsterID, _monsterType monsterType)
@@ -46,12 +45,23 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
         ID = monsterID;
         room = roomObj;
         this.monsterType = monsterType;
+
+        // Using CardLibrary to set monster attributes 
+        GameObject cardLibraryManager = GameObject.Find("Card Library Manager"); // Optimise this later... doesn't matter too much right now. Didn't want to add it as parameter in method (causes too many changes elsewhere), and can't add it as a serialisable field since MonsterScript only exists in a prefab.
+        CardLibrary cardLibrary = cardLibraryManager.GetComponent<CardLibrary>();
+        int randomInt = Random.Range(0, cardLibrary.cardDataList.Count);
+        CardLibrary.CardData cardData = cardLibrary.cardDataList[randomInt]; // Get random card data
+
+        maxHealth = cardData.Health;
         health = maxHealth;
-        //health = 0; // Remove comment as necessary, e.g. if you need to test different rooms.
+        atkDamage = cardData.AttackPower;
+        //img.GetComponent<Image>().sprite = cardData.CardImage; // This currently doesn't work, as CardImage is null (see CardData constructor)
+
+        //health = 0; // Comment in/out as necessary, e.g. if you need to test different rooms quickly.
 
         //picks a random monster image from global resources
         GlobalResources globalResources = GameObject.Find("ResourceManagaer").GetComponent<GlobalResources>();
-        img.GetComponent<Image>().sprite = globalResources.monsters[Random.Range(0, globalResources.monsters.Count)];
+        img.GetComponent<Image>().sprite = globalResources.monsters[Random.Range(0, globalResources.monsters.Count)]; // Assigns a random sprite
         //img.GetComponent<Image>().sortingOrder = 2;
 
         gameObject.transform.position = new Vector3(gameObject.transform.position.x, gameObject.transform.position.y, -1);//puts infront of background
@@ -78,7 +88,15 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
         room = roomObj;
         this.monsterType = monsterType;
 
-        //picks a random monster image from global resources
+        // Using CardLibrary to set monster attributes 
+        GameObject cardLibraryManager = GameObject.Find("Card Library Manager"); // Optimise this later... doesn't matter too much right now. Didn't want to add it as parameter in method (causes too many changes elsewhere), and can't add it as a serialisable field since MonsterScript only exists in a prefab.
+        CardLibrary cardLibrary = cardLibraryManager.GetComponent<CardLibrary>();
+        int randomInt = Random.Range(0, cardLibrary.cardDataList.Count);
+        CardLibrary.CardData cardData = cardLibrary.cardDataList[randomInt]; // Get random card data
+
+        maxHealth = cardData.Health;
+        health = maxHealth;
+        atkDamage = cardData.AttackPower;
         img.GetComponent<Image>().sprite = EnemyImg;
         //img.GetComponent<Image>().sortingOrder = 2;
 
