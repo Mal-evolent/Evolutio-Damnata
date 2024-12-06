@@ -222,7 +222,7 @@ public class RoomScript : MonoBehaviour
             {
                 Debug.Log($"Button inside Outline {temp_i} clicked!");
 
-                if (cardManager.currentSelectedCard != null)
+                if (!string.IsNullOrEmpty(cardManager.currentSelectedCard))
                 {
                     Debug.Log($"Card {cardManager.currentSelectedCard} used on monster {temp_i}");
                     spawnPlayerCard(cardManager.currentSelectedCard, temp_i);

@@ -14,5 +14,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/menuScene.unity
     guid: bf9b8611df5045a479701def5709a0ec
+  - enabled: 1
+    path: Assets/Scenes/victoryScene.unity
+    guid: f5a1833edaf40d144b438ee38acaa6ba
   m_configObjects:
     com.unity.adaptiveperformance.simulator.provider_settings: {fileID: 11400000, guid: 08e9c20414d2e674c858a899f4b377e9, type: 2}
