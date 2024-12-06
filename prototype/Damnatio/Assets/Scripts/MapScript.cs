@@ -403,23 +403,27 @@ public class MapScript : MonoBehaviour
             PlMonsters.GetComponent<MonsterScript>().dead = true;
         }
 
-
+        // Loop through all the rooms
         for (int c = 0; c < rooms.Length; c++)
         {
+            // If the mouse clicks within the current (iterative) room's boundaries on the map...
             if (mousepos.x > rooms[c].x && mousepos.x < rooms[c].x + rooms[c].width)
             {
                 if (mousepos.y > rooms[c].y && mousepos.y < rooms[c].y + rooms[c].height)
                 {
+                    // Loop through each of the rooms connected to the current (iterative) room
                     foreach (_room connectedRoom in rooms[c].connectedRooms)
                     {
-                        if (activeRoom == connectedRoom.room || clearedRooms.Contains(rooms[c].room))
+                        // If a connected room is cleared
+                        if (clearedRooms.Contains(connectedRoom.room))
                         {
+                            // Switch the active room to the current (iterative) room
                             activeRoom.GetComponent<RoomScript>().unloadRoom();
 
                             activeRoom = rooms[c].room;
                             rooms[c].selected = !rooms[c].selected;
                             if (rooms[c].selected)
-                            { //if its the first time clicking on room draw new room as completed
+                            {
                                 drawRoom(rooms[c], true, 0.5f);
                             }
                             activeRoom.GetComponent<RoomScript>().loadRoom(); //load room that the mouse has clicked on
