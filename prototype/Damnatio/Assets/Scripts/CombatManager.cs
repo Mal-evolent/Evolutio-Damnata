@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class CombatManager : MonoBehaviour
 {
@@ -43,14 +44,24 @@ public class CombatManager : MonoBehaviour
     }
     public void TriggerAttack() {
         if (SelectedMonster != null) {
-            GameObject currentRoom = map.GetComponent<MapScript>().activeRoom;
-            int playerMonsterId = SelectedMonster.GetComponent<MonsterScript>().getID();
-            int enemyMonsterId = EnemySelectedMonster.GetComponent<MonsterScript>().getID();
-            currentRoom.GetComponent<RoomScript>().attackEvent(playerMonsterId, enemyMonsterId, 1000f);
+            RoomScript currentRoom = map.GetComponent<MapScript>().activeRoom.GetComponent<RoomScript>();
+            MonsterScript playerMonster = SelectedMonster.GetComponent<MonsterScript>();
+            MonsterScript enemyMonster = EnemySelectedMonster.GetComponent<MonsterScript>();
+
+            int playerMonsterId = playerMonster.getID();
+            int enemyMonsterId = enemyMonster.getID();
+            currentRoom.attackEvent(playerMonsterId, enemyMonsterId, 1000f);
 
             SelectedMonster = null;
             EnemySelectedMonster = null;
             UpdateOutlines();
+
+            // If the current room is the boss room and the enemy's health is 0 or less, go to the victory screen
+            // For some reason, checking that the enemy is a boss does not work (enemyMonster.getMonsterType() == MonsterScript._monsterType.Boss)
+            if (currentRoom.roomsType == RoomScript._roomsType.boss && enemyMonster.getHealth() <= 0)
+            {
+                SceneManager.LoadScene("victoryScene");
+            }
         }
 
     }
