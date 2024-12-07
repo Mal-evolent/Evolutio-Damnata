@@ -958,7 +958,8 @@ MonoBehaviour:
   cardTemplate: {fileID: 21300000, guid: 5a112041cc08f0440b2d7cadf11cc69d, type: 3}
   cardPrefab: {fileID: 8404733209785131298, guid: 071d931bace1dd4499f34a21bd75c309, type: 3}
   cardOutlineManager: {fileID: 210388635}
-  currentSelectedCard: 
+  combatManager: {fileID: 1394303771}
+  currentSelectedCard: {fileID: 0}
 --- !u!1 &1281395480
 GameObject:
   m_ObjectHideFlags: 0
