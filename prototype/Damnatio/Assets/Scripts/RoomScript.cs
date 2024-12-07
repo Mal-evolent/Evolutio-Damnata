@@ -222,7 +222,7 @@ public class RoomScript : MonoBehaviour
             {
                 Debug.Log($"Button inside Outline {temp_i} clicked!");
 
-                if (!string.IsNullOrEmpty(cardManager.currentSelectedCard.name))
+                if (cardManager.currentSelectedCard != null) //!string.IsNullOrEmpty(cardManager.currentSelectedCard.name)
                 {
                     Debug.Log($"Card {cardManager.currentSelectedCard.name} used on monster {temp_i}");
 
@@ -240,6 +240,8 @@ public class RoomScript : MonoBehaviour
 
                     // Spawn card on field
                     spawnPlayerCard(cardManager.currentSelectedCard.name, temp_i);
+
+                    cardManager.currentSelectedCard = null;
                 }
                 else
                 {
@@ -299,7 +301,8 @@ public class RoomScript : MonoBehaviour
         Debug.Log($"Button inside Outline {i} clicked!");
     }
 
-    public void loadRoom() {
+    public void loadRoom() 
+    {
         gameObject.SetActive(true);
         List<GameObject> entities = new List<GameObject>(playerMonsters);
         entities.AddRange(enemyMonsters);
@@ -327,14 +330,18 @@ public class RoomScript : MonoBehaviour
                 a.GetComponent<MonsterScript>().unloadMonster(); 
             }
         }
-        ////unshow all outlines whne room unloads
-        //for (int i = 0; i < Outlines.Count; i++)
-        //{
-        //    if (playerMonsters[i] == null) //if the monster posiitno is null then show it as avaliable space to place maonster
-        //    {
-        //        Outlines[i].enabled = false;
-        //    }
-        //}
+        //unshow all outlines whne room unloads
+        for (int i = 0; i < Outlines.Count; i++)
+        {
+            if (playerMonsters[i] == null) //if the monster posiitno is null then show it as avaliable space to place maonster
+            {
+                Outlines[i].enabled = false;
+            }
+        }
+
+        cardOutlineManager.RemoveHighlight();
+        cardManager.currentSelectedCard = null;
+
         if (combatManager != null)
         {
             combatManager.SelectedMonster = null;
