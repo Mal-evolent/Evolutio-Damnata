@@ -18,6 +18,8 @@ public class CardManager : MonoBehaviour
 
     private List<GameObject> deckCardObjects = new List<GameObject>();
     private List<GameObject> handCardObjects = new List<GameObject>();
+    [SerializeField]
+    CombatManager combatManager;
 
     public GameObject currentSelectedCard;
 
@@ -112,6 +114,8 @@ public class CardManager : MonoBehaviour
                 {
                     currentSelectedCard = cardObject;
                     Debug.Log($"Selected Card: {currentSelectedCard.name}");
+                    combatManager.SelectedMonster = null;
+                    combatManager.UpdateOutlines();
                 }
 
                 if (!cardOutlineManager.cardIsHighlighted)

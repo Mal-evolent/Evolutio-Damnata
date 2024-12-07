@@ -180,10 +180,12 @@ public class RoomScript : MonoBehaviour
     {
         for (int i = 0; i < Outlines.Count; i++)
         {
-            if (Outlines[i].transform.parent.gameObject.GetComponent<MonsterScript>().placed){
+            if (Outlines[i].transform.parent.gameObject.GetComponent<MonsterScript>().placed)
+            {
                 Outlines[i].enabled = true;
             }
-            else{
+            else
+            {
                 Outlines[i].enabled = cardOutlineManager.cardIsHighlighted;
             }
         }
@@ -222,7 +224,7 @@ public class RoomScript : MonoBehaviour
             {
                 Debug.Log($"Button inside Outline {temp_i} clicked!");
 
-                if (cardManager.currentSelectedCard != null) //!string.IsNullOrEmpty(cardManager.currentSelectedCard.name)
+                if (cardManager.currentSelectedCard != null)
                 {
                     Debug.Log($"Card {cardManager.currentSelectedCard.name} used on monster {temp_i}");
 
@@ -265,8 +267,7 @@ public class RoomScript : MonoBehaviour
 
         playerMonsters[whichOutline].GetComponent<MonsterScript>().placed = true;
 
-        //int randomInt = Random.Range(0, cardLibrary.cardDataList.Count);
-        //CardLibrary.CardData cardData = cardLibrary.cardDataList[randomInt]; // Get random card data
+        // Setting monster's attributes using CardLibrary.CardData
         foreach(CardLibrary.CardData cardData in cardLibrary.cardDataList)
         {
             if(cardName == cardData.CardName)
@@ -293,6 +294,8 @@ public class RoomScript : MonoBehaviour
         {
             combatManager.SelectedMonster = playerMonsters[whichOutline];
             combatManager.UpdateOutlines();
+            cardOutlineManager.RemoveHighlight();
+            cardManager.currentSelectedCard = null;
         });
     }
 
