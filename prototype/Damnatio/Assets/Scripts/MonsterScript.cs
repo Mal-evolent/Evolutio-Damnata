@@ -32,7 +32,7 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
 
     [SerializeField]
     float health;
-    float maxHealth = 10;
+    float maxHealth;
     float atkDamage; //<--- set on generateMonster
     float atkDamageMulti = 1.0f;
 
@@ -46,8 +46,11 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
         room = roomObj;
         this.monsterType = monsterType;
 
+        maxHealth = 10;
         health = maxHealth;
         //health = 0; // Comment in/out as necessary, e.g. if you need to test different rooms quickly.
+
+        atkDamage = 3;
 
         //picks a random monster image from global resources
         GlobalResources globalResources = GameObject.Find("ResourceManagaer").GetComponent<GlobalResources>();
@@ -81,8 +84,11 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
         img.GetComponent<Image>().sprite = EnemyImg;
         //img.GetComponent<Image>().sortingOrder = 2;
 
+        maxHealth = 10;
         health = maxHealth;
         //health = 0; // Comment in/out as necessary
+
+        atkDamage = 10;
 
         //TODO -- this needs to be updated so obejct get placed in at the correct coords for the level(minght need to hadn mpick leves images so that blaty boards are roughly the same)
         gameObject.transform.position = new Vector3(gameObject.transform.position.x, gameObject.transform.position.y, -1);//puts inform of background

@@ -57,6 +57,23 @@ public class CombatManager : MonoBehaviour
             EnemySelectedMonster = null;
             UpdateOutlines();
 
+            // Loop through every enemy and attack random player monster
+            List<GameObject> enemyMonsters = currentRoom.returnEnemies();
+            List<GameObject> playerMonsters = currentRoom.returnPlayerMonsters();
+            foreach(GameObject enemyMonsterObject in enemyMonsters)
+            {
+                MonsterScript em = enemyMonsterObject.GetComponent<MonsterScript>();
+                if(playerMonsters.Count > 0)
+                {
+                    int randomInt = Random.Range(0, playerMonsters.Count);
+                    MonsterScript pm = playerMonsters[randomInt].GetComponent<MonsterScript>();
+                    currentRoom.attackEvent(em.getID(), pm.getID(), em.getAttackDamage());
+                    Debug.Log($"Enemy monster {em.getID()} did {em.getAttackDamage()} damage to player monster {pm.getID()}");
+                }
+
+                // Could consider writing an additional check here to check if the player has any monsters after the enemy has done their attack
+            }
+
             // If the current room is the boss room and the enemy's health is 0 or less, go to the victory screen
             // For some reason, checking that the enemy is a boss does not work (enemyMonster.getMonsterType() == MonsterScript._monsterType.Boss)
             if (currentRoom.roomsType == RoomScript._roomsType.boss && enemyMonster.getHealth() <= 0)
