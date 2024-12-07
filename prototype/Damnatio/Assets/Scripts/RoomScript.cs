@@ -258,13 +258,21 @@ public class RoomScript : MonoBehaviour
         Destroy(cardManager.currentSelectedCard);
         cardManager.currentSelectedCard = null;
 
+        // Set monster attributes
         Outlines[whichOutline].sprite = cardLibrary.cardImageGetter(cardName);
 
         playerMonsters[whichOutline].GetComponent<MonsterScript>().placed = true;
 
-        playerMonsters[whichOutline].GetComponent<MonsterScript>().setHealth(10);//<<<-------------------------------------------------------need to change this to monsters atucal health
-        playerMonsters[whichOutline].GetComponent<MonsterScript>().SetAttackDamage(10);//<<<-------------------------------------------------------need to change this to monsters atucal attack
-
+        //int randomInt = Random.Range(0, cardLibrary.cardDataList.Count);
+        //CardLibrary.CardData cardData = cardLibrary.cardDataList[randomInt]; // Get random card data
+        foreach(CardLibrary.CardData cardData in cardLibrary.cardDataList)
+        {
+            if(cardName == cardData.CardName)
+            {
+                playerMonsters[whichOutline].GetComponent<MonsterScript>().setHealth(cardData.Health);
+                playerMonsters[whichOutline].GetComponent<MonsterScript>().SetAttackDamage(cardData.AttackPower);
+            }
+        }
 
         GameObject buttonObject = new GameObject($"Select_Button_{whichOutline}");
         buttonObject.transform.SetParent(playerMonsters[whichOutline].transform, false); // Add as a child of the Outline
@@ -338,7 +346,7 @@ public class RoomScript : MonoBehaviour
     public void attackEvent(int AttackingID, int AttackedID, float Damage) {
         List<GameObject> entities = new List<GameObject>(playerMonsters);
         entities.AddRange(enemyMonsters);
-        float atkDamage = entities[AttackedID].GetComponent<MonsterScript>().getAttackDamage();
+        float atkDamage = entities[AttackingID].GetComponent<MonsterScript>().getAttackDamage();
         entities[AttackedID].GetComponent<MonsterScript>().takeDamage(atkDamage);
     }
     public void attackBuffEvent(int BuffingID, float buff) {

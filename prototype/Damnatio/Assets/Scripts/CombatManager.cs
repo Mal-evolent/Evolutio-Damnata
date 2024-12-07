@@ -51,6 +51,7 @@ public class CombatManager : MonoBehaviour
             int playerMonsterId = playerMonster.getID();
             int enemyMonsterId = enemyMonster.getID();
             currentRoom.attackEvent(playerMonsterId, enemyMonsterId, playerMonster.getAttackDamage());
+            Debug.Log($"Player monster {playerMonsterId} did {playerMonster.getAttackDamage()} damage to enemy monster {enemyMonsterId}");
 
             SelectedMonster = null;
             EnemySelectedMonster = null;

@@ -32,8 +32,8 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
 
     [SerializeField]
     float health;
-    float maxHealth;
-    float atkDamage = 10; //<--- set on generateMonster
+    float maxHealth = 10;
+    float atkDamage; //<--- set on generateMonster
     float atkDamageMulti = 1.0f;
 
     public bool dead = false;
@@ -46,17 +46,7 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
         room = roomObj;
         this.monsterType = monsterType;
 
-        // Using CardLibrary to set monster attributes 
-        GameObject cardLibraryManager = GameObject.Find("Card Library Manager"); // Optimise this later... doesn't matter too much right now. Didn't want to add it as parameter in method (causes too many changes elsewhere), and can't add it as a serialisable field since MonsterScript only exists in a prefab.
-        CardLibrary cardLibrary = cardLibraryManager.GetComponent<CardLibrary>();
-        int randomInt = Random.Range(0, cardLibrary.cardDataList.Count);
-        CardLibrary.CardData cardData = cardLibrary.cardDataList[randomInt]; // Get random card data
-
-        maxHealth = cardData.Health;
         health = maxHealth;
-        atkDamage = cardData.AttackPower;
-        //img.GetComponent<Image>().sprite = cardData.CardImage; // This currently doesn't work, as CardImage is null (see CardData constructor)
-
         //health = 0; // Comment in/out as necessary, e.g. if you need to test different rooms quickly.
 
         //picks a random monster image from global resources
@@ -88,17 +78,11 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
         room = roomObj;
         this.monsterType = monsterType;
 
-        // Using CardLibrary to set monster attributes 
-        GameObject cardLibraryManager = GameObject.Find("Card Library Manager"); // Optimise this later... doesn't matter too much right now. Didn't want to add it as parameter in method (causes too many changes elsewhere), and can't add it as a serialisable field since MonsterScript only exists in a prefab.
-        CardLibrary cardLibrary = cardLibraryManager.GetComponent<CardLibrary>();
-        int randomInt = Random.Range(0, cardLibrary.cardDataList.Count);
-        CardLibrary.CardData cardData = cardLibrary.cardDataList[randomInt]; // Get random card data
-
-        maxHealth = cardData.Health;
-        health = maxHealth;
-        atkDamage = cardData.AttackPower;
         img.GetComponent<Image>().sprite = EnemyImg;
         //img.GetComponent<Image>().sortingOrder = 2;
+
+        health = maxHealth;
+        //health = 0; // Comment in/out as necessary
 
         //TODO -- this needs to be updated so obejct get placed in at the correct coords for the level(minght need to hadn mpick leves images so that blaty boards are roughly the same)
         gameObject.transform.position = new Vector3(gameObject.transform.position.x, gameObject.transform.position.y, -1);//puts inform of background
@@ -166,6 +150,7 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
     public void takeDamage(float damageAmount)
     {
         health -= damageAmount;
+        Debug.Log($"Health is now {health}");
         if (health <= 0)
         {
             Debug.Log("Monster is dead.");
