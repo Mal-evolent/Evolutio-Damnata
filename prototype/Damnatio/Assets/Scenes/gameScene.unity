@@ -1193,6 +1193,7 @@ MonoBehaviour:
   SelectedMonster: {fileID: 0}
   EnemySelectedMonster: {fileID: 0}
   map: {fileID: 559180380}
+  numberVis: {fileID: 7701005947219011525, guid: a68dba72d8724e94989227a650a79328, type: 3}
 --- !u!4 &1394303772
 Transform:
   m_ObjectHideFlags: 0
