@@ -104,6 +104,7 @@ public class RoomScript : MonoBehaviour
                 enemyMonsters.Add(newMonster);
                 newMonster.transform.position = new Vector3(newx, newy, 0);
                 newMonster.transform.localScale = new Vector3(-7, 7, 7);
+                newMonster.GetComponent<MonsterScript>().placed = true;
 
                 //guarantee the spawns of stronger the monsters below
             }
@@ -112,6 +113,7 @@ public class RoomScript : MonoBehaviour
                 enemyMonsters.Add(newMonster);
                 newMonster.transform.position = new Vector3(newx, newy, 0);
                 newMonster.transform.localScale = new Vector3(-7, 7, 7);
+                newMonster.GetComponent<MonsterScript>().placed = true;
             }
 
             GameObject buttonObject = new GameObject($"Select_Button_{enemyMonsters.Count + i}");
@@ -354,6 +356,7 @@ public class RoomScript : MonoBehaviour
             {
                 playerMonsters[whichOutline].GetComponent<MonsterScript>().setHealth(cardData.Health);
                 playerMonsters[whichOutline].GetComponent<MonsterScript>().SetAttackDamage(cardData.AttackPower);
+                playerMonsters[whichOutline].GetComponent<MonsterScript>()._healthBar.SetActive(true);
             }
         }
 
@@ -395,6 +398,10 @@ public class RoomScript : MonoBehaviour
                 if (!a.GetComponent<MonsterScript>().dead)
                 {
                     a.GetComponent<MonsterScript>().loadMonster();
+                    if (a.GetComponent<MonsterScript>().getMonsterType() == MonsterScript._monsterType.Enemy)
+                    {
+                        a.GetComponent<MonsterScript>()._healthBar.SetActive(true);
+                    }
                 }
             }
         }

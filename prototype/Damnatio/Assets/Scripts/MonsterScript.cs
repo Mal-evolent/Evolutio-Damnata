@@ -36,8 +36,13 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
     float atkDamage; //<--- set on generateMonster
     float atkDamageMulti = 1.0f;
 
+    public GameObject _healthBar;
+    Slider healthBar;
+
     public bool dead = false;
     public bool placed = false;
+
+
 
     // Monster needs room passed so they can get information on what's going on
     public void GenerateMonster(GameObject roomObj, int monsterID, _monsterType monsterType)
@@ -69,6 +74,11 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
         else if (monsterType == _monsterType.Friendly) {
             outlineImg.GetComponent<Image>().color = new Color(0xB0, 0x00, 0xFF);
         }
+
+        healthBar = gameObject.GetComponentInChildren<Slider>();
+        healthBar.maxValue = health;
+        healthBar.value = health;
+        healthBar.gameObject.SetActive(false);
 
         unloadMonster();
     }
@@ -102,6 +112,11 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
         {
             outlineImg.GetComponent<Image>().color = new Color(0xB0, 0x00, 0xFF);
         }
+
+        healthBar = gameObject.GetComponentInChildren<Slider>();
+        healthBar.maxValue = health;
+        healthBar.value = health;
+        healthBar.gameObject.SetActive(false);
 
         unloadMonster();
     }
@@ -156,6 +171,7 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
     public void takeDamage(float damageAmount)
     {
         health -= damageAmount;
+        healthBar.value = health;
         Debug.Log($"Health is now {health}");
         if (health <= 0)
         {
