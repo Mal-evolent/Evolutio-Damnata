@@ -191,6 +191,83 @@ public class RoomScript : MonoBehaviour
         }
     }
 
+    public void regenerateDeadFriendly(int id, float newx, float newy, string name)
+    {
+        //recreate and delete old monster
+        GameObject newMonster = Instantiate(monsterPrefab, targetCanvas.transform);
+        newMonster.GetComponent<MonsterScript>().GenerateMonster(gameObject, id, MonsterScript._monsterType.Friendly, placeHolderSprites);
+        //playerMonsters.Add(newMonster);
+        newMonster.transform.position = new Vector3(newx, newy, 0);
+        newMonster.transform.localScale = new Vector3(7, 7, 7);
+        newMonster.name = name;
+        Image monsterImage = newMonster.GetComponentInChildren<Image>();
+        monsterImage.raycastTarget = false;
+
+        //uses the name to get the postion it is replaceing in the outline array
+        GameObject tempDelete = playerMonsters[id];
+        Outlines[id] = monsterImage;
+        playerMonsters[id] = newMonster;
+        Destroy(tempDelete);
+        newMonster.GetComponent<MonsterScript>().loadMonster();
+
+        //add the interactive button
+
+        // Create a new GameObject for the Button
+        GameObject buttonObject = new GameObject($"Button_Outline_{id}");
+        buttonObject.transform.SetParent(Outlines[id].gameObject.transform, false); // Add as a child of the Outline
+        buttonObject.transform.localPosition = Vector3.zero; // Center the Button inside the Outline
+
+        // Add required components to make it a Button
+        RectTransform rectTransform = buttonObject.AddComponent<RectTransform>();
+        rectTransform.sizeDelta = new Vector2(25, 53); // Why 25x53?
+
+        Button buttonComponent = buttonObject.AddComponent<Button>();
+
+        // Optional: Add an Image component to visualize the Button
+        Image buttonImage = buttonObject.AddComponent<Image>();
+        buttonImage.color = new UnityEngine.Color(1, 1, 1, 0); // Transparent background for the Button
+
+
+        // Add onClick functionality
+        int temp_i = id;
+
+        buttonComponent.onClick.AddListener(() =>
+        {
+            Debug.Log($"Button inside Outline {temp_i} clicked!");
+
+            if (cardManager.currentSelectedCard != null)
+            {
+                Debug.Log($"Card {cardManager.currentSelectedCard.name} used on monster {temp_i}");
+
+                // Remove card from hand
+                List<GameObject> handCardObjects = cardManager.getHandCardObjects();
+                foreach (GameObject cardObject in handCardObjects)
+                {
+                    if (cardObject == cardManager.currentSelectedCard)
+                    {
+                        handCardObjects.Remove(cardObject);
+                        Debug.Log("Removed card from hand.");
+                        break;
+                    }
+                }
+
+                // Spawn card on field
+                spawnPlayerCard(cardManager.currentSelectedCard.name, temp_i);
+
+                cardManager.currentSelectedCard = null;
+            }
+            else
+            {
+                Debug.Log("No card selected to use on monster!");
+            }
+        });
+
+
+
+
+
+    }
+
     public void interactableHighlights()
     {
         for (int i = 0; i < Outlines.Count; i++)

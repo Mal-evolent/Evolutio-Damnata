@@ -69,6 +69,10 @@ public class CombatManager : MonoBehaviour
                     MonsterScript pm = playerMonsters[randomInt].GetComponent<MonsterScript>();
                     currentRoom.attackEvent(em.getID(), pm.getID(), em.getAttackDamage());
                     Debug.Log($"Enemy monster {em.getID()} did {em.getAttackDamage()} damage to player monster {pm.getID()}");
+                    if (pm.dead) {
+                        currentRoom.regenerateDeadFriendly(pm.getID(), pm.gameObject.transform.position.x, pm.gameObject.transform.position.y, pm.gameObject.name);
+                        //playerMonsters[randomInt].SetActive(true);
+                    }
                 }
 
                 // Could consider writing an additional check here to check if the player has any monsters after the enemy has done their attack
@@ -83,6 +87,8 @@ public class CombatManager : MonoBehaviour
         }
 
     }
+
+
 
     // Start is called before the first frame update
     void Start()
