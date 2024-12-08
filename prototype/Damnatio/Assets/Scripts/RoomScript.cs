@@ -19,6 +19,9 @@ public class RoomScript : MonoBehaviour
     }
 
     [SerializeField]
+    GameObject numberVis;
+
+    [SerializeField]
     GameObject backgroundImg; //<--- this has been set in the editor
     Sprite newBackgroundImage;
     [SerializeField]
@@ -435,6 +438,7 @@ public class RoomScript : MonoBehaviour
         entities.AddRange(enemyMonsters);
         float atkDamage = entities[AttackingID].GetComponent<MonsterScript>().getAttackDamage();
         entities[AttackedID].GetComponent<MonsterScript>().takeDamage(atkDamage);
+        DamageVisualizer newVisualizer = new DamageVisualizer();
     }
     public void attackBuffEvent(int BuffingID, float buff) {
         List<GameObject> entities = new List<GameObject>(playerMonsters);

@@ -9,6 +9,9 @@ public class CombatManager : MonoBehaviour
     public GameObject EnemySelectedMonster;
     public GameObject map;
 
+    [SerializeField]
+    GameObject numberVis;
+
     public void UpdateOutlines() {
         //toggel the selected monster . if it a reselect then set sleceted monster to null so nothing gets selected
         if (SelectedMonster != null)
@@ -51,6 +54,11 @@ public class CombatManager : MonoBehaviour
             int playerMonsterId = playerMonster.getID();
             int enemyMonsterId = enemyMonster.getID();
             currentRoom.attackEvent(playerMonsterId, enemyMonsterId, playerMonster.getAttackDamage());
+
+            //create attack visualiser
+            DamageVisualizer newVisualizer = new DamageVisualizer();
+            newVisualizer.createDamageNumber(gameObject.GetComponent<MonoBehaviour>(), playerMonster.getAttackDamage(), enemyMonster.transform.position, numberVis);
+
             Debug.Log($"Player monster {playerMonsterId} did {playerMonster.getAttackDamage()} damage to enemy monster {enemyMonsterId}");
 
             SelectedMonster = null;
@@ -63,11 +71,21 @@ public class CombatManager : MonoBehaviour
             foreach(GameObject enemyMonsterObject in enemyMonsters)
             {
                 MonsterScript em = enemyMonsterObject.GetComponent<MonsterScript>();
-                if(playerMonsters.Count > 0)
+                if(playerMonsters.Count > 0 && !em.dead)
                 {
+                    int attepmts = 5;
                     int randomInt = Random.Range(0, playerMonsters.Count);
                     MonsterScript pm = playerMonsters[randomInt].GetComponent<MonsterScript>();
+                    while (!pm.placed && attepmts > 0) {
+                        randomInt = Random.Range(0, playerMonsters.Count);
+                        pm = playerMonsters[randomInt].GetComponent<MonsterScript>();
+                        attepmts--;
+                    }
+                    if (!pm.placed) { continue; }
+
                     currentRoom.attackEvent(em.getID(), pm.getID(), em.getAttackDamage());
+                    newVisualizer.createDamageNumber(gameObject.GetComponent<MonoBehaviour>(), em.getAttackDamage(), pm.transform.position, numberVis);
+
                     Debug.Log($"Enemy monster {em.getID()} did {em.getAttackDamage()} damage to player monster {pm.getID()}");
                     if (pm.dead) {
                         currentRoom.regenerateDeadFriendly(pm.getID(), pm.gameObject.transform.position.x, pm.gameObject.transform.position.y, pm.gameObject.name);
