@@ -64,6 +64,23 @@ public class Deck : MonoBehaviour
         }
     }
 
+    public void DrawOneCard()
+    {
+        // Ensure the hand is filled up to the hand size limit
+        if (Hand.Count < HandSize)
+        {
+            Card drawnCard = Cards[0];
+            Cards.RemoveAt(0);
+            Hand.Add(drawnCard);
+            Debug.Log("Drew Card: " + drawnCard.CardName);
+            cardManager.RefreshUI();
+        }
+        else
+        {
+            Debug.Log("Hand is full. Cannot draw more cards.");
+        }
+    }
+
     public void AddCard(Card card)
     {
         if (Cards.Count >= MaxDeckSize)

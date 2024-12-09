@@ -470,6 +470,10 @@ public class RoomScript : MonoBehaviour
         return playerMonsters;
     }
 
+    public CardManager returnCardManager() {
+        return cardManager;
+    }
+
     // Start is called before the first frame update
     void Start()
     {
