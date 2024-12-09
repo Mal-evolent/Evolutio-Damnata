@@ -2,6 +2,7 @@ using JetBrains.Annotations;
 using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 public class RoomScript : MonoBehaviour
@@ -20,6 +21,11 @@ public class RoomScript : MonoBehaviour
 
     [SerializeField]
     GameObject numberVis;
+    [SerializeField]
+    GameObject manaBar;
+    [SerializeField]
+    GameObject manaText;
+    int currentMana = 10;
 
     [SerializeField]
     GameObject backgroundImg; //<--- this has been set in the editor
@@ -337,6 +343,16 @@ public class RoomScript : MonoBehaviour
 
     public void spawnPlayerCard(string cardName, int whichOutline)
     {
+        int cardCost = 0;
+        foreach (CardLibrary.CardData cardData in cardLibrary.cardDataList)
+        {
+            if (cardName == cardData.CardName)
+            {
+                if (currentMana < cardData.ManaCost) { Debug.Log(cardData.ManaCost); return; } //bail if there isnt enough mana
+                else { cardCost = cardData.ManaCost; break; }
+            }
+        }
+
         // Remove outline/highlight on current card in hand
         cardOutlineManager.RemoveHighlight();
 
@@ -354,9 +370,12 @@ public class RoomScript : MonoBehaviour
         {
             if(cardName == cardData.CardName)
             {
-                playerMonsters[whichOutline].GetComponent<MonsterScript>().setHealth(cardData.Health);
+                //playerMonsters[whichOutline].GetComponent<MonsterScript>().setHealth(cardData.Health);
+                playerMonsters[whichOutline].GetComponent<MonsterScript>().setHealth(100);
                 playerMonsters[whichOutline].GetComponent<MonsterScript>().SetAttackDamage(cardData.AttackPower);
+                
                 playerMonsters[whichOutline].GetComponent<MonsterScript>()._healthBar.SetActive(true);
+                break;
             }
         }
 
@@ -380,6 +399,9 @@ public class RoomScript : MonoBehaviour
             cardOutlineManager.RemoveHighlight();
             cardManager.currentSelectedCard = null;
         });
+
+        manaBar.GetComponent<Slider>().value -= cardCost;
+        manaText.GetComponent<TMP_Text>().text = manaBar.GetComponent<Slider>().value.ToString();
     }
 
     public void DebugLogButton(int i)
@@ -387,12 +409,13 @@ public class RoomScript : MonoBehaviour
         Debug.Log($"Button inside Outline {i} clicked!");
     }
 
-    public void loadRoom() 
+    public void loadRoom()
     {
         gameObject.SetActive(true);
         List<GameObject> entities = new List<GameObject>(playerMonsters);
         entities.AddRange(enemyMonsters);
-        foreach (GameObject a in entities) {
+        foreach (GameObject a in entities)
+        {
             if (a != null)
             {
                 if (!a.GetComponent<MonsterScript>().dead)
@@ -406,6 +429,20 @@ public class RoomScript : MonoBehaviour
             }
         }
         backgroundImg.GetComponent<Image>().sprite = newBackgroundImage;
+        int NumDeadMonsters = 0;
+        foreach (GameObject en in enemyMonsters) { NumDeadMonsters += (en.GetComponent<MonsterScript>().dead) == true ? 1 : 0; }
+        if (NumDeadMonsters != enemyMonsters.Count) //if not all the monster are dead the show manabar
+        {
+            manaBar.SetActive(true);
+            manaText.SetActive(true);
+            manaBar.GetComponent<Slider>().maxValue = currentMana;
+            manaBar.GetComponent<Slider>().value = currentMana;
+            manaText.GetComponent<TMP_Text>().text = manaBar.GetComponent<Slider>().value.ToString();
+        }
+        else {//else hide for room that have been cleared
+            manaBar.SetActive(false);
+            manaText.SetActive(false);
+        }
     }
 
     public void unloadRoom()
