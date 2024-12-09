@@ -371,7 +371,7 @@ public class RoomScript : MonoBehaviour
             if(cardName == cardData.CardName)
             {
                 //playerMonsters[whichOutline].GetComponent<MonsterScript>().setHealth(cardData.Health);
-                playerMonsters[whichOutline].GetComponent<MonsterScript>().setHealth(100);
+                playerMonsters[whichOutline].GetComponent<MonsterScript>().setHealth(cardData.Health);
                 playerMonsters[whichOutline].GetComponent<MonsterScript>().SetAttackDamage(cardData.AttackPower);
                 
                 playerMonsters[whichOutline].GetComponent<MonsterScript>()._healthBar.SetActive(true);
