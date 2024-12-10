@@ -6,6 +6,8 @@ public class Card : MonoBehaviour
     public string CardName;
     public Sprite CardImage;
     public string Description;
+    public int AttackPower;
+    public int Health;
     public int ManaCost;
 
     // Base play method. Can be overridden by derived classes
@@ -23,9 +25,6 @@ public class Card : MonoBehaviour
 // Monster Card (Derived Class from Card)
 public class MonsterCard : Card
 {
-    public int AttackPower;
-    public int Health;
-
     public override void Play()
     {
         Debug.Log("Playing Monster Card: " + CardName + "\n" + "Attack Power: " + AttackPower + "\n" + "Health: " + Health);

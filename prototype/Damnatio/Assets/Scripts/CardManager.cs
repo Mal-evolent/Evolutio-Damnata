@@ -52,9 +52,9 @@ public class CardManager : MonoBehaviour
             TextMeshProUGUI descText = cardObject.transform.GetChild(2).GetComponent<TextMeshProUGUI>();
             descText.text = card.Description;
 
-            // MANA COST
-            TextMeshProUGUI manaText = cardObject.transform.GetChild(3).GetComponent<TextMeshProUGUI>();
-            manaText.text = card.ManaCost.ToString();
+            // CARD ATTRIBUTES
+            TextMeshProUGUI attrText = cardObject.transform.GetChild(3).GetComponent<TextMeshProUGUI>();
+            attrText.text = $"Health: {card.Health}\n Attack: {card.AttackPower}\n Cost: {card.ManaCost}";
 
             Debug.Log($"Displayed {card.CardName} in the UI.");
             deckCardObjects.Add(cardObject);
@@ -85,9 +85,9 @@ public class CardManager : MonoBehaviour
             TextMeshProUGUI descText = cardObject.transform.GetChild(2).GetComponent<TextMeshProUGUI>();
             descText.text = card.Description;
 
-            // MANA COST
-            TextMeshProUGUI manaText = cardObject.transform.GetChild(3).GetComponent<TextMeshProUGUI>();
-            manaText.text = card.ManaCost.ToString();
+            // CARD ATTRIBUTES
+            TextMeshProUGUI attrText = cardObject.transform.GetChild(3).GetComponent<TextMeshProUGUI>();
+            attrText.text = $"Health: {card.Health}\n Attack: {card.AttackPower}\n Cost: {card.ManaCost}";
 
             Debug.Log($"Displayed {card.CardName} in the UI.");
 
