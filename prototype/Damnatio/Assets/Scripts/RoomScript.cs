@@ -400,6 +400,7 @@ public class RoomScript : MonoBehaviour
             cardManager.currentSelectedCard = null;
         });
 
+        // Decrease current mana
         currentMana -= cardCost;
         manaBar.GetComponent<Slider>().value = currentMana;
         manaText.GetComponent<TMP_Text>().text = manaBar.GetComponent<Slider>().value.ToString();

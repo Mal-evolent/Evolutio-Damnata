@@ -96,6 +96,11 @@ public class CombatManager : MonoBehaviour
                 // Could consider writing an additional check here to check if the player has any monsters after the enemy has done their attack
             }
 
+            // Draw one card
+            CardManager cardManager = currentRoom.returnCardManager();
+            cardManager.playerDeck.DrawOneCard();
+            cardManager.RefreshUI();
+
             // If the current room is the boss room and the enemy's health is 0 or less, go to the victory screen
             // For some reason, checking that the enemy is a boss does not work (enemyMonster.getMonsterType() == MonsterScript._monsterType.Boss)
             if (currentRoom.roomsType == RoomScript._roomsType.boss && enemyMonster.getHealth() <= 0)
