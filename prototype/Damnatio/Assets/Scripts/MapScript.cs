@@ -429,11 +429,14 @@ public class MapScript : MonoBehaviour
                             activeRoom.GetComponent<RoomScript>().loadRoom(); //load room that the mouse has clicked on
                             roomChanged = true;
 
-                            // Reset Deck
-                            //RoomScript currentRoom = activeRoom.GetComponent<RoomScript>();
-                            //CardManager cardManager = currentRoom.returnCardManager();
-                            //Deck deck = cardManager.playerDeck;
-                            //deck.Reset();
+                            // Reset the deck, populate deck and hand, shuffle the deck, and refresh UI for the new room
+                            RoomScript currentRoom = activeRoom.GetComponent<RoomScript>();
+                            CardManager cardManager = currentRoom.returnCardManager();
+                            Deck deck = cardManager.playerDeck;
+                            deck.Reset();
+                            deck.PopulateDeck();
+                            deck.Shuffle();
+                            cardManager.RefreshUI();
                         }
                     }
                 }
