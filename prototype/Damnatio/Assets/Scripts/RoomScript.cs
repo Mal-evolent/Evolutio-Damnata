@@ -348,7 +348,7 @@ public class RoomScript : MonoBehaviour
         {
             if (cardName == cardData.CardName)
             {
-                if (currentMana < cardData.ManaCost) { Debug.Log(cardData.ManaCost); return; } //bail if there isnt enough mana
+                if (currentMana < cardData.ManaCost) { Debug.Log($"Not enough mana. Card costs {cardData.ManaCost}, player has {currentMana}"); return; } //bail if there isnt enough mana
                 else { cardCost = cardData.ManaCost; break; }
             }
         }
@@ -400,7 +400,8 @@ public class RoomScript : MonoBehaviour
             cardManager.currentSelectedCard = null;
         });
 
-        manaBar.GetComponent<Slider>().value -= cardCost;
+        currentMana -= cardCost;
+        manaBar.GetComponent<Slider>().value = currentMana;
         manaText.GetComponent<TMP_Text>().text = manaBar.GetComponent<Slider>().value.ToString();
     }
 
