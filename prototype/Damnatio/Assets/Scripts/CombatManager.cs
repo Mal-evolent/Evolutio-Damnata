@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -106,6 +107,22 @@ public class CombatManager : MonoBehaviour
             if (currentRoom.roomsType == RoomScript._roomsType.boss && enemyMonster.getHealth() <= 0)
             {
                 SceneManager.LoadScene("victoryScene");
+            }
+
+            int manaCounter = 0;
+            int MonsCounter = 0;
+            foreach (Card cardData in currentRoom.cardLibrary.playerDeck.Hand) {
+                if (currentRoom.currentMana < cardData.ManaCost) {
+                    manaCounter++;
+                }
+            }
+            foreach (GameObject obj in currentRoom.returnPlayerMonsters()) {
+                if (!obj.GetComponent<MonsterScript>().placed) {
+                    MonsCounter++;
+                }
+            }
+            if (manaCounter == currentRoom.cardLibrary.playerDeck.Hand.Count && MonsCounter == 3) {
+                SceneManager.LoadScene("DefeatedScene");
             }
         }
 

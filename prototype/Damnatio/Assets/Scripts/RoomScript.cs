@@ -25,7 +25,7 @@ public class RoomScript : MonoBehaviour
     GameObject manaBar;
     [SerializeField]
     GameObject manaText;
-    int currentMana = 10;
+    public int currentMana = 10;
 
     [SerializeField]
     GameObject backgroundImg; //<--- this has been set in the editor
@@ -52,7 +52,7 @@ public class RoomScript : MonoBehaviour
     [SerializeField]
     CardManager cardManager;
     [SerializeField]
-    CardLibrary cardLibrary;
+    public CardLibrary cardLibrary;
 
     [SerializeField]
     CardOutlineManager cardOutlineManager;
