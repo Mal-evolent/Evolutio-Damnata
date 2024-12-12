@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+using TMPro;
 
 public class CombatManager : MonoBehaviour
 {
@@ -102,6 +104,14 @@ public class CombatManager : MonoBehaviour
             cardManager.playerDeck.DrawOneCard();
             cardManager.RefreshUI();
 
+            // Increment the turn
+            currentRoom.turn++;
+            currentRoom.turnText.text = $"Turn: {currentRoom.turn}";
+            // Increase current mana
+            currentRoom.currentMana += currentRoom.turn;
+            currentRoom.manaBar.GetComponent<Slider>().value = currentRoom.currentMana;
+            currentRoom.manaText.GetComponent<TMP_Text>().text = currentRoom.manaBar.GetComponent<Slider>().value.ToString();
+
             // If the current room is the boss room and the enemy's health is 0 or less, go to the victory screen
             // For some reason, checking that the enemy is a boss does not work (enemyMonster.getMonsterType() == MonsterScript._monsterType.Boss)
             if (currentRoom.roomsType == RoomScript._roomsType.boss && enemyMonster.getHealth() <= 0)
@@ -111,16 +121,19 @@ public class CombatManager : MonoBehaviour
 
             int manaCounter = 0;
             int MonsCounter = 0;
+            // Loop through each card in the hand. If the player's current mana is less than the current card's mana cost, increment manaCounter
             foreach (Card cardData in currentRoom.cardLibrary.playerDeck.Hand) {
                 if (currentRoom.currentMana < cardData.ManaCost) {
                     manaCounter++;
                 }
             }
+            // Loop through each player monster. If the player monster is not placed, increment MonsCounter
             foreach (GameObject obj in currentRoom.returnPlayerMonsters()) {
                 if (!obj.GetComponent<MonsterScript>().placed) {
                     MonsCounter++;
                 }
             }
+            // If the player doesn't have enough mana to summon any card from their hand and no monsters are placed, load the defeated scene.
             if (manaCounter == currentRoom.cardLibrary.playerDeck.Hand.Count && MonsCounter == 3) {
                 SceneManager.LoadScene("DefeatedScene");
             }

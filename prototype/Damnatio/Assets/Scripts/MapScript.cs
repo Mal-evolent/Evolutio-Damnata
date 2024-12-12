@@ -437,6 +437,10 @@ public class MapScript : MonoBehaviour
                             deck.PopulateDeck();
                             deck.Shuffle();
                             cardManager.RefreshUI();
+
+                            // Reset the turn
+                            activeRoom.GetComponent<RoomScript>().turn = 0;
+                            activeRoom.GetComponent<RoomScript>().turnText.text = $"Turn: {activeRoom.GetComponent<RoomScript>().turn}";
                         }
                     }
                 }

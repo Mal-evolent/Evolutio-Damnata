@@ -22,10 +22,12 @@ public class RoomScript : MonoBehaviour
     [SerializeField]
     GameObject numberVis;
     [SerializeField]
-    GameObject manaBar;
+    public GameObject manaBar;
     [SerializeField]
-    GameObject manaText;
+    public GameObject manaText;
     public int currentMana = 10;
+    public int turn = 0;
+    public TMP_Text turnText;
 
     [SerializeField]
     GameObject backgroundImg; //<--- this has been set in the editor
