@@ -441,6 +441,15 @@ public class MapScript : MonoBehaviour
                             // Reset the turn
                             activeRoom.GetComponent<RoomScript>().turn = 0;
                             activeRoom.GetComponent<RoomScript>().turnText.text = $"Turn: {activeRoom.GetComponent<RoomScript>().turn}";
+
+                            // Player footsteps sfx
+                            AudioSource footsteps = GetComponent<AudioSource>();
+                            if (footsteps.isPlaying)
+                            {
+                                footsteps.Stop();
+                            }
+                            footsteps.Play();
+
                         }
                     }
                 }

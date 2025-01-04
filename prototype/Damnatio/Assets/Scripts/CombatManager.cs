@@ -58,6 +58,14 @@ public class CombatManager : MonoBehaviour
             int enemyMonsterId = enemyMonster.getID();
             currentRoom.attackEvent(playerMonsterId, enemyMonsterId, playerMonster.getAttackDamage());
 
+            // Play fireball sound
+            AudioSource fireball = GetComponent<AudioSource>();
+            if (fireball.isPlaying)
+            {
+                fireball.Stop();
+            }
+            fireball.Play();
+
             //create attack visualiser
             DamageVisualizer newVisualizer = new DamageVisualizer();
             newVisualizer.createDamageNumber(gameObject.GetComponent<MonoBehaviour>(), playerMonster.getAttackDamage(), enemyMonster.transform.position, numberVis);

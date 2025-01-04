@@ -36,6 +36,14 @@ public class CardOutlineManager : MonoBehaviour
         outline.enabled = true;
         currentlyHighlightedCard = cardObject;
         cardIsHighlighted = true;
+
+        // Player select SFX
+        AudioSource select = GetComponent<AudioSource>();
+        if (select.isPlaying)
+        {
+            select.Stop();
+        }
+        select.Play();
     }
 
     public void RemoveHighlight(GameObject cardObject)

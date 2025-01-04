@@ -41,8 +41,8 @@ public class RoomScript : MonoBehaviour
     int placeHolderSpriteCount = 3;
 
     public _roomsType roomsType;
-    static float _playAreaHeight = 423f; //<--this is the play area height
-    static float _playAreaWidth = 527f; //<--this is the play area height
+    static float _playAreaHeight = Screen.height / 2.5f; //<--this is the play area height //423f
+    static float _playAreaWidth = Screen.width / 3.6f; //<--this is the play area height //527f
     [SerializeField]
     float _initalOffsetX = 153f;
     [SerializeField]
@@ -406,6 +406,14 @@ public class RoomScript : MonoBehaviour
         currentMana -= cardCost;
         manaBar.GetComponent<Slider>().value = currentMana;
         manaText.GetComponent<TMP_Text>().text = manaBar.GetComponent<Slider>().value.ToString();
+
+        // Play summon SFX
+        AudioSource churchBells = GetComponent<AudioSource>();
+        if (churchBells.isPlaying)
+        {
+            churchBells.Stop();
+        }
+        churchBells.Play();
     }
 
     public void DebugLogButton(int i)
