@@ -91,6 +91,28 @@ public class combatStage : MonoBehaviour
                     Debug.Log("No card selected to use on monster!");
                 }
             });
+
+            //reveal highlight upon card selection
+            if (cardManager.currentSelectedCard != null)
+            {
+                for (int j = 0; i < spritePositioning.instantiatedPlaceHolders.Count; i++)
+                {
+                    if (spritePositioning.instantiatedPlaceHolders[i] != null)
+                    {
+                        spritePositioning.instantiatedPlaceHolders[i].SetActive(true);
+                    }
+                }
+            }
+            else
+            {
+                for (int j = 0; i < spritePositioning.instantiatedPlaceHolders.Count; i++)
+                {
+                    if (spritePositioning.instantiatedPlaceHolders[i] != null)
+                    {
+                        spritePositioning.instantiatedPlaceHolders[i].SetActive(false);
+                    }
+                }
+            }
         }
     }
 
@@ -187,6 +209,11 @@ public class combatStage : MonoBehaviour
         }
 
         // Initialize interactable highlights
+        interactableHighlights();
+    }
+
+    private void Update()
+    {
         interactableHighlights();
     }
 }

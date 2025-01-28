@@ -101,6 +101,18 @@ public class SpritePositioning : MonoBehaviour
         return Vector3.one;
     }
 
+    public void SetPlaceHolderActive(int index, bool active)
+    {
+        if (index >= 0 && index < instantiatedPlaceHolders.Count)
+        {
+            instantiatedPlaceHolders[index].SetActive(active);
+        }
+        else
+        {
+            Debug.LogError($"Invalid placeholder index: {index}");
+        }
+    }
+
     public IEnumerator placeHolderActiveState(bool active)
     {
         // Wait until the list is populated
