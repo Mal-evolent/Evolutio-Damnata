@@ -39,18 +39,18 @@ public class combatStage : MonoBehaviour
         {
             if (spritePositioning.instantiatedPlaceHolders[i] == null)
             {
-                Debug.LogError($"Outline at index {i} is null!");
+                Debug.LogError($"Placeholder at index {i} is null!");
                 continue;
             }
 
             // Create a new GameObject for the Button
             GameObject buttonObject = new GameObject($"Button_Outline_{i}");
-            buttonObject.transform.SetParent(spritePositioning.instantiatedPlaceHolders[i].gameObject.transform, false); // Add as a child of the Outline
-            buttonObject.transform.localPosition = Vector3.zero; // Center the Button inside the Outline
+            buttonObject.transform.SetParent(spritePositioning.instantiatedPlaceHolders[i].transform, false); // Add as a child of the Placeholder
+            buttonObject.transform.localPosition = Vector3.zero; // Center the Button inside the Placeholder
 
             // Add required components to make it a Button
             RectTransform rectTransform = buttonObject.AddComponent<RectTransform>();
-            rectTransform.sizeDelta = new Vector2(25, 53); // Why 25x53?
+            rectTransform.sizeDelta = new Vector2(25, 53); // Set the size of the Button
 
             Button buttonComponent = buttonObject.AddComponent<Button>();
 
@@ -63,7 +63,7 @@ public class combatStage : MonoBehaviour
 
             buttonComponent.onClick.AddListener(() =>
             {
-                Debug.Log($"Button inside Outline {temp_i} clicked!");
+                Debug.Log($"Button inside Placeholder {temp_i} clicked!");
 
                 if (cardManager.currentSelectedCard != null)
                 {
@@ -173,6 +173,18 @@ public class combatStage : MonoBehaviour
 
         // Set all placeholders to be inactive initially
         StartCoroutine(spritePositioning.SetAllPlaceHoldersInactive());
+
+        // Initialize interactable highlights
+        StartCoroutine(InitializeInteractableHighlights());
+    }
+
+    private IEnumerator InitializeInteractableHighlights()
+    {
+        // Wait until placeholders are instantiated
+        while (spritePositioning.instantiatedPlaceHolders.Count == 0)
+        {
+            yield return null; // Wait for the next frame
+        }
 
         // Initialize interactable highlights
         interactableHighlights();
