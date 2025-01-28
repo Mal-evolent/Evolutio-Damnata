@@ -50,7 +50,7 @@ public class combatStage : MonoBehaviour
 
             // Add required components to make it a Button
             RectTransform rectTransform = buttonObject.AddComponent<RectTransform>();
-            rectTransform.sizeDelta = new Vector2(25, 53); // Set the size of the Button
+            rectTransform.sizeDelta = rectTransform.sizeDelta = spritePositioning.GetFirstPlaceholderSize();
 
             Button buttonComponent = buttonObject.AddComponent<Button>();
 

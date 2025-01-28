@@ -81,6 +81,26 @@ public class SpritePositioning : MonoBehaviour
         }
     }
 
+    public Vector2 GetFirstPlaceholderSize()
+    {
+        List<PositionData> positions = GetPositionsForCurrentRoom();
+        if (positions.Count > 0)
+        {
+            return positions[0].Size;
+        }
+        return Vector2.zero;
+    }
+
+    public Vector3 GetFirstPlaceholderScale()
+    {
+        List<PositionData> positions = GetPositionsForCurrentRoom();
+        if (positions.Count > 0)
+        {
+            return positions[0].Scale;
+        }
+        return Vector3.one;
+    }
+
     public IEnumerator placeHolderActiveState(bool active)
     {
         // Wait until the list is populated
