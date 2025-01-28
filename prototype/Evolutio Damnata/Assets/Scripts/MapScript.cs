@@ -11,6 +11,7 @@ public class MapScript : MonoBehaviour
     [SerializeField]
     Canvas mainCanvas;
     RectTransform rectTransform;
+    public string currentSelectedRoom = "None";
 
     void generateMap()
     {
@@ -34,6 +35,7 @@ public class MapScript : MonoBehaviour
         }
 
         Sprite newBackgroundImage = globalResources.dungeonRooms[Random.Range(0, globalResources.dungeonRooms.Count)];
+        currentSelectedRoom = newBackgroundImage.name;
         mainCanvas.GetComponent<Image>().sprite = newBackgroundImage;
     }
 
@@ -46,18 +48,6 @@ public class MapScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        //may need deletion
-        if (Input.GetMouseButtonUp(0))
-        {
-            Vector3 mousePos = Input.mousePosition;
-            RectTransform rectTransform = mainCanvas.GetComponent<RectTransform>();
-            Vector3 scaleFactor = rectTransform.localScale;
 
-            Vector2 localPoint;
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(rectTransform, mousePos, null, out localPoint);
-            localPoint += new Vector2((rectTransform.rect.width), (rectTransform.rect.height));//offset origin to bottom left of minimap instead of top right
-
-            // Handle mouse click on room (if needed)
-        }
     }
 }

@@ -5,7 +5,7 @@ using System.Drawing;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-public class RoomScript : MonoBehaviour
+public class combatStage : MonoBehaviour
 {
     [SerializeField]
     public GameObject manaBar;
@@ -15,22 +15,6 @@ public class RoomScript : MonoBehaviour
     public TMP_Text turnText;
 
     [SerializeField]
-    GameObject monsterPrefab;
-
-    [SerializeField]
-    Sprite placeHolderSprites;
-    [SerializeField]
-    int placeHolderSpriteCount = 3;
-
-    [SerializeField]
-    float _initalOffsetX = 153f;
-    [SerializeField]
-    float _initalOffsetY = 220f;
-
-    [SerializeField]
-    Canvas targetCanvas;
-
-    [SerializeField]
     CardManager cardManager;
     [SerializeField]
     public CardLibrary cardLibrary;
@@ -38,7 +22,14 @@ public class RoomScript : MonoBehaviour
     [SerializeField]
     CardOutlineManager cardOutlineManager;
     [SerializeField]
+
     List<Image> Outlines;
+
+    [SerializeField]
+    Canvas battleField;
+
+    [SerializeField]
+    SpritePositioning spritePositioning;
 
     List<GameObject> playerMonsters = new List<GameObject>();
 
@@ -157,7 +148,6 @@ public class RoomScript : MonoBehaviour
         buttonImage.color = new UnityEngine.Color(1, 1, 1, 0); // Transparent background for the Button
         buttonComponent.onClick.AddListener(() =>
         {
-            //alternative needed!
             cardOutlineManager.RemoveHighlight();
             cardManager.currentSelectedCard = null;
         });
