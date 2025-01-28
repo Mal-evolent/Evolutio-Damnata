@@ -22,7 +22,6 @@ public class combatStage : MonoBehaviour
     [SerializeField]
     CardOutlineManager cardOutlineManager;
     [SerializeField]
-
     List<Image> Outlines;
 
     [SerializeField]
@@ -36,9 +35,9 @@ public class combatStage : MonoBehaviour
     // This function will be kept
     public void interactableHighlights()
     {
-        for (int i = 0; i < Outlines.Count; i++)
+        for (int i = 0; i < spritePositioning.instantiatedPlaceHolders.Count; i++)
         {
-            if (Outlines[i] == null)
+            if (spritePositioning.instantiatedPlaceHolders[i] == null)
             {
                 Debug.LogError($"Outline at index {i} is null!");
                 continue;
@@ -46,7 +45,7 @@ public class combatStage : MonoBehaviour
 
             // Create a new GameObject for the Button
             GameObject buttonObject = new GameObject($"Button_Outline_{i}");
-            buttonObject.transform.SetParent(Outlines[i].gameObject.transform, false); // Add as a child of the Outline
+            buttonObject.transform.SetParent(spritePositioning.instantiatedPlaceHolders[i].gameObject.transform, false); // Add as a child of the Outline
             buttonObject.transform.localPosition = Vector3.zero; // Center the Button inside the Outline
 
             // Add required components to make it a Button
@@ -169,10 +168,13 @@ public class combatStage : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        for (int i = 0; i < Outlines.Count; i++)
-        {
-            Outlines[i].enabled = false;
-        }
+        // Start the coroutine to wait for room selection
+        StartCoroutine(spritePositioning.WaitForRoomSelection());
+
+        // Set all placeholders to be inactive initially
+        StartCoroutine(spritePositioning.SetAllPlaceHoldersInactive());
+
+        // Initialize interactable highlights
         interactableHighlights();
     }
 }

@@ -11,11 +11,13 @@ public class SpritePositioning : MonoBehaviour
     [SerializeField]
     Canvas mainCanvas;
 
-    private Dictionary<string, List<PositionData>> roomPositions;
+    public Dictionary<string, List<PositionData>> roomPositions;
+    public List<GameObject> instantiatedPlaceHolders;
 
     void Start()
     {
         InitializeRoomPositions();
+        instantiatedPlaceHolders = new List<GameObject>();
         StartCoroutine(WaitForRoomSelection());
     }
 
@@ -34,7 +36,7 @@ public class SpritePositioning : MonoBehaviour
         // Add more rooms and their positions as needed
     }
 
-    IEnumerator WaitForRoomSelection()
+    public IEnumerator WaitForRoomSelection()
     {
         while (mapScript.currentSelectedRoom == "None")
         {
@@ -59,6 +61,14 @@ public class SpritePositioning : MonoBehaviour
 
     public void togglePlaceHolders(bool show)
     {
+        // Clear previously instantiated placeholders
+        foreach (GameObject placeHolder in instantiatedPlaceHolders)
+        {
+            Destroy(placeHolder);
+        }
+        instantiatedPlaceHolders.Clear();
+
+        // Instantiate new placeholders and store them in the list
         List<PositionData> positions = GetPositionsForCurrentRoom();
         foreach (PositionData position in positions)
         {
@@ -67,7 +77,34 @@ public class SpritePositioning : MonoBehaviour
             placeHolder.GetComponent<RectTransform>().sizeDelta = position.Size;
             placeHolder.transform.localScale = position.Scale;
             placeHolder.SetActive(show);
+            instantiatedPlaceHolders.Add(placeHolder);
         }
+    }
+
+    public IEnumerator placeHolderActiveState(bool active)
+    {
+        // Wait until the list is populated
+        while (instantiatedPlaceHolders.Count == 0)
+        {
+            yield return null; // Wait for the next frame
+        }
+
+        foreach (GameObject placeHolder in instantiatedPlaceHolders)
+        {
+            placeHolder.SetActive(active);
+        }
+    }
+
+    public IEnumerator SetAllPlaceHoldersInactive()
+    {
+        yield return StartCoroutine(placeHolderActiveState(false));
+        Debug.Log("All placeholders set to inactive!");
+    }
+
+    public IEnumerator SetAllPlaceHoldersActive()
+    {
+        yield return StartCoroutine(placeHolderActiveState(true));
+        Debug.Log("All placeholders set to active!");
     }
 }
 
