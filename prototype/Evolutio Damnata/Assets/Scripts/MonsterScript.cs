@@ -42,8 +42,6 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
     public bool dead = false;
     public bool placed = false;
 
-
-
     // Monster needs room passed so they can get information on what's going on
     public void GenerateMonster(GameObject roomObj, int monsterID, _monsterType monsterType)
     {
@@ -53,25 +51,25 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
 
         maxHealth = 10;
         health = maxHealth;
-        //health = 0; // Comment in/out as necessary, e.g. if you need to test different rooms quickly.
 
         atkDamage = 3;
 
         //picks a random monster image from global resources
         GlobalResources globalResources = GameObject.Find("ResourceManagaer").GetComponent<GlobalResources>();
         img.GetComponent<Image>().sprite = globalResources.monsters[Random.Range(0, globalResources.monsters.Count)]; // Assigns a random sprite
-        //img.GetComponent<Image>().sortingOrder = 2;
 
         gameObject.transform.position = new Vector3(gameObject.transform.position.x, gameObject.transform.position.y, -1);//puts infront of background
 
         //remove button components if its an enemy
-        if (monsterType == MonsterScript._monsterType.Enemy) {
+        if (monsterType == MonsterScript._monsterType.Enemy)
+        {
             Destroy(gameObject.GetComponent<Button>());
 
             outlineImg.GetComponent<Image>().color = new Color(0xFF, 0x00, 0x00);
 
         }
-        else if (monsterType == _monsterType.Friendly) {
+        else if (monsterType == _monsterType.Friendly)
+        {
             outlineImg.GetComponent<Image>().color = new Color(0xB0, 0x00, 0xFF);
         }
 
@@ -83,7 +81,6 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
         unloadMonster();
     }
 
-
     //overloaded function to allow for custom image
     public void GenerateMonster(GameObject roomObj, int monsterID, _monsterType monsterType, Sprite EnemyImg)
     {
@@ -92,15 +89,12 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
         this.monsterType = monsterType;
 
         img.GetComponent<Image>().sprite = EnemyImg;
-        //img.GetComponent<Image>().sortingOrder = 2;
 
         maxHealth = 10;
         health = maxHealth;
-        //health = 0; // Comment in/out as necessary
 
         atkDamage = 10;
 
-        //TODO -- this needs to be updated so obejct get placed in at the correct coords for the level(minght need to hadn mpick leves images so that blaty boards are roughly the same)
         gameObject.transform.position = new Vector3(gameObject.transform.position.x, gameObject.transform.position.y, -1);//puts inform of background
 
         if (monsterType == MonsterScript._monsterType.Enemy)
@@ -127,7 +121,8 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
         selected = !selected;
         return selected;
     }
-    public void ShowOutline() {
+    public void ShowOutline()
+    {
         selected = true;
         outlineImg.SetActive(true);
     }
@@ -167,7 +162,7 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
     }
 
     //-------------------- IDamageable Implementation --------------------//
-    
+
     public void takeDamage(float damageAmount)
     {
         health -= damageAmount;
@@ -176,8 +171,6 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
         if (health <= 0)
         {
             Debug.Log("Monster is dead.");
-            // Handle monster death logic here
-            //Destroy(gameObject);
             gameObject.SetActive(false);
             dead = true;
         }
@@ -217,14 +210,7 @@ public class MonsterScript : MonoBehaviour, IDamageable, IIdentifiable, IAttacke
     //send attack event to room to apply damage
     public void attack(int targetID)
     {
-        if (room != null && room.GetComponent<RoomScript>() != null)
-        {
-            room.GetComponent<RoomScript>().attackEvent(ID, targetID, getAttackDamage());
-        }
-        else
-        {
-            Debug.LogError("Room or RoomScript not found!");
-        }
+        Debug.LogError("Attack functionality is not implemented.");
     }
 
     //-------------------- IIdentifiable Implementation --------------------//

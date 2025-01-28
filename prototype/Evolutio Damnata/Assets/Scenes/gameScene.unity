@@ -1711,7 +1711,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1284858366}
   m_HandleRect: {fileID: 1284858365}
   m_Direction: 2
-  m_Value: 1
+  m_Value: 0
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -1860,10 +1860,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10f936ff672b18a43813d2a89356911b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SelectedMonster: {fileID: 0}
-  EnemySelectedMonster: {fileID: 0}
-  map: {fileID: 559180380}
-  numberVis: {fileID: 7701005947219011525, guid: a68dba72d8724e94989227a650a79328, type: 3}
 --- !u!4 &1394303772
 Transform:
   m_ObjectHideFlags: 0
@@ -2598,6 +2594,14 @@ PrefabInstance:
       propertyPath: panel
       value: 
       objectReference: {fileID: 246061145}
+    - target: {fileID: 7951368645089198031, guid: 507ba406ccdc1a043a24409f51a9f709, type: 3}
+      propertyPath: miniMap
+      value: 
+      objectReference: {fileID: 246061145}
+    - target: {fileID: 7951368645089198031, guid: 507ba406ccdc1a043a24409f51a9f709, type: 3}
+      propertyPath: mainCanvas
+      value: 
+      objectReference: {fileID: 2123307026}
     - target: {fileID: 7951368645089198031, guid: 507ba406ccdc1a043a24409f51a9f709, type: 3}
       propertyPath: roomPrefab
       value: 

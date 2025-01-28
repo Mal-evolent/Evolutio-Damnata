@@ -113,8 +113,8 @@ public class CardManager : MonoBehaviour
                 {
                     currentSelectedCard = cardObject;
                     Debug.Log($"Selected Card: {currentSelectedCard.name}");
-                    combatManager.SelectedMonster = null;
-                    combatManager.UpdateOutlines();
+                    //combatManager.SelectedMonster = null;
+                    //combatManager.UpdateOutlines();
                 }
 
                 if (!cardOutlineManager.cardIsHighlighted)
