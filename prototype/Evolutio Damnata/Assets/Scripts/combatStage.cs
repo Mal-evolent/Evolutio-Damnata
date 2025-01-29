@@ -32,9 +32,15 @@ public class combatStage : MonoBehaviour
 
     List<GameObject> playerMonsters = new List<GameObject>();
 
+    private bool buttonsInitialized = false;
+
     // This function will be kept
     public void interactableHighlights()
     {
+        if (buttonsInitialized) return;
+
+        Vector2 buttonSize = spritePositioning.GetFirstPlaceholderSize(); // Get the size of the placeholders
+
         for (int i = 0; i < spritePositioning.instantiatedPlaceHolders.Count; i++)
         {
             if (spritePositioning.instantiatedPlaceHolders[i] == null)
@@ -50,7 +56,7 @@ public class combatStage : MonoBehaviour
 
             // Add required components to make it a Button
             RectTransform rectTransform = buttonObject.AddComponent<RectTransform>();
-            rectTransform.sizeDelta = rectTransform.sizeDelta = spritePositioning.GetFirstPlaceholderSize();
+            rectTransform.sizeDelta = buttonSize; // Set the size of the Button to match the placeholder size
 
             Button buttonComponent = buttonObject.AddComponent<Button>();
 
@@ -91,32 +97,11 @@ public class combatStage : MonoBehaviour
                     Debug.Log("No card selected to use on monster!");
                 }
             });
-
-            //reveal highlight upon card selection
-            if (cardManager.currentSelectedCard != null)
-            {
-                for (int j = 0; i < spritePositioning.instantiatedPlaceHolders.Count; i++)
-                {
-                    if (spritePositioning.instantiatedPlaceHolders[i] != null)
-                    {
-                        spritePositioning.instantiatedPlaceHolders[i].SetActive(true);
-                    }
-                }
-            }
-            else
-            {
-                for (int j = 0; i < spritePositioning.instantiatedPlaceHolders.Count; i++)
-                {
-                    if (spritePositioning.instantiatedPlaceHolders[i] != null)
-                    {
-                        spritePositioning.instantiatedPlaceHolders[i].SetActive(false);
-                    }
-                }
-            }
         }
+
+        buttonsInitialized = true;
     }
 
-    // This function will be kept
     public void spawnPlayerCard(string cardName, int whichOutline)
     {
         int cardCost = 0;
@@ -160,7 +145,7 @@ public class combatStage : MonoBehaviour
 
         // Add required components to make it a Button
         RectTransform rectTransform = buttonObject.AddComponent<RectTransform>();
-        rectTransform.sizeDelta = new Vector2(25, 53); // Why 25x53?
+        rectTransform.sizeDelta = new Vector2(25, 53); // Set the size of the Button
 
         Button buttonComponent = buttonObject.AddComponent<Button>();
 
@@ -214,6 +199,26 @@ public class combatStage : MonoBehaviour
 
     private void Update()
     {
-        interactableHighlights();
+        // Check if a card is selected and update placeholder visibility
+        if (cardManager.currentSelectedCard != null)
+        {
+            for (int i = 0; i < spritePositioning.instantiatedPlaceHolders.Count; i++)
+            {
+                if (spritePositioning.instantiatedPlaceHolders[i] != null)
+                {
+                    spritePositioning.instantiatedPlaceHolders[i].SetActive(true);
+                }
+            }
+        }
+        else
+        {
+            for (int i = 0; i < spritePositioning.instantiatedPlaceHolders.Count; i++)
+            {
+                if (spritePositioning.instantiatedPlaceHolders[i] != null)
+                {
+                    spritePositioning.instantiatedPlaceHolders[i].SetActive(false);
+                }
+            }
+        }
     }
 }
