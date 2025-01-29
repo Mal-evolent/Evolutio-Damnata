@@ -32,12 +32,13 @@ public class combatStage : MonoBehaviour
 
     private bool buttonsInitialized = false;
 
+    // Button dimensions
+    private readonly Vector2 buttonSize = new Vector2(217.9854f, 322.7287f);
+
     // This function will be kept
     public void interactableHighlights()
     {
         if (buttonsInitialized) return;
-
-        Vector2 buttonSize = spritePositioning.GetFirstPlaceholderSize(); // Get the size of the placeholders
 
         for (int i = 0; i < spritePositioning.instantiatedPlaceHolders.Count; i++)
         {
@@ -45,6 +46,13 @@ public class combatStage : MonoBehaviour
             {
                 Debug.LogError($"Placeholder at index {i} is null!");
                 continue;
+            }
+
+            // Set RaycastTarget to false for the placeholder outline
+            Image placeholderImage = spritePositioning.instantiatedPlaceHolders[i].GetComponent<Image>();
+            if (placeholderImage != null)
+            {
+                placeholderImage.raycastTarget = false;
             }
 
             // Create a new GameObject for the Button
@@ -143,17 +151,27 @@ public class combatStage : MonoBehaviour
             playerMonsters.Add(newMonster);
         }
 
-        playerMonsters[whichOutline].GetComponent<MonsterScript>().placed = true;
+        MonsterScript monsterScript = playerMonsters[whichOutline].GetComponent<MonsterScript>();
+        if (monsterScript == null)
+        {
+            Debug.LogError($"MonsterScript not found on playerMonsters[{whichOutline}]");
+            return;
+        }
+
+        monsterScript.placed = true;
 
         // Setting monster's attributes using CardLibrary.CardData
         foreach (CardLibrary.CardData cardData in cardLibrary.cardDataList)
         {
             if (cardName == cardData.CardName)
             {
-                playerMonsters[whichOutline].GetComponent<MonsterScript>().setHealth(cardData.Health);
-                playerMonsters[whichOutline].GetComponent<MonsterScript>().SetAttackDamage(cardData.AttackPower);
+                monsterScript.setHealth(cardData.Health);
+                monsterScript.SetAttackDamage(cardData.AttackPower);
 
-                playerMonsters[whichOutline].GetComponent<MonsterScript>()._healthBar.SetActive(true);
+                if (monsterScript._healthBar != null)
+                {
+                    monsterScript._healthBar.SetActive(true);
+                }
                 break;
             }
         }
@@ -164,7 +182,7 @@ public class combatStage : MonoBehaviour
 
         // Add required components to make it a Button
         RectTransform rectTransform = buttonObject.AddComponent<RectTransform>();
-        rectTransform.sizeDelta = spritePositioning.GetFirstPlaceholderSize();
+        rectTransform.sizeDelta = buttonSize; // Use the defined button size
 
         Button buttonComponent = buttonObject.AddComponent<Button>();
 
