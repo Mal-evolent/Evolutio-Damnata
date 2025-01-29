@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using TMPro;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UI;
 public class combatStage : MonoBehaviour
@@ -99,7 +100,7 @@ public class combatStage : MonoBehaviour
                     cardManager.currentSelectedCard = null;
 
                     // Deactivate placeholders
-                    SetPlaceholdersActive(false);
+                    placeHolderActiveState(false);
                 }
                 else
                 {
@@ -239,21 +240,28 @@ public class combatStage : MonoBehaviour
         // Check if a card is selected and update placeholder visibility
         if (cardManager.currentSelectedCard != null)
         {
-            SetPlaceholdersActive(true);
+            placeHolderActiveState(true);
         }
         else
         {
-            SetPlaceholdersActive(false);
+            placeHolderActiveState(false);
         }
     }
 
-    private void SetPlaceholdersActive(bool active)
+    private void placeHolderActiveState(bool active)
     {
         for (int i = 0; i < spritePositioning.instantiatedPlaceHolders.Count; i++)
         {
             if (spritePositioning.instantiatedPlaceHolders[i] != null)
             {
-                spritePositioning.instantiatedPlaceHolders[i].SetActive(active);
+                Image placeholderImage = spritePositioning.instantiatedPlaceHolders[i].GetComponent<Image>();
+                if (placeholderImage != null && placeholderImage.sprite != null)
+                {
+                    if (placeholderImage.sprite.name == "wizard_outline")
+                    {
+                        spritePositioning.instantiatedPlaceHolders[i].SetActive(active);
+                    }
+                }
             }
         }
     }
