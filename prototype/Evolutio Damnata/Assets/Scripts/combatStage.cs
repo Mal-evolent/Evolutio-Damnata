@@ -21,8 +21,6 @@ public class combatStage : MonoBehaviour
 
     [SerializeField]
     CardOutlineManager cardOutlineManager;
-    [SerializeField]
-    List<Image> Outlines;
 
     [SerializeField]
     Canvas battleField;
@@ -75,6 +73,9 @@ public class combatStage : MonoBehaviour
                 {
                     Debug.Log($"Card {cardManager.currentSelectedCard.name} used on monster {temp_i}");
 
+                    // Spawn card on field
+                    spawnPlayerCard(cardManager.currentSelectedCard.name, temp_i);
+
                     // Remove card from hand
                     List<GameObject> handCardObjects = cardManager.getHandCardObjects();
                     foreach (GameObject cardObject in handCardObjects)
@@ -87,10 +88,10 @@ public class combatStage : MonoBehaviour
                         }
                     }
 
-                    // Spawn card on field
-                    spawnPlayerCard(cardManager.currentSelectedCard.name, temp_i);
-
                     cardManager.currentSelectedCard = null;
+
+                    // Deactivate placeholders
+                    SetPlaceholdersActive(false);
                 }
                 else
                 {
@@ -104,6 +105,12 @@ public class combatStage : MonoBehaviour
 
     public void spawnPlayerCard(string cardName, int whichOutline)
     {
+        if (whichOutline < 0 || whichOutline >= spritePositioning.instantiatedPlaceHolders.Count)
+        {
+            Debug.LogError($"Invalid outline index: {whichOutline}");
+            return;
+        }
+
         int cardCost = 0;
         foreach (CardLibrary.CardData cardData in cardLibrary.cardDataList)
         {
@@ -122,7 +129,19 @@ public class combatStage : MonoBehaviour
         cardManager.currentSelectedCard = null;
 
         // Set monster attributes
-        Outlines[whichOutline].sprite = cardLibrary.cardImageGetter(cardName);
+        Image placeholderImage = spritePositioning.instantiatedPlaceHolders[whichOutline].GetComponent<Image>();
+        if (placeholderImage != null)
+        {
+            placeholderImage.sprite = cardLibrary.cardImageGetter(cardName);
+        }
+
+        // Ensure playerMonsters list has enough elements
+        while (playerMonsters.Count <= whichOutline)
+        {
+            GameObject newMonster = new GameObject($"Monster_{whichOutline}");
+            newMonster.AddComponent<MonsterScript>(); // Add the MonsterScript component to the new monster
+            playerMonsters.Add(newMonster);
+        }
 
         playerMonsters[whichOutline].GetComponent<MonsterScript>().placed = true;
 
@@ -145,7 +164,7 @@ public class combatStage : MonoBehaviour
 
         // Add required components to make it a Button
         RectTransform rectTransform = buttonObject.AddComponent<RectTransform>();
-        rectTransform.sizeDelta = new Vector2(25, 53); // Set the size of the Button
+        rectTransform.sizeDelta = spritePositioning.GetFirstPlaceholderSize();
 
         Button buttonComponent = buttonObject.AddComponent<Button>();
 
@@ -202,22 +221,21 @@ public class combatStage : MonoBehaviour
         // Check if a card is selected and update placeholder visibility
         if (cardManager.currentSelectedCard != null)
         {
-            for (int i = 0; i < spritePositioning.instantiatedPlaceHolders.Count; i++)
-            {
-                if (spritePositioning.instantiatedPlaceHolders[i] != null)
-                {
-                    spritePositioning.instantiatedPlaceHolders[i].SetActive(true);
-                }
-            }
+            SetPlaceholdersActive(true);
         }
         else
         {
-            for (int i = 0; i < spritePositioning.instantiatedPlaceHolders.Count; i++)
+            SetPlaceholdersActive(false);
+        }
+    }
+
+    private void SetPlaceholdersActive(bool active)
+    {
+        for (int i = 0; i < spritePositioning.instantiatedPlaceHolders.Count; i++)
+        {
+            if (spritePositioning.instantiatedPlaceHolders[i] != null)
             {
-                if (spritePositioning.instantiatedPlaceHolders[i] != null)
-                {
-                    spritePositioning.instantiatedPlaceHolders[i].SetActive(false);
-                }
+                spritePositioning.instantiatedPlaceHolders[i].SetActive(active);
             }
         }
     }
