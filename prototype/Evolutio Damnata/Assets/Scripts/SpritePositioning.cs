@@ -12,12 +12,12 @@ public class SpritePositioning : MonoBehaviour
     Canvas mainCanvas;
 
     public Dictionary<string, List<PositionData>> roomPositions;
-    public List<GameObject> instantiatedPlaceHolders;
+    public List<GameObject> activeEntities;
 
     void Start()
     {
         InitializeRoomPositions();
-        instantiatedPlaceHolders = new List<GameObject>();
+        activeEntities = new List<GameObject>();
         StartCoroutine(WaitForRoomSelection());
     }
 
@@ -62,11 +62,11 @@ public class SpritePositioning : MonoBehaviour
     public void togglePlaceHolders(bool show)
     {
         // Clear previously instantiated placeholders
-        foreach (GameObject placeHolder in instantiatedPlaceHolders)
+        foreach (GameObject placeHolder in activeEntities)
         {
             Destroy(placeHolder);
         }
-        instantiatedPlaceHolders.Clear();
+        activeEntities.Clear();
 
         // Instantiate new placeholders and store them in the list
         List<PositionData> positions = GetPositionsForCurrentRoom();
@@ -77,7 +77,7 @@ public class SpritePositioning : MonoBehaviour
             placeHolder.GetComponent<RectTransform>().sizeDelta = position.Size;
             placeHolder.transform.localScale = position.Scale;
             placeHolder.SetActive(show);
-            instantiatedPlaceHolders.Add(placeHolder);
+            activeEntities.Add(placeHolder);
         }
     }
 
@@ -104,12 +104,12 @@ public class SpritePositioning : MonoBehaviour
     public IEnumerator placeHolderActiveState(bool active)
     {
         // Wait until the list is populated
-        while (instantiatedPlaceHolders.Count == 0)
+        while (activeEntities.Count == 0)
         {
             yield return null; // Wait for the next frame
         }
 
-        foreach (GameObject placeHolder in instantiatedPlaceHolders)
+        foreach (GameObject placeHolder in activeEntities)
         {
             placeHolder.SetActive(active);
         }

@@ -29,8 +29,6 @@ public class combatStage : MonoBehaviour
     [SerializeField]
     SpritePositioning spritePositioning;
 
-    List<GameObject> playerMonsters = new List<GameObject>();
-
     private bool buttonsInitialized = false;
 
     // Button dimensions
@@ -41,16 +39,16 @@ public class combatStage : MonoBehaviour
     {
         if (buttonsInitialized) return;
 
-        for (int i = 0; i < spritePositioning.instantiatedPlaceHolders.Count; i++)
+        for (int i = 0; i < spritePositioning.activeEntities.Count; i++)
         {
-            if (spritePositioning.instantiatedPlaceHolders[i] == null)
+            if (spritePositioning.activeEntities[i] == null)
             {
                 Debug.LogError($"Placeholder at index {i} is null!");
                 continue;
             }
 
             // Set RaycastTarget to false for the placeholder outline
-            Image placeholderImage = spritePositioning.instantiatedPlaceHolders[i].GetComponent<Image>();
+            Image placeholderImage = spritePositioning.activeEntities[i].GetComponent<Image>();
             if (placeholderImage != null)
             {
                 placeholderImage.raycastTarget = false;
@@ -58,7 +56,7 @@ public class combatStage : MonoBehaviour
 
             // Create a new GameObject for the Button
             GameObject buttonObject = new GameObject($"Button_Outline_{i}");
-            buttonObject.transform.SetParent(spritePositioning.instantiatedPlaceHolders[i].transform, false); // Add as a child of the Placeholder
+            buttonObject.transform.SetParent(spritePositioning.activeEntities[i].transform, false); // Add as a child of the Placeholder
             buttonObject.transform.localPosition = Vector3.zero; // Center the Button inside the Placeholder
 
             // Add required components to make it a Button
@@ -82,8 +80,11 @@ public class combatStage : MonoBehaviour
                 {
                     Debug.Log($"Card {cardManager.currentSelectedCard.name} used on monster {temp_i}");
 
+                    // Capture the outline's Image component
+                    Image outlineImage = spritePositioning.activeEntities[temp_i].GetComponent<Image>();
+
                     // Spawn card on field
-                    spawnPlayerCard(cardManager.currentSelectedCard.name, temp_i);
+                    spawnPlayerCard(cardManager.currentSelectedCard.name, temp_i, outlineImage);
 
                     // Remove card from hand
                     List<GameObject> handCardObjects = cardManager.getHandCardObjects();
@@ -112,22 +113,46 @@ public class combatStage : MonoBehaviour
         buttonsInitialized = true;
     }
 
-    public void spawnPlayerCard(string cardName, int whichOutline)
+    public void spawnPlayerCard(string cardName, int whichOutline, Image outlineImage)
     {
-        if (whichOutline < 0 || whichOutline >= spritePositioning.instantiatedPlaceHolders.Count)
+        if (whichOutline < 0 || whichOutline >= spritePositioning.activeEntities.Count)
         {
             Debug.LogError($"Invalid outline index: {whichOutline}");
             return;
         }
 
+        // Check if the placeholder is already populated
+        EntityManager existingEntityManager = spritePositioning.activeEntities[whichOutline].GetComponent<EntityManager>();
+        if (existingEntityManager != null && existingEntityManager.placed)
+        {
+            Debug.LogError("Cannot place a card in an already populated placeholder.");
+            return;
+        }
+
         int cardCost = 0;
+        CardLibrary.CardData selectedCardData = null;
         foreach (CardLibrary.CardData cardData in cardLibrary.cardDataList)
         {
             if (cardName == cardData.CardName)
             {
-                if (currentMana < cardData.ManaCost) { Debug.Log($"Not enough mana. Card costs {cardData.ManaCost}, player has {currentMana}"); return; } //bail if there isnt enough mana
-                else { cardCost = cardData.ManaCost; break; }
+                if (currentMana < cardData.ManaCost)
+                {
+                    Debug.Log($"Not enough mana. Card costs {cardData.ManaCost}, player has {currentMana}");
+                    return; // Bail if there isn't enough mana
+                }
+                else
+                {
+                    cardCost = cardData.ManaCost;
+                    selectedCardData = cardData;
+                    break;
+                }
             }
+        }
+
+        if (selectedCardData == null)
+        {
+            Debug.LogError($"Card data not found for card name: {cardName}");
+            return;
         }
 
         // Remove outline/highlight on current card in hand
@@ -138,63 +163,36 @@ public class combatStage : MonoBehaviour
         cardManager.currentSelectedCard = null;
 
         // Set monster attributes
-        Image placeholderImage = spritePositioning.instantiatedPlaceHolders[whichOutline].GetComponent<Image>();
+        Image placeholderImage = spritePositioning.activeEntities[whichOutline].GetComponent<Image>();
         if (placeholderImage != null)
         {
             placeholderImage.sprite = cardLibrary.cardImageGetter(cardName);
         }
 
-        // Ensure playerMonsters list has enough elements
-        while (playerMonsters.Count <= whichOutline)
+        // Get the placeholder GameObject
+        GameObject placeholder = spritePositioning.activeEntities[whichOutline];
+
+        // Add the EntityManager component to the placeholder
+        EntityManager entityManager = placeholder.GetComponent<EntityManager>();
+        if (entityManager == null)
         {
-            GameObject newMonster = new GameObject($"Monster_{whichOutline}");
-            newMonster.AddComponent<MonsterScript>(); // Add the MonsterScript component to the new monster
-            playerMonsters.Add(newMonster);
+            entityManager = placeholder.AddComponent<EntityManager>();
         }
 
-        MonsterScript monsterScript = playerMonsters[whichOutline].GetComponent<MonsterScript>();
-        if (monsterScript == null)
-        {
-            Debug.LogError($"MonsterScript not found on playerMonsters[{whichOutline}]");
-            return;
-        }
+        // Find the health bar Slider component using transform.Find
+        Transform healthBarTransform = placeholder.transform.Find("healthBar");
+        Slider healthBarSlider = healthBarTransform != null ? healthBarTransform.GetComponent<Slider>() : null;
 
-        monsterScript.placed = true;
+        entityManager.placed = true;
 
-        // Setting monster's attributes using CardLibrary.CardData
-        foreach (CardLibrary.CardData cardData in cardLibrary.cardDataList)
-        {
-            if (cardName == cardData.CardName)
-            {
-                monsterScript.setHealth(cardData.Health);
-                monsterScript.SetAttackDamage(cardData.AttackPower);
+        // Initialize the monster with the appropriate type, attributes, and outline image
+        entityManager.InitializeMonster(EntityManager._monsterType.Friendly, selectedCardData.Health, selectedCardData.AttackPower, outlineImage, healthBarSlider);
 
-                if (monsterScript._healthBar != null)
-                {
-                    monsterScript._healthBar.SetActive(true);
-                }
-                break;
-            }
-        }
+        // Rename the placeholder to the card name
+        placeholder.name = cardName;
 
-        GameObject buttonObject = new GameObject($"Select_Button_{whichOutline}");
-        buttonObject.transform.SetParent(playerMonsters[whichOutline].transform, false); // Add as a child of the Outline
-        buttonObject.transform.localPosition = Vector3.zero; // Center the Button inside the Outline
-
-        // Add required components to make it a Button
-        RectTransform rectTransform = buttonObject.AddComponent<RectTransform>();
-        rectTransform.sizeDelta = buttonSize; // Use the defined button size
-
-        Button buttonComponent = buttonObject.AddComponent<Button>();
-
-        // Optional: Add an Image component to visualize the Button
-        Image buttonImage = buttonObject.AddComponent<Image>();
-        buttonImage.color = new UnityEngine.Color(1, 1, 1, 0); // Transparent background for the Button
-        buttonComponent.onClick.AddListener(() =>
-        {
-            cardOutlineManager.RemoveHighlight();
-            cardManager.currentSelectedCard = null;
-        });
+        // Display the health bar
+        displayHealthBar(placeholder, true);
 
         // Decrease current mana
         currentMana -= cardCost;
@@ -226,7 +224,7 @@ public class combatStage : MonoBehaviour
     private IEnumerator InitializeInteractableHighlights()
     {
         // Wait until placeholders are instantiated
-        while (spritePositioning.instantiatedPlaceHolders.Count == 0)
+        while (spritePositioning.activeEntities.Count == 0)
         {
             yield return null; // Wait for the next frame
         }
@@ -250,19 +248,28 @@ public class combatStage : MonoBehaviour
 
     private void placeHolderActiveState(bool active)
     {
-        for (int i = 0; i < spritePositioning.instantiatedPlaceHolders.Count; i++)
+        for (int i = 0; i < spritePositioning.activeEntities.Count; i++)
         {
-            if (spritePositioning.instantiatedPlaceHolders[i] != null)
+            if (spritePositioning.activeEntities[i] != null)
             {
-                Image placeholderImage = spritePositioning.instantiatedPlaceHolders[i].GetComponent<Image>();
+                Image placeholderImage = spritePositioning.activeEntities[i].GetComponent<Image>();
                 if (placeholderImage != null && placeholderImage.sprite != null)
                 {
                     if (placeholderImage.sprite.name == "wizard_outline")
                     {
-                        spritePositioning.instantiatedPlaceHolders[i].SetActive(active);
+                        spritePositioning.activeEntities[i].SetActive(active);
                     }
                 }
             }
+        }
+    }
+
+    private void displayHealthBar(GameObject entity, bool active)
+    {
+        Transform healthBarTransform = entity.transform.Find("healthBar");
+        if (healthBarTransform != null)
+        {
+            healthBarTransform.gameObject.SetActive(active);
         }
     }
 }
