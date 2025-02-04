@@ -12,16 +12,18 @@ public class SpritePositioning : MonoBehaviour
     Canvas mainCanvas;
 
     public Dictionary<string, List<PositionData>> roomPositions;
+    public Dictionary<string, List<PositionData>> enemyRoomPositions;
     public List<GameObject> activeEntities;
 
     void Start()
     {
-        InitializeRoomPositions();
+        InitializePlayerRoomPositions();
+        InitializeEnemyRoomPositions();
         activeEntities = new List<GameObject>();
         StartCoroutine(WaitForRoomSelection());
     }
 
-    void InitializeRoomPositions()
+    void InitializePlayerRoomPositions()
     {
         roomPositions = new Dictionary<string, List<PositionData>>();
 
@@ -36,6 +38,21 @@ public class SpritePositioning : MonoBehaviour
         // Add more rooms and their positions as needed
     }
 
+    void InitializeEnemyRoomPositions()
+    {
+        enemyRoomPositions = new Dictionary<string, List<PositionData>>();
+
+        // Example configuration for room "Main Map"
+        enemyRoomPositions["Main Map"] = new List<PositionData>
+        {
+            new PositionData(new Vector2(100, 100), new Vector2(50, 50), new Vector3(0.5826045f, 0.5826045f, 0.5826045f)),
+            new PositionData(new Vector2(200, 200), new Vector2(50, 50), new Vector3(0.5826045f, 0.5826045f, 0.5826045f)),
+            new PositionData(new Vector2(300, 300), new Vector2(50, 50), new Vector3(0.5826045f, 0.5826045f, 0.5826045f))
+        };
+
+        // Add more rooms and their positions as needed
+    }
+
     public IEnumerator WaitForRoomSelection()
     {
         while (mapScript.currentSelectedRoom == "None")
@@ -45,7 +62,7 @@ public class SpritePositioning : MonoBehaviour
         togglePlaceHolders(true); // Set placeholders to be visible once the room is selected
     }
 
-    public List<PositionData> GetPositionsForCurrentRoom()
+    public List<PositionData> GetPlayerPositionsForCurrentRoom()
     {
         string currentRoom = mapScript.currentSelectedRoom;
         if (roomPositions.ContainsKey(currentRoom))
@@ -55,6 +72,20 @@ public class SpritePositioning : MonoBehaviour
         else
         {
             Debug.LogError($"No position data found for room: {currentRoom}");
+            return new List<PositionData>();
+        }
+    }
+
+    public List<PositionData> GetEnemyPositionsForCurrentRoom()
+    {
+        string currentRoom = mapScript.currentSelectedRoom;
+        if (enemyRoomPositions.ContainsKey(currentRoom))
+        {
+            return enemyRoomPositions[currentRoom];
+        }
+        else
+        {
+            Debug.LogError($"No enemy position data found for room: {currentRoom}");
             return new List<PositionData>();
         }
     }
@@ -69,7 +100,7 @@ public class SpritePositioning : MonoBehaviour
         activeEntities.Clear();
 
         // Instantiate new placeholders and store them in the list
-        List<PositionData> positions = GetPositionsForCurrentRoom();
+        List<PositionData> positions = GetPlayerPositionsForCurrentRoom();
         foreach (PositionData position in positions)
         {
             GameObject placeHolder = Instantiate(placeHolderPrefab, mainCanvas.transform);
@@ -83,7 +114,7 @@ public class SpritePositioning : MonoBehaviour
 
     public Vector2 GetFirstPlaceholderSize()
     {
-        List<PositionData> positions = GetPositionsForCurrentRoom();
+        List<PositionData> positions = GetPlayerPositionsForCurrentRoom();
         if (positions.Count > 0)
         {
             return positions[0].Size;
@@ -93,7 +124,7 @@ public class SpritePositioning : MonoBehaviour
 
     public Vector3 GetFirstPlaceholderScale()
     {
-        List<PositionData> positions = GetPositionsForCurrentRoom();
+        List<PositionData> positions = GetPlayerPositionsForCurrentRoom();
         if (positions.Count > 0)
         {
             return positions[0].Scale;
