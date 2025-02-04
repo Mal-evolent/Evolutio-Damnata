@@ -1,4 +1,3 @@
-using JetBrains.Annotations;
 using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
@@ -84,7 +83,7 @@ public class combatStage : MonoBehaviour
                     Image outlineImage = spritePositioning.activeEntities[temp_i].GetComponent<Image>();
 
                     // Spawn card on field
-                    spawnPlayerCard(cardManager.currentSelectedCard.name, temp_i, outlineImage);
+                    spawnPlayerCard(cardManager.currentSelectedCard.name, temp_i);
 
                     // Remove card from hand
                     List<GameObject> handCardObjects = cardManager.getHandCardObjects();
@@ -113,7 +112,7 @@ public class combatStage : MonoBehaviour
         buttonsInitialized = true;
     }
 
-    public void spawnPlayerCard(string cardName, int whichOutline, Image outlineImage)
+    public void spawnPlayerCard(string cardName, int whichOutline)
     {
         if (whichOutline < 0 || whichOutline >= spritePositioning.activeEntities.Count)
         {
@@ -162,15 +161,23 @@ public class combatStage : MonoBehaviour
         Destroy(cardManager.currentSelectedCard);
         cardManager.currentSelectedCard = null;
 
+        // Get the placeholder GameObject
+        GameObject placeholder = spritePositioning.activeEntities[whichOutline];
+
         // Set monster attributes
-        Image placeholderImage = spritePositioning.activeEntities[whichOutline].GetComponent<Image>();
+        Image placeholderImage = placeholder.GetComponent<Image>();
         if (placeholderImage != null)
         {
             placeholderImage.sprite = cardLibrary.cardImageGetter(cardName);
         }
 
-        // Get the placeholder GameObject
-        GameObject placeholder = spritePositioning.activeEntities[whichOutline];
+        // Apply positioning, scale, and rotation
+        RectTransform rectTransform = placeholder.GetComponent<RectTransform>();
+        PositionData positionData = spritePositioning.GetPlayerPositionsForCurrentRoom()[whichOutline];
+        rectTransform.anchoredPosition = positionData.Position;
+        rectTransform.sizeDelta = positionData.Size;
+        rectTransform.localScale = positionData.Scale;
+        rectTransform.rotation = positionData.Rotation;
 
         // Add the EntityManager component to the placeholder
         EntityManager entityManager = placeholder.GetComponent<EntityManager>();
@@ -186,7 +193,7 @@ public class combatStage : MonoBehaviour
         entityManager.placed = true;
 
         // Initialize the monster with the appropriate type, attributes, and outline image
-        entityManager.InitializeMonster(EntityManager._monsterType.Friendly, selectedCardData.Health, selectedCardData.AttackPower, outlineImage, healthBarSlider);
+        entityManager.InitializeMonster(EntityManager._monsterType.Friendly, selectedCardData.Health, selectedCardData.AttackPower, healthBarSlider);
 
         // Rename the placeholder to the card name
         placeholder.name = cardName;
@@ -208,9 +215,77 @@ public class combatStage : MonoBehaviour
         churchBells.Play();
     }
 
-    public void spawnEnemy()
+    public void spawnEnemy(string cardName, int whichOutline)
     {
+        if (whichOutline < 0 || whichOutline >= spritePositioning.enemyEntities.Count)
+        {
+            Debug.LogError($"Invalid outline index: {whichOutline}");
+            return;
+        }
 
+        // Check if the placeholder is already populated
+        EntityManager existingEntityManager = spritePositioning.enemyEntities[whichOutline].GetComponent<EntityManager>();
+        if (existingEntityManager != null && existingEntityManager.placed)
+        {
+            Debug.LogError("Cannot place a card in an already populated placeholder.");
+            return;
+        }
+
+        CardLibrary.CardData selectedCardData = null;
+        foreach (CardLibrary.CardData cardData in cardLibrary.cardDataList)
+        {
+            if (cardName == cardData.CardName)
+            {
+                selectedCardData = cardData;
+                break;
+            }
+        }
+
+        if (selectedCardData == null)
+        {
+            Debug.LogError($"Card data not found for card name: {cardName}");
+            return;
+        }
+
+        // Get the placeholder GameObject
+        GameObject placeholder = spritePositioning.enemyEntities[whichOutline];
+
+        // Set monster attributes
+        Image placeholderImage = placeholder.GetComponent<Image>();
+        if (placeholderImage != null)
+        {
+            placeholderImage.sprite = cardLibrary.cardImageGetter(cardName);
+        }
+
+        // Apply positioning, scale, and rotation
+        RectTransform rectTransform = placeholder.GetComponent<RectTransform>();
+        PositionData positionData = spritePositioning.GetEnemyPositionsForCurrentRoom()[whichOutline];
+        rectTransform.anchoredPosition = positionData.Position;
+        rectTransform.sizeDelta = positionData.Size;
+        rectTransform.localScale = positionData.Scale;
+        rectTransform.rotation = positionData.Rotation;
+
+        // Add the EntityManager component to the placeholder
+        EntityManager entityManager = placeholder.GetComponent<EntityManager>();
+        if (entityManager == null)
+        {
+            entityManager = placeholder.AddComponent<EntityManager>();
+        }
+
+        // Find the health bar Slider component using transform.Find
+        Transform healthBarTransform = placeholder.transform.Find("healthBar");
+        Slider healthBarSlider = healthBarTransform != null ? healthBarTransform.GetComponent<Slider>() : null;
+
+        entityManager.placed = true;
+
+        // Initialize the monster with the appropriate type, attributes, and outline image
+        entityManager.InitializeMonster(EntityManager._monsterType.Enemy, selectedCardData.Health, selectedCardData.AttackPower, healthBarSlider);
+
+        // Rename the placeholder to the card name
+        placeholder.name = cardName;
+
+        // Display the health bar
+        displayHealthBar(placeholder, true);
     }
 
     // Start is called before the first frame update

@@ -38,7 +38,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     public bool placed = false;
 
     // Method to set monster type and initialize health bar
-    public void InitializeMonster(_monsterType monsterType, float maxHealth, float atkDamage, Image outlineImageComponent, Slider healthBarSlider)
+    public void InitializeMonster(_monsterType monsterType, float maxHealth, float atkDamage, Slider healthBarSlider)
     {
         this.monsterType = monsterType;
         this.maxHealth = maxHealth;
