@@ -14,12 +14,14 @@ public class SpritePositioning : MonoBehaviour
     public Dictionary<string, List<PositionData>> roomPositions;
     public Dictionary<string, List<PositionData>> enemyRoomPositions;
     public List<GameObject> activeEntities;
+    public List<GameObject> enemyEntities;
 
     void Start()
     {
         InitializePlayerRoomPositions();
         InitializeEnemyRoomPositions();
         activeEntities = new List<GameObject>();
+        enemyEntities = new List<GameObject>();
         StartCoroutine(WaitForRoomSelection());
     }
 
@@ -30,9 +32,9 @@ public class SpritePositioning : MonoBehaviour
         // Example configuration for room "Main Map"
         roomPositions["Main Map"] = new List<PositionData>
         {
-            new PositionData(new Vector2(-553, -384), new Vector2(613.7594f, 550.7698f), new Vector3(0.5826045f, 0.5826045f, 0.5826045f)),
-            new PositionData(new Vector2(-417.94f, -250.38f), new Vector2(613.7594f, 550.7698f), new Vector3(0.5826045f, 0.5826045f, 0.5826045f)),
-            new PositionData(new Vector2(-306.8797f, -384), new Vector2(613.7594f, 550.7698f), new Vector3(0.5826045f, 0.5826045f, 0.5826045f))
+            new PositionData(new Vector2(-553, -384), new Vector2(613.7594f, 550.7698f), new Vector3(0.5826045f, 0.5826045f, 0.5826045f), Quaternion.Euler(0, 0, 0)),
+            new PositionData(new Vector2(-417.94f, -250.38f), new Vector2(613.7594f, 550.7698f), new Vector3(0.5826045f, 0.5826045f, 0.5826045f), Quaternion.Euler(0, 0, 0)),
+            new PositionData(new Vector2(-306.8797f, -384), new Vector2(613.7594f, 550.7698f), new Vector3(0.5826045f, 0.5826045f, 0.5826045f), Quaternion.Euler(0, 0, 0))
         };
 
         // Add more rooms and their positions as needed
@@ -45,9 +47,9 @@ public class SpritePositioning : MonoBehaviour
         // Example configuration for room "Main Map"
         enemyRoomPositions["Main Map"] = new List<PositionData>
         {
-            new PositionData(new Vector2(100, 100), new Vector2(50, 50), new Vector3(0.5826045f, 0.5826045f, 0.5826045f)),
-            new PositionData(new Vector2(200, 200), new Vector2(50, 50), new Vector3(0.5826045f, 0.5826045f, 0.5826045f)),
-            new PositionData(new Vector2(300, 300), new Vector2(50, 50), new Vector3(0.5826045f, 0.5826045f, 0.5826045f))
+            new PositionData(new Vector2(269, -384), new Vector2(613.7594f, 550.7698f), new Vector3(0.5826045f, 0.5826045f, 0.5826045f), Quaternion.Euler(0, 180, 0)),
+            new PositionData(new Vector2(417.940002f, -250.380005f), new Vector2(613.7594f, 550.7698f), new Vector3(0.5826045f, 0.5826045f, 0.5826045f), Quaternion.Euler(0, 180, 0)),
+            new PositionData(new Vector2(606, -384), new Vector2(613.7594f, 550.7698f), new Vector3(0.5826045f, 0.5826045f, 0.5826045f), Quaternion.Euler(0, 180, 0))
         };
 
         // Add more rooms and their positions as needed
@@ -60,6 +62,7 @@ public class SpritePositioning : MonoBehaviour
             yield return null; // Wait for the next frame
         }
         togglePlaceHolders(true); // Set placeholders to be visible once the room is selected
+        DisplayEnemyPlaceHolders(); // Display enemy placeholders permanently
     }
 
     public List<PositionData> GetPlayerPositionsForCurrentRoom()
@@ -101,14 +104,42 @@ public class SpritePositioning : MonoBehaviour
 
         // Instantiate new placeholders and store them in the list
         List<PositionData> positions = GetPlayerPositionsForCurrentRoom();
-        foreach (PositionData position in positions)
+        for (int i = 0; i < positions.Count; i++)
         {
+            PositionData position = positions[i];
             GameObject placeHolder = Instantiate(placeHolderPrefab, mainCanvas.transform);
             placeHolder.GetComponent<RectTransform>().anchoredPosition = position.Position;
             placeHolder.GetComponent<RectTransform>().sizeDelta = position.Size;
             placeHolder.transform.localScale = position.Scale;
+            placeHolder.transform.rotation = position.Rotation;
+            placeHolder.name = $"Player_Placeholder_{i}";
             placeHolder.SetActive(show);
             activeEntities.Add(placeHolder);
+        }
+    }
+
+    public void DisplayEnemyPlaceHolders()
+    {
+        // Clear previously instantiated enemy placeholders
+        foreach (GameObject placeHolder in enemyEntities)
+        {
+            Destroy(placeHolder);
+        }
+        enemyEntities.Clear();
+
+        // Instantiate new enemy placeholders and store them in the list
+        List<PositionData> positions = GetEnemyPositionsForCurrentRoom();
+        for (int i = 0; i < positions.Count; i++)
+        {
+            PositionData position = positions[i];
+            GameObject placeHolder = Instantiate(placeHolderPrefab, mainCanvas.transform);
+            placeHolder.GetComponent<RectTransform>().anchoredPosition = position.Position;
+            placeHolder.GetComponent<RectTransform>().sizeDelta = position.Size;
+            placeHolder.transform.localScale = position.Scale;
+            placeHolder.transform.rotation = position.Rotation;
+            placeHolder.name = $"Enemy_Placeholder_{i}";
+            placeHolder.SetActive(true);
+            enemyEntities.Add(placeHolder);
         }
     }
 
@@ -165,11 +196,13 @@ public class PositionData
     public Vector2 Position;
     public Vector2 Size;
     public Vector3 Scale;
+    public Quaternion Rotation;
 
-    public PositionData(Vector2 position, Vector2 size, Vector3 scale)
+    public PositionData(Vector2 position, Vector2 size, Vector3 scale, Quaternion rotation)
     {
         Position = position;
         Size = size;
         Scale = scale;
+        Rotation = rotation;
     }
 }
