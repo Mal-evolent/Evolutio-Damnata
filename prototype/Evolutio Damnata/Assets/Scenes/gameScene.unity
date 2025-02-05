@@ -460,7 +460,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Cards: []
   Hand: []
-  MaxDeckSize: 30
+  MaxDeckSize: 10
   HandSize: 5
   cardLibrary: {fileID: 1159794893}
   cardManager: {fileID: 1201594250}
@@ -1481,6 +1481,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerDeck: {fileID: 294774779}
+  enemyDeck: {fileID: 294774779}
   cardDataList:
   - CardName: 
     CardImage: {fileID: 0}
@@ -2199,7 +2200,8 @@ MonoBehaviour:
   placeHolderPrefab: {fileID: 4984019819858904803, guid: feb6f16f3491b3c44ab3ac9bf11c14cc, type: 3}
   mapScript: {fileID: 559180382}
   mainCanvas: {fileID: 2123307026}
-  instantiatedPlaceHolders: []
+  activeEntities: []
+  enemyEntities: []
 --- !u!4 &1417216790
 Transform:
   m_ObjectHideFlags: 0
@@ -2842,7 +2844,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   manaBar: {fileID: 1793571144}
   manaText: {fileID: 1870554165}
-  currentMana: 10
+  currentMana: 100
   turnText: {fileID: 352670599}
   cardManager: {fileID: 1201594250}
   cardLibrary: {fileID: 1159794893}

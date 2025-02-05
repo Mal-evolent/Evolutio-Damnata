@@ -28,6 +28,7 @@ public class CardLibrary : MonoBehaviour
     }
 
     public Deck playerDeck;
+    public Deck enemyDeck;
 
     // The list of all card data
     public List<CardData> cardDataList = new List<CardData>();
@@ -172,6 +173,15 @@ public class CardLibrary : MonoBehaviour
         else
         {
             Debug.LogWarning("Player Deck not assigned or already populated. Please assign a Player Deck.");
+        }
+
+        if(enemyDeck != null && enemyDeck.Cards.Count == 0)
+        {
+            enemyDeck.PopulateDeck();
+        }
+        else
+        {
+            Debug.LogWarning("Enemy Deck not assigned or already populated. Please assign an Enemy Deck.");
         }
     }
 

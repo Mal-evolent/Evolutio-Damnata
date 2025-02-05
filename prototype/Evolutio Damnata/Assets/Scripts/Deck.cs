@@ -26,15 +26,7 @@ public class Deck : MonoBehaviour
         List<Card> newDeck = cardLibrary.CreateDeckFromLibrary();
         foreach (Card card in newDeck)
         {
-            if (Cards.Count < 10) // Cap the deck to 10 cards
-            {
-                AddCard(card);
-            }
-            else
-            {
-                Debug.LogWarning("Deck is full. Cannot add more cards.");
-                break;
-            }
+            AddCard(card);
         }
 
         Debug.Log("Deck Populated");
