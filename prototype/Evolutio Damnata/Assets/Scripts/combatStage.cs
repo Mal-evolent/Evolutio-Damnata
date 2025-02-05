@@ -11,7 +11,7 @@ public class combatStage : MonoBehaviour
     public GameObject manaBar;
     [SerializeField]
     public GameObject manaText;
-    public int currentMana = 10;
+    public int currentMana = 100;
     public TMP_Text turnText;
 
     [SerializeField]
