@@ -11,7 +11,7 @@ public class combatStage : MonoBehaviour
     public GameObject manaBar;
     [SerializeField]
     public GameObject manaText;
-    public int currentMana = 100;
+    public int currentMana;
     public TMP_Text turnText;
 
     [SerializeField]
@@ -125,6 +125,7 @@ public class combatStage : MonoBehaviour
         if (existingEntityManager != null && existingEntityManager.placed)
         {
             Debug.LogError("Cannot place a card in an already populated placeholder.");
+            cardOutlineManager.RemoveHighlight();
             return;
         }
 
@@ -136,7 +137,8 @@ public class combatStage : MonoBehaviour
             {
                 if (currentMana < cardData.ManaCost)
                 {
-                    Debug.Log($"Not enough mana. Card costs {cardData.ManaCost}, player has {currentMana}");
+                    Debug.LogError($"Not enough mana. Card costs {cardData.ManaCost}, player has {currentMana}");
+                    cardOutlineManager.RemoveHighlight();
                     return; // Bail if there isn't enough mana
                 }
                 else
