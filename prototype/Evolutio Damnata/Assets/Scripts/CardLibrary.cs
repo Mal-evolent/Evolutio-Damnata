@@ -83,9 +83,27 @@ public class CardLibrary : MonoBehaviour
         cardDataList.Add(new CardData("Cleric", null, "A devoted cleric with divine powers", 4, 4, 6));
         cardDataList.Add(new CardData("Assassin", null, "A deadly assassin with lethal skills", 3, 7, 5));
         cardDataList.Add(new CardData("Druid", null, "A nature-loving druid with elemental magic", 4, 5, 7));
+        cardDataList.Add(new CardData("Paladin", null, "A holy paladin with divine powers", 5, 6, 10));
+        cardDataList.Add(new CardData("Barbarian", null, "A fierce barbarian with brute strength", 4, 8, 7));
+        cardDataList.Add(new CardData("Necromancer", null, "A dark necromancer with undead minions", 6, 7, 8));
+        cardDataList.Add(new CardData("Bard", null, "A musical bard with enchanting melodies", 3, 4, 5));
+        cardDataList.Add(new CardData("Monk", null, "A disciplined monk with martial arts", 4, 5, 6));
+        cardDataList.Add(new CardData("Alchemist", null, "A crafty alchemist with potion brewing", 3, 3, 4));
+        cardDataList.Add(new CardData("Shaman", null, "A spiritual shaman with totemic magic", 4, 6, 7));
+        cardDataList.Add(new CardData("Ranger", null, "A skilled ranger with tracking abilities", 3, 5, 6));
+        cardDataList.Add(new CardData("Warlock", null, "A sinister warlock with dark pact", 5, 7, 9));
+        cardDataList.Add(new CardData("Swashbuckler", null, "A daring swashbuckler with acrobatic skills", 4, 6, 8));
+        cardDataList.Add(new CardData("Inquisitor", null, "A vigilant inquisitor with divine judgment", 5, 6, 7));
+        cardDataList.Add(new CardData("Sorceress", null, "A powerful sorceress with arcane spells", 6, 8, 10));
+        cardDataList.Add(new CardData("Beastmaster", null, "A wild beastmaster with animal companions", 4, 5, 6));
+        cardDataList.Add(new CardData("Elementalist", null, "An elemental elementalist with elemental mastery", 5, 7, 8));
+        cardDataList.Add(new CardData("Illusionist", null, "A tricky illusionist with deceptive magic", 3, 4, 5));
+        cardDataList.Add(new CardData("Artificer", null, "A creative artificer with magical inventions", 4, 6, 7));
+        cardDataList.Add(new CardData("Mystic", null, "A mysterious mystic with psychic powers", 5, 7, 9));
+
 
         // Iterate over cardDataList to validate each card and set default sprite if needed
-        List<CardData> validCards = new List<CardData>();
+        List <CardData> validCards = new List<CardData>();
 
         foreach (var cardData in cardDataList)
         {
