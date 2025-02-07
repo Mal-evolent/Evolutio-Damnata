@@ -440,7 +440,7 @@ GameObject:
   - component: {fileID: 294774780}
   - component: {fileID: 294774779}
   m_Layer: 0
-  m_Name: Deck Manager
+  m_Name: Player Deck Manager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1383,6 +1383,56 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &825410029
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 825410031}
+  - component: {fileID: 825410030}
+  m_Layer: 0
+  m_Name: Enemy Deck Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &825410030
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 825410029}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8fb3d21f11feb6d40af3d29faf59a2f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Cards: []
+  Hand: []
+  MaxDeckSize: 10
+  HandSize: 5
+  cardLibrary: {fileID: 1159794893}
+  cardManager: {fileID: 1201594250}
+--- !u!4 &825410031
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 825410029}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 322.2276, y: 294.4488, z: -2.2345278}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1011744913
 GameObject:
   m_ObjectHideFlags: 0
@@ -1481,7 +1531,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerDeck: {fileID: 294774779}
-  enemyDeck: {fileID: 294774779}
+  enemyDeck: {fileID: 825410030}
   cardDataList:
   - CardName: 
     CardImage: {fileID: 0}
@@ -1489,6 +1539,7 @@ MonoBehaviour:
     ManaCost: 0
     AttackPower: 0
     Health: 0
+    Keywords: []
   defaultCardSprite: {fileID: 21300000, guid: cfc01b4a01660a74992bfb87771ebd33, type: 3}
 --- !u!4 &1159794894
 Transform:
@@ -1585,10 +1636,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5bd57f1ba6bd4004eac23ebefed19227, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  img: {fileID: 0}
   outlineImg: {fileID: 4984019819858904803, guid: feb6f16f3491b3c44ab3ac9bf11c14cc, type: 3}
+  spriteImage: {fileID: 0}
   health: 0
-  _healthBar: {fileID: 2903006031178496468, guid: 13811d77f45b76e46a27b229ca045f5e, type: 3}
+  maxHealth: 0
+  atkDamage: 0
+  atkDamageMulti: 1
+  healthBar: {fileID: 0}
   dead: 0
   placed: 0
 --- !u!1 &1187307910
@@ -1949,6 +2003,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10f936ff672b18a43813d2a89356911b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  playerMana: 0
+  maxPlayerMana: 0
+  enemyMana: 0
+  maxEnemyMana: 0
+  playerHealth: 0
+  enemyHealth: 0
+  storedMana: 0
+  maxStoredMana: 2
+  playerTurn: 1
+  playerDeck: {fileID: 294774779}
+  enemyDeck: {fileID: 825410030}
+  cardManager: {fileID: 1201594250}
+  cardLibrary: {fileID: 1159794893}
+  spritePositioning: {fileID: 1417216789}
+  manaBar: {fileID: 1793571144}
+  manaText: {fileID: 1870554165}
+  turnText: {fileID: 352670599}
+  damageNumberPrefab: {fileID: 7701005947219011525, guid: a68dba72d8724e94989227a650a79328, type: 3}
 --- !u!4 &1394303772
 Transform:
   m_ObjectHideFlags: 0
@@ -2200,7 +2272,7 @@ MonoBehaviour:
   placeHolderPrefab: {fileID: 4984019819858904803, guid: feb6f16f3491b3c44ab3ac9bf11c14cc, type: 3}
   mapScript: {fileID: 559180382}
   mainCanvas: {fileID: 2123307026}
-  activeEntities: []
+  playerEntities: []
   enemyEntities: []
 --- !u!4 &1417216790
 Transform:
@@ -2877,9 +2949,10 @@ SceneRoots:
   - {fileID: 1201594249}
   - {fileID: 1159794894}
   - {fileID: 294774780}
+  - {fileID: 825410031}
   - {fileID: 210388636}
-  - {fileID: 2123307027}
   - {fileID: 1011744916}
   - {fileID: 1394303772}
   - {fileID: 1417216790}
   - {fileID: 1178621649}
+  - {fileID: 2123307027}

@@ -1,8 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Drawing;
 using TMPro;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UI;
 public class combatStage : MonoBehaviour
@@ -38,16 +36,16 @@ public class combatStage : MonoBehaviour
     {
         if (buttonsInitialized) return;
 
-        for (int i = 0; i < spritePositioning.activeEntities.Count; i++)
+        for (int i = 0; i < spritePositioning.playerEntities.Count; i++)
         {
-            if (spritePositioning.activeEntities[i] == null)
+            if (spritePositioning.playerEntities[i] == null)
             {
                 Debug.LogError($"Placeholder at index {i} is null!");
                 continue;
             }
 
             // Set RaycastTarget to false for the placeholder outline
-            Image placeholderImage = spritePositioning.activeEntities[i].GetComponent<Image>();
+            Image placeholderImage = spritePositioning.playerEntities[i].GetComponent<Image>();
             if (placeholderImage != null)
             {
                 placeholderImage.raycastTarget = false;
@@ -55,7 +53,7 @@ public class combatStage : MonoBehaviour
 
             // Create a new GameObject for the Button
             GameObject buttonObject = new GameObject($"Button_Outline_{i}");
-            buttonObject.transform.SetParent(spritePositioning.activeEntities[i].transform, false); // Add as a child of the Placeholder
+            buttonObject.transform.SetParent(spritePositioning.playerEntities[i].transform, false); // Add as a child of the Placeholder
             buttonObject.transform.localPosition = Vector3.zero; // Center the Button inside the Placeholder
 
             // Add required components to make it a Button
@@ -80,7 +78,7 @@ public class combatStage : MonoBehaviour
                     Debug.Log($"Card {cardManager.currentSelectedCard.name} used on monster {temp_i}");
 
                     // Capture the outline's Image component
-                    Image outlineImage = spritePositioning.activeEntities[temp_i].GetComponent<Image>();
+                    Image outlineImage = spritePositioning.playerEntities[temp_i].GetComponent<Image>();
 
                     // Spawn card on field
                     spawnPlayerCard(cardManager.currentSelectedCard.name, temp_i);
@@ -114,14 +112,14 @@ public class combatStage : MonoBehaviour
 
     public void spawnPlayerCard(string cardName, int whichOutline)
     {
-        if (whichOutline < 0 || whichOutline >= spritePositioning.activeEntities.Count)
+        if (whichOutline < 0 || whichOutline >= spritePositioning.playerEntities.Count)
         {
             Debug.LogError($"Invalid outline index: {whichOutline}");
             return;
         }
 
         // Check if the placeholder is already populated
-        EntityManager existingEntityManager = spritePositioning.activeEntities[whichOutline].GetComponent<EntityManager>();
+        EntityManager existingEntityManager = spritePositioning.playerEntities[whichOutline].GetComponent<EntityManager>();
         if (existingEntityManager != null && existingEntityManager.placed)
         {
             Debug.LogError("Cannot place a card in an already populated placeholder.");
@@ -164,7 +162,7 @@ public class combatStage : MonoBehaviour
         cardManager.currentSelectedCard = null;
 
         // Get the placeholder GameObject
-        GameObject placeholder = spritePositioning.activeEntities[whichOutline];
+        GameObject placeholder = spritePositioning.playerEntities[whichOutline];
 
         // Set monster attributes
         Image placeholderImage = placeholder.GetComponent<Image>();
@@ -195,7 +193,7 @@ public class combatStage : MonoBehaviour
         entityManager.placed = true;
 
         // Initialize the monster with the appropriate type, attributes, and outline image
-        entityManager.InitializeMonster(EntityManager._monsterType.Friendly, selectedCardData.Health, selectedCardData.AttackPower, healthBarSlider);
+        entityManager.InitializeMonster(EntityManager._monsterType.Friendly, selectedCardData.Health, selectedCardData.AttackPower, healthBarSlider, placeholderImage);
 
         // Rename the placeholder to the card name
         placeholder.name = cardName;
@@ -281,7 +279,7 @@ public class combatStage : MonoBehaviour
         entityManager.placed = true;
 
         // Initialize the monster with the appropriate type, attributes, and outline image
-        entityManager.InitializeMonster(EntityManager._monsterType.Enemy, selectedCardData.Health, selectedCardData.AttackPower, healthBarSlider);
+        entityManager.InitializeMonster(EntityManager._monsterType.Enemy, selectedCardData.Health, selectedCardData.AttackPower, healthBarSlider, placeholderImage);
 
         // Rename the placeholder to the card name
         placeholder.name = cardName;
@@ -306,7 +304,7 @@ public class combatStage : MonoBehaviour
     private IEnumerator InitializeInteractableHighlights()
     {
         // Wait until placeholders are instantiated
-        while (spritePositioning.activeEntities.Count == 0)
+        while (spritePositioning.playerEntities.Count == 0)
         {
             yield return null; // Wait for the next frame
         }
@@ -330,16 +328,16 @@ public class combatStage : MonoBehaviour
 
     private void placeHolderActiveState(bool active)
     {
-        for (int i = 0; i < spritePositioning.activeEntities.Count; i++)
+        for (int i = 0; i < spritePositioning.playerEntities.Count; i++)
         {
-            if (spritePositioning.activeEntities[i] != null)
+            if (spritePositioning.playerEntities[i] != null)
             {
-                Image placeholderImage = spritePositioning.activeEntities[i].GetComponent<Image>();
+                Image placeholderImage = spritePositioning.playerEntities[i].GetComponent<Image>();
                 if (placeholderImage != null && placeholderImage.sprite != null)
                 {
                     if (placeholderImage.sprite.name == "wizard_outline")
                     {
-                        spritePositioning.activeEntities[i].SetActive(active);
+                        spritePositioning.playerEntities[i].SetActive(active);
                     }
                 }
             }

@@ -13,14 +13,14 @@ public class SpritePositioning : MonoBehaviour
 
     public Dictionary<string, List<PositionData>> roomPositions;
     public Dictionary<string, List<PositionData>> enemyRoomPositions;
-    public List<GameObject> activeEntities;
+    public List<GameObject> playerEntities;
     public List<GameObject> enemyEntities;
 
     void Start()
     {
         InitializePlayerRoomPositions();
         InitializeEnemyRoomPositions();
-        activeEntities = new List<GameObject>();
+        playerEntities = new List<GameObject>();
         enemyEntities = new List<GameObject>();
         StartCoroutine(WaitForRoomSelection());
     }
@@ -96,11 +96,11 @@ public class SpritePositioning : MonoBehaviour
     public void togglePlaceHolders(bool show)
     {
         // Clear previously instantiated placeholders
-        foreach (GameObject placeHolder in activeEntities)
+        foreach (GameObject placeHolder in playerEntities)
         {
             Destroy(placeHolder);
         }
-        activeEntities.Clear();
+        playerEntities.Clear();
 
         // Instantiate new placeholders and store them in the list
         List<PositionData> positions = GetPlayerPositionsForCurrentRoom();
@@ -114,7 +114,7 @@ public class SpritePositioning : MonoBehaviour
             placeHolder.transform.rotation = position.Rotation;
             placeHolder.name = $"Player_Placeholder_{i}";
             placeHolder.SetActive(show);
-            activeEntities.Add(placeHolder);
+            playerEntities.Add(placeHolder);
         }
     }
 
@@ -166,12 +166,12 @@ public class SpritePositioning : MonoBehaviour
     public IEnumerator placeHolderActiveState(bool active)
     {
         // Wait until the list is populated
-        while (activeEntities.Count == 0)
+        while (playerEntities.Count == 0)
         {
             yield return null; // Wait for the next frame
         }
 
-        foreach (GameObject placeHolder in activeEntities)
+        foreach (GameObject placeHolder in playerEntities)
         {
             placeHolder.SetActive(active);
         }

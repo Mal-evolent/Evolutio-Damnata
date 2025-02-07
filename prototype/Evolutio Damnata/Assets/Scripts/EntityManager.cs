@@ -7,8 +7,6 @@ using UnityEngine.UI;
 public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 {
     [SerializeField]
-    GameObject img;
-    [SerializeField]
     GameObject outlineImg;
 
     [SerializeField]
@@ -26,24 +24,30 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     _monsterType monsterType;
 
     [SerializeField]
+    Image spriteImage;
+    [SerializeField]
     float health;
+    [SerializeField]
     float maxHealth;
+    [SerializeField]
     float atkDamage;
+    [SerializeField]
     float atkDamageMulti = 1.0f;
 
-    public GameObject _healthBar;
+    [SerializeField]
     Slider healthBar;
 
     public bool dead = false;
     public bool placed = false;
 
     // Method to set monster type and initialize health bar
-    public void InitializeMonster(_monsterType monsterType, float maxHealth, float atkDamage, Slider healthBarSlider)
+    public void InitializeMonster(_monsterType monsterType, float maxHealth, float atkDamage, Slider healthBarSlider, Image image)
     {
         this.monsterType = monsterType;
         this.maxHealth = maxHealth;
         this.health = maxHealth;
         this.atkDamage = atkDamage;
+        this.spriteImage = image;
 
         // Use the passed Slider component reference
         healthBar = healthBarSlider;
@@ -77,16 +81,6 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     {
         selected = false;
         outlineImg.SetActive(false);
-    }
-
-    public void setHealth(float hlth)
-    {
-        health = hlth;
-    }
-
-    public void SetAttackDamage(float dmg)
-    {
-        atkDamage = dmg;
     }
 
     public void loadMonster()
