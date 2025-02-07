@@ -57,12 +57,6 @@ public class CombatManager : MonoBehaviour
         // Initialize DamageVisualizer
         damageVisualizer = new DamageVisualizer();
 
-        // Start the coroutine to wait for room selection
-        StartCoroutine(spritePositioning.WaitForRoomSelection());
-
-        // Set all placeholders to be inactive initially
-        StartCoroutine(spritePositioning.SetAllPlaceHoldersInactive());
-
         // Start the first turn
         StartCoroutine(PrepPhase());
     }

@@ -19,6 +19,8 @@ public class combatStage : MonoBehaviour
 
     [SerializeField]
     CardOutlineManager cardOutlineManager;
+    [SerializeField]
+    CombatManager combatManager;
 
     [SerializeField]
     Canvas battleField;
@@ -73,7 +75,7 @@ public class combatStage : MonoBehaviour
             {
                 Debug.Log($"Button inside Placeholder {temp_i} clicked!");
 
-                if (cardManager.currentSelectedCard != null)
+                if (cardManager.currentSelectedCard != null && combatManager.playerTurn)
                 {
                     Debug.Log($"Card {cardManager.currentSelectedCard.name} used on monster {temp_i}");
 
@@ -102,7 +104,8 @@ public class combatStage : MonoBehaviour
                 }
                 else
                 {
-                    Debug.Log("No card selected to use on monster!");
+                    Debug.Log("No card selected or not the players turn!");
+                    cardOutlineManager.RemoveHighlight();
                 }
             });
         }
