@@ -25,6 +25,8 @@ public class Card : MonoBehaviour
 // Monster Card (Derived Class from Card)
 public class MonsterCard : Card
 {
+    public List<string> Keywords { get; set; }
+
     public override void Play()
     {
         Debug.Log("Playing Monster Card: " + CardName + "\n" + "Attack Power: " + AttackPower + "\n" + "Health: " + Health);

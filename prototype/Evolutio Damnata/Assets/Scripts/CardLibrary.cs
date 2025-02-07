@@ -15,8 +15,9 @@ public class CardLibrary : MonoBehaviour
         public int ManaCost;
         public int AttackPower;
         public int Health;
+        public List<string> Keywords; // List of keywords
 
-        public CardData(string name, Sprite image, string description, int manaCost, int attackPower, int health)
+        public CardData(string name, Sprite image, string description, int manaCost, int attackPower, int health, List<string> keywords = null)
         {
             CardName = name;
             CardImage = image;
@@ -24,6 +25,7 @@ public class CardLibrary : MonoBehaviour
             ManaCost = manaCost;
             AttackPower = attackPower;
             Health = health;
+            Keywords = keywords ?? new List<string>();
         }
     }
 
@@ -49,6 +51,7 @@ public class CardLibrary : MonoBehaviour
         newCard.ManaCost = cardData.ManaCost;
         newCard.AttackPower = cardData.AttackPower;
         newCard.Health = cardData.Health;
+        newCard.Keywords = cardData.Keywords ?? new List<string>(); // Handle null keywords
 
         return newCard;
     }
@@ -72,19 +75,19 @@ public class CardLibrary : MonoBehaviour
             return;
         }
 
-        // Example of adding cards
-        cardDataList.Add(new CardData("Wizard", null, "A powerful wizard with fire spells", 5, 7, 10));
-        cardDataList.Add(new CardData("Warrior", null, "A brave warrior", 3, 6, 8));
-        cardDataList.Add(new CardData("Archer", null, "An expert archer", 2, 4, 6));
-        cardDataList.Add(new CardData("Healer", null, "A healer with healing spells", 4, 3, 5));
-        cardDataList.Add(new CardData("Rogue", null, "A sneaky rogue with stealth abilities", 3, 5, 7));
-        cardDataList.Add(new CardData("Knight", null, "A noble knight with a strong shield", 4, 6, 9));
+        // Example of adding cards with and without keywords
+        cardDataList.Add(new CardData("Wizard", null, "A powerful wizard with fire spells", 5, 7, 10, new List<string> { "Spellcaster", "Fire" }));
+        cardDataList.Add(new CardData("Warrior", null, "A brave warrior", 3, 6, 8, new List<string> { "Taunt" }));
+        cardDataList.Add(new CardData("Archer", null, "An expert archer", 2, 4, 6, new List<string> { "Ranged" }));
+        cardDataList.Add(new CardData("Healer", null, "A healer with healing spells", 4, 3, 5, new List<string> { "Heal" }));
+        cardDataList.Add(new CardData("Rogue", null, "A sneaky rogue with stealth abilities", 3, 5, 7, new List<string> { "Stealth" }));
+        cardDataList.Add(new CardData("Knight", null, "A noble knight with a strong shield", 4, 6, 9, new List<string> { "Taunt" }));
         cardDataList.Add(new CardData("Sorcerer", null, "A mysterious sorcerer with dark magic", 6, 8, 12));
         cardDataList.Add(new CardData("Berserker", null, "A raging berserker with unmatched strength", 5, 9, 8));
         cardDataList.Add(new CardData("Cleric", null, "A devoted cleric with divine powers", 4, 4, 6));
         cardDataList.Add(new CardData("Assassin", null, "A deadly assassin with lethal skills", 3, 7, 5));
         cardDataList.Add(new CardData("Druid", null, "A nature-loving druid with elemental magic", 4, 5, 7));
-        cardDataList.Add(new CardData("Paladin", null, "A holy paladin with divine powers", 5, 6, 10));
+        cardDataList.Add(new CardData("Paladin", null, "A holy paladin with divine powers", 5, 6, 10, new List<string> { "Taunt" }));
         cardDataList.Add(new CardData("Barbarian", null, "A fierce barbarian with brute strength", 4, 8, 7));
         cardDataList.Add(new CardData("Necromancer", null, "A dark necromancer with undead minions", 6, 7, 8));
         cardDataList.Add(new CardData("Bard", null, "A musical bard with enchanting melodies", 3, 4, 5));
@@ -101,10 +104,10 @@ public class CardLibrary : MonoBehaviour
         cardDataList.Add(new CardData("Illusionist", null, "A tricky illusionist with deceptive magic", 3, 4, 5));
         cardDataList.Add(new CardData("Artificer", null, "A creative artificer with magical inventions", 4, 6, 7));
         cardDataList.Add(new CardData("Mystic", null, "A mysterious mystic with psychic powers", 5, 7, 9));
-
+        cardDataList.Add(new CardData("Guardian", null, "A steadfast guardian with protective abilities", 4, 6, 8, new List<string> { "Taunt" }));
 
         // Iterate over cardDataList to validate each card and set default sprite if needed
-        List <CardData> validCards = new List<CardData>();
+        List<CardData> validCards = new List<CardData>();
 
         foreach (var cardData in cardDataList)
         {
@@ -175,7 +178,7 @@ public class CardLibrary : MonoBehaviour
             Debug.LogWarning("Player Deck not assigned or already populated. Please assign a Player Deck.");
         }
 
-        if(enemyDeck != null && enemyDeck.Cards.Count == 0)
+        if (enemyDeck != null && enemyDeck.Cards.Count == 0)
         {
             enemyDeck.PopulateDeck();
         }
