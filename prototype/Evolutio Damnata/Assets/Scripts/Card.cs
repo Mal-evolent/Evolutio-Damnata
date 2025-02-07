@@ -37,10 +37,44 @@ public class MonsterCard : Card
 // Spell Card (Derived Class from Card)
 public class SpellCard : Card
 {
+    public enum SpellEffect
+    {
+        Damage,
+        Heal,
+        Buff,
+        Debuff
+    }
+
+    public SpellEffect EffectType;
+    public int EffectValue;
+
     public override void Play()
     {
-        Debug.Log("Playing Spell Card: " + CardName);
-        // spell logic here
+        Debug.Log("Playing Spell Card: " + CardName + "\n" + "Effect: " + EffectType + "\n" + "Value: " + EffectValue);
+        ApplyEffect();
+    }
+
+    private void ApplyEffect()
+    {
+        switch (EffectType)
+        {
+            case SpellEffect.Damage:
+                // Apply damage logic here
+                Debug.Log("Applying " + EffectValue + " damage.");
+                break;
+            case SpellEffect.Heal:
+                // Apply heal logic here
+                Debug.Log("Healing for " + EffectValue + " health.");
+                break;
+            case SpellEffect.Buff:
+                // Apply buff logic here
+                Debug.Log("Applying buff with value " + EffectValue + ".");
+                break;
+            case SpellEffect.Debuff:
+                // Apply debuff logic here
+                Debug.Log("Applying debuff with value " + EffectValue + ".");
+                break;
+        }
     }
 }
 
