@@ -42,11 +42,14 @@ public class SpellCard : Card
         Damage,
         Heal,
         Buff,
-        Debuff
+        Debuff,
+        doubleAttack,
+        burn
     }
 
     public SpellEffect EffectType;
     public int EffectValue;
+    public int Duration; // Duration for effects like burn
 
     public override void Play()
     {
@@ -74,7 +77,29 @@ public class SpellCard : Card
                 // Apply debuff logic here
                 Debug.Log("Applying debuff with value " + EffectValue + ".");
                 break;
+            case SpellEffect.doubleAttack:
+                // Apply double attack logic here
+                Debug.Log("Applying double attack effect.");
+                ApplyDoubleAttackEffect();
+                break;
+            case SpellEffect.burn:
+                // Apply burn logic here
+                Debug.Log("Applying burn effect.");
+                ApplyBurnEffect();
+                break;
         }
+    }
+
+    private void ApplyBurnEffect()
+    {
+        // Logic to apply burn effect (damage over time)
+        Debug.Log("Burn effect applied: " + EffectValue + " damage over " + Duration + " turns.");
+    }
+
+    private void ApplyDoubleAttackEffect()
+    {
+        // Logic to allow a monster to attack twice
+        Debug.Log("Double attack effect applied for " + Duration + " turns.");
     }
 }
 
