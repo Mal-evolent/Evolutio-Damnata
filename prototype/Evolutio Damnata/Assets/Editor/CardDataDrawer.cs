@@ -6,6 +6,16 @@ using Sirenix.Utilities.Editor;
 [CustomPropertyDrawer(typeof(CardData))]
 public class CardDataDrawer : OdinValueDrawer<CardData>
 {
+    private InspectorProperty isSpellCard;
+    private InspectorProperty isMonsterCard;
+
+    protected override void Initialize()
+    {
+        base.Initialize();
+        isSpellCard = this.Property.Children["IsSpellCard"];
+        isMonsterCard = this.Property.Children["IsMonsterCard"];
+    }
+
     protected override void DrawPropertyLayout(GUIContent label)
     {
         var property = this.Property;
@@ -29,33 +39,15 @@ public class CardDataDrawer : OdinValueDrawer<CardData>
         DrawChildProperty(property, "ManaCost");
 
         // Draw the IsSpellCard and IsMonsterCard toggles
-        var isSpellCard = property.Children["IsSpellCard"];
-        var isMonsterCard = property.Children["IsMonsterCard"];
-
-        if (isSpellCard != null)
-        {
-            isSpellCard.Draw();
-        }
-        else
-        {
-            Debug.LogWarning($"Property 'IsSpellCard' not found on '{property.Path}'.");
-        }
-
-        if (isMonsterCard != null)
-        {
-            isMonsterCard.Draw();
-        }
-        else
-        {
-            Debug.LogWarning($"Property 'IsMonsterCard' not found on '{property.Path}'.");
-        }
+        isSpellCard?.Draw();
+        isMonsterCard?.Draw();
 
         // Draw the spell card fields if IsSpellCard is true
         if (isSpellCard != null && isSpellCard.ValueEntry.WeakSmartValue as bool? == true)
         {
-            DrawChildProperty(property, "EffectType");
             DrawChildProperty(property, "EffectValue");
             DrawChildProperty(property, "Duration");
+            DrawChildProperty(property, "EffectType");
         }
 
         // Draw the monster card fields if IsMonsterCard is true
@@ -74,7 +66,6 @@ public class CardDataDrawer : OdinValueDrawer<CardData>
         var childProperty = property.Children[childName];
         if (childProperty != null)
         {
-            Debug.Log($"Drawing property '{childName}' on '{property.Path}'.");
             childProperty.Draw();
         }
         else
