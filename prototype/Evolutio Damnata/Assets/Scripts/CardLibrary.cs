@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-
+using Sirenix.OdinInspector;
 
 public class CardLibrary : MonoBehaviour
 {
@@ -11,16 +11,35 @@ public class CardLibrary : MonoBehaviour
         public Sprite CardImage;
         public string Description;
         public int ManaCost;
+
+        // AttackPower is now always visible
+        [ShowIf(nameof(IsMonsterCard))]
         public int AttackPower;
+
+        [ShowIf(nameof(IsMonsterCard))]
         public int Health;
+
+        [ShowIf(nameof(IsMonsterCard))]
         public List<string> Keywords;
 
-        // Spell-specific properties
-        public SpellCard.SpellEffect? EffectType;
+        [ShowIf(nameof(IsSpellCard))]
+        public SpellEffect? EffectType;
+
+        //[ShowIf(nameof(IsSpellCard))]
         public int? EffectValue;
+
+        [ShowIf(nameof(IsSpellCard))]
         public int? Duration;
 
-        public CardData(string name, Sprite image, string description, int manaCost, int attackPower, int health, List<string> keywords = null, SpellCard.SpellEffect? effectType = null, int? effectValue = null, int? duration = null)
+        //IsSpellCard is now public for debugging purposes
+        public bool IsSpellCard;
+
+        // IsMonsterCard is now a direct field instead of a computed property
+        public bool IsMonsterCard;
+
+        public CardData(
+            string name, Sprite image, string description, int manaCost, int attackPower, int health,
+            List<string> keywords = null, SpellEffect? effectType = null, int? effectValue = null, int? duration = null)
         {
             CardName = name;
             CardImage = image;
@@ -32,6 +51,12 @@ public class CardLibrary : MonoBehaviour
             EffectType = effectType;
             EffectValue = effectValue;
             Duration = duration;
+
+            // Explicitly setting IsSpellCard instead of relying on HasValue
+            IsSpellCard = effectType != null;
+            IsMonsterCard = !IsSpellCard; // Ensures IsMonsterCard is correctly assigned
+
+            Debug.LogWarning($"CardData created: {CardName}, IsSpellCard: {IsSpellCard}, IsMonsterCard: {IsMonsterCard}, EffectType: {EffectType}");
         }
     }
 
@@ -51,7 +76,7 @@ public class CardLibrary : MonoBehaviour
     public Card CreateCardFromData(CardData cardData)
     {
         Card newCard;
-        if (cardData.EffectType.HasValue)
+        if (cardData.IsSpellCard)
         {
             // Create a spell card
             SpellCard spellCard = new GameObject(cardData.CardName).AddComponent<SpellCard>();
@@ -106,10 +131,10 @@ public class CardLibrary : MonoBehaviour
         cardDataList.Add(new CardData("Archer", null, "An expert archer", 2, 4, 6, new List<string> { "Ranged" }));
 
         // Example of adding spell cards
-        cardDataList.Add(new CardData("Fireball", null, "Deals damage to a single target", 4, 0, 0, null, SpellCard.SpellEffect.Damage, 10));
-        cardDataList.Add(new CardData("Healing Light", null, "Heals a single target", 3, 0, 0, null, SpellCard.SpellEffect.Heal, 8));
-        cardDataList.Add(new CardData("Burning Flames", null, "Applies burn effect to a single target", 5, 0, 0, null, SpellCard.SpellEffect.burn, 5, 3));
-        cardDataList.Add(new CardData("Frenzy", null, "Allows a monster to attack twice", 6, 0, 0, null, SpellCard.SpellEffect.doubleAttack, 0, 2));
+        cardDataList.Add(new CardData("Fireball", null, "Deals damage to a single target", 4, 0, 0, null, SpellEffect.Damage, 10));
+        cardDataList.Add(new CardData("Healing Light", null, "Heals a single target", 3, 0, 0, null, SpellEffect.Heal, 8));
+        cardDataList.Add(new CardData("Burning Flames", null, "Applies burn effect to a single target", 5, 0, 0, null, SpellEffect.burn, 5, 3));
+        cardDataList.Add(new CardData("Frenzy", null, "Allows a monster to attack twice", 6, 0, 0, null, SpellEffect.doubleAttack, 0, 2));
 
         // Iterate over cardDataList to validate each card and set default sprite if needed
         List<CardData> validCards = new List<CardData>();
@@ -171,25 +196,6 @@ public class CardLibrary : MonoBehaviour
             {
                 cardImageDictionary.Add(cardData.CardName, cardData.CardImage);
             }
-        }
-
-        // Populate the player's deck if it's assigned and empty
-        if (playerDeck != null && playerDeck.Cards.Count == 0)
-        {
-            playerDeck.PopulateDeck();
-        }
-        else
-        {
-            Debug.LogWarning("Player Deck not assigned or already populated. Please assign a Player Deck.");
-        }
-
-        if (enemyDeck != null && enemyDeck.Cards.Count == 0)
-        {
-            enemyDeck.PopulateDeck();
-        }
-        else
-        {
-            Debug.LogWarning("Enemy Deck not assigned or already populated. Please assign an Enemy Deck.");
         }
     }
 

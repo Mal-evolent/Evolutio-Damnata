@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Sirenix.OdinInspector;
 
 public class Card : MonoBehaviour
 {
@@ -37,19 +38,17 @@ public class MonsterCard : Card
 // Spell Card (Derived Class from Card)
 public class SpellCard : Card
 {
-    public enum SpellEffect
-    {
-        Damage,
-        Heal,
-        Buff,
-        Debuff,
-        doubleAttack,
-        burn
-    }
-
+    [ShowIf(nameof(IsSpellCard))]
     public SpellEffect EffectType;
+
+    [ShowIf(nameof(IsSpellCard))]
     public int EffectValue;
+
+    [ShowIf(nameof(IsSpellCard))]
     public int Duration; // Duration for effects like burn
+
+    [HideInInspector]
+    public bool IsSpellCard = true;
 
     public override void Play()
     {
