@@ -131,8 +131,8 @@ public class combatStage : MonoBehaviour
         }
 
         int cardCost = 0;
-        CardLibrary.CardData selectedCardData = null;
-        foreach (CardLibrary.CardData cardData in cardLibrary.cardDataList)
+        CardData selectedCardData = null;
+        foreach (CardData cardData in cardLibrary.cardDataList)
         {
             if (cardName == cardData.CardName)
             {
@@ -234,8 +234,8 @@ public class combatStage : MonoBehaviour
             return;
         }
 
-        CardLibrary.CardData selectedCardData = null;
-        foreach (CardLibrary.CardData cardData in cardLibrary.cardDataList)
+        CardData selectedCardData = null;
+        foreach (CardData cardData in cardLibrary.cardDataList)
         {
             if (cardName == cardData.CardName)
             {

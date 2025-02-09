@@ -1,9 +1,10 @@
 public enum SpellEffect
 {
+    None,
     Damage,
     Heal,
     Buff,
     Debuff,
-    doubleAttack,
-    burn
+    DoubleAttack,
+    Burn
 }

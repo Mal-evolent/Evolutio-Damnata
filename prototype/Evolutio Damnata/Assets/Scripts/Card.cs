@@ -76,12 +76,12 @@ public class SpellCard : Card
                 // Apply debuff logic here
                 Debug.Log("Applying debuff with value " + EffectValue + ".");
                 break;
-            case SpellEffect.doubleAttack:
+            case SpellEffect.DoubleAttack: // Corrected casing here
                 // Apply double attack logic here
                 Debug.Log("Applying double attack effect.");
                 ApplyDoubleAttackEffect();
                 break;
-            case SpellEffect.burn:
+            case SpellEffect.Burn:
                 // Apply burn logic here
                 Debug.Log("Applying burn effect.");
                 ApplyBurnEffect();
