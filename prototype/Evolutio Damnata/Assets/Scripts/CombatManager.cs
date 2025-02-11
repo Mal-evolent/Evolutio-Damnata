@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.PlayerLoop;
 
 public class CombatManager : MonoBehaviour
 {
@@ -37,7 +38,9 @@ public class CombatManager : MonoBehaviour
 
     void Update()
     {
-        // Additional update logic if needed
+        //TESTING ONLY
+
+        playerTurn = true;
     }
 
     void InitializeGame()

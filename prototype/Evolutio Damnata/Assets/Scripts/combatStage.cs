@@ -79,9 +79,6 @@ public class combatStage : MonoBehaviour
                 {
                     Debug.Log($"Card {cardManager.currentSelectedCard.name} used on monster {temp_i}");
 
-                    // Capture the outline's Image component
-                    Image outlineImage = spritePositioning.playerEntities[temp_i].GetComponent<Image>();
-
                     // Spawn card on field
                     spawnPlayerCard(cardManager.currentSelectedCard.name, temp_i);
 
@@ -123,13 +120,8 @@ public class combatStage : MonoBehaviour
 
         // Check if the placeholder is already populated
         EntityManager existingEntityManager = spritePositioning.playerEntities[whichOutline].GetComponent<EntityManager>();
-        if (existingEntityManager != null && existingEntityManager.placed)
-        {
-            Debug.LogError("Cannot place a card in an already populated placeholder.");
-            cardOutlineManager.RemoveHighlight();
-            return;
-        }
 
+        // Find the selected card data
         int cardCost = 0;
         CardData selectedCardData = null;
         foreach (CardData cardData in cardLibrary.cardDataList)
@@ -157,6 +149,14 @@ public class combatStage : MonoBehaviour
             return;
         }
 
+        // If the card is not a spell card and the placeholder is already populated, return
+        if (!selectedCardData.IsSpellCard && existingEntityManager != null && existingEntityManager.placed)
+        {
+            Debug.LogError("Cannot place a card in an already populated placeholder.");
+            cardOutlineManager.RemoveHighlight();
+            return;
+        }
+
         // Remove outline/highlight on current card in hand
         cardOutlineManager.RemoveHighlight();
 
@@ -169,7 +169,7 @@ public class combatStage : MonoBehaviour
 
         // Set monster attributes
         Image placeholderImage = placeholder.GetComponent<Image>();
-        if (placeholderImage != null)
+        if (placeholderImage != null && !selectedCardData.IsSpellCard)
         {
             placeholderImage.sprite = cardLibrary.cardImageGetter(cardName);
         }
@@ -193,16 +193,36 @@ public class combatStage : MonoBehaviour
         Transform healthBarTransform = placeholder.transform.Find("healthBar");
         Slider healthBarSlider = healthBarTransform != null ? healthBarTransform.GetComponent<Slider>() : null;
 
-        entityManager.placed = true;
+        // Initialize the monster with the appropriate type, attributes, and outline image only if it's not a spell card or the placeholder is empty
+        if (!selectedCardData.IsSpellCard || (existingEntityManager == null || !existingEntityManager.placed))
+        {
+            entityManager.InitializeMonster(EntityManager._monsterType.Friendly, selectedCardData.Health, selectedCardData.AttackPower, healthBarSlider, placeholderImage);
+        }
 
-        // Initialize the monster with the appropriate type, attributes, and outline image
-        entityManager.InitializeMonster(EntityManager._monsterType.Friendly, selectedCardData.Health, selectedCardData.AttackPower, healthBarSlider, placeholderImage);
+        // Check if the placeholder is already occupied by a placed monster card
+        bool isOccupied = existingEntityManager != null && existingEntityManager.placed;
 
-        // Rename the placeholder to the card name
-        placeholder.name = cardName;
+        // Set entity.placed to false only if the placeholder is empty
+        if (!isOccupied)
+        {
+            entityManager.placed = !selectedCardData.IsSpellCard;
+        }
 
-        // Display the health bar
-        displayHealthBar(placeholder, true);
+        // Display or hide the health bar based on whether the placeholder is occupied by a placed monster card
+        if (selectedCardData.IsSpellCard && !isOccupied)
+        {
+            displayHealthBar(placeholder, false);
+        }
+        else
+        {
+            displayHealthBar(placeholder, true);
+        }
+
+        // Rename the placeholder to the card name unless it's a spell card
+        if (!selectedCardData.IsSpellCard)
+        {
+            placeholder.name = cardName;
+        }
 
         // Decrease current mana
         currentMana -= cardCost;
