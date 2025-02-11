@@ -105,7 +105,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         health -= damageAmount;
         if (healthBar != null)
         {
-            healthBar.value = health / maxHealth; // Normalize health to a percentage
+            healthBar.value = health / maxHealth;
         }
         Debug.Log($"Health is now {health}");
         if (health <= 0)
@@ -133,11 +133,6 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     }
 
     //-------------------- IAttacker Implementation --------------------//
-    // Returns monster's total attack
-    public float getAttackDamage()
-    {
-        return atkDamage * atkDamageMulti; // Total attack damage calculation
-    }
 
     // Buffs monster attack by amount (additive not replacement)
     public void attackBuff(float buffAmount)
@@ -151,10 +146,17 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         atkDamage -= buffAmount;
     }
 
-    // Send attack event to room to apply damage
-    public void attack(int targetID)
+    // Perform an attack with the specified damage
+    public void attack(int damage)
     {
-        Debug.LogError("Attack functionality is not implemented.");
+        // Implement the attack logic here
+        Debug.Log($"Attacking with {damage} damage.");
+    }
+
+    // Returns the attack damage of the monster
+    public float getAttackDamage()
+    {
+        return atkDamage * atkDamageMulti;
     }
 
     // Other methods, Start, and Update logic can remain unchanged

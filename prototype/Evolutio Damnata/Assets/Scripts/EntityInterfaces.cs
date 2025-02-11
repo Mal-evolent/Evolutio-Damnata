@@ -1,7 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
 public interface IDamageable
 {
     void takeDamage(float damageAmount);
@@ -13,7 +9,7 @@ public interface IAttacker
 {
     void attackBuff(float buffAmount);
     void attackDebuff(float buffAmount);
-    void attack(int targetID);
+    void attack(int damage);
     float getAttackDamage();
 }
 

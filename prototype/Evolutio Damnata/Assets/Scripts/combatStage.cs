@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Linq;
+
 public class combatStage : MonoBehaviour
 {
     [SerializeField]
@@ -119,7 +121,18 @@ public class combatStage : MonoBehaviour
         }
 
         // Check if the placeholder is already populated
-        EntityManager existingEntityManager = spritePositioning.playerEntities[whichOutline].GetComponent<EntityManager>();
+        GameObject placeholder = spritePositioning.playerEntities[whichOutline];
+        if (placeholder == null)
+        {
+            Debug.LogError($"Placeholder at index {whichOutline} is null!");
+            return;
+        }
+
+        EntityManager existingEntityManager = placeholder.GetComponent<EntityManager>();
+        if (existingEntityManager == null)
+        {
+            Debug.LogError($"EntityManager component not found on placeholder at index {whichOutline}!");
+        }
 
         // Find the selected card data
         int cardCost = 0;
@@ -160,27 +173,73 @@ public class combatStage : MonoBehaviour
         // Remove outline/highlight on current card in hand
         cardOutlineManager.RemoveHighlight();
 
-        // Remove card from hand
-        Destroy(cardManager.currentSelectedCard);
-        cardManager.currentSelectedCard = null;
+        // If it's a spell card, set the target entity and apply the effect
+        if (selectedCardData.IsSpellCard)
+        {
+            if (cardManager.currentSelectedCard == null)
+            {
+                Debug.LogError("Current selected card is null when trying to cast spell!");
+            }
+            else
+            {
+                Debug.Log($"Checking card: {cardManager.currentSelectedCard.name}, Components: {string.Join(", ", cardManager.currentSelectedCard.GetComponents<Component>().Select(c => c.GetType().Name))}");
+                SpellCard spellCard = cardManager.currentSelectedCard.GetComponent<SpellCard>();
+                if (spellCard == null)
+                {
+                    Debug.LogWarning("SpellCard component not found on current selected card! Adding SpellCard component.");
+                    spellCard = cardManager.currentSelectedCard.AddComponent<SpellCard>();
 
-        // Get the placeholder GameObject
-        GameObject placeholder = spritePositioning.playerEntities[whichOutline];
+                    // Copy properties from CardData to SpellCard
+                    spellCard.CardName = selectedCardData.CardName;
+                    spellCard.CardImage = selectedCardData.CardImage;
+                    spellCard.Description = selectedCardData.Description;
+                    spellCard.ManaCost = selectedCardData.ManaCost;
+                    spellCard.EffectType = selectedCardData.EffectType;
+                    spellCard.EffectValue = selectedCardData.EffectValue;
+                    spellCard.Duration = selectedCardData.Duration;
+                }
+                Debug.Log("Applying spell effect to target entity.");
+                spellCard.targetEntity = existingEntityManager;
+                spellCard.Play();
+            }
+        }
+
+        // Remove card from hand
+        if (cardManager.currentSelectedCard == null)
+        {
+            Debug.LogError("Current selected card is null!");
+        }
+        else
+        {
+            Destroy(cardManager.currentSelectedCard);
+            cardManager.currentSelectedCard = null;
+        }
 
         // Set monster attributes
         Image placeholderImage = placeholder.GetComponent<Image>();
-        if (placeholderImage != null && !selectedCardData.IsSpellCard)
+        if (placeholderImage == null)
+        {
+            Debug.LogError("Image component not found on placeholder!");
+        }
+        else if (!selectedCardData.IsSpellCard)
         {
             placeholderImage.sprite = cardLibrary.cardImageGetter(cardName);
         }
 
         // Apply positioning, scale, and rotation
         RectTransform rectTransform = placeholder.GetComponent<RectTransform>();
-        PositionData positionData = spritePositioning.GetPlayerPositionsForCurrentRoom()[whichOutline];
-        rectTransform.anchoredPosition = positionData.Position;
-        rectTransform.sizeDelta = positionData.Size;
-        rectTransform.localScale = positionData.Scale;
-        rectTransform.rotation = positionData.Rotation;
+        if (rectTransform == null)
+        {
+            Debug.LogError("RectTransform component not found on placeholder!");
+        }
+        else
+        {
+            PositionData positionData = spritePositioning.GetPlayerPositionsForCurrentRoom()[whichOutline];
+            rectTransform.anchoredPosition = positionData.Position;
+            rectTransform.sizeDelta = positionData.Size;
+            rectTransform.localScale = positionData.Scale;
+            rectTransform.rotation = positionData.Rotation;
+        }
 
         // Add the EntityManager component to the placeholder
         EntityManager entityManager = placeholder.GetComponent<EntityManager>();
@@ -191,7 +250,15 @@ public class combatStage : MonoBehaviour
 
         // Find the health bar Slider component using transform.Find
         Transform healthBarTransform = placeholder.transform.Find("healthBar");
+        if (healthBarTransform == null)
+        {
+            Debug.LogError("Health bar transform not found on placeholder!");
+        }
         Slider healthBarSlider = healthBarTransform != null ? healthBarTransform.GetComponent<Slider>() : null;
+        if (healthBarSlider == null)
+        {
+            Debug.LogError("Slider component not found on health bar transform!");
+        }
 
         // Initialize the monster with the appropriate type, attributes, and outline image only if it's not a spell card or the placeholder is empty
         if (!selectedCardData.IsSpellCard || (existingEntityManager == null || !existingEntityManager.placed))
