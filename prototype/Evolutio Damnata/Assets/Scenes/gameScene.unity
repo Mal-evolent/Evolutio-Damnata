@@ -1427,6 +1427,55 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &822254395
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 822254397}
+  - component: {fileID: 822254396}
+  m_Layer: 0
+  m_Name: EnemyAI
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &822254396
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 822254395}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e353d4658169594086cdeb380477c37, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enemyDeck: {fileID: 825410030}
+  cardLibrary: {fileID: 1159794893}
+  combatManager: {fileID: 1394303771}
+  combatStage: {fileID: 6081315368044828686}
+  spritePositioning: {fileID: 1417216789}
+--- !u!4 &822254397
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 822254395}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1318.1229, y: 578.01227, z: -7.450616}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &825410029
 GameObject:
   m_ObjectHideFlags: 0
@@ -1575,7 +1624,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerDeck: {fileID: 294774779}
-  enemyDeck: {fileID: 825410030}
   cardDataList:
   - CardName: 
     CardImage: {fileID: 0}
@@ -1583,8 +1631,8 @@ MonoBehaviour:
     ManaCost: 0
     AttackPower: 0
     Health: 0
-    Keywords: []
-    EffectType: 0
+    Keywords: 
+    EffectTypes: 00000000
     EffectValue: 0
     Duration: 0
     IsSpellCard: 1
@@ -3009,6 +3057,7 @@ SceneRoots:
   - {fileID: 1394303772}
   - {fileID: 1417216790}
   - {fileID: 1178621649}
-  - {fileID: 2123307027}
   - {fileID: 1011744916}
   - {fileID: 389717232}
+  - {fileID: 822254397}
+  - {fileID: 2123307027}

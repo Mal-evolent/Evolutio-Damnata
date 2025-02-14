@@ -5,7 +5,6 @@ using UnityEngine;
 public class CardLibrary : MonoBehaviour
 {
     public Deck playerDeck;
-    public Deck enemyDeck;
     public List<CardData> cardDataList = new List<CardData>();
 
     [Header("Default Sprite for Cards")]
@@ -151,6 +150,13 @@ public class CardLibrary : MonoBehaviour
             {
                 cardImageDictionary.Add(cardData.CardName, cardData.CardImage);
             }
+        }
+
+        // Populate the player's deck using the Deck class methods
+        if (playerDeck != null)
+        {
+            playerDeck.cardLibrary = this;
+            playerDeck.PopulateDeck();
         }
     }
 

@@ -10,6 +10,8 @@ public class SpritePositioning : MonoBehaviour
     MapScript mapScript;
     [SerializeField]
     Canvas mainCanvas;
+    [SerializeField]
+    bool roomReady = false;
 
     public Dictionary<string, List<PositionData>> roomPositions;
     public Dictionary<string, List<PositionData>> enemyRoomPositions;
@@ -63,6 +65,7 @@ public class SpritePositioning : MonoBehaviour
         }
         togglePlaceHolders(true); // Set placeholders to be visible once the room is selected
         DisplayEnemyPlaceHolders(); // Display enemy placeholders permanently
+        roomReady = true;
     }
 
     public List<PositionData> GetPlayerPositionsForCurrentRoom()
