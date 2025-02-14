@@ -22,14 +22,26 @@ public class EnemyAI : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        InitializeDeck();
-        DrawInitialHand();
+        StartCoroutine(InitializeDeckWhenReady());
     }
 
     // Update is called once per frame
     void Update()
     {
         // Update logic here
+    }
+
+    private IEnumerator InitializeDeckWhenReady()
+    {
+        // Wait until the room is ready
+        while (!spritePositioning.roomReady)
+        {
+            yield return null; // Wait for the next frame
+        }
+
+        InitializeDeck();
+        DrawInitialHand();
+        SpawnRandomMonsterCards();
     }
 
     private void InitializeDeck()
@@ -47,6 +59,39 @@ public class EnemyAI : MonoBehaviour
 
     private void DrawInitialHand()
     {
-        enemyDeck.DrawCard();
+        for (int i = 0; i < enemyDeck.HandSize; i++)
+        {
+            enemyDeck.DrawOneCard();
+        }
+    }
+
+    private void SpawnRandomMonsterCards()
+    {
+        List<PositionData> enemyPositions = spritePositioning.GetEnemyPositionsForCurrentRoom();
+        for (int i = 0; i < enemyPositions.Count; i++)
+        {
+            if (enemyDeck.Hand.Count > 0)
+            {
+                // Filter out spell cards
+                List<Card> monsterCards = enemyDeck.Hand.FindAll(card => !(card is SpellCard));
+                if (monsterCards.Count > 0)
+                {
+                    int randomIndex = Random.Range(0, monsterCards.Count);
+                    Card randomCard = monsterCards[randomIndex];
+                    enemyDeck.Hand.Remove(randomCard);
+                    combatStage.spawnEnemy(randomCard.CardName, i);
+                }
+                else
+                {
+                    Debug.LogWarning("No monster cards available to spawn!");
+                    break;
+                }
+            }
+            else
+            {
+                Debug.LogWarning("Enemy hand is empty!");
+                break;
+            }
+        }
     }
 }

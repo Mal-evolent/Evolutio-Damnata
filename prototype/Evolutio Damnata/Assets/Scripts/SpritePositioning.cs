@@ -11,7 +11,7 @@ public class SpritePositioning : MonoBehaviour
     [SerializeField]
     Canvas mainCanvas;
     [SerializeField]
-    bool roomReady = false;
+    public bool roomReady = false;
 
     public Dictionary<string, List<PositionData>> roomPositions;
     public Dictionary<string, List<PositionData>> enemyRoomPositions;
@@ -25,6 +25,7 @@ public class SpritePositioning : MonoBehaviour
         playerEntities = new List<GameObject>();
         enemyEntities = new List<GameObject>();
         StartCoroutine(WaitForRoomSelection());
+        roomReady = false;
     }
 
     void InitializePlayerRoomPositions()
