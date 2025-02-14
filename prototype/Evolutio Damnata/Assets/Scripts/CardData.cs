@@ -21,7 +21,7 @@ public class CardData
     public int Health;
 
     [SerializeField, ShowIf(nameof(IsMonsterCard))]
-    public List<string> Keywords;
+    public List<Keywords.MonsterKeyword> Keywords;
 
     [SerializeField, ShowIf(nameof(IsSpellCard))]
     public SpellEffect EffectType = SpellEffect.None; // Default value instead of nullable
@@ -40,7 +40,7 @@ public class CardData
 
     public CardData(
         string name, Sprite image, string description, int manaCost, int attackPower, int health,
-        List<string> keywords = null, SpellEffect effectType = SpellEffect.None, int effectValue = 0, int duration = 0)
+        List<Keywords.MonsterKeyword> keywords = null, SpellEffect effectType = SpellEffect.None, int effectValue = 0, int duration = 0)
     {
         CardName = name;
         CardImage = image;
@@ -48,7 +48,7 @@ public class CardData
         ManaCost = manaCost;
         AttackPower = attackPower;
         Health = health;
-        Keywords = keywords ?? new List<string>();
+        Keywords = keywords ?? new List<Keywords.MonsterKeyword>();
         EffectType = effectType;
         EffectValue = effectValue;
         Duration = duration;
@@ -56,7 +56,6 @@ public class CardData
         IsSpellCard = effectType != SpellEffect.None; // Now properly detects spell cards
         IsMonsterCard = !IsSpellCard;
     }
-
 
     private void OnIsSpellCardChanged()
     {

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class CardLibrary : MonoBehaviour
@@ -51,7 +52,7 @@ public class CardLibrary : MonoBehaviour
                 monsterCard.ManaCost = cardData.ManaCost;
                 monsterCard.AttackPower = cardData.AttackPower;
                 monsterCard.Health = cardData.Health;
-                monsterCard.Keywords = cardData.Keywords ?? new List<string>();
+                monsterCard.Keywords = cardData.Keywords?.Select(k => k.ToString()).ToList() ?? new List<string>();
 
                 // Add a readable unique identifier
                 monsterCard.name = $"{cardData.CardName}";
@@ -87,9 +88,9 @@ public class CardLibrary : MonoBehaviour
             return;
         }
 
-        cardDataList.Add(new CardData("Wizard", null, "A powerful wizard with fire spells", 5, 7, 10, new List<string> { "Spellcaster", "Fire" }));
-        cardDataList.Add(new CardData("Warrior", null, "A brave warrior", 3, 6, 8, new List<string> { "Taunt" }));
-        cardDataList.Add(new CardData("Archer", null, "An expert archer", 2, 4, 6, new List<string> { "Ranged" }));
+        cardDataList.Add(new CardData("Wizard", null, "A powerful wizard with fire spells", 5, 7, 10, new List<Keywords.MonsterKeyword> { Keywords.MonsterKeyword.Spellcaster, Keywords.MonsterKeyword.Fire }));
+        cardDataList.Add(new CardData("Warrior", null, "A brave warrior", 3, 6, 8, new List<Keywords.MonsterKeyword> { Keywords.MonsterKeyword.Taunt }));
+        cardDataList.Add(new CardData("Archer", null, "An expert archer", 2, 4, 6, new List<Keywords.MonsterKeyword> { Keywords.MonsterKeyword.Ranged }));
 
         cardDataList.Add(new CardData("Fireball", null, "Deals damage to a single target", 4, 0, 0, null, SpellEffect.Damage, 2));
         cardDataList.Add(new CardData("Healing Light", null, "Heals a single target", 3, 0, 0, null, SpellEffect.Heal, 8));
