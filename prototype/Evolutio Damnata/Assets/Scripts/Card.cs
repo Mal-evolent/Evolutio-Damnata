@@ -39,7 +39,7 @@ public class MonsterCard : Card
 public class SpellCard : Card
 {
     [ShowIf(nameof(IsSpellCard))]
-    public SpellEffect EffectType;
+    public List<SpellEffect> EffectTypes = new List<SpellEffect>(); // Changed to list
 
     [ShowIf(nameof(IsSpellCard))]
     public int EffectValue;
@@ -55,32 +55,35 @@ public class SpellCard : Card
 
     public override void Play()
     {
-        Debug.Log("Playing Spell Card: " + CardName + "\n" + "Effect: " + EffectType + "\n" + "Value: " + EffectValue);
-        ApplyEffect();
+        Debug.Log("Playing Spell Card: " + CardName + "\n" + "Effects: " + string.Join(", ", EffectTypes) + "\n" + "Value: " + EffectValue);
+        ApplyEffects();
     }
 
-    private void ApplyEffect()
+    private void ApplyEffects()
     {
-        switch (EffectType)
+        foreach (var effect in EffectTypes)
         {
-            case SpellEffect.Damage:
-                ApplyDamageEffect();
-                break;
-            case SpellEffect.Heal:
-                ApplyHealEffect();
-                break;
-            case SpellEffect.Buff:
-                ApplyBuffEffect();
-                break;
-            case SpellEffect.Debuff:
-                ApplyDebuffEffect();
-                break;
-            case SpellEffect.DoubleAttack:
-                ApplyDoubleAttackEffect();
-                break;
-            case SpellEffect.Burn:
-                ApplyBurnEffect();
-                break;
+            switch (effect)
+            {
+                case SpellEffect.Damage:
+                    ApplyDamageEffect();
+                    break;
+                case SpellEffect.Heal:
+                    ApplyHealEffect();
+                    break;
+                case SpellEffect.Buff:
+                    ApplyBuffEffect();
+                    break;
+                case SpellEffect.Debuff:
+                    ApplyDebuffEffect();
+                    break;
+                case SpellEffect.DoubleAttack:
+                    ApplyDoubleAttackEffect();
+                    break;
+                case SpellEffect.Burn:
+                    ApplyBurnEffect();
+                    break;
+            }
         }
     }
 

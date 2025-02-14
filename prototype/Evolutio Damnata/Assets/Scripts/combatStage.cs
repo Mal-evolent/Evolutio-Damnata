@@ -200,7 +200,7 @@ public class combatStage : MonoBehaviour
                     spellCard.CardImage = selectedCardData.CardImage;
                     spellCard.Description = selectedCardData.Description;
                     spellCard.ManaCost = selectedCardData.ManaCost;
-                    spellCard.EffectType = selectedCardData.EffectType;
+                    spellCard.EffectTypes = selectedCardData.EffectTypes; // Updated to use EffectTypes
                     spellCard.EffectValue = selectedCardData.EffectValue;
                     spellCard.Duration = selectedCardData.Duration;
                 }

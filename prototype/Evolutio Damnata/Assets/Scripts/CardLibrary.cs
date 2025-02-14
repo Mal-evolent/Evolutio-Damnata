@@ -26,7 +26,7 @@ public class CardLibrary : MonoBehaviour
                 spellCard.CardImage = cardData.CardImage ?? defaultCardSprite;
                 spellCard.Description = cardData.Description;
                 spellCard.ManaCost = cardData.ManaCost;
-                spellCard.EffectType = cardData.EffectType;
+                spellCard.EffectTypes = cardData.EffectTypes; // Assign the list of effects
                 spellCard.EffectValue = cardData.EffectValue;
                 spellCard.Duration = cardData.Duration;
 
@@ -92,10 +92,10 @@ public class CardLibrary : MonoBehaviour
         cardDataList.Add(new CardData("Warrior", null, "A brave warrior", 3, 6, 8, new List<Keywords.MonsterKeyword> { Keywords.MonsterKeyword.Taunt }));
         cardDataList.Add(new CardData("Archer", null, "An expert archer", 2, 4, 6, new List<Keywords.MonsterKeyword> { Keywords.MonsterKeyword.Ranged }));
 
-        cardDataList.Add(new CardData("Fireball", null, "Deals damage to a single target", 4, 0, 0, null, SpellEffect.Damage, 2));
-        cardDataList.Add(new CardData("Healing Light", null, "Heals a single target", 3, 0, 0, null, SpellEffect.Heal, 8));
-        cardDataList.Add(new CardData("Burning Flames", null, "Applies burn effect to a single target", 5, 0, 0, null, SpellEffect.Burn, 5, 3));
-        cardDataList.Add(new CardData("Frenzy", null, "Allows a monster to attack twice", 6, 0, 0, null, SpellEffect.DoubleAttack, 0, 2));
+        cardDataList.Add(new CardData("Fireball", null, "Deals damage to a single target", 4, 0, 0, null, new List<SpellEffect> { SpellEffect.Damage }, 2));
+        cardDataList.Add(new CardData("Healing Light", null, "Heals a single target", 3, 0, 0, null, new List<SpellEffect> { SpellEffect.Heal }, 8));
+        cardDataList.Add(new CardData("Burning Flames", null, "Applies burn effect to a single target", 5, 0, 0, null, new List<SpellEffect> { SpellEffect.Burn }, 5, 3));
+        cardDataList.Add(new CardData("Frenzy", null, "Allows a monster to attack twice", 6, 0, 0, null, new List<SpellEffect> { SpellEffect.DoubleAttack }, 0, 2));
 
         List<CardData> validCards = new List<CardData>();
 

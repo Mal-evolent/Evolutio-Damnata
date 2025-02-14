@@ -47,7 +47,7 @@ public class CardDataDrawer : OdinValueDrawer<CardData>
         {
             DrawChildProperty(property, "EffectValue");
             DrawChildProperty(property, "Duration");
-            DrawChildProperty(property, "EffectType");
+            DrawChildProperty(property, "EffectTypes"); // Updated to draw EffectTypes
         }
 
         // Draw the monster card fields if IsMonsterCard is true
