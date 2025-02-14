@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using Sirenix.OdinInspector;
 
 public class CardLibrary : MonoBehaviour
 {
@@ -16,28 +15,53 @@ public class CardLibrary : MonoBehaviour
     public Card CreateCardFromData(CardData cardData)
     {
         Card newCard;
+
         if (cardData.IsSpellCard)
         {
             SpellCard spellCard = new GameObject(cardData.CardName).AddComponent<SpellCard>();
-            spellCard.CardName = cardData.CardName;
-            spellCard.CardImage = cardData.CardImage ?? defaultCardSprite;
-            spellCard.Description = cardData.Description;
-            spellCard.ManaCost = cardData.ManaCost;
-            spellCard.EffectType = cardData.EffectType;  // No need for .Value
-            spellCard.EffectValue = cardData.EffectValue; // Direct assignment
-            spellCard.Duration = cardData.Duration; // Direct assignment
+            if (spellCard != null)
+            {
+                spellCard.CardName = cardData.CardName;
+                spellCard.CardImage = cardData.CardImage ?? defaultCardSprite;
+                spellCard.Description = cardData.Description;
+                spellCard.ManaCost = cardData.ManaCost;
+                spellCard.EffectType = cardData.EffectType;
+                spellCard.EffectValue = cardData.EffectValue;
+                spellCard.Duration = cardData.Duration;
+
+                // Add a readable unique identifier
+                spellCard.name = $"{cardData.CardName}";
+                Debug.Log($"Created SpellCard: {spellCard.name}");
+            }
+            else
+            {
+                Debug.LogError("Failed to create SpellCard component.");
+            }
+
             newCard = spellCard;
         }
         else
         {
             MonsterCard monsterCard = new GameObject(cardData.CardName).AddComponent<MonsterCard>();
-            monsterCard.CardName = cardData.CardName;
-            monsterCard.CardImage = cardData.CardImage ?? defaultCardSprite;
-            monsterCard.Description = cardData.Description;
-            monsterCard.ManaCost = cardData.ManaCost;
-            monsterCard.AttackPower = cardData.AttackPower;
-            monsterCard.Health = cardData.Health;
-            monsterCard.Keywords = cardData.Keywords ?? new List<string>();
+            if (monsterCard != null)
+            {
+                monsterCard.CardName = cardData.CardName;
+                monsterCard.CardImage = cardData.CardImage ?? defaultCardSprite;
+                monsterCard.Description = cardData.Description;
+                monsterCard.ManaCost = cardData.ManaCost;
+                monsterCard.AttackPower = cardData.AttackPower;
+                monsterCard.Health = cardData.Health;
+                monsterCard.Keywords = cardData.Keywords ?? new List<string>();
+
+                // Add a readable unique identifier
+                monsterCard.name = $"{cardData.CardName}";
+                Debug.Log($"Created MonsterCard: {monsterCard.name}");
+            }
+            else
+            {
+                Debug.LogError("Failed to create MonsterCard component.");
+            }
+
             newCard = monsterCard;
         }
 
@@ -67,7 +91,7 @@ public class CardLibrary : MonoBehaviour
         cardDataList.Add(new CardData("Warrior", null, "A brave warrior", 3, 6, 8, new List<string> { "Taunt" }));
         cardDataList.Add(new CardData("Archer", null, "An expert archer", 2, 4, 6, new List<string> { "Ranged" }));
 
-        cardDataList.Add(new CardData("Fireball", null, "Deals damage to a single target", 4, 0, 0, null, SpellEffect.Damage, 10));
+        cardDataList.Add(new CardData("Fireball", null, "Deals damage to a single target", 4, 0, 0, null, SpellEffect.Damage, 2));
         cardDataList.Add(new CardData("Healing Light", null, "Heals a single target", 3, 0, 0, null, SpellEffect.Heal, 8));
         cardDataList.Add(new CardData("Burning Flames", null, "Applies burn effect to a single target", 5, 0, 0, null, SpellEffect.Burn, 5, 3));
         cardDataList.Add(new CardData("Frenzy", null, "Allows a monster to attack twice", 6, 0, 0, null, SpellEffect.DoubleAttack, 0, 2));

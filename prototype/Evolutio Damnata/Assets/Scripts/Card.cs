@@ -86,14 +86,28 @@ public class SpellCard : Card
 
     private void ApplyDamageEffect()
     {
+        Debug.Log($"Applying Damage Effect for SpellCard: {name}");
+
         if (targetEntity != null)
         {
             targetEntity.takeDamage(EffectValue);
-            Debug.Log("Applying " + EffectValue + " damage to target.");
+            Debug.Log($"Applying {EffectValue} damage to target for SpellCard: {name}");
+
+            // Create and animate the damage number using EffectManager
+            MonoBehaviour targetMonoBehaviour = targetEntity as MonoBehaviour;
+            if (targetMonoBehaviour != null)
+            {
+                Vector3 targetPosition = targetMonoBehaviour.transform.position;
+                Debug.Log($"Damage number created and animated for SpellCard: {name}");
+            }
+            else
+            {
+                Debug.LogError($"targetEntity is not a MonoBehaviour for SpellCard: {name}");
+            }
         }
         else
         {
-            Debug.LogError("No target entity set for damage effect.");
+            Debug.LogError($"No target entity set for damage effect for SpellCard: {name}");
         }
     }
 

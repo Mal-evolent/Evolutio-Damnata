@@ -30,6 +30,12 @@ public class combatStage : MonoBehaviour
     [SerializeField]
     SpritePositioning spritePositioning;
 
+    [SerializeField]
+    DamageVisualizer damageVisualizer;
+
+    [SerializeField]
+    GameObject damageNumberPrefab;
+
     private bool buttonsInitialized = false;
 
     // Button dimensions
@@ -263,7 +269,7 @@ public class combatStage : MonoBehaviour
         // Initialize the monster with the appropriate type, attributes, and outline image only if it's not a spell card or the placeholder is empty
         if (!selectedCardData.IsSpellCard || (existingEntityManager == null || !existingEntityManager.placed))
         {
-            entityManager.InitializeMonster(EntityManager._monsterType.Friendly, selectedCardData.Health, selectedCardData.AttackPower, healthBarSlider, placeholderImage);
+            entityManager.InitializeMonster(EntityManager._monsterType.Friendly, selectedCardData.Health, selectedCardData.AttackPower, healthBarSlider, placeholderImage, damageVisualizer, damageNumberPrefab);
         }
 
         // Check if the placeholder is already occupied by a placed monster card
@@ -369,7 +375,7 @@ public class combatStage : MonoBehaviour
         entityManager.placed = true;
 
         // Initialize the monster with the appropriate type, attributes, and outline image
-        entityManager.InitializeMonster(EntityManager._monsterType.Enemy, selectedCardData.Health, selectedCardData.AttackPower, healthBarSlider, placeholderImage);
+        entityManager.InitializeMonster(EntityManager._monsterType.Enemy, selectedCardData.Health, selectedCardData.AttackPower, healthBarSlider, placeholderImage, damageVisualizer, damageNumberPrefab);
 
         // Rename the placeholder to the card name
         placeholder.name = cardName;

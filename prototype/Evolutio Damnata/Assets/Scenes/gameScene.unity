@@ -822,6 +822,50 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 424.14}
   m_SizeDelta: {x: 327.8737, y: 86.278}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &389717231
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 389717232}
+  - component: {fileID: 389717233}
+  m_Layer: 0
+  m_Name: DamageVisualizer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &389717232
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 389717231}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1318.1229, y: 578.01227, z: -7.450616}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &389717233
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 389717231}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7642f7d6108c63c42a33472244eef845, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &404896484
 GameObject:
   m_ObjectHideFlags: 0
@@ -1648,6 +1692,8 @@ MonoBehaviour:
   atkDamage: 0
   atkDamageMulti: 1
   healthBar: {fileID: 0}
+  damageVisualizer: {fileID: 389717233}
+  damageNumberPrefab: {fileID: 7701005947219011525, guid: a68dba72d8724e94989227a650a79328, type: 3}
   dead: 0
   placed: 0
 --- !u!1 &1187307910
@@ -2022,6 +2068,7 @@ MonoBehaviour:
   cardManager: {fileID: 1201594250}
   cardLibrary: {fileID: 1159794893}
   spritePositioning: {fileID: 1417216789}
+  damageVisualizer: {fileID: 389717233}
   manaBar: {fileID: 1793571144}
   manaText: {fileID: 1870554165}
   turnText: {fileID: 352670599}
@@ -2929,6 +2976,8 @@ MonoBehaviour:
   combatManager: {fileID: 1394303771}
   battleField: {fileID: 2123307026}
   spritePositioning: {fileID: 1417216789}
+  damageVisualizer: {fileID: 389717233}
+  damageNumberPrefab: {fileID: 7701005947219011525, guid: a68dba72d8724e94989227a650a79328, type: 3}
 --- !u!4 &6081315368044828687
 Transform:
   m_ObjectHideFlags: 0
@@ -2962,3 +3011,4 @@ SceneRoots:
   - {fileID: 1178621649}
   - {fileID: 2123307027}
   - {fileID: 1011744916}
+  - {fileID: 389717232}

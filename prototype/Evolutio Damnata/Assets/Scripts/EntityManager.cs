@@ -37,17 +37,25 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     [SerializeField]
     Slider healthBar;
 
+    [SerializeField]
+    DamageVisualizer damageVisualizer;
+
+    [SerializeField]
+    GameObject damageNumberPrefab;
+
     public bool dead = false;
     public bool placed = false;
 
     // Method to set monster type and initialize health bar
-    public void InitializeMonster(_monsterType monsterType, float maxHealth, float atkDamage, Slider healthBarSlider, Image image)
+    public void InitializeMonster(_monsterType monsterType, float maxHealth, float atkDamage, Slider healthBarSlider, Image image, DamageVisualizer damageVisualizer, GameObject damageNumberPrefab)
     {
         this.monsterType = monsterType;
         this.maxHealth = maxHealth;
         this.health = maxHealth;
         this.atkDamage = atkDamage;
         this.spriteImage = image;
+        this.damageVisualizer = damageVisualizer;
+        this.damageNumberPrefab = damageNumberPrefab;
 
         // Use the passed Slider component reference
         healthBar = healthBarSlider;
@@ -113,6 +121,24 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
             Debug.Log("Monster is dead.");
             gameObject.SetActive(false);
             dead = true;
+        }
+
+        // Create and animate the damage number
+        if (damageVisualizer != null && damageNumberPrefab != null)
+        {
+            Vector3 position = transform.position;
+            damageVisualizer.createDamageNumber(this, damageAmount, position, damageNumberPrefab);
+        }
+        else
+        {
+            if (damageVisualizer == null)
+            {
+                Debug.LogError("DamageVisualizer is not set.");
+            }
+            if (damageNumberPrefab == null)
+            {
+                Debug.LogError("damageNumberPrefab is not set.");
+            }
         }
     }
 

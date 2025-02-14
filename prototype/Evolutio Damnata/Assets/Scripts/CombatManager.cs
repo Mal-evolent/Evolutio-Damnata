@@ -2,7 +2,6 @@ using System.Collections;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
-using UnityEngine.PlayerLoop;
 
 public class CombatManager : MonoBehaviour
 {
@@ -57,8 +56,12 @@ public class CombatManager : MonoBehaviour
         playerDeck.PopulateDeck();
         enemyDeck.PopulateDeck();
 
-        // Initialize DamageVisualizer
-        damageVisualizer = new DamageVisualizer();
+        // Reference the DamageVisualizer component
+        damageVisualizer = FindObjectOfType<DamageVisualizer>();
+        if (damageVisualizer == null)
+        {
+            Debug.LogError("DamageVisualizer not found in the scene.");
+        }
 
         // Start the first turn
         StartCoroutine(PrepPhase());
