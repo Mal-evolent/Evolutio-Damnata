@@ -142,7 +142,7 @@ public class SpritePositioning : MonoBehaviour
             placeHolder.transform.localScale = position.Scale;
             placeHolder.transform.rotation = position.Rotation;
             placeHolder.name = $"Enemy_Placeholder_{i}";
-            placeHolder.SetActive(true);
+            placeHolder.SetActive(false);
             enemyEntities.Add(placeHolder);
         }
     }

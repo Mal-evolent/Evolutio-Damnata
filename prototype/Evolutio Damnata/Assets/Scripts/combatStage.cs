@@ -320,7 +320,14 @@ public class combatStage : MonoBehaviour
         }
 
         // Check if the placeholder is already populated
-        EntityManager existingEntityManager = spritePositioning.enemyEntities[whichOutline].GetComponent<EntityManager>();
+        GameObject enemyPlaceholder = spritePositioning.enemyEntities[whichOutline];
+        if (enemyPlaceholder == null)
+        {
+            Debug.LogError($"Placeholder at index {whichOutline} is null!");
+            return;
+        }
+
+        EntityManager existingEntityManager = enemyPlaceholder.GetComponent<EntityManager>();
         if (existingEntityManager != null && existingEntityManager.placed)
         {
             Debug.LogError("Cannot place a card in an already populated placeholder.");
@@ -343,18 +350,15 @@ public class combatStage : MonoBehaviour
             return;
         }
 
-        // Get the placeholder GameObject
-        GameObject placeholder = spritePositioning.enemyEntities[whichOutline];
-
         // Set monster attributes
-        Image placeholderImage = placeholder.GetComponent<Image>();
+        Image placeholderImage = enemyPlaceholder.GetComponent<Image>();
         if (placeholderImage != null)
         {
             placeholderImage.sprite = cardLibrary.cardImageGetter(cardName);
         }
 
         // Apply positioning, scale, and rotation
-        RectTransform rectTransform = placeholder.GetComponent<RectTransform>();
+        RectTransform rectTransform = enemyPlaceholder.GetComponent<RectTransform>();
         PositionData positionData = spritePositioning.GetEnemyPositionsForCurrentRoom()[whichOutline];
         rectTransform.anchoredPosition = positionData.Position;
         rectTransform.sizeDelta = positionData.Size;
@@ -362,14 +366,14 @@ public class combatStage : MonoBehaviour
         rectTransform.rotation = positionData.Rotation;
 
         // Add the EntityManager component to the placeholder
-        EntityManager entityManager = placeholder.GetComponent<EntityManager>();
+        EntityManager entityManager = enemyPlaceholder.GetComponent<EntityManager>();
         if (entityManager == null)
         {
-            entityManager = placeholder.AddComponent<EntityManager>();
+            entityManager = enemyPlaceholder.AddComponent<EntityManager>();
         }
 
         // Find the health bar Slider component using transform.Find
-        Transform healthBarTransform = placeholder.transform.Find("healthBar");
+        Transform healthBarTransform = enemyPlaceholder.transform.Find("healthBar");
         Slider healthBarSlider = healthBarTransform != null ? healthBarTransform.GetComponent<Slider>() : null;
 
         entityManager.placed = true;
@@ -378,10 +382,13 @@ public class combatStage : MonoBehaviour
         entityManager.InitializeMonster(EntityManager._monsterType.Enemy, selectedCardData.Health, selectedCardData.AttackPower, healthBarSlider, placeholderImage, damageVisualizer, damageNumberPrefab);
 
         // Rename the placeholder to the card name
-        placeholder.name = cardName;
+        enemyPlaceholder.name = cardName;
 
         // Display the health bar
-        displayHealthBar(placeholder, true);
+        displayHealthBar(enemyPlaceholder, true);
+
+        // Activate the placeholder game object
+        enemyPlaceholder.SetActive(true);
     }
 
     // Start is called before the first frame update
