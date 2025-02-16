@@ -40,17 +40,19 @@ public class combatStage : MonoBehaviour
 
     // Button dimensions
     private readonly Vector2 buttonSize = new Vector2(217.9854f, 322.7287f);
+    private readonly Vector2 enemyButtonSize = new Vector2(114.2145f, 188.1686f); // Enemy placeholder button dimensions
 
     // This function will be kept
     public void interactableHighlights()
     {
         if (buttonsInitialized) return;
 
+        // Add buttons to player entities
         for (int i = 0; i < spritePositioning.playerEntities.Count; i++)
         {
             if (spritePositioning.playerEntities[i] == null)
             {
-                Debug.LogError($"Placeholder at index {i} is null!");
+                Debug.LogError($"Player placeholder at index {i} is null!");
                 continue;
             }
 
@@ -81,7 +83,7 @@ public class combatStage : MonoBehaviour
 
             buttonComponent.onClick.AddListener(() =>
             {
-                Debug.Log($"Button inside Placeholder {temp_i} clicked!");
+                Debug.Log($"Button inside Player Placeholder {temp_i} clicked!");
 
                 if (cardManager.currentSelectedCard != null && combatManager.playerTurn)
                 {
@@ -113,6 +115,62 @@ public class combatStage : MonoBehaviour
                     cardOutlineManager.RemoveHighlight();
                 }
             });
+        }
+
+        // Add buttons to enemy placeholders
+        for (int i = 0; i < spritePositioning.enemyEntities.Count; i++)
+        {
+            if (spritePositioning.enemyEntities[i] == null)
+            {
+                Debug.LogError($"Enemy placeholder at index {i} is null!");
+                continue;
+            }
+
+            // Store the placeholder's world position before parenting
+            Vector3 originalWorldPos = spritePositioning.enemyEntities[i].transform.position;
+            Vector3 originalScale = spritePositioning.enemyEntities[i].transform.localScale;
+            Quaternion originalRotation = spritePositioning.enemyEntities[i].transform.rotation;
+
+            // Create a new GameObject for the Button
+            GameObject buttonObject = new GameObject($"Enemy_Button_Outline_{i}");
+
+            // Set the button's parent to the top-level canvas (so it's clickable)
+            buttonObject.transform.SetParent(battleField.transform, false);
+
+            // Restore the button's world position
+            buttonObject.transform.position = originalWorldPos;
+
+            // Add required UI components
+            RectTransform rectTransform = buttonObject.AddComponent<RectTransform>();
+            rectTransform.sizeDelta = enemyButtonSize; // Use the enemy button size
+
+            Button buttonComponent = buttonObject.AddComponent<Button>();
+
+            // Optional: Add an Image component for debugging (can be made transparent)
+            Image buttonImage = buttonObject.AddComponent<Image>();
+            buttonImage.color = new UnityEngine.Color(1, 1, 1, 0);
+            buttonImage.raycastTarget = true;
+
+            // Convert the placeholder's world position into the button's local space
+            Vector3 localPos = buttonObject.transform.InverseTransformPoint(originalWorldPos);
+
+            // Now make the placeholder a child of the button
+            spritePositioning.enemyEntities[i].transform.SetParent(buttonObject.transform, false);
+
+            // Restore the correct local position, scale, and rotation
+            spritePositioning.enemyEntities[i].transform.localPosition = localPos;
+            spritePositioning.enemyEntities[i].transform.localScale = originalScale;
+            spritePositioning.enemyEntities[i].transform.rotation = originalRotation;
+
+            // Add onClick functionality
+            int temp_i = i;
+            buttonComponent.onClick.AddListener(() =>
+            {
+                Debug.Log($"Button inside Enemy Placeholder {temp_i} clicked!");
+                // Add attack logic here
+            });
+
+            Debug.Log($"Button {i} created, parented correctly, and position fixed.");
         }
 
         buttonsInitialized = true;
@@ -357,13 +415,6 @@ public class combatStage : MonoBehaviour
             placeholderImage.sprite = cardLibrary.cardImageGetter(cardName);
         }
 
-        // Apply positioning, scale, and rotation
-        RectTransform rectTransform = enemyPlaceholder.GetComponent<RectTransform>();
-        PositionData positionData = spritePositioning.GetEnemyPositionsForCurrentRoom()[whichOutline];
-        rectTransform.anchoredPosition = positionData.Position;
-        rectTransform.sizeDelta = positionData.Size;
-        rectTransform.localScale = positionData.Scale;
-        rectTransform.rotation = positionData.Rotation;
 
         // Add the EntityManager component to the placeholder
         EntityManager entityManager = enemyPlaceholder.GetComponent<EntityManager>();

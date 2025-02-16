@@ -2372,6 +2372,7 @@ MonoBehaviour:
   placeHolderPrefab: {fileID: 4984019819858904803, guid: feb6f16f3491b3c44ab3ac9bf11c14cc, type: 3}
   mapScript: {fileID: 559180382}
   mainCanvas: {fileID: 2123307026}
+  roomReady: 0
   playerEntities: []
   enemyEntities: []
 --- !u!4 &1417216790
