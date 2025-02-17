@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class EnemyAI : MonoBehaviour
 {
@@ -70,6 +71,8 @@ public class EnemyAI : MonoBehaviour
         List<PositionData> enemyPositions = spritePositioning.GetEnemyPositionsForCurrentRoom();
         for (int i = 0; i < enemyPositions.Count; i++)
         {
+            bool cardPlayed = false;
+
             if (enemyDeck.Hand.Count > 0)
             {
                 // Filter out spell cards
@@ -80,17 +83,30 @@ public class EnemyAI : MonoBehaviour
                     Card randomCard = monsterCards[randomIndex];
                     enemyDeck.Hand.Remove(randomCard);
                     combatStage.spawnEnemy(randomCard.CardName, i);
+                    cardPlayed = true;
                 }
                 else
                 {
                     Debug.LogWarning("No monster cards available to spawn!");
-                    break;
                 }
             }
             else
             {
                 Debug.LogWarning("Enemy hand is empty!");
-                break;
+            }
+
+            // If no card was played, deactivate the parent button
+            if (!cardPlayed)
+            {
+                GameObject enemyPlaceholder = spritePositioning.enemyEntities[i];
+                if (enemyPlaceholder != null)
+                {
+                    Button parentButton = enemyPlaceholder.GetComponentInParent<Button>();
+                    if (parentButton != null)
+                    {
+                        parentButton.gameObject.SetActive(false);
+                    }
+                }
             }
         }
     }
