@@ -29,6 +29,8 @@ public class CombatManager : MonoBehaviour
     public TMP_Text turnText;
     public GameObject damageNumberPrefab;
 
+
+
     void Start()
     {
         // Initialize game state

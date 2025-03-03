@@ -87,6 +87,14 @@ public class combatStage : MonoBehaviour
 
                 if (cardManager.currentSelectedCard != null && combatManager.playerTurn)
                 {
+                    // Check if the selected card is already placed
+                    EntityManager selectedCardEntityManager = cardManager.currentSelectedCard.GetComponent<EntityManager>();
+                    if (selectedCardEntityManager != null && selectedCardEntityManager.placed)
+                    {
+                        Debug.Log("Cannot place an already placed card!");
+                        return;
+                    }
+
                     Debug.Log($"Card {cardManager.currentSelectedCard.name} used on monster {temp_i}");
 
                     // Spawn card on field
@@ -108,6 +116,14 @@ public class combatStage : MonoBehaviour
 
                     // Deactivate placeholders
                     placeHolderActiveState(false);
+                }
+                // Makes placed cards selectable
+                else if (cardManager.currentSelectedCard == null)
+                {
+                    if (spritePositioning.playerEntities[temp_i].GetComponent<EntityManager>().placed)
+                    {
+                        cardManager.currentSelectedCard = spritePositioning.playerEntities[temp_i];
+                    }
                 }
                 else
                 {
