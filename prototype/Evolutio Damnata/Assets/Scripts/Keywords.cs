@@ -4,6 +4,7 @@ public class Keywords : MonoBehaviour
 {
     public enum MonsterKeyword
     {
+        None,
         Taunt,
         Ranged,
         Spellcaster,

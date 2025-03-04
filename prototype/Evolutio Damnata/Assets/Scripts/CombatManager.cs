@@ -50,8 +50,8 @@ public class CombatManager : MonoBehaviour
         maxPlayerMana = 1;
         enemyMana = 0;
         maxEnemyMana = 1;
-        playerHealth = 30; // Example starting health
-        enemyHealth = 30; // Example starting health
+        playerHealth = 30;
+        enemyHealth = 30; 
         storedMana = 0;
 
         // Populate decks

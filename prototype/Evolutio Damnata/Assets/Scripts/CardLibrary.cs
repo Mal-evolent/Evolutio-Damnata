@@ -28,6 +28,7 @@ public class CardLibrary : MonoBehaviour
                 spellCard.EffectTypes = cardData.EffectTypes; // Assign the list of effects
                 spellCard.EffectValue = cardData.EffectValue;
                 spellCard.Duration = cardData.Duration;
+                spellCard.CardType = cardData;
 
                 // Add a readable unique identifier
                 spellCard.name = $"{cardData.CardName}";
@@ -52,6 +53,7 @@ public class CardLibrary : MonoBehaviour
                 monsterCard.AttackPower = cardData.AttackPower;
                 monsterCard.Health = cardData.Health;
                 monsterCard.Keywords = cardData.Keywords?.Select(k => k.ToString()).ToList() ?? new List<string>();
+                monsterCard.CardType = cardData;
 
                 // Add a readable unique identifier
                 monsterCard.name = $"{cardData.CardName}";

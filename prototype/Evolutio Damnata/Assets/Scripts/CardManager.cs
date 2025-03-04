@@ -38,6 +38,10 @@ public class CardManager : MonoBehaviour
             cardRectTransform.SetParent(deckPanelRect, false);
             cardObject.name = card.CardName;
 
+            // Assign the Card reference to the CardUI component
+            CardUI cardUI = cardObject.AddComponent<CardUI>();
+            cardUI.card = card;
+
             // IMAGE
             Image image = cardObject.transform.GetChild(0).GetComponent<Image>();
             image.sprite = card.CardImage;
@@ -70,6 +74,10 @@ public class CardManager : MonoBehaviour
             RectTransform cardRectTransform = cardObject.GetComponent<RectTransform>();
             cardRectTransform.SetParent(cardUIContainer, false);
             cardObject.name = card.CardName;
+
+            // Assign the Card reference to the CardUI component
+            CardUI cardUI = cardObject.AddComponent<CardUI>();
+            cardUI.card = card;
 
             // IMAGE
             Image image = cardObject.transform.GetChild(0).GetComponent<Image>();
@@ -108,7 +116,7 @@ public class CardManager : MonoBehaviour
                     Debug.LogError("CardOutlineManager is not assigned!");
                 }
 
-                if(cardOutlineManager.cardIsHighlighted)
+                if (cardOutlineManager.cardIsHighlighted)
                 {
                     currentSelectedCard = cardObject;
                     Debug.Log($"Selected Card: {currentSelectedCard.name}");

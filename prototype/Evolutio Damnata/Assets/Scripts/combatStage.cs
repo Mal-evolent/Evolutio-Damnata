@@ -87,40 +87,63 @@ public class combatStage : MonoBehaviour
 
                 if (cardManager.currentSelectedCard != null && combatManager.playerTurn)
                 {
-                    // Check if the selected card is already placed
-                    EntityManager selectedCardEntityManager = cardManager.currentSelectedCard.GetComponent<EntityManager>();
-                    if (selectedCardEntityManager != null && selectedCardEntityManager.placed)
+                    // Get the CardUI component to access the actual card object
+                    CardUI cardUI = cardManager.currentSelectedCard.GetComponent<CardUI>();
+                    if (cardUI == null)
                     {
-                        Debug.Log("Cannot place an already placed card!");
+                        Debug.LogError("CardUI component not found on current selected card!");
                         return;
                     }
 
-                    Debug.Log($"Card {cardManager.currentSelectedCard.name} used on monster {temp_i}");
-
-                    // Spawn card on field
-                    spawnPlayerCard(cardManager.currentSelectedCard.name, temp_i);
-
-                    // Remove card from hand
-                    List<GameObject> handCardObjects = cardManager.getHandCardObjects();
-                    foreach (GameObject cardObject in handCardObjects)
+                    Card cardComponent = cardUI.card;
+                    if (cardComponent == null)
                     {
-                        if (cardObject == cardManager.currentSelectedCard)
-                        {
-                            handCardObjects.Remove(cardObject);
-                            Debug.Log("Removed card from hand.");
-                            break;
-                        }
+                        Debug.LogError("Card component not found on current selected card!");
+                        return;
                     }
 
-                    cardManager.currentSelectedCard = null;
+                    CardData cardData = cardComponent.CardType;
+                    if (cardData == null)
+                    {
+                        Debug.LogError("CardType is null on current selected card!");
+                        return;
+                    }
 
-                    // Deactivate placeholders
-                    placeHolderActiveState(false);
+                    if (cardData.IsMonsterCard)
+                    {
+                        spawnPlayerCard(cardManager.currentSelectedCard.name, temp_i);
+
+                        // Remove card from hand
+                        List<GameObject> handCardObjects = cardManager.getHandCardObjects();
+                        foreach (GameObject cardObject in handCardObjects)
+                        {
+                            if (cardObject == cardManager.currentSelectedCard)
+                            {
+                                handCardObjects.Remove(cardObject);
+                                Debug.Log("Removed card from hand.");
+                                break;
+                            }
+                        }
+
+                        cardManager.currentSelectedCard = null;
+
+                        // Deactivate placeholders
+                        placeHolderActiveState(false);
+                    }
+                    else if (cardData.IsSpellCard)
+                    {
+                        Debug.Log("Spells cannot be placed on the field.");
+                    }
+                    else
+                    {
+                        Debug.LogError("Card type not found!");
+                    }
                 }
                 // Makes placed cards selectable
                 else if (cardManager.currentSelectedCard == null)
                 {
-                    if (spritePositioning.playerEntities[temp_i].GetComponent<EntityManager>().placed)
+                    EntityManager entityManager = spritePositioning.playerEntities[temp_i].GetComponent<EntityManager>();
+                    if (entityManager != null && entityManager.placed)
                     {
                         cardManager.currentSelectedCard = spritePositioning.playerEntities[temp_i];
                     }
@@ -131,6 +154,8 @@ public class combatStage : MonoBehaviour
                     cardOutlineManager.RemoveHighlight();
                 }
             });
+
+
         }
 
         // Add buttons to enemy placeholders
@@ -190,6 +215,25 @@ public class combatStage : MonoBehaviour
         }
 
         buttonsInitialized = true;
+    }
+
+    public void checkCardType(string cardName, int whichOutline)
+    {
+        MonsterCard selectedMonsterCard = cardManager.currentSelectedCard.GetComponent<MonsterCard>();
+        SpellCard selectedSpellCard = cardManager.currentSelectedCard.GetComponent<SpellCard>();
+
+        if (selectedMonsterCard != null)
+        {
+            spawnPlayerCard(cardName, whichOutline);
+        }
+        else if (selectedSpellCard != null)
+        {
+            Debug.Log("Spells cannot be placed on the field.");
+        }
+        else
+        {
+            Debug.LogError("Card type not found!");
+        }
     }
 
     public void spawnPlayerCard(string cardName, int whichOutline)

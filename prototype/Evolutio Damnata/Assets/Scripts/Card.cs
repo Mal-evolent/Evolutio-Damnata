@@ -10,6 +10,7 @@ public class Card : MonoBehaviour
     public int AttackPower;
     public int Health;
     public int ManaCost;
+    public CardData CardType; 
 
     // Base play method. Can be overridden by derived classes
     public virtual void Play()
