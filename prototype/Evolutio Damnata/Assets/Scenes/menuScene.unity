@@ -726,7 +726,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Damnatio
+  m_text: Damnata
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: f0e59e2d608743841b2438129ce1547c, type: 2}
   m_sharedMaterial: {fileID: 3592573278942874430, guid: f0e59e2d608743841b2438129ce1547c, type: 2}
@@ -753,7 +753,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 207.5
+  m_fontSize: 220.7
   m_fontSizeBase: 112.19
   m_fontWeight: 400
   m_enableAutoSizing: 1
