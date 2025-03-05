@@ -40,7 +40,7 @@ public class combatStage : MonoBehaviour
 
     // Button dimensions
     private readonly Vector2 buttonSize = new Vector2(217.9854f, 322.7287f);
-    private readonly Vector2 enemyButtonSize = new Vector2(114.2145f, 188.1686f); // Enemy placeholder button dimensions
+    private readonly Vector2 enemyButtonSize = new Vector2(114.2145f, 188.1686f);
 
     // This function will be kept
     public void interactableHighlights()
@@ -532,7 +532,15 @@ public class combatStage : MonoBehaviour
         // Check if a card is selected and update placeholder visibility
         if (cardManager.currentSelectedCard != null)
         {
-            placeHolderActiveState(true);
+            EntityManager selectedCardEntityManager = cardManager.currentSelectedCard.GetComponent<EntityManager>();
+            if (selectedCardEntityManager != null && selectedCardEntityManager.placed)
+            {
+                placeHolderActiveState(false);
+            }
+            else
+            {
+                placeHolderActiveState(true);
+            }
         }
         else
         {
