@@ -133,9 +133,49 @@ public class combatStage : MonoBehaviour
                     }
                     else if (cardData != null && cardData.IsSpellCard)
                     {
-                        Debug.Log("Spells cannot be placed on the field.");
-                        cardManager.currentSelectedCard = null;
-                        cardOutlineManager.RemoveHighlight();
+                        if (entityManager != null && entityManager.placed)
+                        {
+                            // Apply spell effect to the placed monster
+                            Debug.Log($"Applying spell {cardManager.currentSelectedCard.name} to monster {temp_i}");
+                            SpellCard spellCard = cardManager.currentSelectedCard.GetComponent<SpellCard>();
+                            if (spellCard == null)
+                            {
+                                Debug.LogWarning("SpellCard component not found on current selected card! Adding SpellCard component.");
+                                spellCard = cardManager.currentSelectedCard.AddComponent<SpellCard>();
+
+                                // Copy properties from CardData to SpellCard
+                                spellCard.CardName = cardData.CardName;
+                                spellCard.CardImage = cardData.CardImage;
+                                spellCard.Description = cardData.Description;
+                                spellCard.ManaCost = cardData.ManaCost;
+                                spellCard.EffectTypes = cardData.EffectTypes;
+                                spellCard.EffectValue = cardData.EffectValue;
+                                spellCard.Duration = cardData.Duration;
+                            }
+                            spellCard.targetEntity = entityManager;
+                            spellCard.Play();
+
+                            // Remove card from hand
+                            List<GameObject> handCardObjects = cardManager.getHandCardObjects();
+                            foreach (GameObject cardObject in handCardObjects)
+                            {
+                                if (cardObject == cardManager.currentSelectedCard)
+                                {
+                                    handCardObjects.Remove(cardObject);
+                                    Debug.Log("Removed card from hand.");
+                                    break;
+                                }
+                            }
+
+                            cardManager.currentSelectedCard = null;
+                            cardOutlineManager.RemoveHighlight();
+                        }
+                        else
+                        {
+                            Debug.Log("Spells cannot be placed on the field.");
+                            cardManager.currentSelectedCard = null;
+                            cardOutlineManager.RemoveHighlight();
+                        }
                     }
                     else if (!entityManager.placed)
                     {
@@ -156,9 +196,6 @@ public class combatStage : MonoBehaviour
                     cardOutlineManager.RemoveHighlight();
                 }
             });
-
-
-
         }
 
         // Add buttons to enemy placeholders
