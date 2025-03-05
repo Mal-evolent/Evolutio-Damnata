@@ -536,17 +536,39 @@ public class combatStage : MonoBehaviour
             if (selectedCardEntityManager != null && selectedCardEntityManager.placed)
             {
                 placeHolderActiveState(false);
+                availableEnemyTargets(true); 
             }
             else
             {
                 placeHolderActiveState(true);
+                availableEnemyTargets(false); 
             }
         }
         else
         {
             placeHolderActiveState(false);
+            availableEnemyTargets(false);
         }
     }
+
+    private void availableEnemyTargets(bool active)
+    {
+        for (int i = 0; i < spritePositioning.enemyEntities.Count; i++)
+        {
+            if (spritePositioning.enemyEntities[i] != null)
+            {
+                Image placeholderImage = spritePositioning.enemyEntities[i].GetComponent<Image>();
+                if (placeholderImage != null && placeholderImage.sprite != null)
+                {
+                    if (placeholderImage.sprite.name != "wizard_outline")
+                    {
+                        //apply effect here
+                    }
+                }
+            }
+        }
+    }
+
 
     private void placeHolderActiveState(bool active)
     {
