@@ -199,6 +199,7 @@ public class combatStage : MonoBehaviour
         }
 
         // Add buttons to enemy placeholders
+        // Add buttons to enemy placeholders
         for (int i = 0; i < spritePositioning.enemyEntities.Count; i++)
         {
             if (spritePositioning.enemyEntities[i] == null)
@@ -248,11 +249,93 @@ public class combatStage : MonoBehaviour
             buttonComponent.onClick.AddListener(() =>
             {
                 Debug.Log($"Button inside Enemy Placeholder {temp_i} clicked!");
-                // Add attack logic here
+                EntityManager entityManager = spritePositioning.enemyEntities[temp_i].GetComponent<EntityManager>();
+
+                if (cardManager.currentSelectedCard != null && combatManager.playerTurn)
+                {
+                    // Get the CardUI component to access the actual card object
+                    CardUI cardUI = cardManager.currentSelectedCard.GetComponent<CardUI>();
+                    if (cardUI == null && !entityManager.placed)
+                    {
+                        Debug.LogError("CardUI component not found on current selected card!");
+                        return;
+                    }
+
+                    Card cardComponent = cardUI?.card;
+                    if (cardComponent == null && !entityManager.placed)
+                    {
+                        Debug.LogError("Card component not found on current selected card!");
+                        return;
+                    }
+
+                    CardData cardData = cardComponent?.CardType;
+                    if (cardData == null && !entityManager.placed)
+                    {
+                        Debug.LogError("CardType is null on current selected card!");
+                        return;
+                    }
+
+                    if (cardData != null && cardData.IsSpellCard)
+                    {
+                        if (entityManager != null && entityManager.placed)
+                        {
+                            // Apply spell effect to the enemy monster
+                            Debug.Log($"Applying spell {cardManager.currentSelectedCard.name} to enemy monster {temp_i}");
+                            SpellCard spellCard = cardManager.currentSelectedCard.GetComponent<SpellCard>();
+                            if (spellCard == null)
+                            {
+                                Debug.LogWarning("SpellCard component not found on current selected card! Adding SpellCard component.");
+                                spellCard = cardManager.currentSelectedCard.AddComponent<SpellCard>();
+
+                                // Copy properties from CardData to SpellCard
+                                spellCard.CardName = cardData.CardName;
+                                spellCard.CardImage = cardData.CardImage;
+                                spellCard.Description = cardData.Description;
+                                spellCard.ManaCost = cardData.ManaCost;
+                                spellCard.EffectTypes = cardData.EffectTypes;
+                                spellCard.EffectValue = cardData.EffectValue;
+                                spellCard.Duration = cardData.Duration;
+                            }
+                            spellCard.targetEntity = entityManager;
+                            spellCard.Play();
+
+                            // Remove card from hand
+                            List<GameObject> handCardObjects = cardManager.getHandCardObjects();
+                            foreach (GameObject cardObject in handCardObjects)
+                            {
+                                if (cardObject == cardManager.currentSelectedCard)
+                                {
+                                    handCardObjects.Remove(cardObject);
+                                    Debug.Log("Removed card from hand.");
+                                    break;
+                                }
+                            }
+
+                            cardManager.currentSelectedCard = null;
+                            cardOutlineManager.RemoveHighlight();
+                        }
+                        else
+                        {
+                            Debug.Log("Spells cannot be placed on the field.");
+                            cardManager.currentSelectedCard = null;
+                            cardOutlineManager.RemoveHighlight();
+                        }
+                    }
+                    else if (!entityManager.placed)
+                    {
+                        Debug.LogError("Card type not found!");
+                    }
+                }
+                else
+                {
+                    Debug.Log("No card selected or not the players turn!");
+                    cardOutlineManager.RemoveHighlight();
+                }
             });
 
             Debug.Log($"Button {i} created, parented correctly, and position fixed.");
         }
+
 
         buttonsInitialized = true;
     }
