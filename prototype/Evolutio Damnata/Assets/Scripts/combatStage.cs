@@ -84,26 +84,27 @@ public class combatStage : MonoBehaviour
             buttonComponent.onClick.AddListener(() =>
             {
                 Debug.Log($"Button inside Player Placeholder {temp_i} clicked!");
+                EntityManager entityManager = spritePositioning.playerEntities[temp_i].GetComponent<EntityManager>();
 
                 if (cardManager.currentSelectedCard != null && combatManager.playerTurn)
                 {
                     // Get the CardUI component to access the actual card object
                     CardUI cardUI = cardManager.currentSelectedCard.GetComponent<CardUI>();
-                    if (cardUI == null)
+                    if (cardUI == null && entityManager.placed != true)
                     {
                         Debug.LogError("CardUI component not found on current selected card!");
                         return;
                     }
 
                     Card cardComponent = cardUI.card;
-                    if (cardComponent == null)
+                    if (cardComponent == null && entityManager.placed != true)
                     {
                         Debug.LogError("Card component not found on current selected card!");
                         return;
                     }
 
                     CardData cardData = cardComponent.CardType;
-                    if (cardData == null)
+                    if (cardData == null && entityManager.placed != true)
                     {
                         Debug.LogError("CardType is null on current selected card!");
                         return;
@@ -142,7 +143,6 @@ public class combatStage : MonoBehaviour
                 // Makes placed cards selectable
                 else if (cardManager.currentSelectedCard == null)
                 {
-                    EntityManager entityManager = spritePositioning.playerEntities[temp_i].GetComponent<EntityManager>();
                     if (entityManager != null && entityManager.placed)
                     {
                         cardManager.currentSelectedCard = spritePositioning.playerEntities[temp_i];
