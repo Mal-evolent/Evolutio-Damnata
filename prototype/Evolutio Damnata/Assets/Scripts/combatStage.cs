@@ -47,7 +47,14 @@ public class combatStage : MonoBehaviour
     {
         if (buttonsInitialized) return;
 
-        // Add buttons to player entities
+        AddButtonsToPlayerEntities();
+        AddButtonsToEnemyEntities();
+
+        buttonsInitialized = true;
+    }
+
+    private void AddButtonsToPlayerEntities()
+    {
         for (int i = 0; i < spritePositioning.playerEntities.Count; i++)
         {
             if (spritePositioning.playerEntities[i] == null)
@@ -56,151 +63,174 @@ public class combatStage : MonoBehaviour
                 continue;
             }
 
-            // Set RaycastTarget to false for the placeholder outline
-            Image placeholderImage = spritePositioning.playerEntities[i].GetComponent<Image>();
-            if (placeholderImage != null)
-            {
-                placeholderImage.raycastTarget = false;
-            }
+            CreatePlayerButton(i);
+        }
+    }
 
-            // Create a new GameObject for the Button
-            GameObject buttonObject = new GameObject($"Button_Outline_{i}");
-            buttonObject.transform.SetParent(spritePositioning.playerEntities[i].transform, false); // Add as a child of the Placeholder
-            buttonObject.transform.localPosition = Vector3.zero; // Center the Button inside the Placeholder
+    private void CreatePlayerButton(int index)
+    {
+        GameObject playerEntity = spritePositioning.playerEntities[index];
 
-            // Add required components to make it a Button
-            RectTransform rectTransform = buttonObject.AddComponent<RectTransform>();
-            rectTransform.sizeDelta = buttonSize; // Set the size of the Button to match the placeholder size
-
-            Button buttonComponent = buttonObject.AddComponent<Button>();
-
-            // Optional: Add an Image component to visualize the Button
-            Image buttonImage = buttonObject.AddComponent<Image>();
-            buttonImage.color = new UnityEngine.Color(1, 1, 1, 0); // Transparent background for the Button
-
-            // Add onClick functionality
-            int temp_i = i;
-
-            buttonComponent.onClick.AddListener(() =>
-            {
-                Debug.Log($"Button inside Player Placeholder {temp_i} clicked!");
-                EntityManager entityManager = spritePositioning.playerEntities[temp_i].GetComponent<EntityManager>();
-
-                if (cardManager.currentSelectedCard != null && combatManager.playerTurn)
-                {
-                    // Get the CardUI component to access the actual card object
-                    CardUI cardUI = cardManager.currentSelectedCard.GetComponent<CardUI>();
-                    if (cardUI == null && !entityManager.placed)
-                    {
-                        Debug.LogError("CardUI component not found on current selected card!");
-                        return;
-                    }
-
-                    Card cardComponent = cardUI?.card;
-                    if (cardComponent == null && !entityManager.placed)
-                    {
-                        Debug.LogError("Card component not found on current selected card!");
-                        return;
-                    }
-
-                    CardData cardData = cardComponent?.CardType;
-                    if (cardData == null && !entityManager.placed)
-                    {
-                        Debug.LogError("CardType is null on current selected card!");
-                        return;
-                    }
-
-                    if (cardData != null && cardData.IsMonsterCard)
-                    {
-                        spawnPlayerCard(cardManager.currentSelectedCard.name, temp_i);
-
-                        // Remove card from hand
-                        List<GameObject> handCardObjects = cardManager.getHandCardObjects();
-                        foreach (GameObject cardObject in handCardObjects)
-                        {
-                            if (cardObject == cardManager.currentSelectedCard)
-                            {
-                                handCardObjects.Remove(cardObject);
-                                Destroy(cardObject);
-                                Debug.Log("Removed card from hand.");
-                                break;
-                            }
-                        }
-
-                        cardManager.currentSelectedCard = null;
-
-                        // Deactivate placeholders
-                        placeHolderActiveState(false);
-                    }
-                    else if (cardData != null && cardData.IsSpellCard)
-                    {
-                        if (entityManager != null && entityManager.placed)
-                        {
-                            // Apply spell effect to the placed monster
-                            Debug.Log($"Applying spell {cardManager.currentSelectedCard.name} to monster {temp_i}");
-                            SpellCard spellCard = cardManager.currentSelectedCard.GetComponent<SpellCard>();
-                            if (spellCard == null)
-                            {
-                                Debug.LogWarning("SpellCard component not found on current selected card! Adding SpellCard component.");
-                                spellCard = cardManager.currentSelectedCard.AddComponent<SpellCard>();
-
-                                // Copy properties from CardData to SpellCard
-                                spellCard.CardName = cardData.CardName;
-                                spellCard.CardImage = cardData.CardImage;
-                                spellCard.Description = cardData.Description;
-                                spellCard.ManaCost = cardData.ManaCost;
-                                spellCard.EffectTypes = cardData.EffectTypes;
-                                spellCard.EffectValue = cardData.EffectValue;
-                                spellCard.Duration = cardData.Duration;
-                            }
-                            spellCard.targetEntity = entityManager;
-                            spellCard.Play();
-
-                            // Remove card from hand
-                            List<GameObject> handCardObjects = cardManager.getHandCardObjects();
-                            foreach (GameObject cardObject in handCardObjects)
-                            {
-                                if (cardObject == cardManager.currentSelectedCard)
-                                {
-                                    handCardObjects.Remove(cardObject);
-                                    Destroy(cardObject);
-                                    Debug.Log("Removed card from hand.");
-                                    break;
-                                }
-                            }
-
-                            cardManager.currentSelectedCard = null;
-                            cardOutlineManager.RemoveHighlight();
-                        }
-                        else
-                        {
-                            Debug.Log("Spells cannot be placed on the field.");
-                            cardManager.currentSelectedCard = null;
-                            cardOutlineManager.RemoveHighlight();
-                        }
-                    }
-                    else if (!entityManager.placed)
-                    {
-                        Debug.LogError("Card type not found!");
-                    }
-                }
-                // Makes placed cards selectable
-                else if (cardManager.currentSelectedCard == null)
-                {
-                    if (entityManager != null && entityManager.placed)
-                    {
-                        cardManager.currentSelectedCard = spritePositioning.playerEntities[temp_i];
-                    }
-                }
-                else
-                {
-                    Debug.Log("No card selected or not the players turn!");
-                    cardOutlineManager.RemoveHighlight();
-                }
-            });
+        // Set RaycastTarget to false for the placeholder outline
+        Image placeholderImage = playerEntity.GetComponent<Image>();
+        if (placeholderImage != null)
+        {
+            placeholderImage.raycastTarget = false;
         }
 
-        // Add buttons to enemy placeholders
+        // Create a new GameObject for the Button
+        GameObject buttonObject = new GameObject($"Button_Outline_{index}");
+        buttonObject.transform.SetParent(playerEntity.transform, false); // Add as a child of the Placeholder
+        buttonObject.transform.localPosition = Vector3.zero; // Center the Button inside the Placeholder
+
+        // Add required components to make it a Button
+        RectTransform rectTransform = buttonObject.AddComponent<RectTransform>();
+        rectTransform.sizeDelta = buttonSize; // Set the size of the Button to match the placeholder size
+
+        Button buttonComponent = buttonObject.AddComponent<Button>();
+
+        // Optional: Add an Image component to visualize the Button
+        Image buttonImage = buttonObject.AddComponent<Image>();
+        buttonImage.color = new UnityEngine.Color(1, 1, 1, 0); // Transparent background for the Button
+
+        // Add onClick functionality
+        buttonComponent.onClick.AddListener(() => OnPlayerButtonClick(index));
+    }
+
+    private void OnPlayerButtonClick(int index)
+    {
+        Debug.Log($"Button inside Player Placeholder {index} clicked!");
+        EntityManager entityManager = spritePositioning.playerEntities[index].GetComponent<EntityManager>();
+
+        if (cardManager.currentSelectedCard != null && combatManager.playerTurn)
+        {
+            HandlePlayerCardSelection(index, entityManager);
+        }
+        else if (cardManager.currentSelectedCard == null)
+        {
+            if (entityManager != null && entityManager.placed)
+            {
+                cardManager.currentSelectedCard = spritePositioning.playerEntities[index];
+            }
+        }
+        else
+        {
+            Debug.Log("No card selected or not the players turn!");
+            cardOutlineManager.RemoveHighlight();
+        }
+    }
+
+    private void HandlePlayerCardSelection(int index, EntityManager entityManager)
+    {
+        CardUI cardUI = cardManager.currentSelectedCard.GetComponent<CardUI>();
+        if (cardUI == null && !entityManager.placed)
+        {
+            Debug.LogError("CardUI component not found on current selected card!");
+            return;
+        }
+
+        Card cardComponent = cardUI?.card;
+        if (cardComponent == null && !entityManager.placed)
+        {
+            Debug.LogError("Card component not found on current selected card!");
+            return;
+        }
+
+        CardData cardData = cardComponent?.CardType;
+        if (cardData == null && !entityManager.placed)
+        {
+            Debug.LogError("CardType is null on current selected card!");
+            return;
+        }
+
+        if (cardData != null && cardData.IsMonsterCard)
+        {
+            HandleMonsterCardSelection(index);
+        }
+        else if (cardData != null && cardData.IsSpellCard)
+        {
+            HandleSpellCardSelection(index, entityManager);
+        }
+        else if (!entityManager.placed)
+        {
+            Debug.LogError("Card type not found!");
+        }
+    }
+
+    private void HandleMonsterCardSelection(int index)
+    {
+        spawnPlayerCard(cardManager.currentSelectedCard.name, index);
+
+        // Remove card from hand
+        List<GameObject> handCardObjects = cardManager.getHandCardObjects();
+        foreach (GameObject cardObject in handCardObjects)
+        {
+            if (cardObject == cardManager.currentSelectedCard)
+            {
+                handCardObjects.Remove(cardObject);
+                Destroy(cardObject);
+                Debug.Log("Removed card from hand.");
+                break;
+            }
+        }
+
+        cardManager.currentSelectedCard = null;
+
+        // Deactivate placeholders
+        placeHolderActiveState(false);
+    }
+
+    private void HandleSpellCardSelection(int index, EntityManager entityManager)
+    {
+        if (entityManager != null && entityManager.placed)
+        {
+            // Apply spell effect to the placed monster
+            Debug.Log($"Applying spell {cardManager.currentSelectedCard.name} to monster {index}");
+            SpellCard spellCard = cardManager.currentSelectedCard.GetComponent<SpellCard>();
+            if (spellCard == null)
+            {
+                Debug.LogWarning("SpellCard component not found on current selected card! Adding SpellCard component.");
+                spellCard = cardManager.currentSelectedCard.AddComponent<SpellCard>();
+
+                // Copy properties from CardData to SpellCard
+                CardData selectedCardData = spellCard.CardType;
+                spellCard.CardName = selectedCardData.CardName;
+                spellCard.CardImage = selectedCardData.CardImage;
+                spellCard.Description = selectedCardData.Description;
+                spellCard.ManaCost = selectedCardData.ManaCost;
+                spellCard.EffectTypes = selectedCardData.EffectTypes;
+                spellCard.EffectValue = selectedCardData.EffectValue;
+                spellCard.Duration = selectedCardData.Duration;
+            }
+            spellCard.targetEntity = entityManager;
+            spellCard.Play();
+
+            // Remove card from hand
+            List<GameObject> handCardObjects = cardManager.getHandCardObjects();
+            foreach (GameObject cardObject in handCardObjects)
+            {
+                if (cardObject == cardManager.currentSelectedCard)
+                {
+                    handCardObjects.Remove(cardObject);
+                    Destroy(cardObject);
+                    Debug.Log("Removed card from hand.");
+                    break;
+                }
+            }
+
+            cardManager.currentSelectedCard = null;
+            cardOutlineManager.RemoveHighlight();
+        }
+        else
+        {
+            Debug.Log("Spells cannot be placed on the field.");
+            cardManager.currentSelectedCard = null;
+            cardOutlineManager.RemoveHighlight();
+        }
+    }
+
+    private void AddButtonsToEnemyEntities()
+    {
         for (int i = 0; i < spritePositioning.enemyEntities.Count; i++)
         {
             if (spritePositioning.enemyEntities[i] == null)
@@ -209,137 +239,148 @@ public class combatStage : MonoBehaviour
                 continue;
             }
 
-            // Store the placeholder's world position before parenting
-            Vector3 originalWorldPos = spritePositioning.enemyEntities[i].transform.position;
-            Vector3 originalScale = spritePositioning.enemyEntities[i].transform.localScale;
-            Quaternion originalRotation = spritePositioning.enemyEntities[i].transform.rotation;
+            CreateEnemyButton(i);
+        }
+    }
 
-            // Create a new GameObject for the Button
-            GameObject buttonObject = new GameObject($"Enemy_Button_Outline_{i}");
+    private void CreateEnemyButton(int index)
+    {
+        GameObject enemyEntity = spritePositioning.enemyEntities[index];
 
-            // Set the button's parent to the top-level canvas (so it's clickable)
-            buttonObject.transform.SetParent(battleField.transform, false);
+        // Store the placeholder's world position before parenting
+        Vector3 originalWorldPos = enemyEntity.transform.position;
+        Vector3 originalScale = enemyEntity.transform.localScale;
+        Quaternion originalRotation = enemyEntity.transform.rotation;
 
-            // Restore the button's world position
-            buttonObject.transform.position = originalWorldPos;
+        // Create a new GameObject for the Button
+        GameObject buttonObject = new GameObject($"Enemy_Button_Outline_{index}");
 
-            // Add required UI components
-            RectTransform rectTransform = buttonObject.AddComponent<RectTransform>();
-            rectTransform.sizeDelta = enemyButtonSize; // Use the enemy button size
+        // Set the button's parent to the top-level canvas (so it's clickable)
+        buttonObject.transform.SetParent(battleField.transform, false);
 
-            Button buttonComponent = buttonObject.AddComponent<Button>();
+        // Restore the button's world position
+        buttonObject.transform.position = originalWorldPos;
 
-            // Optional: Add an Image component for debugging (can be made transparent)
-            Image buttonImage = buttonObject.AddComponent<Image>();
-            buttonImage.color = new UnityEngine.Color(1, 1, 1, 0);
-            buttonImage.raycastTarget = true;
+        // Add required UI components
+        RectTransform rectTransform = buttonObject.AddComponent<RectTransform>();
+        rectTransform.sizeDelta = enemyButtonSize; // Use the enemy button size
 
-            // Convert the placeholder's world position into the button's local space
-            Vector3 localPos = buttonObject.transform.InverseTransformPoint(originalWorldPos);
+        Button buttonComponent = buttonObject.AddComponent<Button>();
 
-            // Now make the placeholder a child of the button
-            spritePositioning.enemyEntities[i].transform.SetParent(buttonObject.transform, false);
+        // Optional: Add an Image component for debugging (can be made transparent)
+        Image buttonImage = buttonObject.AddComponent<Image>();
+        buttonImage.color = new UnityEngine.Color(1, 1, 1, 0);
+        buttonImage.raycastTarget = true;
 
-            // Restore the correct local position, scale, and rotation
-            spritePositioning.enemyEntities[i].transform.localPosition = localPos;
-            spritePositioning.enemyEntities[i].transform.localScale = originalScale;
-            spritePositioning.enemyEntities[i].transform.rotation = originalRotation;
+        // Convert the placeholder's world position into the button's local space
+        Vector3 localPos = buttonObject.transform.InverseTransformPoint(originalWorldPos);
 
-            // Add onClick functionality
-            int temp_i = i;
-            buttonComponent.onClick.AddListener(() =>
-            {
-                Debug.Log($"Button inside Enemy Placeholder {temp_i} clicked!");
-                EntityManager entityManager = spritePositioning.enemyEntities[temp_i].GetComponent<EntityManager>();
+        // Now make the placeholder a child of the button
+        enemyEntity.transform.SetParent(buttonObject.transform, false);
 
-                if (cardManager.currentSelectedCard != null && combatManager.playerTurn)
-                {
-                    // Get the CardUI component to access the actual card object
-                    CardUI cardUI = cardManager.currentSelectedCard.GetComponent<CardUI>();
-                    if (cardUI == null && !entityManager.placed)
-                    {
-                        Debug.LogError("CardUI component not found on current selected card!");
-                        return;
-                    }
+        // Restore the correct local position, scale, and rotation
+        enemyEntity.transform.localPosition = localPos;
+        enemyEntity.transform.localScale = originalScale;
+        enemyEntity.transform.rotation = originalRotation;
 
-                    Card cardComponent = cardUI?.card;
-                    if (cardComponent == null && !entityManager.placed)
-                    {
-                        Debug.LogError("Card component not found on current selected card!");
-                        return;
-                    }
+        // Add onClick functionality
+        buttonComponent.onClick.AddListener(() => OnEnemyButtonClick(index));
 
-                    CardData cardData = cardComponent?.CardType;
-                    if (cardData == null && !entityManager.placed)
-                    {
-                        Debug.LogError("CardType is null on current selected card!");
-                        return;
-                    }
+        Debug.Log($"Button {index} created, parented correctly, and position fixed.");
+    }
 
-                    if (cardData != null && cardData.IsSpellCard)
-                    {
-                        if (entityManager != null && entityManager.placed)
-                        {
-                            // Apply spell effect to the enemy monster
-                            Debug.Log($"Applying spell {cardManager.currentSelectedCard.name} to enemy monster {temp_i}");
-                            SpellCard spellCard = cardManager.currentSelectedCard.GetComponent<SpellCard>();
-                            if (spellCard == null)
-                            {
-                                Debug.LogWarning("SpellCard component not found on current selected card! Adding SpellCard component.");
-                                spellCard = cardManager.currentSelectedCard.AddComponent<SpellCard>();
+    private void OnEnemyButtonClick(int index)
+    {
+        Debug.Log($"Button inside Enemy Placeholder {index} clicked!");
+        EntityManager entityManager = spritePositioning.enemyEntities[index].GetComponent<EntityManager>();
 
-                                // Copy properties from CardData to SpellCard
-                                spellCard.CardName = cardData.CardName;
-                                spellCard.CardImage = cardData.CardImage;
-                                spellCard.Description = cardData.Description;
-                                spellCard.ManaCost = cardData.ManaCost;
-                                spellCard.EffectTypes = cardData.EffectTypes;
-                                spellCard.EffectValue = cardData.EffectValue;
-                                spellCard.Duration = cardData.Duration;
-                            }
-                            spellCard.targetEntity = entityManager;
-                            spellCard.Play();
+        if (cardManager.currentSelectedCard != null && combatManager.playerTurn)
+        {
+            HandleEnemyCardSelection(index, entityManager);
+        }
+        else
+        {
+            Debug.Log("No card selected or not the players turn!");
+            cardOutlineManager.RemoveHighlight();
+        }
+    }
 
-                            // Remove card from hand
-                            List<GameObject> handCardObjects = cardManager.getHandCardObjects();
-                            foreach (GameObject cardObject in handCardObjects)
-                            {
-                                if (cardObject == cardManager.currentSelectedCard)
-                                {
-                                    handCardObjects.Remove(cardObject);
-                                    Destroy(cardObject);
-                                    Debug.Log("Removed card from hand.");
-                                    break;
-                                }
-                            }
-
-                            cardManager.currentSelectedCard = null;
-                            cardOutlineManager.RemoveHighlight();
-                        }
-                        else
-                        {
-                            Debug.Log("Spells cannot be placed on the field.");
-                            cardManager.currentSelectedCard = null;
-                            cardOutlineManager.RemoveHighlight();
-                        }
-                    }
-                    else if (!entityManager.placed)
-                    {
-                        Debug.LogError("Card type not found!");
-                    }
-                }
-                else
-                {
-                    Debug.Log("No card selected or not the players turn!");
-                    cardOutlineManager.RemoveHighlight();
-                }
-            });
-
-            Debug.Log($"Button {i} created, parented correctly, and position fixed.");
+    private void HandleEnemyCardSelection(int index, EntityManager entityManager)
+    {
+        CardUI cardUI = cardManager.currentSelectedCard.GetComponent<CardUI>();
+        if (cardUI == null && !entityManager.placed)
+        {
+            Debug.LogError("CardUI component not found on current selected card!");
+            return;
         }
 
-        buttonsInitialized = true;
+        Card cardComponent = cardUI?.card;
+        if (cardComponent == null && !entityManager.placed)
+        {
+            Debug.LogError("Card component not found on current selected card!");
+            return;
+        }
+
+        CardData selectedCardData = cardComponent?.CardType;
+        if (selectedCardData == null && !entityManager.placed)
+        {
+            Debug.LogError("CardType is null on current selected card!");
+            return;
+        }
+
+        if (selectedCardData != null && selectedCardData.IsSpellCard)
+        {
+            if (entityManager != null && entityManager.placed)
+            {
+                // Apply spell effect to the enemy monster
+                Debug.Log($"Applying spell {cardManager.currentSelectedCard.name} to enemy monster {index}");
+                SpellCard spellCard = cardManager.currentSelectedCard.GetComponent<SpellCard>();
+                if (spellCard == null)
+                {
+                    Debug.LogWarning("SpellCard component not found on current selected card! Adding SpellCard component.");
+                    spellCard = cardManager.currentSelectedCard.AddComponent<SpellCard>();
+
+                    // Copy properties from CardData to SpellCard
+                    spellCard.CardName = selectedCardData.CardName;
+                    spellCard.CardImage = selectedCardData.CardImage;
+                    spellCard.Description = selectedCardData.Description;
+                    spellCard.ManaCost = selectedCardData.ManaCost;
+                    spellCard.EffectTypes = selectedCardData.EffectTypes;
+                    spellCard.EffectValue = selectedCardData.EffectValue;
+                    spellCard.Duration = selectedCardData.Duration;
+                }
+                spellCard.targetEntity = entityManager;
+                spellCard.Play();
+
+                // Remove card from hand
+                List<GameObject> handCardObjects = cardManager.getHandCardObjects();
+                foreach (GameObject cardObject in handCardObjects)
+                {
+                    if (cardObject == cardManager.currentSelectedCard)
+                    {
+                        handCardObjects.Remove(cardObject);
+                        Destroy(cardObject);
+                        Debug.Log("Removed card from hand.");
+                        break;
+                    }
+                }
+
+                cardManager.currentSelectedCard = null;
+                cardOutlineManager.RemoveHighlight();
+            }
+            else
+            {
+                Debug.Log("Spells cannot be placed on the field.");
+                cardManager.currentSelectedCard = null;
+                cardOutlineManager.RemoveHighlight();
+            }
+        }
+        else if (!entityManager.placed)
+        {
+            Debug.LogError("Card type not found!");
+        }
     }
+
 
     public void spawnPlayerCard(string cardName, int whichOutline)
     {
