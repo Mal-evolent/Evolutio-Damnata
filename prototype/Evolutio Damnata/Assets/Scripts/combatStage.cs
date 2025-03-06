@@ -121,6 +121,7 @@ public class combatStage : MonoBehaviour
                             if (cardObject == cardManager.currentSelectedCard)
                             {
                                 handCardObjects.Remove(cardObject);
+                                Destroy(cardObject);
                                 Debug.Log("Removed card from hand.");
                                 break;
                             }
@@ -162,6 +163,7 @@ public class combatStage : MonoBehaviour
                                 if (cardObject == cardManager.currentSelectedCard)
                                 {
                                     handCardObjects.Remove(cardObject);
+                                    Destroy(cardObject);
                                     Debug.Log("Removed card from hand.");
                                     break;
                                 }
@@ -198,7 +200,6 @@ public class combatStage : MonoBehaviour
             });
         }
 
-        // Add buttons to enemy placeholders
         // Add buttons to enemy placeholders
         for (int i = 0; i < spritePositioning.enemyEntities.Count; i++)
         {
@@ -306,6 +307,7 @@ public class combatStage : MonoBehaviour
                                 if (cardObject == cardManager.currentSelectedCard)
                                 {
                                     handCardObjects.Remove(cardObject);
+                                    Destroy(cardObject);
                                     Debug.Log("Removed card from hand.");
                                     break;
                                 }
@@ -335,7 +337,6 @@ public class combatStage : MonoBehaviour
 
             Debug.Log($"Button {i} created, parented correctly, and position fixed.");
         }
-
 
         buttonsInitialized = true;
     }
