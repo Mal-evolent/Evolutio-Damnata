@@ -5,171 +5,176 @@ using UnityEngine.UI;
 
 public class CombatManager : MonoBehaviour
 {
-    public int playerMana;
-    public int maxPlayerMana;
-    public int enemyMana;
-    public int maxEnemyMana;
-    public int playerHealth;
-    public int enemyHealth;
-    public int storedMana;
-    public int maxStoredMana = 2;
+    public int playerMana = 1;
+    public int enemyMana = 1;
+    public int maxMana = 1;
+    public int playerHealth = 30;
+    public int enemyHealth = 30;
+
     public bool playerTurn = true;
+    private bool playerGoesFirst = true;
+
+    public Button endPhaseButton;
     public Button endTurnButton;
 
-    public Deck playerDeck;
-    public Deck enemyDeck;
-    public CardManager cardManager;
-    public CardLibrary cardLibrary;
-    public SpritePositioning spritePositioning;
-    public DamageVisualizer damageVisualizer;
-
-    [SerializeField]
-    public GameObject manaBar;
-    [SerializeField]
-    public GameObject manaText;
+    public TMP_Text manaText;
     public TMP_Text turnText;
-    public GameObject damageNumberPrefab;
+    public Slider manaBar;
 
-
-
-    void Start()
+    private void Start()
     {
-        // Initialize game state
         InitializeGame();
     }
 
-    void Update()
+    private void InitializeGame()
     {
-        //TESTING ONLY
-
-        //playerTurn = true;
-    }
-
-    void InitializeGame()
-    {
-        playerMana = 0;
-        maxPlayerMana = 1;
-        enemyMana = 0;
-        maxEnemyMana = 1;
-        playerHealth = 30;
-        enemyHealth = 30; 
-        storedMana = 0;
-
-        // Populate decks
-        playerDeck.PopulateDeck();
-        enemyDeck.PopulateDeck();
-
-        // Reference the DamageVisualizer component
-        damageVisualizer = FindObjectOfType<DamageVisualizer>();
-        if (damageVisualizer == null)
-        {
-            Debug.LogError("DamageVisualizer not found in the scene.");
-        }
-
-        // Start the first turn
+        Debug.Log("Initializing Game");
+        UpdateManaUI();
+        SetButtonState(endPhaseButton, true);
+        SetButtonState(endTurnButton, false);
         StartCoroutine(PrepPhase());
     }
 
-    IEnumerator PrepPhase()
+    private IEnumerator PrepPhase()
     {
-        // Increase max mana and gain mana
-        maxPlayerMana++;
-        playerMana = maxPlayerMana;
-        maxEnemyMana++;
-        enemyMana = maxEnemyMana;
-
-        // Update mana UI
+        Debug.Log("Entering Prep Phase");
+        maxMana++;
+        playerMana = maxMana;
+        enemyMana = maxMana;
         UpdateManaUI();
+        playerTurn = playerGoesFirst;
+        playerGoesFirst = !playerGoesFirst;
 
-        // Allow players to play cards
-        // Example: player plays cards
-        yield return StartCoroutine(PlayerPlayCards());
-
-        // Example: enemy plays cards
-        yield return StartCoroutine(EnemyPlayCards());
-
-        // Proceed to Combat Phase
-        StartCoroutine(CombatPhase());
-    }
-
-    IEnumerator PlayerPlayCards()
-    {
-        // Logic for player to play cards
-        // Example: wait for player input
-        yield return new WaitForSeconds(2); // Placeholder for player input
-    }
-
-    IEnumerator EnemyPlayCards()
-    {
-        // Logic for enemy to play cards
-        // Example: AI plays cards
-        yield return new WaitForSeconds(2); // Placeholder for enemy AI
-    }
-
-    IEnumerator CombatPhase()
-    {
-        // Determine attack order
         if (playerTurn)
         {
-            // Player attacks first
-            yield return StartCoroutine(PlayerAttack());
-            yield return StartCoroutine(EnemyAttack());
+            Debug.Log("Player's Prep Phase");
+            SetButtonState(endPhaseButton, true);
+            yield return null; // Wait for player to press End Phase
         }
         else
         {
-            // Enemy attacks first
-            yield return StartCoroutine(EnemyAttack());
-            yield return StartCoroutine(PlayerAttack());
+            Debug.Log("Enemy's Prep Phase");
+            yield return StartCoroutine(EnemyPlayCards());
+            EndPhase();
         }
-
-        // Proceed to Clean-Up Phase
-        StartCoroutine(CleanUpPhase());
     }
 
-    IEnumerator PlayerAttack()
+    public void EndPhase()
     {
-        yield return new WaitForSeconds(1);
+        Debug.Log("Ending Phase");
+        SetButtonState(endPhaseButton, false);
+        if (playerTurn)
+        {
+            Debug.Log("Player's End Phase");
+            playerTurn = false;
+            StartCoroutine(EnemyPrepPhase());
+        }
+        else
+        {
+            Debug.Log("Enemy's End Phase");
+            playerTurn = true;
+            StartCoroutine(CombatPhase());
+        }
     }
 
-    IEnumerator EnemyAttack()
+    private IEnumerator EnemyPrepPhase()
     {
-        yield return new WaitForSeconds(1); 
+        Debug.Log("Enemy Prep Phase");
+        yield return StartCoroutine(EnemyPlayCards());
+        EndPhase();
     }
 
-    IEnumerator CleanUpPhase()
+    private IEnumerator EnemyPlayCards()
     {
-        // Resolve lingering effects
-        yield return StartCoroutine(ResolveLingeringEffects());
-
+        Debug.Log("Enemy Playing Cards");
+        yield return new WaitForSeconds(2);
     }
 
-    IEnumerator ResolveLingeringEffects()
+    private IEnumerator CombatPhase()
     {
-        // Logic to resolve burn, poison, curses, etc.
-        yield return new WaitForSeconds(1); // Placeholder for effect resolution
+        Debug.Log("Entering Combat Phase");
+        if (playerTurn)
+        {
+            Debug.Log("Player's Combat Phase");
+            SetButtonState(endTurnButton, true);
+            yield return null; // Wait for player to press End Turn
+        }
+        else
+        {
+            Debug.Log("Enemy's Combat Phase");
+            yield return StartCoroutine(EnemyAttack());
+            EndTurn();
+        }
     }
 
     public void EndTurn()
     {
-        // End the current turn
+        Debug.Log("Ending Turn");
+        SetButtonState(endTurnButton, false);
         playerTurn = !playerTurn;
-        // Disable end turn button
-        endTurnButton.interactable = false;
-    }
-    IEnumerator LastStand()
-    {
-        // Logic for Last Stand mechanic
-        yield return new WaitForSeconds(1); // Placeholder for Last Stand resolution
+
+        if (playerTurn)
+        {
+            Debug.Log("Player's Turn");
+            StartCoroutine(PlayerAttackPhase());
+        }
+        else
+        {
+            Debug.Log("Enemy's Turn");
+            StartCoroutine(EnemyAttackPhase());
+        }
     }
 
-    void UpdateGameState()
+    private IEnumerator PlayerAttackPhase()
     {
-        // Update game state, check for game over conditions, etc.
+        Debug.Log("Player's Attack Phase");
+        SetButtonState(endTurnButton, true);
+        yield return null; // Wait for player to press End Turn
+        StartCoroutine(CleanUpPhase());
     }
 
-    void UpdateManaUI()
+    private IEnumerator EnemyAttackPhase()
     {
-        manaBar.GetComponent<Slider>().value = playerMana;
-        manaText.GetComponent<TMP_Text>().text = playerMana.ToString();
+        Debug.Log("Enemy's Attack Phase");
+        yield return StartCoroutine(EnemyAttack());
+        StartCoroutine(CleanUpPhase());
+    }
+
+    private IEnumerator EnemyAttack()
+    {
+        Debug.Log("Enemy Attacks");
+        yield return new WaitForSeconds(2);
+    }
+
+    private IEnumerator CleanUpPhase()
+    {
+        Debug.Log("Entering Clean Up Phase");
+        yield return new WaitForSeconds(1);
+        StartCoroutine(PrepPhase());
+    }
+
+    private void SetButtonState(Button button, bool state)
+    {
+        if (button != null)
+        {
+            button.gameObject.SetActive(state);
+        }
+    }
+
+    private void UpdateManaUI()
+    {
+        if (manaBar != null)
+        {
+            manaBar.maxValue = maxMana;
+            manaBar.value = playerMana;
+        }
+        if (manaText != null)
+        {
+            manaText.text = playerMana.ToString();
+        }
+        else
+        {
+            Debug.LogWarning("Mana Text not set in the Combat Manager");
+        }
     }
 }
