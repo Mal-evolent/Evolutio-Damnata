@@ -341,25 +341,6 @@ public class combatStage : MonoBehaviour
         buttonsInitialized = true;
     }
 
-    public void checkCardType(string cardName, int whichOutline)
-    {
-        MonsterCard selectedMonsterCard = cardManager.currentSelectedCard.GetComponent<MonsterCard>();
-        SpellCard selectedSpellCard = cardManager.currentSelectedCard.GetComponent<SpellCard>();
-
-        if (selectedMonsterCard != null)
-        {
-            spawnPlayerCard(cardName, whichOutline);
-        }
-        else if (selectedSpellCard != null)
-        {
-            Debug.Log("Spells cannot be placed on the field.");
-        }
-        else
-        {
-            Debug.LogError("Card type not found!");
-        }
-    }
-
     public void spawnPlayerCard(string cardName, int whichOutline)
     {
         if (whichOutline < 0 || whichOutline >= spritePositioning.playerEntities.Count)
