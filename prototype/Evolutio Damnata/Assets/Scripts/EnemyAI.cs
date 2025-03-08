@@ -42,7 +42,7 @@ public class EnemyAI : MonoBehaviour
 
         InitializeDeck();
         DrawInitialHand();
-        SpawnRandomMonsterCards();
+        StartCoroutine(PrepPhase());
     }
 
     private void InitializeDeck()
@@ -64,6 +64,12 @@ public class EnemyAI : MonoBehaviour
         {
             enemyDeck.DrawOneCard();
         }
+    }
+
+    private IEnumerator PrepPhase()
+    {
+        yield return new WaitUntil(() => combatManager.isEnemyPrepPhase == true);
+        SpawnRandomMonsterCards();
     }
 
     private void SpawnRandomMonsterCards()
