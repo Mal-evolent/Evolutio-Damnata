@@ -1,6 +1,7 @@
 using System.Resources;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 //---------------interfaces for different attributes--------------------------------//
 
@@ -46,7 +47,8 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     public bool dead = false;
     public bool placed = false;
 
-    // Method to set monster type and initialize health bar
+    private List<OngoingEffect> ongoingEffects = new List<OngoingEffect>();
+
     public void InitializeMonster(_monsterType monsterType, float maxHealth, float atkDamage, Slider healthBarSlider, Image image, DamageVisualizer damageVisualizer, GameObject damageNumberPrefab)
     {
         this.monsterType = monsterType;
@@ -57,12 +59,11 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         this.damageVisualizer = damageVisualizer;
         this.damageNumberPrefab = damageNumberPrefab;
 
-        // Use the passed Slider component reference
         healthBar = healthBarSlider;
         if (healthBar != null)
         {
-            healthBar.maxValue = 1; // Set max value to 1 for percentage
-            healthBar.value = health / maxHealth; // Normalize health to a percentage
+            healthBar.maxValue = 1;
+            healthBar.value = health / maxHealth;
             healthBar.gameObject.SetActive(true);
             Debug.Log($"Health bar initialized with value: {healthBar.value}");
         }
@@ -105,8 +106,6 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         return monsterType;
     }
 
-    //-------------------- IDamageable Implementation --------------------//
-
     public void takeDamage(float damageAmount)
     {
         health -= damageAmount;
@@ -118,16 +117,20 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         Debug.Log($"Health is now {health}");
         if (health <= 0)
         {
-            Debug.Log("Monster is dead.");
-            gameObject.SetActive(false);
-            dead = true;
+            Die();
         }
 
-        // Create and animate the damage number
         if (damageVisualizer != null && damageNumberPrefab != null)
         {
-            Vector3 position = transform.position;
-            damageVisualizer.createDamageNumber(this, damageAmount, position, damageNumberPrefab);
+            if (gameObject.activeInHierarchy)
+            {
+                Vector3 position = transform.position;
+                damageVisualizer.createDamageNumber(this, damageAmount, position, damageNumberPrefab);
+            }
+            else
+            {
+                Debug.LogWarning("Cannot start coroutine on inactive game object.");
+            }
         }
         else
         {
@@ -142,7 +145,19 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         }
     }
 
-    // Heals the monster by amount
+    private void Die()
+    {
+        dead = true;
+        gameObject.SetActive(false);
+        RemoveAllOngoingEffects();
+        Debug.Log("Monster is dead.");
+    }
+
+    private void RemoveAllOngoingEffects()
+    {
+        ongoingEffects.Clear();
+    }
+
     public void heal(float healAmount)
     {
         health += healAmount;
@@ -153,40 +168,57 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         }
     }
 
-    // Returns monster's current health
     public float getHealth()
     {
         return health;
     }
 
-    //-------------------- IAttacker Implementation --------------------//
-
-    // Buffs monster attack by amount (additive not replacement)
     public void attackBuff(float buffAmount)
     {
         atkDamage += buffAmount;
     }
 
-    // Same as attackBuff but removes instead of adds
     public void attackDebuff(float buffAmount)
     {
         atkDamage -= buffAmount;
     }
 
-    // Perform an attack with the specified damage
     public void attack(int damage)
     {
-        // Implement the attack logic here
         Debug.Log($"Attacking with {damage} damage.");
     }
 
-    // Returns the attack damage of the monster
     public float getAttackDamage()
     {
         return atkDamage * atkDamageMulti;
     }
 
-    // Other methods, Start, and Update logic can remain unchanged
+    public void AddOngoingEffect(OngoingEffect effect)
+    {
+        ongoingEffects.Add(effect);
+    }
+
+    public void ApplyOngoingEffects()
+    {
+        if (dead) return;
+
+        for (int i = ongoingEffects.Count - 1; i >= 0; i--)
+        {
+            OngoingEffect effect = ongoingEffects[i];
+            effect.ApplyEffect(this);
+            effect.DecreaseDuration();
+            if (effect.IsExpired())
+            {
+                ongoingEffects.RemoveAt(i);
+            }
+        }
+    }
+
+    public void AddNewOngoingEffect(OngoingEffect effect)
+    {
+        ongoingEffects.Add(effect);
+    }
+
     void Start()
     {
         // Initialization logic if needed
@@ -194,6 +226,9 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 
     void Update()
     {
-        // Game logic per frame
+        if (dead)
+        {
+            // Handle death logic
+        }
     }
 }

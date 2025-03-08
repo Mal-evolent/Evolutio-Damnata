@@ -10,7 +10,7 @@ public class Card : MonoBehaviour
     public int AttackPower;
     public int Health;
     public int ManaCost;
-    public CardData CardType; 
+    public CardData CardType;
 
     // Base play method. Can be overridden by derived classes
     public virtual void Play()
@@ -148,8 +148,24 @@ public class SpellCard : Card
 
     private void ApplyBurnEffect()
     {
-        // Logic to apply burn effect (damage over time)
-        Debug.Log("Burn effect applied: " + EffectValue + " damage over " + Duration + " turns.");
+        if (targetEntity != null)
+        {
+            EntityManager entityManager = targetEntity as EntityManager;
+            if (entityManager != null)
+            {
+                OngoingEffect burnEffect = new OngoingEffect(SpellEffect.Burn, EffectValue, Duration, entityManager);
+                entityManager.AddNewOngoingEffect(burnEffect);
+                Debug.Log($"Burn effect applied: {EffectValue} damage over {Duration} turns to {entityManager.name}");
+            }
+            else
+            {
+                Debug.LogError("Target entity is not an EntityManager.");
+            }
+        }
+        else
+        {
+            Debug.LogError("No target entity set for burn effect.");
+        }
     }
 }
 

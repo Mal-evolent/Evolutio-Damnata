@@ -107,6 +107,29 @@ public class CombatManager : MonoBehaviour
     private IEnumerator EnemyPlayCards()
     {
         Debug.Log("Enemy Playing Cards");
+
+        // Simulate AI playing cards
+        bool cardPlayed = false;
+        for (int i = 0; i < enemyDeck.Hand.Count; i++)
+        {
+            Card card = enemyDeck.Hand[i];
+            if (card != null && card.CardType.IsMonsterCard && enemyMana >= card.CardType.ManaCost)
+            {
+                // Play the card
+                combatStage.spawnEnemy(card.CardName, i);
+                enemyDeck.Hand.Remove(card);
+                enemyMana -= card.CardType.ManaCost;
+                cardPlayed = true;
+                Debug.Log($"Enemy played card: {card.CardName}");
+                break;
+            }
+        }
+
+        if (!cardPlayed)
+        {
+            Debug.Log("Enemy did not play any cards.");
+        }
+
         yield return new WaitForSeconds(2);
     }
 
@@ -178,6 +201,27 @@ public class CombatManager : MonoBehaviour
     {
         Debug.Log("Entering Clean-Up Phase");
         isCleanUpPhase = true;
+
+        // Apply ongoing effects to all player entities
+        foreach (var entity in combatStage.spritePositioning.playerEntities)
+        {
+            EntityManager entityManager = entity.GetComponent<EntityManager>();
+            if (entityManager != null)
+            {
+                entityManager.ApplyOngoingEffects();
+            }
+        }
+
+        // Apply ongoing effects to all enemy entities
+        foreach (var entity in combatStage.spritePositioning.enemyEntities)
+        {
+            EntityManager entityManager = entity.GetComponent<EntityManager>();
+            if (entityManager != null)
+            {
+                entityManager.ApplyOngoingEffects();
+            }
+        }
+
         playerDeck.DrawOneCard();
         enemyDeck.DrawOneCard();
         yield return new WaitForSeconds(1);

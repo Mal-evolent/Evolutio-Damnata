@@ -27,7 +27,7 @@ public class combatStage : MonoBehaviour
     Canvas battleField;
 
     [SerializeField]
-    SpritePositioning spritePositioning;
+    public SpritePositioning spritePositioning;
 
     [SerializeField]
     DamageVisualizer damageVisualizer;
