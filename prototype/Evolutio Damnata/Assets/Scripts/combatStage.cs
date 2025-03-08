@@ -380,7 +380,18 @@ public class combatStage : MonoBehaviour
             EntityManager playerEntityManager = cardManager.currentSelectedCard.GetComponent<EntityManager>();
             if (playerEntityManager != null && playerEntityManager.placed)
             {
-                HandleMonsterAttack(playerEntityManager, entityManager);
+                if (combatManager.isPlayerCombatPhase)
+                {
+                    HandleMonsterAttack(playerEntityManager, entityManager);
+                }
+                else
+                {
+                    Debug.Log("Attacks are not allowed at this stage!");
+                }
+            }
+            else
+            {
+                Debug.Log("Player monster not selected or not placed.");
             }
         }
     }
