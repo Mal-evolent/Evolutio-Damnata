@@ -72,7 +72,6 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         }
     }
 
-    // Toggle switch
     public bool OutlineSelect()
     {
         selected = !selected;
@@ -111,6 +110,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     public void takeDamage(float damageAmount)
     {
         health -= damageAmount;
+        health = Mathf.Clamp(health, 0, maxHealth);
         if (healthBar != null)
         {
             healthBar.value = health / maxHealth;
@@ -146,9 +146,10 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     public void heal(float healAmount)
     {
         health += healAmount;
+        health = Mathf.Clamp(health, 0, maxHealth);
         if (healthBar != null)
         {
-            healthBar.value = health / maxHealth; // Normalize health to a percentage
+            healthBar.value = health / maxHealth;
         }
     }
 
