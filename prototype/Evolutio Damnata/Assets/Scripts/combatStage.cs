@@ -159,6 +159,14 @@ public class combatStage : MonoBehaviour
 
     private void HandleMonsterCardSelection(int index)
     {
+        if (!combatManager.isPlayerPrepPhase)
+        {
+            Debug.LogError("Cannot spawn monster card outside of the preparation phase.");
+            cardOutlineManager.RemoveHighlight();
+            cardManager.currentSelectedCard = null;
+            return;
+        }
+
         CardUI cardUI = cardManager.currentSelectedCard.GetComponent<CardUI>();
         if (cardUI == null)
         {
@@ -214,6 +222,7 @@ public class combatStage : MonoBehaviour
 
     private void HandleSpellCardSelection(int index, EntityManager entityManager)
     {
+
         CardUI cardUI = cardManager.currentSelectedCard.GetComponent<CardUI>();
         if (cardUI == null)
         {
@@ -445,6 +454,13 @@ public class combatStage : MonoBehaviour
 
     public void spawnPlayerCard(string cardName, int whichOutline)
     {
+        // Check if the player is in the preparation phase
+        if (!combatManager.isPlayerPrepPhase)
+        {
+            Debug.LogError("Cannot spawn monster card outside of the preparation phase.");
+            return;
+        }
+
         if (whichOutline < 0 || whichOutline >= spritePositioning.playerEntities.Count)
         {
             Debug.LogError($"Invalid outline index: {whichOutline}");
