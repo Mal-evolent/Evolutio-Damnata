@@ -7,7 +7,7 @@ public class CombatManager : MonoBehaviour
 {
     public int playerMana = 0;
     public int enemyMana = 0;
-    public int maxMana = 0;
+    public int currentMana = 0;
     public int playerHealth = 30;
     public int enemyHealth = 30;
 
@@ -43,12 +43,11 @@ public class CombatManager : MonoBehaviour
     private IEnumerator RoundStart()
     {
         Debug.Log("Starting New Round");
-        maxMana++;
-        playerMana = maxMana;
-        enemyMana = maxMana;
+        currentMana++;
+        playerMana = currentMana;
+        enemyMana = currentMana;
         UpdateManaUI();
 
-        playerTurn = playerGoesFirst;
         playerGoesFirst = !playerGoesFirst;
 
         yield return StartCoroutine(PrepPhase());
@@ -67,6 +66,7 @@ public class CombatManager : MonoBehaviour
             yield return new WaitUntil(() => endPhaseButton.gameObject.activeSelf == false);
 
             isPlayerPrepPhase = false;
+            playerTurn = false;
             isEnemyPrepPhase = true;
             Debug.Log("Enemy's Prep Phase");
             yield return StartCoroutine(EnemyPlayCards());
@@ -80,6 +80,7 @@ public class CombatManager : MonoBehaviour
             isEnemyPrepPhase = false;
 
             isPlayerPrepPhase = true;
+            playerTurn = true;
             Debug.Log("Player's Prep Phase");
             SetButtonState(endPhaseButton, true);
             yield return new WaitUntil(() => endPhaseButton.gameObject.activeSelf == false);
@@ -114,6 +115,7 @@ public class CombatManager : MonoBehaviour
             yield return new WaitUntil(() => endTurnButton.gameObject.activeSelf == false);
             isPlayerCombatPhase = false;
 
+            playerTurn = false;
             isEnemyCombatPhase = true;
             Debug.Log("Enemy Attacks");
             yield return StartCoroutine(EnemyAttack());
@@ -127,6 +129,7 @@ public class CombatManager : MonoBehaviour
             isEnemyCombatPhase = false;
 
             isPlayerCombatPhase = true;
+            playerTurn = true; 
             Debug.Log("Player Attacks");
             SetButtonState(endTurnButton, true);
             yield return new WaitUntil(() => endTurnButton.gameObject.activeSelf == false);
@@ -176,11 +179,12 @@ public class CombatManager : MonoBehaviour
     {
         if (manaBar != null)
         {
-            manaBar.value = maxMana;
+            manaBar.value = currentMana;
+            manaBar.value = playerMana;
         }
         if (manaText != null)
         {
-            manaText.text = maxMana.ToString();
+            manaText.text = currentMana.ToString();
         }
         else
         {
@@ -190,8 +194,8 @@ public class CombatManager : MonoBehaviour
 
     public void UpdateMana(int playerManaChange, int enemyManaChange)
     {
-        playerMana = Mathf.Clamp(playerMana + playerManaChange, 0, maxMana);
-        enemyMana = Mathf.Clamp(enemyMana + enemyManaChange, 0, maxMana);
+        playerMana = Mathf.Clamp(playerMana + playerManaChange, 0, currentMana);
+        enemyMana = Mathf.Clamp(enemyMana + enemyManaChange, 0, currentMana);
         UpdateManaUI();
     }
 }

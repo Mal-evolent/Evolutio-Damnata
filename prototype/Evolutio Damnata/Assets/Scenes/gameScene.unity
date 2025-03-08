@@ -2504,15 +2504,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerMana: 0
   enemyMana: 0
-  maxMana: 0
+  currentMana: 0
   playerHealth: 0
   enemyHealth: 0
-  playerTurn: 1
   endPhaseButton: {fileID: 143301893}
   endTurnButton: {fileID: 192387895}
   manaText: {fileID: 1870554167}
   turnText: {fileID: 352670599}
   manaBar: {fileID: 1793571146}
+  playerGoesFirst: 1
+  playerTurn: 1
+  isPlayerPrepPhase: 0
+  isPlayerCombatPhase: 0
+  isEnemyPrepPhase: 0
+  isEnemyCombatPhase: 0
 --- !u!4 &1394303772
 Transform:
   m_ObjectHideFlags: 0
@@ -3545,7 +3550,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   manaBar: {fileID: 1793571144}
   manaText: {fileID: 1870554165}
-  currentMana: 100
+  currentMana: 0
   turnText: {fileID: 352670599}
   cardManager: {fileID: 1201594250}
   cardLibrary: {fileID: 1159794893}

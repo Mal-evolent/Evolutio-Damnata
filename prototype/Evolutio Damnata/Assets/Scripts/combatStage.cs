@@ -159,29 +159,89 @@ public class combatStage : MonoBehaviour
 
     private void HandleMonsterCardSelection(int index)
     {
-        spawnPlayerCard(cardManager.currentSelectedCard.name, index);
-
-        // Remove card from hand
-        List<GameObject> handCardObjects = cardManager.getHandCardObjects();
-        foreach (GameObject cardObject in handCardObjects)
+        CardUI cardUI = cardManager.currentSelectedCard.GetComponent<CardUI>();
+        if (cardUI == null)
         {
-            if (cardObject == cardManager.currentSelectedCard)
-            {
-                handCardObjects.Remove(cardObject);
-                Destroy(cardObject);
-                Debug.Log("Removed card from hand.");
-                break;
-            }
+            Debug.LogError("CardUI component not found on current selected card!");
+            return;
         }
 
-        cardManager.currentSelectedCard = null;
+        Card cardComponent = cardUI.card;
+        if (cardComponent == null)
+        {
+            Debug.LogError("Card component not found on current selected card!");
+            return;
+        }
 
-        // Deactivate placeholders
-        placeHolderActiveState(false);
+        CardData cardData = cardComponent.CardType;
+        if (cardData == null)
+        {
+            Debug.LogError("CardType is null on current selected card!");
+            return;
+        }
+
+        if (currentMana < cardData.ManaCost)
+        {
+            Debug.LogError($"Not enough mana. Card costs {cardData.ManaCost}, player has {currentMana}");
+            cardOutlineManager.RemoveHighlight();
+            return; // Bail if there isn't enough mana
+        }
+
+        if (cardData.IsMonsterCard)
+        {
+            spawnPlayerCard(cardManager.currentSelectedCard.name, index);
+
+            // Remove card from hand
+            List<GameObject> handCardObjects = cardManager.getHandCardObjects();
+            foreach (GameObject cardObject in handCardObjects)
+            {
+                if (cardObject == cardManager.currentSelectedCard)
+                {
+                    handCardObjects.Remove(cardObject);
+                    Destroy(cardObject);
+                    Debug.Log("Removed card from hand.");
+                    break;
+                }
+            }
+
+            cardManager.currentSelectedCard = null;
+
+            // Deactivate placeholders
+            placeHolderActiveState(false);
+        }
     }
+
 
     private void HandleSpellCardSelection(int index, EntityManager entityManager)
     {
+        CardUI cardUI = cardManager.currentSelectedCard.GetComponent<CardUI>();
+        if (cardUI == null)
+        {
+            Debug.LogError("CardUI component not found on current selected card!");
+            return;
+        }
+
+        Card cardComponent = cardUI.card;
+        if (cardComponent == null)
+        {
+            Debug.LogError("Card component not found on current selected card!");
+            return;
+        }
+
+        CardData cardData = cardComponent.CardType;
+        if (cardData == null)
+        {
+            Debug.LogError("CardType is null on current selected card!");
+            return;
+        }
+
+        if (currentMana < cardData.ManaCost)
+        {
+            Debug.LogError($"Not enough mana. Card costs {cardData.ManaCost}, player has {currentMana}");
+            cardOutlineManager.RemoveHighlight();
+            return; // Bail if there isn't enough mana
+        }
+
         if (entityManager != null && entityManager.placed)
         {
             // Apply spell effect to the placed monster
@@ -228,6 +288,7 @@ public class combatStage : MonoBehaviour
             cardOutlineManager.RemoveHighlight();
         }
     }
+
 
     private void AddButtonsToEnemyEntities()
     {
