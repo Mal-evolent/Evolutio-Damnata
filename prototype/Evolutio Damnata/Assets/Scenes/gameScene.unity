@@ -2502,6 +2502,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10f936ff672b18a43813d2a89356911b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  combatStage: {fileID: 6081315368044828686}
   playerMana: 0
   enemyMana: 0
   currentMana: 0
@@ -2509,9 +2510,6 @@ MonoBehaviour:
   enemyHealth: 0
   endPhaseButton: {fileID: 143301893}
   endTurnButton: {fileID: 192387895}
-  manaText: {fileID: 1870554167}
-  turnText: {fileID: 352670599}
-  manaBar: {fileID: 1793571146}
   playerGoesFirst: 1
   playerTurn: 1
   isPlayerPrepPhase: 0
@@ -3582,13 +3580,13 @@ SceneRoots:
   - {fileID: 519420032}
   - {fileID: 559180383}
   - {fileID: 6081315368044828687}
+  - {fileID: 1394303772}
   - {fileID: 671977324}
   - {fileID: 1201594249}
   - {fileID: 1159794894}
   - {fileID: 294774780}
   - {fileID: 825410031}
   - {fileID: 210388636}
-  - {fileID: 1394303772}
   - {fileID: 1417216790}
   - {fileID: 1178621649}
   - {fileID: 1011744916}

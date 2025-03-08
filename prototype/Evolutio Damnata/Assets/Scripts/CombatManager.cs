@@ -5,18 +5,15 @@ using UnityEngine.UI;
 
 public class CombatManager : MonoBehaviour
 {
+    public combatStage combatStage;
+
     public int playerMana = 0;
     public int enemyMana = 0;
-    public int currentMana = 0;
     public int playerHealth = 30;
     public int enemyHealth = 30;
 
     public Button endPhaseButton;
     public Button endTurnButton;
-
-    public TMP_Text manaText;
-    public TMP_Text turnText;
-    public Slider manaBar;
 
     public bool playerGoesFirst = true;
     public bool playerTurn;
@@ -26,6 +23,10 @@ public class CombatManager : MonoBehaviour
     public bool isEnemyPrepPhase = false;
     public bool isEnemyCombatPhase = false;
 
+    //used for phase tracking
+    private bool isPlayerTurn;
+    private bool playerTurnEnded = false;
+
     private void Start()
     {
         InitializeGame();
@@ -34,20 +35,23 @@ public class CombatManager : MonoBehaviour
     private void InitializeGame()
     {
         Debug.Log("Initializing Game");
-        UpdateManaUI();
         SetButtonState(endPhaseButton, true);
         SetButtonState(endTurnButton, false);
+
+        // Set isPlayerTurn based on playerGoesFirst
+        isPlayerTurn = playerGoesFirst;
+
         StartCoroutine(RoundStart());
     }
 
     private IEnumerator RoundStart()
     {
         Debug.Log("Starting New Round");
-        currentMana++;
-        playerMana = currentMana;
-        enemyMana = currentMana;
-        UpdateManaUI();
+        combatStage.currentMana++;
+        playerMana = combatStage.currentMana;
+        enemyMana = combatStage.currentMana;
 
+        isPlayerTurn = playerGoesFirst;
         playerGoesFirst = !playerGoesFirst;
 
         yield return StartCoroutine(PrepPhase());
@@ -58,7 +62,7 @@ public class CombatManager : MonoBehaviour
         Debug.Log("Entering Prep Phase");
         ResetPhaseStates();
 
-        if (playerTurn)
+        if (isPlayerTurn)
         {
             isPlayerPrepPhase = true;
             Debug.Log("Player's Prep Phase");
@@ -66,7 +70,7 @@ public class CombatManager : MonoBehaviour
             yield return new WaitUntil(() => endPhaseButton.gameObject.activeSelf == false);
 
             isPlayerPrepPhase = false;
-            playerTurn = false;
+            isPlayerTurn = false;
             isEnemyPrepPhase = true;
             Debug.Log("Enemy's Prep Phase");
             yield return StartCoroutine(EnemyPlayCards());
@@ -80,7 +84,7 @@ public class CombatManager : MonoBehaviour
             isEnemyPrepPhase = false;
 
             isPlayerPrepPhase = true;
-            playerTurn = true;
+            isPlayerTurn = true;
             Debug.Log("Player's Prep Phase");
             SetButtonState(endPhaseButton, true);
             yield return new WaitUntil(() => endPhaseButton.gameObject.activeSelf == false);
@@ -107,33 +111,41 @@ public class CombatManager : MonoBehaviour
         Debug.Log("Entering Combat Phase");
         ResetPhaseStates();
 
-        if (playerTurn)
+        if (isPlayerTurn)
         {
             isPlayerCombatPhase = true;
-            Debug.Log("Player Attacks");
+            Debug.Log("Player Attacks - Start");
             SetButtonState(endTurnButton, true);
-            yield return new WaitUntil(() => endTurnButton.gameObject.activeSelf == false);
+            playerTurnEnded = false;
+            yield return new WaitUntil(() => playerTurnEnded);
             isPlayerCombatPhase = false;
+            Debug.Log("Player Attacks - End");
 
-            playerTurn = false;
+            isPlayerTurn = false;
+
             isEnemyCombatPhase = true;
-            Debug.Log("Enemy Attacks");
+            Debug.Log("Enemy Attacks - Start");
             yield return StartCoroutine(EnemyAttack());
             isEnemyCombatPhase = false;
+            Debug.Log("Enemy Attacks - End");
         }
         else
         {
             isEnemyCombatPhase = true;
-            Debug.Log("Enemy Attacks");
+            Debug.Log("Enemy Attacks - Start");
             yield return StartCoroutine(EnemyAttack());
             isEnemyCombatPhase = false;
+            Debug.Log("Enemy Attacks - End");
+
+            isPlayerTurn = true;
 
             isPlayerCombatPhase = true;
-            playerTurn = true; 
-            Debug.Log("Player Attacks");
+            Debug.Log("Player Attacks - Start");
             SetButtonState(endTurnButton, true);
-            yield return new WaitUntil(() => endTurnButton.gameObject.activeSelf == false);
+            playerTurnEnded = false;
+            yield return new WaitUntil(() => playerTurnEnded);
             isPlayerCombatPhase = false;
+            Debug.Log("Player Attacks - End");
         }
 
         yield return StartCoroutine(CleanUpPhase());
@@ -149,6 +161,7 @@ public class CombatManager : MonoBehaviour
     {
         Debug.Log("Ending Turn");
         SetButtonState(endTurnButton, false);
+        playerTurnEnded = true;
     }
 
     private IEnumerator CleanUpPhase()
@@ -175,27 +188,9 @@ public class CombatManager : MonoBehaviour
         }
     }
 
-    private void UpdateManaUI()
-    {
-        if (manaBar != null)
-        {
-            manaBar.value = currentMana;
-            manaBar.value = playerMana;
-        }
-        if (manaText != null)
-        {
-            manaText.text = currentMana.ToString();
-        }
-        else
-        {
-            Debug.LogWarning("Mana Text not set in the Combat Manager");
-        }
-    }
-
     public void UpdateMana(int playerManaChange, int enemyManaChange)
     {
-        playerMana = Mathf.Clamp(playerMana + playerManaChange, 0, currentMana);
-        enemyMana = Mathf.Clamp(enemyMana + enemyManaChange, 0, currentMana);
-        UpdateManaUI();
+        playerMana = Mathf.Clamp(playerMana + playerManaChange, 0, combatStage.currentMana);
+        enemyMana = Mathf.Clamp(enemyMana + enemyManaChange, 0, combatStage.currentMana);
     }
 }

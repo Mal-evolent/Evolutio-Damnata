@@ -709,7 +709,6 @@ public class combatStage : MonoBehaviour
         enemyPlaceholder.SetActive(true);
     }
 
-    // Start is called before the first frame update
     void Start()
     {
         // Start the coroutine to wait for room selection
@@ -736,6 +735,10 @@ public class combatStage : MonoBehaviour
 
     private void Update()
     {
+        // Update the mana bar and text to match the currentMana value
+        manaBar.GetComponent<Slider>().value = currentMana;
+        manaText.GetComponent<TMP_Text>().text = currentMana.ToString();
+
         // Check if a card is selected and update placeholder visibility
         if (cardManager.currentSelectedCard != null)
         {
