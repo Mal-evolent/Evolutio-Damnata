@@ -11,15 +11,20 @@ public class CombatManager : MonoBehaviour
     public int playerHealth = 30;
     public int enemyHealth = 30;
 
-    public bool playerTurn = true;
-    private bool playerGoesFirst = true;
-
     public Button endPhaseButton;
     public Button endTurnButton;
 
     public TMP_Text manaText;
     public TMP_Text turnText;
     public Slider manaBar;
+
+    public bool playerGoesFirst = true;
+    public bool playerTurn;
+
+    public bool isPlayerPrepPhase = false;
+    public bool isPlayerCombatPhase = false;
+    public bool isEnemyPrepPhase = false;
+    public bool isEnemyCombatPhase = false;
 
     private void Start()
     {
@@ -32,56 +37,56 @@ public class CombatManager : MonoBehaviour
         UpdateManaUI();
         SetButtonState(endPhaseButton, true);
         SetButtonState(endTurnButton, false);
-        StartCoroutine(PrepPhase());
+        StartCoroutine(RoundStart());
+    }
+
+    private IEnumerator RoundStart()
+    {
+        Debug.Log("Starting New Round");
+        maxMana++;
+        playerMana = maxMana;
+        enemyMana = maxMana;
+        UpdateManaUI();
+
+        playerTurn = playerGoesFirst;
+        playerGoesFirst = !playerGoesFirst;
+
+        yield return StartCoroutine(PrepPhase());
     }
 
     private IEnumerator PrepPhase()
     {
         Debug.Log("Entering Prep Phase");
-        maxMana++;
-        playerMana = maxMana;
-        enemyMana = maxMana;
-        UpdateManaUI();
-        playerTurn = playerGoesFirst;
-        playerGoesFirst = !playerGoesFirst;
+        ResetPhaseStates();
 
         if (playerTurn)
         {
+            isPlayerPrepPhase = true;
             Debug.Log("Player's Prep Phase");
             SetButtonState(endPhaseButton, true);
-            yield return null; // Wait for player to press End Phase
-        }
-        else
-        {
+            yield return new WaitUntil(() => endPhaseButton.gameObject.activeSelf == false);
+
+            isPlayerPrepPhase = false;
+            isEnemyPrepPhase = true;
             Debug.Log("Enemy's Prep Phase");
             yield return StartCoroutine(EnemyPlayCards());
-            EndPhase();
-        }
-    }
-
-    public void EndPhase()
-    {
-        Debug.Log("Ending Phase");
-        SetButtonState(endPhaseButton, false);
-        if (playerTurn)
-        {
-            Debug.Log("Player's End Phase");
-            playerTurn = false;
-            StartCoroutine(EnemyPrepPhase());
+            isEnemyPrepPhase = false;
         }
         else
         {
-            Debug.Log("Enemy's End Phase");
-            playerTurn = true;
-            StartCoroutine(CombatPhase());
-        }
-    }
+            isEnemyPrepPhase = true;
+            Debug.Log("Enemy's Prep Phase");
+            yield return StartCoroutine(EnemyPlayCards());
+            isEnemyPrepPhase = false;
 
-    private IEnumerator EnemyPrepPhase()
-    {
-        Debug.Log("Enemy Prep Phase");
-        yield return StartCoroutine(EnemyPlayCards());
-        EndPhase();
+            isPlayerPrepPhase = true;
+            Debug.Log("Player's Prep Phase");
+            SetButtonState(endPhaseButton, true);
+            yield return new WaitUntil(() => endPhaseButton.gameObject.activeSelf == false);
+            isPlayerPrepPhase = false;
+        }
+
+        yield return StartCoroutine(CombatPhase());
     }
 
     private IEnumerator EnemyPlayCards()
@@ -90,54 +95,45 @@ public class CombatManager : MonoBehaviour
         yield return new WaitForSeconds(2);
     }
 
+    public void EndPhase()
+    {
+        Debug.Log("Ending Prep Phase");
+        SetButtonState(endPhaseButton, false);
+    }
+
     private IEnumerator CombatPhase()
     {
         Debug.Log("Entering Combat Phase");
+        ResetPhaseStates();
+
         if (playerTurn)
         {
-            Debug.Log("Player's Combat Phase");
+            isPlayerCombatPhase = true;
+            Debug.Log("Player Attacks");
             SetButtonState(endTurnButton, true);
-            yield return null; // Wait for player to press End Turn
-        }
-        else
-        {
-            Debug.Log("Enemy's Combat Phase");
+            yield return new WaitUntil(() => endTurnButton.gameObject.activeSelf == false);
+            isPlayerCombatPhase = false;
+
+            isEnemyCombatPhase = true;
+            Debug.Log("Enemy Attacks");
             yield return StartCoroutine(EnemyAttack());
-            EndTurn();
-        }
-    }
-
-    public void EndTurn()
-    {
-        Debug.Log("Ending Turn");
-        SetButtonState(endTurnButton, false);
-        playerTurn = !playerTurn;
-
-        if (playerTurn)
-        {
-            Debug.Log("Player's Turn");
-            StartCoroutine(PlayerAttackPhase());
+            isEnemyCombatPhase = false;
         }
         else
         {
-            Debug.Log("Enemy's Turn");
-            StartCoroutine(EnemyAttackPhase());
+            isEnemyCombatPhase = true;
+            Debug.Log("Enemy Attacks");
+            yield return StartCoroutine(EnemyAttack());
+            isEnemyCombatPhase = false;
+
+            isPlayerCombatPhase = true;
+            Debug.Log("Player Attacks");
+            SetButtonState(endTurnButton, true);
+            yield return new WaitUntil(() => endTurnButton.gameObject.activeSelf == false);
+            isPlayerCombatPhase = false;
         }
-    }
 
-    private IEnumerator PlayerAttackPhase()
-    {
-        Debug.Log("Player's Attack Phase");
-        SetButtonState(endTurnButton, true);
-        yield return null; // Wait for player to press End Turn
-        StartCoroutine(CleanUpPhase());
-    }
-
-    private IEnumerator EnemyAttackPhase()
-    {
-        Debug.Log("Enemy's Attack Phase");
-        yield return StartCoroutine(EnemyAttack());
-        StartCoroutine(CleanUpPhase());
+        yield return StartCoroutine(CleanUpPhase());
     }
 
     private IEnumerator EnemyAttack()
@@ -146,11 +142,26 @@ public class CombatManager : MonoBehaviour
         yield return new WaitForSeconds(2);
     }
 
+    public void EndTurn()
+    {
+        Debug.Log("Ending Turn");
+        SetButtonState(endTurnButton, false);
+    }
+
     private IEnumerator CleanUpPhase()
     {
-        Debug.Log("Entering Clean Up Phase");
+        Debug.Log("Entering Clean-Up Phase");
+        ResetPhaseStates();
         yield return new WaitForSeconds(1);
-        StartCoroutine(PrepPhase());
+        StartCoroutine(RoundStart());
+    }
+
+    private void ResetPhaseStates()
+    {
+        isPlayerPrepPhase = false;
+        isPlayerCombatPhase = false;
+        isEnemyPrepPhase = false;
+        isEnemyCombatPhase = false;
     }
 
     private void SetButtonState(Button button, bool state)
