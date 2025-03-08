@@ -5,9 +5,9 @@ using UnityEngine.UI;
 
 public class CombatManager : MonoBehaviour
 {
-    public int playerMana = 1;
-    public int enemyMana = 1;
-    public int maxMana = 1;
+    public int playerMana = 0;
+    public int enemyMana = 0;
+    public int maxMana = 0;
     public int playerHealth = 30;
     public int enemyHealth = 30;
 
@@ -176,16 +176,22 @@ public class CombatManager : MonoBehaviour
     {
         if (manaBar != null)
         {
-            manaBar.maxValue = maxMana;
-            manaBar.value = playerMana;
+            manaBar.value = maxMana;
         }
         if (manaText != null)
         {
-            manaText.text = playerMana.ToString();
+            manaText.text = maxMana.ToString();
         }
         else
         {
             Debug.LogWarning("Mana Text not set in the Combat Manager");
         }
+    }
+
+    public void UpdateMana(int playerManaChange, int enemyManaChange)
+    {
+        playerMana = Mathf.Clamp(playerMana + playerManaChange, 0, maxMana);
+        enemyMana = Mathf.Clamp(enemyMana + enemyManaChange, 0, maxMana);
+        UpdateManaUI();
     }
 }
