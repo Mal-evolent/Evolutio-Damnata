@@ -60,10 +60,7 @@ public class EnemyAI : MonoBehaviour
 
     private void DrawInitialHand()
     {
-        for (int i = 0; i < enemyDeck.HandSize; i++)
-        {
-            enemyDeck.DrawOneCard();
-        }
+        enemyDeck.DrawCard();
     }
 
     private IEnumerator PrepPhase()

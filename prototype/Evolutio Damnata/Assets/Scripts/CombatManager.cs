@@ -23,6 +23,9 @@ public class CombatManager : MonoBehaviour
     public bool isEnemyPrepPhase = false;
     public bool isEnemyCombatPhase = false;
 
+    public Deck playerDeck;
+    public Deck enemyDeck;
+
     //used for phase tracking
     private bool isPlayerTurn;
     private bool playerTurnEnded = false;
@@ -169,6 +172,8 @@ public class CombatManager : MonoBehaviour
     private IEnumerator CleanUpPhase()
     {
         Debug.Log("Entering Clean-Up Phase");
+        playerDeck.DrawOneCard();
+        enemyDeck.DrawOneCard();    
         ResetPhaseStates();
         yield return new WaitForSeconds(1);
         StartCoroutine(RoundStart());
