@@ -51,6 +51,8 @@ public class CombatManager : MonoBehaviour
         playerMana = combatStage.currentMana;
         enemyMana = combatStage.currentMana;
 
+        combatStage.updateManaUI();
+
         isPlayerTurn = playerGoesFirst;
         playerGoesFirst = !playerGoesFirst;
 

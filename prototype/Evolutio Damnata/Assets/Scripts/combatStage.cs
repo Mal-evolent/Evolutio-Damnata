@@ -624,8 +624,7 @@ public class combatStage : MonoBehaviour
 
         // Decrease current mana
         currentMana -= cardCost;
-        manaBar.GetComponent<Slider>().value = currentMana;
-        manaText.GetComponent<TMP_Text>().text = manaBar.GetComponent<Slider>().value.ToString();
+        updateManaUI();
 
         // Play summon SFX
         AudioSource churchBells = GetComponent<AudioSource>();
@@ -733,12 +732,15 @@ public class combatStage : MonoBehaviour
         interactableHighlights();
     }
 
-    private void Update()
+
+    public void updateManaUI()
     {
-        // Update the mana bar and text to match the currentMana value
         manaBar.GetComponent<Slider>().value = currentMana;
         manaText.GetComponent<TMP_Text>().text = currentMana.ToString();
+    }
 
+    private void Update()
+    {
         // Check if a card is selected and update placeholder visibility
         if (cardManager.currentSelectedCard != null)
         {
