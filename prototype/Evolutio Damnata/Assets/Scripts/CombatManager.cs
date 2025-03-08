@@ -6,7 +6,9 @@ using UnityEngine.UI;
 public class CombatManager : MonoBehaviour
 {
     public combatStage combatStage;
+    public TMP_Text turnUI;
 
+    public int turnCount = 0;
     public int playerMana = 0;
     public int enemyMana = 0;
     public int playerHealth = 30;
@@ -52,6 +54,8 @@ public class CombatManager : MonoBehaviour
     {
         Debug.Log("Starting New Round");
         combatStage.currentMana++;
+        turnCount++;
+        turnUI.text = "turn: " + turnCount;
         playerMana = combatStage.currentMana;
         enemyMana = combatStage.currentMana;
 

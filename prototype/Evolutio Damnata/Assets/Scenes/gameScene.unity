@@ -1219,7 +1219,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 405.61}
+  m_AnchoredPosition: {x: 0, y: 393.69}
   m_SizeDelta: {x: 327.8737, y: 86.278}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &389717231
@@ -2503,6 +2503,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   combatStage: {fileID: 6081315368044828686}
+  turnUI: {fileID: 352670599}
+  turnCount: 0
   playerMana: 0
   enemyMana: 0
   playerHealth: 0
@@ -3551,7 +3553,6 @@ MonoBehaviour:
   manaBar: {fileID: 1793571144}
   manaText: {fileID: 1870554165}
   currentMana: 0
-  turnText: {fileID: 352670599}
   cardManager: {fileID: 1201594250}
   cardLibrary: {fileID: 1159794893}
   cardOutlineManager: {fileID: 210388635}
