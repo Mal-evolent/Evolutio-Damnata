@@ -22,6 +22,7 @@ public class CombatManager : MonoBehaviour
     public bool isPlayerCombatPhase = false;
     public bool isEnemyPrepPhase = false;
     public bool isEnemyCombatPhase = false;
+    public bool isCleanUpPhase = false;
 
     public Deck playerDeck;
     public Deck enemyDeck;
@@ -172,11 +173,12 @@ public class CombatManager : MonoBehaviour
     private IEnumerator CleanUpPhase()
     {
         Debug.Log("Entering Clean-Up Phase");
+        isCleanUpPhase = true;
         playerDeck.DrawOneCard();
-        enemyDeck.DrawOneCard();    
-        ResetPhaseStates();
+        enemyDeck.DrawOneCard();
         yield return new WaitForSeconds(1);
         StartCoroutine(RoundStart());
+        ResetPhaseStates();
     }
 
     private void ResetPhaseStates()
@@ -185,6 +187,7 @@ public class CombatManager : MonoBehaviour
         isPlayerCombatPhase = false;
         isEnemyPrepPhase = false;
         isEnemyCombatPhase = false;
+        isCleanUpPhase = false;
     }
 
     private void SetButtonState(Button button, bool state)

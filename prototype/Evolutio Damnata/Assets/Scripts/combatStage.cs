@@ -222,6 +222,13 @@ public class combatStage : MonoBehaviour
 
     private void HandleSpellCardSelection(int index, EntityManager entityManager)
     {
+        if(combatManager.isCleanUpPhase)
+        {
+            Debug.LogError("Cannot play spell cards during the Clean Up phase.");
+            cardOutlineManager.RemoveHighlight();
+            cardManager.currentSelectedCard = null;
+            return;
+        }
 
         CardUI cardUI = cardManager.currentSelectedCard.GetComponent<CardUI>();
         if (cardUI == null)
