@@ -212,6 +212,9 @@ public class combatStage : MonoBehaviour
                 }
             }
 
+            // Also remove the card from the player's deck hand
+            cardManager.playerDeck.Hand.Remove(cardComponent);
+
             cardManager.currentSelectedCard = null;
 
             // Deactivate placeholders
@@ -222,7 +225,7 @@ public class combatStage : MonoBehaviour
 
     private void HandleSpellCardSelection(int index, EntityManager entityManager)
     {
-        if(combatManager.isCleanUpPhase)
+        if (combatManager.isCleanUpPhase)
         {
             Debug.LogError("Cannot play spell cards during the Clean Up phase.");
             cardOutlineManager.RemoveHighlight();
@@ -268,15 +271,14 @@ public class combatStage : MonoBehaviour
                 Debug.LogWarning("SpellCard component not found on current selected card! Adding SpellCard component.");
                 spellCard = cardManager.currentSelectedCard.AddComponent<SpellCard>();
 
-                // Copy properties from CardData to SpellCard
-                CardData selectedCardData = spellCard.CardType;
-                spellCard.CardName = selectedCardData.CardName;
-                spellCard.CardImage = selectedCardData.CardImage;
-                spellCard.Description = selectedCardData.Description;
-                spellCard.ManaCost = selectedCardData.ManaCost;
-                spellCard.EffectTypes = selectedCardData.EffectTypes;
-                spellCard.EffectValue = selectedCardData.EffectValue;
-                spellCard.Duration = selectedCardData.Duration;
+                spellCard.CardType = cardData;
+                spellCard.CardName = cardData.CardName;
+                spellCard.CardImage = cardData.CardImage;
+                spellCard.Description = cardData.Description;
+                spellCard.ManaCost = cardData.ManaCost;
+                spellCard.EffectTypes = cardData.EffectTypes;
+                spellCard.EffectValue = cardData.EffectValue;
+                spellCard.Duration = cardData.Duration;
             }
             spellCard.targetEntity = entityManager;
             spellCard.Play();
@@ -293,6 +295,9 @@ public class combatStage : MonoBehaviour
                     break;
                 }
             }
+
+            // Also remove the card from the player's deck hand
+            cardManager.playerDeck.Hand.Remove(cardComponent);
 
             cardManager.currentSelectedCard = null;
             cardOutlineManager.RemoveHighlight();
