@@ -1,6 +1,7 @@
 using System.Resources;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 using System.Collections.Generic;
 
 //---------------interfaces for different attributes--------------------------------//
@@ -108,6 +109,8 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 
     public void takeDamage(float damageAmount)
     {
+        if (dead) return;
+
         health -= damageAmount;
         health = Mathf.Clamp(health, 0, maxHealth);
         if (healthBar != null)
@@ -125,7 +128,9 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
             if (gameObject.activeInHierarchy)
             {
                 Vector3 position = transform.position;
-                damageVisualizer.createDamageNumber(this, damageAmount, position, damageNumberPrefab);
+                // Instantiate the damage number prefab as a separate GameObject
+                GameObject damageNumberInstance = Instantiate(damageNumberPrefab, position, Quaternion.identity);
+                damageVisualizer.createDamageNumber(this, damageAmount, position, damageNumberInstance);
             }
             else
             {
@@ -148,9 +153,33 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     private void Die()
     {
         dead = true;
-        gameObject.SetActive(false);
         RemoveAllOngoingEffects();
         Debug.Log("Monster is dead.");
+
+        // Start the coroutine to fade out and deactivate the game object
+        StartCoroutine(FadeOutAndDeactivate(10.0f)); // Adjust the duration as needed
+    }
+
+    private IEnumerator FadeOutAndDeactivate(float duration)
+    {
+        SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
+        if (spriteRenderer != null)
+        {
+            Color originalColor = spriteRenderer.color;
+            float elapsedTime = 0f;
+
+            while (elapsedTime < duration)
+            {
+                elapsedTime += Time.deltaTime;
+                float alpha = Mathf.Lerp(1f, 0f, elapsedTime / duration);
+                spriteRenderer.color = new Color(originalColor.r, originalColor.g, originalColor.b, alpha);
+                yield return null;
+            }
+
+            spriteRenderer.color = new Color(originalColor.r, originalColor.g, originalColor.b, 0f);
+        }
+
+        gameObject.SetActive(false);
     }
 
     private void RemoveAllOngoingEffects()
@@ -160,6 +189,8 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 
     public void heal(float healAmount)
     {
+        if (dead) return;
+
         health += healAmount;
         health = Mathf.Clamp(health, 0, maxHealth);
         if (healthBar != null)
@@ -175,16 +206,22 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 
     public void attackBuff(float buffAmount)
     {
+        if (dead) return;
+
         atkDamage += buffAmount;
     }
 
     public void attackDebuff(float buffAmount)
     {
+        if (dead) return;
+
         atkDamage -= buffAmount;
     }
 
     public void attack(int damage)
     {
+        if (dead) return;
+
         Debug.Log($"Attacking with {damage} damage.");
     }
 
@@ -195,6 +232,8 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 
     public void AddOngoingEffect(OngoingEffect effect)
     {
+        if (dead) return;
+
         ongoingEffects.Add(effect);
     }
 
@@ -216,6 +255,8 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 
     public void AddNewOngoingEffect(OngoingEffect effect)
     {
+        if (dead) return;
+
         ongoingEffects.Add(effect);
     }
 
