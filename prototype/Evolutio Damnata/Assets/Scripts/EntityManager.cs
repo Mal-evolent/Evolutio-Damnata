@@ -88,8 +88,11 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 
     public void HideOutline()
     {
-        selected = false;
-        outlineImg.SetActive(false);
+        if (outlineImg != null)
+        {
+            selected = false;
+            outlineImg.SetActive(false);
+        }
     }
 
     public void loadMonster()
@@ -156,6 +159,9 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         RemoveAllOngoingEffects();
         Debug.Log("Monster is dead.");
 
+        // Hide the outline before starting the fade-out process
+        HideOutline();
+
         // Start the coroutine to fade out and deactivate the game object
         StartCoroutine(FadeOutAndDeactivate(10.0f)); // Adjust the duration as needed
     }
@@ -163,24 +169,44 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     private IEnumerator FadeOutAndDeactivate(float duration)
     {
         SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
-        if (spriteRenderer != null)
-        {
-            Color originalColor = spriteRenderer.color;
-            float elapsedTime = 0f;
+        Image uiImage = GetComponent<Image>();
 
-            while (elapsedTime < duration)
+        if (spriteRenderer == null && uiImage == null)
+        {
+            Debug.LogError("No SpriteRenderer or Image component found! Cannot fade out.");
+            yield break;
+        }
+
+        float elapsedTime = 0f;
+
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+            float alpha = Mathf.Lerp(1f, 0f, elapsedTime / duration);
+
+            if (spriteRenderer != null)
             {
-                elapsedTime += Time.deltaTime;
-                float alpha = Mathf.Lerp(1f, 0f, elapsedTime / duration);
-                spriteRenderer.color = new Color(originalColor.r, originalColor.g, originalColor.b, alpha);
-                yield return null;
+                spriteRenderer.color = new Color(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, alpha);
+            }
+            if (uiImage != null)
+            {
+                uiImage.color = new Color(uiImage.color.r, uiImage.color.g, uiImage.color.b, alpha);
             }
 
-            spriteRenderer.color = new Color(originalColor.r, originalColor.g, originalColor.b, 0f);
+            yield return null;
         }
+
+        // Ensure the object is fully transparent before deactivating
+        if (spriteRenderer != null)
+            spriteRenderer.color = new Color(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, 0f);
+
+        if (uiImage != null)
+            uiImage.color = new Color(uiImage.color.r, uiImage.color.g, uiImage.color.b, 0f);
 
         gameObject.SetActive(false);
     }
+
+
 
     private void RemoveAllOngoingEffects()
     {

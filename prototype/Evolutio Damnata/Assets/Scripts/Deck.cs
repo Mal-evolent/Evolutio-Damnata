@@ -49,6 +49,12 @@ public class Deck : MonoBehaviour
         // Ensure the hand is filled up to the hand size limit
         while (Hand.Count < HandSize && Cards.Count > 0)
         {
+            if (Cards.Count == 0)
+            {
+                Debug.LogWarning("Deck is empty. Cannot draw more cards.");
+                return;
+            }
+
             Card drawnCard = Cards[0];
             Cards.RemoveAt(0);
             Hand.Add(drawnCard);
@@ -67,6 +73,12 @@ public class Deck : MonoBehaviour
         // Ensure the hand is filled up to the hand size limit
         if (Hand.Count < HandSize)
         {
+            if (Cards.Count == 0)
+            {
+                Debug.LogWarning("Deck is empty. Cannot draw more cards.");
+                return;
+            }
+
             Card drawnCard = Cards[0];
             Cards.RemoveAt(0);
             Hand.Add(drawnCard);
