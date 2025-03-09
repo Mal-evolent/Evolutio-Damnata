@@ -7,6 +7,9 @@ using System.Linq;
 
 public class combatStage : MonoBehaviour
 {
+    public Sprite wizardOutlineSprite;
+
+
     [SerializeField]
     public GameObject manaBar;
     [SerializeField]
@@ -644,7 +647,7 @@ public class combatStage : MonoBehaviour
         // Initialize the monster with the appropriate type, attributes, and outline image only if it's not a spell card or the placeholder is empty
         if (!selectedCardData.IsSpellCard || (existingEntityManager == null || !existingEntityManager.placed))
         {
-            entityManager.InitializeMonster(EntityManager._monsterType.Friendly, selectedCardData.Health, selectedCardData.AttackPower, healthBarSlider, placeholderImage, damageVisualizer, damageNumberPrefab);
+            entityManager.InitializeMonster(EntityManager._monsterType.Friendly, selectedCardData.Health, selectedCardData.AttackPower, healthBarSlider, placeholderImage, damageVisualizer, damageNumberPrefab, wizardOutlineSprite);
         }
 
         // Check if the placeholder is already occupied by a placed monster card
@@ -750,7 +753,6 @@ public class combatStage : MonoBehaviour
             placeholderImage.sprite = cardLibrary.cardImageGetter(cardName);
         }
 
-
         // Add the EntityManager component to the placeholder
         EntityManager entityManager = enemyPlaceholder.GetComponent<EntityManager>();
         if (entityManager == null)
@@ -765,7 +767,7 @@ public class combatStage : MonoBehaviour
         entityManager.placed = true;
 
         // Initialize the monster with the appropriate type, attributes, and outline image
-        entityManager.InitializeMonster(EntityManager._monsterType.Enemy, selectedCardData.Health, selectedCardData.AttackPower, healthBarSlider, placeholderImage, damageVisualizer, damageNumberPrefab);
+        entityManager.InitializeMonster(EntityManager._monsterType.Enemy, selectedCardData.Health, selectedCardData.AttackPower, healthBarSlider, placeholderImage, damageVisualizer, damageNumberPrefab, wizardOutlineSprite);
 
         // Rename the placeholder to the card name
         enemyPlaceholder.name = cardName;

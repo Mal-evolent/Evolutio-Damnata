@@ -8,8 +8,7 @@ using System.Collections.Generic;
 
 public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 {
-    [SerializeField]
-    GameObject outlineImg;
+    public Sprite outlineSprite;
 
     [SerializeField]
     ResourceManager resourceManager;
@@ -50,7 +49,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 
     private List<OngoingEffect> ongoingEffects = new List<OngoingEffect>();
 
-    public void InitializeMonster(_monsterType monsterType, float maxHealth, float atkDamage, Slider healthBarSlider, Image image, DamageVisualizer damageVisualizer, GameObject damageNumberPrefab)
+    public void InitializeMonster(_monsterType monsterType, float maxHealth, float atkDamage, Slider healthBarSlider, Image image, DamageVisualizer damageVisualizer, GameObject damageNumberPrefab, Sprite outlineSprite)
     {
         this.monsterType = monsterType;
         this.maxHealth = maxHealth;
@@ -59,6 +58,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         this.spriteImage = image;
         this.damageVisualizer = damageVisualizer;
         this.damageNumberPrefab = damageNumberPrefab;
+        this.outlineSprite = outlineSprite;
 
         healthBar = healthBarSlider;
         if (healthBar != null)
@@ -78,21 +78,6 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     {
         selected = !selected;
         return selected;
-    }
-
-    public void ShowOutline()
-    {
-        selected = true;
-        outlineImg.SetActive(true);
-    }
-
-    public void HideOutline()
-    {
-        if (outlineImg != null)
-        {
-            selected = false;
-            outlineImg.SetActive(false);
-        }
     }
 
     public void loadMonster()
@@ -159,11 +144,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         RemoveAllOngoingEffects();
         Debug.Log("Monster is dead.");
 
-        // Hide the outline before starting the fade-out process
-        HideOutline();
-
-        // Start the coroutine to fade out and deactivate the game object
-        StartCoroutine(FadeOutAndDeactivate(6.5f)); // Adjust the duration as needed
+        StartCoroutine(FadeOutAndDeactivate(6.5f));
     }
 
     private IEnumerator FadeOutAndDeactivate(float duration)
@@ -201,20 +182,28 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
             yield return null;
         }
 
-        // Ensure the object is fully transparent before deactivating
+        // Ensure full transparency before changing sprite
         if (spriteRenderer != null)
+        {
             spriteRenderer.color = new Color(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, 0f);
-
+            spriteRenderer.sprite = outlineSprite; // Change sprite
+        }
         if (uiImage != null)
+        {
             uiImage.color = new Color(uiImage.color.r, uiImage.color.g, uiImage.color.b, 0f);
-
+            uiImage.sprite = outlineSprite; // Change sprite
+        }
         if (healthBarImage != null)
-            healthBarImage.color = new Color(healthBarImage.color.r, healthBarImage.color.g, healthBarImage.color.b, 0f);
+        {
+            healthBarImage.color = new Color(healthBarImage.color.r, healthBarImage.color.g, 0f);
+        }
+
+        placed = false;
+
+        Debug.Log("Fade out complete. Changing sprite to outline and deactivating object.");
 
         gameObject.SetActive(false);
     }
-
-
 
     private void RemoveAllOngoingEffects()
     {
