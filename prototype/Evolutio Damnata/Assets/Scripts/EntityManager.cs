@@ -182,25 +182,29 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
             yield return null;
         }
 
-        // Ensure full transparency before changing sprite
         if (spriteRenderer != null)
         {
-            spriteRenderer.color = new Color(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, 0f);
-            spriteRenderer.sprite = outlineSprite; // Change sprite
+            spriteRenderer.sprite = outlineSprite;
+            spriteRenderer.color = new Color(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, 1f); // Reset transparency
         }
         if (uiImage != null)
         {
-            uiImage.color = new Color(uiImage.color.r, uiImage.color.g, uiImage.color.b, 0f);
-            uiImage.sprite = outlineSprite; // Change sprite
+            uiImage.sprite = outlineSprite;
+            uiImage.color = new Color(uiImage.color.r, uiImage.color.g, uiImage.color.b, 1f); // Reset transparency
         }
         if (healthBarImage != null)
         {
-            healthBarImage.color = new Color(healthBarImage.color.r, healthBarImage.color.g, 0f);
+            healthBarImage.color = new Color(healthBarImage.color.r, healthBarImage.color.g, healthBarImage.color.b, 1f); // Reset transparency
+        }
+
+        if (healthBar != null)
+        {
+            healthBar.gameObject.SetActive(false); // Set health bar to inactive
         }
 
         placed = false;
 
-        Debug.Log("Fade out complete. Changing sprite to outline and deactivating object.");
+        Debug.Log("Fade out complete. Changing sprite to outline, resetting transparency, and deactivating health bar.");
 
         gameObject.SetActive(false);
     }
