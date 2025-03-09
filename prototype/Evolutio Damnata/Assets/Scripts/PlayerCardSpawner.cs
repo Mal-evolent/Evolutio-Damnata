@@ -2,6 +2,11 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Linq;
 
+/**
+ * The PlayerCardSpawner class is responsible for spawning player cards in the combat stage.
+ * It handles the placement of monster cards and the casting of spell cards.
+ */
+
 public class PlayerCardSpawner
 {
     private SpritePositioning spritePositioning;

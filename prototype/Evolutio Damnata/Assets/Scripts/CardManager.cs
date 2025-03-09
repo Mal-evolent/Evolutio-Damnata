@@ -3,7 +3,11 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-// Card Manager for handling UI
+/*
+ * CardManager is responsible for managing the player's deck and hand of cards.
+ * It displays the deck and hand in the UI and handles card selection.
+ */
+
 public class CardManager : MonoBehaviour
 {
     public Deck playerDeck;
@@ -147,7 +151,7 @@ public class CardManager : MonoBehaviour
         deckCardObjects.Clear();
         handCardObjects.Clear();
 
-        DisplayDeck(); // Reload and update UI display of cards
-        DisplayHand(); // Reload and update UI display of cards
+        DisplayDeck();
+        DisplayHand();
     }
 }

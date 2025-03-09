@@ -2,6 +2,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using Sirenix.OdinInspector;
 
+/* 
+ * Card class is the base class for all card types. It contains common properties and methods that are shared by all card types.
+ * MonsterCard, SpellCard, and RitualCard are derived classes that inherit from the Card class.
+ * MonsterCard and SpellCard override the Play method to provide specific implementations for playing the card.
+ */
+
 public class Card : MonoBehaviour
 {
     public string CardName;

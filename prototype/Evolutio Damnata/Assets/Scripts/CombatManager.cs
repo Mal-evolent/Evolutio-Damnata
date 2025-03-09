@@ -3,6 +3,12 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 
+/*
+ * The CombatManager class is responsible for managing the combat stage of the game.
+ * It keeps track of the game state, player and enemy health, mana, and turn count.
+ * It also handles the end phase and end turn buttons, and the player and enemy actions.
+ */
+
 public class CombatManager : MonoBehaviour
 {
     public CombatStage combatStage;

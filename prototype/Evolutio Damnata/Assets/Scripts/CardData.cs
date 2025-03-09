@@ -2,6 +2,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using Sirenix.OdinInspector;
 
+/* 
+ * This class is used to store data for cards in the game.
+ * It is used to create a ScriptableObject asset for each card.
+ * The asset is then used to create a prefab for the card.
+ */
+
 [System.Serializable]
 public class CardData
 {

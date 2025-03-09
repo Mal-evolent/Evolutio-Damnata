@@ -1,6 +1,11 @@
 using System.Collections;
 using UnityEngine;
 
+/**
+ * The PhaseManager class is responsible for managing the different phases of the combat stage.
+ * It handles the preparation phase, combat phase, and clean-up phase of the game.
+ */
+
 public class PhaseManager
 {
     private CombatManager combatManager;

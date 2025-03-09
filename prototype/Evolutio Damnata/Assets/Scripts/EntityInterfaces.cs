@@ -1,3 +1,8 @@
+
+/*
+ * This file contains the interfaces for the entities in the game
+ */
+
 public interface IDamageable
 {
     void takeDamage(float damageAmount);

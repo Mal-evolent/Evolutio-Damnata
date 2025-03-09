@@ -6,6 +6,12 @@ using System;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
+/**
+ * This class is used to generate the map for the game.
+ * It generates a random background image for the map.
+ */
+
+
 public class MapScript : MonoBehaviour
 {
     [SerializeField]

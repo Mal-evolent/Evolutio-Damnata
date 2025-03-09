@@ -1,9 +1,14 @@
 using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Linq;
+
+
+/*
+ * The CombatStage class is responsible for managing the combat stage of the game.
+ * It keeps track of the game state, player and enemy health, mana, and turn count.
+ * It also handles the end phase and end turn buttons, and the player and enemy actions.
+ */
 
 public class CombatStage : MonoBehaviour
 {

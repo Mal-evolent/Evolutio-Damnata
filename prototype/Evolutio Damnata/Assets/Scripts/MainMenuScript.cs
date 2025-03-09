@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+/**
+ * This class is used to control the main menu of the game.
+ * It contains two methods, one to quit the game and one to start the game.
+ */
 
 public class MainMenuScript : MonoBehaviour
 {

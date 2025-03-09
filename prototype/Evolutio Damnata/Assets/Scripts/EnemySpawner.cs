@@ -1,6 +1,11 @@
 using UnityEngine;
 using UnityEngine.UI;
 
+/* 
+ * EnemySpawner class is used to spawn enemies in the game.
+ * It contains methods to spawn enemies in the game world.
+ */
+
 public class EnemySpawner
 {
     private SpritePositioning spritePositioning;

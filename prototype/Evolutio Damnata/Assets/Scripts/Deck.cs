@@ -1,6 +1,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+
+/* 
+ * Deck class is used to manage the player's and Enemy's deck of cards.
+ * It contains a list of Card objects that represent the cards in the deck.
+ * It also contains methods to shuffle the deck, draw cards, and add/remove cards from the deck.
+ */
+
+
 public class Deck : MonoBehaviour
 {
     public List<Card> Cards = new List<Card>();

@@ -2,6 +2,13 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+
+/* 
+ * CardLibrary class is used to manage the card library in the game.
+ * It contains a list of CardData objects that represent the cards in the game.
+ * It also contains methods to create cards from the CardData objects and populate the player's deck.
+ */
+
 public class CardLibrary : MonoBehaviour
 {
     public Deck playerDeck;

@@ -4,6 +4,12 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 
+/**
+ * This class is responsible for managing the entity's health, attack damage, and ongoing effects.
+ * It implements the IDamageable and IAttacker interfaces to handle damage and attack logic.
+ */
+
+
 //---------------interfaces for different attributes--------------------------------//
 
 public class EntityManager : MonoBehaviour, IDamageable, IAttacker

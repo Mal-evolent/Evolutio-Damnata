@@ -3,6 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+
+/*
+ * The EnemyAI class is responsible for managing the enemy AI behavior during combat.
+ * It handles the enemy deck, card library, combat manager, combat stage, and sprite positioning.
+ * It initializes the enemy deck, draws the initial hand, and spawns monster cards during the prep phase.
+ */
+
 public class EnemyAI : MonoBehaviour
 {
     [SerializeField]
@@ -37,7 +44,7 @@ public class EnemyAI : MonoBehaviour
         // Wait until the room is ready
         while (!spritePositioning.roomReady)
         {
-            yield return null; // Wait for the next frame
+            yield return null;
         }
 
         InitializeDeck();
@@ -53,7 +60,7 @@ public class EnemyAI : MonoBehaviour
             return;
         }
 
-        enemyDeck.cardLibrary = cardLibrary; // Assign the card library to the deck
+        enemyDeck.cardLibrary = cardLibrary;
         enemyDeck.PopulateDeck();
         Debug.Log("Enemy deck initialized and shuffled.");
     }

@@ -2,6 +2,14 @@ using UnityEngine;
 
 public class AttackHandler
 {
+    /**
+     * Handles the attack between two monsters.
+     * 
+     * @param playerEntity The attacking monster.
+     * @param enemyEntity The defending monster.
+     */
+
+
     public void HandleMonsterAttack(EntityManager playerEntity, EntityManager enemyEntity)
     {
         if (playerEntity == null || enemyEntity == null)

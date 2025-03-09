@@ -2513,13 +2513,13 @@ MonoBehaviour:
   endTurnButton: {fileID: 192387895}
   playerGoesFirst: 1
   playerTurn: 1
+  playerDeck: {fileID: 294774779}
+  enemyDeck: {fileID: 825410030}
   isPlayerPrepPhase: 0
   isPlayerCombatPhase: 0
   isEnemyPrepPhase: 0
   isEnemyCombatPhase: 0
   isCleanUpPhase: 0
-  playerDeck: {fileID: 294774779}
-  enemyDeck: {fileID: 825410030}
 --- !u!4 &1394303772
 Transform:
   m_ObjectHideFlags: 0

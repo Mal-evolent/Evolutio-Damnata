@@ -2,6 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/**
+ * This class is used to position the sprites on the map.
+ * It generates placeholders for the player and enemy entities.
+ */
+
 public class SpritePositioning : MonoBehaviour
 {
     [SerializeField]

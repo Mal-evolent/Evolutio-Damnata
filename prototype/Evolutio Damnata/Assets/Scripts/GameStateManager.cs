@@ -1,6 +1,12 @@
 using System.Collections;
 using UnityEngine;
 
+
+/*
+ * The GameStateManager class is responsible for managing the game state.
+ * It keeps track of the combat manager and initializes the game.
+ */
+
 public class GameStateManager
 {
     private CombatManager combatManager;

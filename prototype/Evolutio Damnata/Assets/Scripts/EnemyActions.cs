@@ -1,6 +1,12 @@
 using System.Collections;
 using UnityEngine;
 
+
+/*
+ * The EnemyActions class is responsible for handling the enemy's actions during combat.
+ * It contains methods for playing cards and attacking the player.
+ */
+
 public class EnemyActions
 {
     private CombatManager combatManager;

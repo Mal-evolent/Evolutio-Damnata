@@ -1,6 +1,11 @@
 using UnityEngine;
 using UnityEngine.UI;
 
+/**
+ * This class is responsible for creating buttons for player and enemy entities.
+ */
+
+
 public class ButtonCreator : MonoBehaviour
 {
     private Canvas battleField;

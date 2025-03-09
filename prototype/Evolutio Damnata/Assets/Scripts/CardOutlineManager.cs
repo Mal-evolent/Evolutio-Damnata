@@ -1,6 +1,14 @@
 using UnityEngine;
 using UnityEngine.UI;
 
+/*
+ * This script is used to manage the outline of a card when it is selected by the player.
+ * It allows the player to select a card and have it highlighted with a green outline.
+ * If the player selects a different card, the outline will be removed from the previously selected card.
+ * If the player selects the same card again, the outline will be removed.
+ * 
+ * This script is attached to the GameManager object in the scene.
+ */
 public class CardOutlineManager : MonoBehaviour
 {
     private GameObject currentlyHighlightedCard;

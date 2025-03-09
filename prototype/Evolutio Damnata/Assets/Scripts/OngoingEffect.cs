@@ -2,6 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+
+/**
+ * This class is responsible for managing the ongoing effects of a spell on an entity.
+ */
+
 public class OngoingEffect
 {
     public SpellEffect EffectType { get; private set; }
