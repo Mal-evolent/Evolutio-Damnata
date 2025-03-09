@@ -170,10 +170,11 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     {
         SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
         Image uiImage = GetComponent<Image>();
+        Image healthBarImage = healthBar != null ? healthBar.GetComponentInChildren<Image>() : null;
 
-        if (spriteRenderer == null && uiImage == null)
+        if (spriteRenderer == null && uiImage == null && healthBarImage == null)
         {
-            Debug.LogError("No SpriteRenderer or Image component found! Cannot fade out.");
+            Debug.LogError("No SpriteRenderer, Image, or HealthBar component found! Cannot fade out.");
             yield break;
         }
 
@@ -192,6 +193,10 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
             {
                 uiImage.color = new Color(uiImage.color.r, uiImage.color.g, uiImage.color.b, alpha);
             }
+            if (healthBarImage != null)
+            {
+                healthBarImage.color = new Color(healthBarImage.color.r, healthBarImage.color.g, healthBarImage.color.b, alpha);
+            }
 
             yield return null;
         }
@@ -202,6 +207,9 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 
         if (uiImage != null)
             uiImage.color = new Color(uiImage.color.r, uiImage.color.g, uiImage.color.b, 0f);
+
+        if (healthBarImage != null)
+            healthBarImage.color = new Color(healthBarImage.color.r, healthBarImage.color.g, healthBarImage.color.b, 0f);
 
         gameObject.SetActive(false);
     }
