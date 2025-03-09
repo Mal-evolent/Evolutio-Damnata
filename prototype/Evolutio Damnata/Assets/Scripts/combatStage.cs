@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Linq;
 
-public class combatStage : MonoBehaviour
+public class CombatStage : MonoBehaviour
 {
     public Sprite wizardOutlineSprite;
 

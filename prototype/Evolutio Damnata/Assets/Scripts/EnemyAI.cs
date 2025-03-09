@@ -15,7 +15,7 @@ public class EnemyAI : MonoBehaviour
     private CombatManager combatManager;
 
     [SerializeField]
-    private combatStage combatStage;
+    private CombatStage combatStage;
 
     [SerializeField]
     private SpritePositioning spritePositioning;
