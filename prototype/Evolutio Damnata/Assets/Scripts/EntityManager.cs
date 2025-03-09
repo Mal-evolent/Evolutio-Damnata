@@ -163,7 +163,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         HideOutline();
 
         // Start the coroutine to fade out and deactivate the game object
-        StartCoroutine(FadeOutAndDeactivate(10.0f)); // Adjust the duration as needed
+        StartCoroutine(FadeOutAndDeactivate(6.5f)); // Adjust the duration as needed
     }
 
     private IEnumerator FadeOutAndDeactivate(float duration)

@@ -394,6 +394,7 @@ public class combatStage : MonoBehaviour
                 if (combatManager.isPlayerCombatPhase)
                 {
                     HandleMonsterAttack(playerEntityManager, entityManager);
+                    cardManager.currentSelectedCard = null;
                 }
                 else
                 {
