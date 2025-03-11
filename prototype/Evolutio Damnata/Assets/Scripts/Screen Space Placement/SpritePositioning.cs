@@ -50,8 +50,8 @@ public class SpritePositioning : MonoBehaviour
         {
             yield return null; // Wait for the next frame
         }
-        placeHolderManager.TogglePlaceHolders(true, mapScript.currentSelectedRoom); // Set placeholders to be visible once the room is selected
-        enemyPlaceHolderManager.DisplayEnemyPlaceHolders(mapScript.currentSelectedRoom); // Display enemy placeholders permanently
+        placeHolderManager.TogglePlaceHolders(true, mapScript.currentSelectedRoom);
+        enemyPlaceHolderManager.DisplayEnemyPlaceHolders(mapScript.currentSelectedRoom);
         roomReady = true;
     }
 
