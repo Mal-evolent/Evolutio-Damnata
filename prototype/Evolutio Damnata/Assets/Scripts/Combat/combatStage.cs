@@ -50,6 +50,7 @@ public class CombatStage : MonoBehaviour
     private EnemySpawner enemySpawner;
     private PlayerCardSpawner playerCardSpawner;
     private EnemySelectionEffectHandler enemySelectionEffectHandler;
+    private PlayerSelectionEffectHandler playerSelectionEffectHandler;
 
     private void Awake()
     {
@@ -64,6 +65,7 @@ public class CombatStage : MonoBehaviour
         playerCardSpawner = new PlayerCardSpawner(spritePositioning, cardLibrary, cardOutlineManager, cardManager, combatManager, damageVisualizer, damageNumberPrefab, wizardOutlineSprite, manaBar, manaText, this);
 
         enemySelectionEffectHandler = new EnemySelectionEffectHandler(spritePositioning);
+        playerSelectionEffectHandler = new PlayerSelectionEffectHandler(spritePositioning, cardManager);
     }
 
     // This function will be kept
@@ -133,7 +135,7 @@ public class CombatStage : MonoBehaviour
                 placeHolderActiveState(false);
                 enemySelectionEffectHandler.ApplyEffect(true);
 
-                playerSelectionEffect();
+                playerSelectionEffectHandler.ApplyEffect();
             }
             else
             {
@@ -145,18 +147,6 @@ public class CombatStage : MonoBehaviour
         {
             placeHolderActiveState(false);
             enemySelectionEffectHandler.ApplyEffect(false);
-        }
-    }
-
-    private void playerSelectionEffect()
-    {
-        for (int i = 0; i < spritePositioning.playerEntities.Count; i++)
-        {
-            if (spritePositioning.playerEntities[i] == cardManager.currentSelectedCard)
-            {
-                //apply selection effect here
-                break;
-            }
         }
     }
 
