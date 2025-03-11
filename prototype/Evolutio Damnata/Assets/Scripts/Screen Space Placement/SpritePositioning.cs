@@ -23,6 +23,8 @@ public class SpritePositioning : MonoBehaviour
     public List<GameObject> playerEntities;
     public List<GameObject> enemyEntities;
 
+    private PlaceHolderManager placeHolderManager;
+
     void Start()
     {
         var playerInitializer = new PlayerRoomPositionsInitializer();
@@ -33,6 +35,9 @@ public class SpritePositioning : MonoBehaviour
 
         playerEntities = new List<GameObject>();
         enemyEntities = new List<GameObject>();
+
+        placeHolderManager = new PlaceHolderManager(placeHolderPrefab, mainCanvas, playerEntities, roomPositions);
+
         StartCoroutine(WaitForRoomSelection());
         roomReady = false;
     }
@@ -43,7 +48,7 @@ public class SpritePositioning : MonoBehaviour
         {
             yield return null; // Wait for the next frame
         }
-        togglePlaceHolders(true); // Set placeholders to be visible once the room is selected
+        placeHolderManager.TogglePlaceHolders(true, mapScript.currentSelectedRoom); // Set placeholders to be visible once the room is selected
         DisplayEnemyPlaceHolders(); // Display enemy placeholders permanently
         roomReady = true;
     }
@@ -73,31 +78,6 @@ public class SpritePositioning : MonoBehaviour
         {
             Debug.LogError($"No enemy position data found for room: {currentRoom}");
             return new List<PositionData>();
-        }
-    }
-
-    public void togglePlaceHolders(bool show)
-    {
-        // Clear previously instantiated placeholders
-        foreach (GameObject placeHolder in playerEntities)
-        {
-            Destroy(placeHolder);
-        }
-        playerEntities.Clear();
-
-        // Instantiate new placeholders and store them in the list
-        List<PositionData> positions = GetPlayerPositionsForCurrentRoom();
-        for (int i = 0; i < positions.Count; i++)
-        {
-            PositionData position = positions[i];
-            GameObject placeHolder = Instantiate(placeHolderPrefab, mainCanvas.transform);
-            placeHolder.GetComponent<RectTransform>().anchoredPosition = position.Position;
-            placeHolder.GetComponent<RectTransform>().sizeDelta = position.Size;
-            placeHolder.transform.localScale = position.Scale;
-            placeHolder.transform.rotation = position.Rotation;
-            placeHolder.name = $"Player_Placeholder_{i}";
-            placeHolder.SetActive(show);
-            playerEntities.Add(placeHolder);
         }
     }
 
