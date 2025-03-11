@@ -49,6 +49,7 @@ public class CombatStage : MonoBehaviour
     private AttackHandler attackHandler;
     private EnemySpawner enemySpawner;
     private PlayerCardSpawner playerCardSpawner;
+    private EnemySelectionEffectHandler enemySelectionEffectHandler;
 
     private void Awake()
     {
@@ -61,6 +62,8 @@ public class CombatStage : MonoBehaviour
         attackHandler = new AttackHandler();
         enemySpawner = new EnemySpawner(spritePositioning, cardLibrary, damageVisualizer, damageNumberPrefab, wizardOutlineSprite);
         playerCardSpawner = new PlayerCardSpawner(spritePositioning, cardLibrary, cardOutlineManager, cardManager, combatManager, damageVisualizer, damageNumberPrefab, wizardOutlineSprite, manaBar, manaText, this);
+
+        enemySelectionEffectHandler = new EnemySelectionEffectHandler(spritePositioning);
     }
 
     // This function will be kept
@@ -128,42 +131,24 @@ public class CombatStage : MonoBehaviour
             if (selectedCardEntityManager != null && selectedCardEntityManager.placed)
             {
                 placeHolderActiveState(false);
-                availableEnemyTargets(true);
+                enemySelectionEffectHandler.ApplyEffect(true);
 
-                ReactivateSelectedCardPlaceholder();
+                playerSelectionEffect();
             }
             else
             {
                 placeHolderActiveState(true);
-                availableEnemyTargets(false);
+                enemySelectionEffectHandler.ApplyEffect(false);
             }
         }
         else
         {
             placeHolderActiveState(false);
-            availableEnemyTargets(false);
+            enemySelectionEffectHandler.ApplyEffect(false);
         }
     }
 
-    private void availableEnemyTargets(bool active)
-    {
-        for (int i = 0; i < spritePositioning.enemyEntities.Count; i++)
-        {
-            if (spritePositioning.enemyEntities[i] != null)
-            {
-                Image placeholderImage = spritePositioning.enemyEntities[i].GetComponent<Image>();
-                if (placeholderImage != null && placeholderImage.sprite != null)
-                {
-                    if (placeholderImage.sprite.name != "wizard_outline")
-                    {
-                        //apply effect here
-                    }
-                }
-            }
-        }
-    }
-
-    private void ReactivateSelectedCardPlaceholder()
+    private void playerSelectionEffect()
     {
         for (int i = 0; i < spritePositioning.playerEntities.Count; i++)
         {
