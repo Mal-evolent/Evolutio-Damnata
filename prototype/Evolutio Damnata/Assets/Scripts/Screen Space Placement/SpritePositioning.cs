@@ -25,28 +25,16 @@ public class SpritePositioning : MonoBehaviour
 
     void Start()
     {
-        var initializer = new PlayerRoomPositionsInitializer();
-        roomPositions = initializer.InitializePlayerRoomPositions();
-        InitializeEnemyRoomPositions();
+        var playerInitializer = new PlayerRoomPositionsInitializer();
+        roomPositions = playerInitializer.InitializePlayerRoomPositions();
+
+        var enemyInitializer = new EnemyRoomPositionsInitializer();
+        enemyRoomPositions = enemyInitializer.InitializeEnemyRoomPositions();
+
         playerEntities = new List<GameObject>();
         enemyEntities = new List<GameObject>();
         StartCoroutine(WaitForRoomSelection());
         roomReady = false;
-    }
-
-    void InitializeEnemyRoomPositions()
-    {
-        enemyRoomPositions = new Dictionary<string, List<PositionData>>();
-
-        // Example configuration for room "Main Map"
-        enemyRoomPositions["Main Map"] = new List<PositionData>
-        {
-            new PositionData(new Vector2(269, -384), new Vector2(613.7594f, 550.7698f), new Vector3(0.5826045f, 0.5826045f, 0.5826045f), Quaternion.Euler(0, 180, 0)),
-            new PositionData(new Vector2(417.940002f, -250.380005f), new Vector2(613.7594f, 550.7698f), new Vector3(0.5826045f, 0.5826045f, 0.5826045f), Quaternion.Euler(0, 180, 0)),
-            new PositionData(new Vector2(606, -384), new Vector2(613.7594f, 550.7698f), new Vector3(0.5826045f, 0.5826045f, 0.5826045f), Quaternion.Euler(0, 180, 0))
-        };
-
-        // Add more rooms and their positions as needed
     }
 
     public IEnumerator WaitForRoomSelection()
