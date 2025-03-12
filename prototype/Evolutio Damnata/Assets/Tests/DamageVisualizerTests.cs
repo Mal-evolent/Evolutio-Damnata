@@ -4,11 +4,14 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using TMPro;
 
-public class DamageVisualizerTests : MonoBehaviour
+public class DamageVisualizerTests
 {
     private GameObject canvas;
     private GameObject damageVisualizerPrefab;
     private GameObject damageNumberPrefab;
+    private TestMonoBehaviour testMonoBehaviour;
+
+    private class TestMonoBehaviour : MonoBehaviour { }
 
     [SetUp]
     public void SetUp()
@@ -24,6 +27,10 @@ public class DamageVisualizerTests : MonoBehaviour
         // Create a prefab for the damage number
         damageNumberPrefab = new GameObject("DamageNumber");
         damageNumberPrefab.AddComponent<TextMeshProUGUI>();
+
+        // Create a GameObject with the TestMonoBehaviour
+        GameObject testMonoBehaviourObject = new GameObject("TestMonoBehaviour");
+        testMonoBehaviour = testMonoBehaviourObject.AddComponent<TestMonoBehaviour>();
     }
 
     [TearDown]
@@ -33,6 +40,7 @@ public class DamageVisualizerTests : MonoBehaviour
         GameObject.Destroy(canvas);
         GameObject.Destroy(damageVisualizerPrefab);
         GameObject.Destroy(damageNumberPrefab);
+        GameObject.Destroy(testMonoBehaviour.gameObject);
     }
 
     [UnityTest]
@@ -45,7 +53,7 @@ public class DamageVisualizerTests : MonoBehaviour
         // Call createDamageNumber
         Vector3 position = new Vector3(0, 0, 0);
         float damageNumber = 50f;
-        damageVisualizer.createDamageNumber(this, damageNumber, position, damageNumberPrefab);
+        damageVisualizer.createDamageNumber(testMonoBehaviour, damageNumber, position, damageNumberPrefab);
 
         // Wait for the next frame to ensure the damage number is created
         yield return null;
