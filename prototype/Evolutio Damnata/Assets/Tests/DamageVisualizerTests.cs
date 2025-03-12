@@ -51,7 +51,7 @@ public class DamageVisualizerTests
         DamageVisualizer damageVisualizer = damageVisualizerObject.GetComponent<DamageVisualizer>();
 
         // Call createDamageNumber
-        Vector3 position = new Vector3(0, 0, 0);
+        Vector3 position = new Vector3(0, 1, 0);
         float damageNumber = 50f;
         damageVisualizer.createDamageNumber(testMonoBehaviour, damageNumber, position, damageNumberPrefab);
 
@@ -62,9 +62,7 @@ public class DamageVisualizerTests
         TextMeshProUGUI text = GameObject.FindObjectOfType<TextMeshProUGUI>();
         Assert.IsNotNull(text, "Damage number text object was not created.");
         Assert.AreEqual("-50", text.text, "Damage number text is incorrect.");
-
-        // Verify the initial position
-        Assert.AreEqual(new Vector3(0, 0, 0), text.transform.position, "Initial position of damage number is incorrect.");
+        Assert.AreEqual(new Vector3(0, 2, 0), text.transform.position, "Initial position of damage number is incorrect.");
 
         // Wait for the animation to complete
         yield return new WaitForSeconds(1.01f);
