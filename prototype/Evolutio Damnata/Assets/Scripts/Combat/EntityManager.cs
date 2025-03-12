@@ -9,7 +9,6 @@ using System.Collections.Generic;
  * It implements the IDamageable and IAttacker interfaces to handle damage and attack logic.
  */
 
-
 //---------------interfaces for different attributes--------------------------------//
 
 public class EntityManager : MonoBehaviour, IDamageable, IAttacker
@@ -126,7 +125,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 
                 damageVisualizer.CreateDamageNumber(this, damageAmount, position, damageNumberInstance);
 
-                // Destroy the instance after a delay
+                
                 Destroy(damageNumberInstance, 1.5f);
             }
             else
@@ -147,76 +146,14 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         }
     }
 
-
     private void Die()
     {
         dead = true;
         RemoveAllOngoingEffects();
         Debug.Log("Monster is dead.");
 
-        StartCoroutine(FadeOutAndDeactivate(6.5f));
-    }
-
-    private IEnumerator FadeOutAndDeactivate(float duration)
-    {
-        SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
-        Image uiImage = GetComponent<Image>();
-        Image healthBarImage = healthBar != null ? healthBar.GetComponentInChildren<Image>() : null;
-
-        if (spriteRenderer == null && uiImage == null && healthBarImage == null)
-        {
-            Debug.LogError("No SpriteRenderer, Image, or HealthBar component found! Cannot fade out.");
-            yield break;
-        }
-
-        float elapsedTime = 0f;
-
-        while (elapsedTime < duration)
-        {
-            elapsedTime += Time.deltaTime;
-            float alpha = Mathf.Lerp(1f, 0f, elapsedTime / duration);
-
-            if (spriteRenderer != null)
-            {
-                spriteRenderer.color = new Color(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, alpha);
-            }
-            if (uiImage != null)
-            {
-                uiImage.color = new Color(uiImage.color.r, uiImage.color.g, uiImage.color.b, alpha);
-            }
-            if (healthBarImage != null)
-            {
-                healthBarImage.color = new Color(healthBarImage.color.r, healthBarImage.color.g, healthBarImage.color.b, alpha);
-            }
-
-            yield return null;
-        }
-
-        if (spriteRenderer != null)
-        {
-            spriteRenderer.sprite = outlineSprite;
-            spriteRenderer.color = new Color(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, 1f);
-        }
-        if (uiImage != null)
-        {
-            uiImage.sprite = outlineSprite;
-            uiImage.color = new Color(uiImage.color.r, uiImage.color.g, uiImage.color.b, 1f);
-        }
-        if (healthBarImage != null)
-        {
-            healthBarImage.color = new Color(healthBarImage.color.r, healthBarImage.color.g, healthBarImage.color.b, 1f);
-        }
-
-        if (healthBar != null)
-        {
-            healthBar.gameObject.SetActive(false); // Set health bar to inactive
-        }
-
-        placed = false;
-
-        Debug.Log("Fade out complete. Changing sprite to outline, resetting transparency, and deactivating health bar.");
-
-        gameObject.SetActive(false);
+        FadeOutEffect fadeOutEffect = gameObject.AddComponent<FadeOutEffect>();
+        StartCoroutine(fadeOutEffect.FadeOutAndDeactivate(gameObject, 6.5f, outlineSprite));
     }
 
     private void RemoveAllOngoingEffects()
@@ -304,9 +241,6 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 
     void Update()
     {
-        if (dead)
-        {
-            // Handle death logic
-        }
+
     }
 }
