@@ -122,9 +122,12 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
             if (gameObject.activeInHierarchy)
             {
                 Vector3 position = transform.position;
-                // Instantiate the damage number prefab as a separate GameObject
                 GameObject damageNumberInstance = Instantiate(damageNumberPrefab, position, Quaternion.identity);
-                damageVisualizer.createDamageNumber(this, damageAmount, position, damageNumberInstance);
+
+                damageVisualizer.CreateDamageNumber(this, damageAmount, position, damageNumberInstance);
+
+                // Destroy the instance after a delay
+                Destroy(damageNumberInstance, 1.5f);
             }
             else
             {
@@ -143,6 +146,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
             }
         }
     }
+
 
     private void Die()
     {
@@ -191,16 +195,16 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         if (spriteRenderer != null)
         {
             spriteRenderer.sprite = outlineSprite;
-            spriteRenderer.color = new Color(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, 1f); // Reset transparency
+            spriteRenderer.color = new Color(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, 1f);
         }
         if (uiImage != null)
         {
             uiImage.sprite = outlineSprite;
-            uiImage.color = new Color(uiImage.color.r, uiImage.color.g, uiImage.color.b, 1f); // Reset transparency
+            uiImage.color = new Color(uiImage.color.r, uiImage.color.g, uiImage.color.b, 1f);
         }
         if (healthBarImage != null)
         {
-            healthBarImage.color = new Color(healthBarImage.color.r, healthBarImage.color.g, healthBarImage.color.b, 1f); // Reset transparency
+            healthBarImage.color = new Color(healthBarImage.color.r, healthBarImage.color.g, healthBarImage.color.b, 1f);
         }
 
         if (healthBar != null)

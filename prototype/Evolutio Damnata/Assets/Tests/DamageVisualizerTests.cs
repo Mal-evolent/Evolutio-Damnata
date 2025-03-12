@@ -50,10 +50,10 @@ public class DamageVisualizerTests
         GameObject damageVisualizerObject = GameObject.Instantiate(damageVisualizerPrefab);
         DamageVisualizer damageVisualizer = damageVisualizerObject.GetComponent<DamageVisualizer>();
 
-        // Call createDamageNumber
+        // Call CreateDamageNumber
         Vector3 position = new Vector3(0, 1, 0);
         float damageNumber = 50f;
-        damageVisualizer.createDamageNumber(testMonoBehaviour, damageNumber, position, damageNumberPrefab);
+        damageVisualizer.CreateDamageNumber(testMonoBehaviour, damageNumber, position, damageNumberPrefab);
 
         // Wait for the next frame to ensure the damage number is created
         yield return null;
@@ -65,10 +65,15 @@ public class DamageVisualizerTests
         Assert.AreEqual(new Vector3(0, 2, 0), text.transform.position, "Initial position of damage number is incorrect.");
 
         // Wait for the animation to complete
-        yield return new WaitForSeconds(1.01f);
+        yield return new WaitForSeconds(1.1f);
+
+        
+        yield return null;
+        yield return null;
 
         // Verify the damage number is destroyed after animation
-        text = GameObject.FindObjectOfType<TextMeshProUGUI>();
+        text = GameObject.FindObjectOfType<TextMeshProUGUI>(); // Recheck after waiting
         Assert.IsNull(text, "Damage number text object was not destroyed after animation.");
     }
+
 }

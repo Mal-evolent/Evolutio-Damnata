@@ -10,7 +10,7 @@ using UnityEngine;
 
 public class DamageVisualizer : MonoBehaviour
 {
-    public void createDamageNumber(MonoBehaviour callerMono, float damageNumber, Vector3 position, GameObject prefab)
+    public void CreateDamageNumber(MonoBehaviour callerMono, float damageNumber, Vector3 position, GameObject prefab)
     {
         GameObject number = GameObject.Instantiate(prefab, GameObject.Find("Canvas").transform);
         number.transform.position = new Vector3(position.x, position.y, 0f);
