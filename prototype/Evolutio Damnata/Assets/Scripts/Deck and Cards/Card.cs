@@ -159,7 +159,7 @@ public class SpellCard : Card
             EntityManager entityManager = targetEntity as EntityManager;
             if (entityManager != null)
             {
-                OngoingEffect burnEffect = new OngoingEffect(SpellEffect.Burn, EffectValue, Duration, entityManager);
+                OngoingEffectManager burnEffect = new OngoingEffectManager(SpellEffect.Burn, EffectValue, Duration, entityManager);
                 entityManager.AddNewOngoingEffect(burnEffect);
                 Debug.Log($"Burn effect applied: {EffectValue} damage over {Duration} turns to {entityManager.name}");
             }

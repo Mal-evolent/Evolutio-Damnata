@@ -52,7 +52,8 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     public bool dead = false;
     public bool placed = false;
 
-    private List<OngoingEffect> ongoingEffects = new List<OngoingEffect>();
+    private List<OngoingEffectManager> ongoingEffects = new List<OngoingEffectManager>();
+    private OngoingEffectApplier ongoingEffectApplier;
 
     public void InitializeMonster(_monsterType monsterType, float maxHealth, float atkDamage, Slider healthBarSlider, Image image, DamageVisualizer damageVisualizer, GameObject damageNumberPrefab, Sprite outlineSprite)
     {
@@ -125,7 +126,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 
                 damageVisualizer.CreateDamageNumber(this, damageAmount, position, damageNumberInstance);
 
-                
+
                 Destroy(damageNumberInstance, 1.5f);
             }
             else
@@ -204,7 +205,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         return atkDamage * atkDamageMulti;
     }
 
-    public void AddOngoingEffect(OngoingEffect effect)
+    public void AddOngoingEffect(OngoingEffectManager effect)
     {
         if (dead) return;
 
@@ -215,19 +216,10 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     {
         if (dead) return;
 
-        for (int i = ongoingEffects.Count - 1; i >= 0; i--)
-        {
-            OngoingEffect effect = ongoingEffects[i];
-            effect.ApplyEffect(this);
-            effect.DecreaseDuration();
-            if (effect.IsExpired())
-            {
-                ongoingEffects.RemoveAt(i);
-            }
-        }
+        ongoingEffectApplier.ApplyEffects(this);
     }
 
-    public void AddNewOngoingEffect(OngoingEffect effect)
+    public void AddNewOngoingEffect(OngoingEffectManager effect)
     {
         if (dead) return;
 
@@ -236,7 +228,8 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 
     void Start()
     {
-        // Initialization logic if needed
+        ongoingEffectApplier = new OngoingEffectApplier(ongoingEffects);
+        // Other initialization logic if needed
     }
 
     void Update()

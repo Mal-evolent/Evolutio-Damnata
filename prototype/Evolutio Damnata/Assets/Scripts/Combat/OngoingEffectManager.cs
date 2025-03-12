@@ -7,14 +7,14 @@ using UnityEngine;
  * This class is responsible for managing the ongoing effects of a spell on an entity.
  */
 
-public class OngoingEffect
+public class OngoingEffectManager
 {
     public SpellEffect EffectType { get; private set; }
     public int EffectValue { get; private set; }
     public int Duration { get; private set; }
     public EntityManager TargetEntity { get; private set; }
 
-    public OngoingEffect(SpellEffect effectType, int effectValue, int duration, EntityManager targetEntity) // Modify constructor
+    public OngoingEffectManager(SpellEffect effectType, int effectValue, int duration, EntityManager targetEntity)
     {
         EffectType = effectType;
         EffectValue = effectValue;
