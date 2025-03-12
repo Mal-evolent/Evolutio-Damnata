@@ -2,6 +2,12 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
+/*
+ * This class, FadeOutEffect, provides a coroutine method FadeOutAndDeactivate that gradually fades out the visual components 
+ * (SpriteRenderer, UI Image, and HealthBar) of a target GameObject over a specified duration and then deactivates the GameObject. 
+ * Optionally, it can replace the sprite with an outline sprite before deactivation.
+ */
+
 public class FadeOutEffect : MonoBehaviour
 {
     public IEnumerator FadeOutAndDeactivate(GameObject target, float duration, Sprite outlineSprite = null)
