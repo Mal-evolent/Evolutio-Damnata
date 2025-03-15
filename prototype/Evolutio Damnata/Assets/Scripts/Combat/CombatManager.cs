@@ -29,7 +29,7 @@ public class CombatManager : MonoBehaviour
     public Deck playerDeck;
     public Deck enemyDeck;
 
-    public GameStateManager gameStateManager;
+    public roundManager gameStateManager;
     public PhaseManager phaseManager;
     public PlayerActions playerActions;
     public EnemyActions enemyActions;
@@ -43,7 +43,7 @@ public class CombatManager : MonoBehaviour
 
     private void Start()
     {
-        gameStateManager = new GameStateManager(this);
+        gameStateManager = new roundManager(this);
         phaseManager = new PhaseManager(this);
         playerActions = new PlayerActions(this);
         enemyActions = new EnemyActions(this);

@@ -3,15 +3,15 @@ using UnityEngine;
 
 
 /*
- * The GameStateManager class is responsible for managing the game state.
+ * The roundManager class is responsible for managing the game state.
  * It keeps track of the combat manager and initializes the game.
  */
 
-public class GameStateManager
+public class roundManager
 {
     private CombatManager combatManager;
 
-    public GameStateManager(CombatManager combatManager)
+    public roundManager(CombatManager combatManager)
     {
         this.combatManager = combatManager;
     }
