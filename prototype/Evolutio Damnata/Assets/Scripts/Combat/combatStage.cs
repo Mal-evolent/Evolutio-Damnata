@@ -19,6 +19,7 @@ public class CombatStage : MonoBehaviour
     [SerializeField]
     public GameObject manaText;
     public int currentMana;
+    public int maxMana;
 
     [SerializeField]
     CardManager cardManager;
@@ -120,7 +121,9 @@ public class CombatStage : MonoBehaviour
 
     public void updateManaUI()
     {
-        manaBar.GetComponent<Slider>().value = currentMana;
+        Slider manaSlider = manaBar.GetComponent<Slider>();
+        manaSlider.maxValue = maxMana;
+        manaSlider.value = currentMana; 
         manaText.GetComponent<TMP_Text>().text = currentMana.ToString();
     }
 

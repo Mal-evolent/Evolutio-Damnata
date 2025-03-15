@@ -125,7 +125,7 @@ public class PlayerCardSpawner
                     spellCard.CardImage = selectedCardData.CardImage;
                     spellCard.Description = selectedCardData.Description;
                     spellCard.ManaCost = selectedCardData.ManaCost;
-                    spellCard.EffectTypes = selectedCardData.EffectTypes; // Updated to use EffectTypes
+                    spellCard.EffectTypes = selectedCardData.EffectTypes;
                     spellCard.EffectValue = selectedCardData.EffectValue;
                     spellCard.Duration = selectedCardData.Duration;
                 }

@@ -30,12 +30,20 @@ public class GameStateManager
     public IEnumerator RoundStart()
     {
         Debug.Log("Starting New Round");
-        combatManager.combatStage.currentMana++;
         combatManager.turnCount++;
         combatManager.turnUI.text = "turn: " + combatManager.turnCount;
+
+        // Set maxMana to the current turn count
+        combatManager.combatStage.maxMana = combatManager.turnCount;
+
+        // Set currentMana to maxMana
+        combatManager.combatStage.currentMana = combatManager.combatStage.maxMana;
+
+        // Update player and enemy mana
         combatManager.playerMana = combatManager.combatStage.currentMana;
         combatManager.enemyMana = combatManager.combatStage.currentMana;
 
+        // Update the mana UI
         combatManager.combatStage.updateManaUI();
 
         combatManager.playerTurn = combatManager.playerGoesFirst;
