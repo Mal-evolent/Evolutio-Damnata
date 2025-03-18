@@ -76,7 +76,16 @@ public class PlayerCardSpawner
                 {
                     Debug.LogError($"Not enough mana. Card costs {cardData.ManaCost}, player has {combatStage.currentMana}");
                     cardOutlineManager.RemoveHighlight();
-                    return; // Bail if there isn't enough mana
+                    if (cardManager != null)
+                    {
+                        cardManager.currentSelectedCard = null;
+                        Debug.Log("Set currentSelectedCard to null due to insufficient mana.");
+                    }
+                    else
+                    {
+                        Debug.LogError("cardManager is null!");
+                    }
+                    return;
                 }
                 else
                 {
@@ -144,6 +153,7 @@ public class PlayerCardSpawner
         {
             Object.Destroy(cardManager.currentSelectedCard);
             cardManager.currentSelectedCard = null;
+            Debug.Log("Set currentSelectedCard to null after removing card from hand.");
         }
 
         // Set monster attributes

@@ -116,13 +116,6 @@ public class CardSelectionHandler : MonoBehaviour
             return;
         }
 
-        if (combatStage.currentMana < cardData.ManaCost)
-        {
-            Debug.LogError($"Not enough mana. Card costs {cardData.ManaCost}, player has {combatStage.currentMana}");
-            cardOutlineManager.RemoveHighlight();
-            return; // Bail if there isn't enough mana
-        }
-
         if (cardData.IsMonsterCard)
         {
             combatStage.spawnPlayerCard(cardManager.currentSelectedCard.name, index);
@@ -185,6 +178,7 @@ public class CardSelectionHandler : MonoBehaviour
         {
             Debug.LogError($"Not enough mana. Card costs {cardData.ManaCost}, player has {combatStage.currentMana}");
             cardOutlineManager.RemoveHighlight();
+            cardManager.currentSelectedCard = null;
             return; // Bail if there isn't enough mana
         }
 
