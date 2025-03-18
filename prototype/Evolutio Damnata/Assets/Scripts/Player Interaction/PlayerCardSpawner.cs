@@ -59,12 +59,13 @@ public class PlayerCardSpawner
             return;
         }
 
-        EntityManager existingEntityManager = placeholder.GetComponent<EntityManager>();
-        if (existingEntityManager == null)
+        Image placeholderImage = placeholder.GetComponent<Image>();
+        if (placeholderImage == null)
         {
-            Debug.LogError($"EntityManager component not found on placeholder at index {whichOutline}!");
+            Debug.LogError("Image component not found on placeholder!");
+            return;
         }
-
+        EntityManager existingEntityManager = placeholder.GetComponent<EntityManager>();
         // Find the selected card data
         int cardCost = 0;
         CardData selectedCardData = null;
@@ -157,12 +158,7 @@ public class PlayerCardSpawner
         }
 
         // Set monster attributes
-        Image placeholderImage = placeholder.GetComponent<Image>();
-        if (placeholderImage == null)
-        {
-            Debug.LogError("Image component not found on placeholder!");
-        }
-        else if (!selectedCardData.IsSpellCard)
+        if (!selectedCardData.IsSpellCard)
         {
             placeholderImage.sprite = cardLibrary.cardImageGetter(cardName);
         }
@@ -251,6 +247,7 @@ public class PlayerCardSpawner
             Debug.LogError("AudioSource component not found on CombatStage!");
         }
     }
+
 
     private void DisplayHealthBar(GameObject entity, bool active)
     {

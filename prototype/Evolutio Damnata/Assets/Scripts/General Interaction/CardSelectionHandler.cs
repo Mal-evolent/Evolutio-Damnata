@@ -1,12 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-
 /*
  * This class handles the selection of cards and the interaction between cards and entities.
  * It is responsible for handling the logic of playing cards, attacking, and applying spell effects.
  */
-
 
 public class CardSelectionHandler : MonoBehaviour
 {
