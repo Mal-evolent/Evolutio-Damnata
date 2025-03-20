@@ -122,12 +122,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
             if (gameObject.activeInHierarchy)
             {
                 Vector3 position = transform.position;
-                GameObject damageNumberInstance = Instantiate(damageNumberPrefab, position, Quaternion.identity);
-
-                damageVisualizer.CreateDamageNumber(this, damageAmount, position, damageNumberInstance);
-
-
-                Destroy(damageNumberInstance, 1.5f);
+                damageVisualizer.CreateDamageNumber(this, damageAmount, position, damageNumberPrefab);
             }
             else
             {
@@ -146,6 +141,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
             }
         }
     }
+
 
     private void Die()
     {

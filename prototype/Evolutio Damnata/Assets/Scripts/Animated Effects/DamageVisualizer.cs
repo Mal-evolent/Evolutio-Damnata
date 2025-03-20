@@ -37,7 +37,7 @@ public class DamageVisualizer : MonoBehaviour
         // Start the animation coroutine
         callerMono.StartCoroutine(AnimateText(number));
 
-        return number; // Return the instance
+        return number;
     }
 
     private IEnumerator AnimateText(GameObject visual)
