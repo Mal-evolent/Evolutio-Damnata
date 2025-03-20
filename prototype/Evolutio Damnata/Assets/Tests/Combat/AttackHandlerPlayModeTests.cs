@@ -3,6 +3,7 @@ using UnityEngine.TestTools;
 using NUnit.Framework;
 using System.Collections;
 using UnityEngine.UI;
+using TMPro; // Add this directive
 
 public class AttackHandlerPlayModeTests
 {
@@ -13,10 +14,16 @@ public class AttackHandlerPlayModeTests
     private EntityManager enemyEntity;
     private Slider playerHealthBar;
     private Slider enemyHealthBar;
+    private GameObject damageNumberPrefab;
+    private GameObject mockCanvas;
 
     [SetUp]
     public void Setup()
     {
+        // Create a mock Canvas
+        mockCanvas = new GameObject("Canvas");
+        mockCanvas.AddComponent<Canvas>();
+
         playerGameObject = new GameObject("PlayerEntity");
         enemyGameObject = new GameObject("EnemyEntity");
 
@@ -29,8 +36,12 @@ public class AttackHandlerPlayModeTests
         // Mock DamageVisualizer (empty behavior)
         DamageVisualizer mockDamageVisualizer = new GameObject("MockDamageVisualizer").AddComponent<DamageVisualizer>();
 
-        playerEntity.InitializeMonster(EntityManager._monsterType.player, 100, 20, playerHealthBar, null, mockDamageVisualizer, null, null);
-        enemyEntity.InitializeMonster(EntityManager._monsterType.Enemy, 80, 15, enemyHealthBar, null, mockDamageVisualizer, null, null);
+        // Create a mock damage number prefab
+        damageNumberPrefab = new GameObject("DamageNumberPrefab");
+        damageNumberPrefab.AddComponent<TextMeshProUGUI>();
+
+        playerEntity.InitializeMonster(EntityManager._monsterType.player, 100, 20, playerHealthBar, null, mockDamageVisualizer, damageNumberPrefab, null);
+        enemyEntity.InitializeMonster(EntityManager._monsterType.Enemy, 80, 15, enemyHealthBar, null, mockDamageVisualizer, damageNumberPrefab, null);
 
         // Instantiate AttackHandler normally
         attackHandler = new AttackHandler();
@@ -39,9 +50,6 @@ public class AttackHandlerPlayModeTests
     [UnityTest]
     public IEnumerator HandleMonsterAttack_UpdatesHealthCorrectly()
     {
-        // Expect errors without enforcing strict order
-        LogAssert.Expect(LogType.Error, "damageNumberPrefab is not set.");
-        LogAssert.Expect(LogType.Error, "DamageVisualizer is not set.");
 
         // Store initial health values
         float initialPlayerHealth = playerEntity.getHealth();
@@ -65,5 +73,7 @@ public class AttackHandlerPlayModeTests
     {
         GameObject.Destroy(playerGameObject);
         GameObject.Destroy(enemyGameObject);
+        GameObject.Destroy(damageNumberPrefab);
+        GameObject.Destroy(mockCanvas);
     }
 }
