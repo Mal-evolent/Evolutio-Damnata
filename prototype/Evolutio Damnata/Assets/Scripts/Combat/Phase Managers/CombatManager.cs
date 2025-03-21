@@ -41,7 +41,7 @@ public class CombatManager : MonoBehaviour
     public bool isEnemyCombatPhase = false;
     public bool isCleanUpPhase = false;
 
-    private void Start()
+    public void Start()
     {
         gameStateManager = new roundManager(this);
         phaseManager = new PhaseManager(this);
