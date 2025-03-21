@@ -81,6 +81,7 @@ public class EnemySpawner
         Slider healthBarSlider = healthBarTransform != null ? healthBarTransform.GetComponent<Slider>() : null;
 
         entityManager.placed = true;
+        entityManager.dead = false;
 
         // Initialize the monster with the appropriate type, attributes, and outline image
         entityManager.InitializeMonster(EntityManager._monsterType.Enemy, selectedCardData.Health, selectedCardData.AttackPower, healthBarSlider, placeholderImage, damageVisualizer, damageNumberPrefab, wizardOutlineSprite);

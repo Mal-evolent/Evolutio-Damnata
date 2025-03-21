@@ -17,8 +17,6 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     [SerializeField]
     ResourceManager resourceManager;
 
-    bool selected = false;
-
     public enum _monsterType
     {
         player,
@@ -77,12 +75,6 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         {
             Debug.LogError("Health bar Slider component not found!");
         }
-    }
-
-    public bool OutlineSelect()
-    {
-        selected = !selected;
-        return selected;
     }
 
     public void loadMonster()
@@ -145,6 +137,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     private void Die()
     {
         dead = true;
+        placed = false;
         RemoveAllOngoingEffects();
         Debug.Log("Monster is dead.");
 

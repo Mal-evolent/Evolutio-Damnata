@@ -210,6 +210,10 @@ public class PlayerCardSpawner
         if (!isOccupied)
         {
             entityManager.placed = !selectedCardData.IsSpellCard;
+            if (entityManager.placed)
+            {
+                entityManager.dead = false;
+            }
         }
 
         // Display or hide the health bar based on whether the placeholder is occupied by a placed monster card
@@ -247,7 +251,6 @@ public class PlayerCardSpawner
             Debug.LogError("AudioSource component not found on CombatStage!");
         }
     }
-
 
     private void DisplayHealthBar(GameObject entity, bool active)
     {
