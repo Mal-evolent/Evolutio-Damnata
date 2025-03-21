@@ -102,7 +102,7 @@ public class CardLibrary : MonoBehaviour
 
         cardDataList.Add(new CardData("Fireball", null, "Deals damage to a single target", 4, 0, 0, null, new List<SpellEffect> { SpellEffect.Damage }, 2));
         cardDataList.Add(new CardData("Healing Light", null, "Heals a single target", 3, 0, 0, null, new List<SpellEffect> { SpellEffect.Heal }, 8));
-        cardDataList.Add(new CardData("Burning Flames", null, "Applies burn effect to a single target", 5, 0, 0, null, new List<SpellEffect> { SpellEffect.Burn }, 5, 3));
+        cardDataList.Add(new CardData("Burning Flames", null, "Applies burn effect to a single target", 5, 0, 0, null, new List<SpellEffect> { SpellEffect.Burn, SpellEffect.Damage }, 5, 3));
         cardDataList.Add(new CardData("Frenzy", null, "Allows a monster to attack twice", 6, 0, 0, null, new List<SpellEffect> { SpellEffect.DoubleAttack }, 0, 2));
 
         List<CardData> validCards = new List<CardData>();
