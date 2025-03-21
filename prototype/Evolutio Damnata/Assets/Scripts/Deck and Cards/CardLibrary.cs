@@ -32,7 +32,7 @@ public class CardLibrary : MonoBehaviour
                 spellCard.CardImage = cardData.CardImage ?? defaultCardSprite;
                 spellCard.Description = cardData.Description;
                 spellCard.ManaCost = cardData.ManaCost;
-                spellCard.EffectTypes = cardData.EffectTypes; // Assign the list of effects
+                spellCard.EffectTypes = cardData.EffectTypes;
                 spellCard.EffectValue = cardData.EffectValue;
                 spellCard.Duration = cardData.Duration;
                 spellCard.CardType = cardData;
