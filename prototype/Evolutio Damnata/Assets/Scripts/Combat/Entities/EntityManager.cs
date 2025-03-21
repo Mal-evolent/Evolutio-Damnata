@@ -148,8 +148,34 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         RemoveAllOngoingEffects();
         Debug.Log("Monster is dead.");
 
+        // Disable all buttons in the hierarchy, including parent objects
+        Button[] buttonsInChildren = GetComponentsInChildren<Button>(true);
+        Button[] buttonsInParents = GetComponentsInParent<Button>(true);
+
+        foreach (Button button in buttonsInChildren)
+        {
+            button.interactable = false;
+        }
+
+        foreach (Button button in buttonsInParents)
+        {
+            button.interactable = false;
+        }
+
         FadeOutEffect fadeOutEffect = gameObject.AddComponent<FadeOutEffect>();
-        StartCoroutine(fadeOutEffect.FadeOutAndDeactivate(gameObject, 6.5f, outlineSprite));
+        StartCoroutine(fadeOutEffect.FadeOutAndDeactivate(gameObject, 6.5f, outlineSprite, () =>
+        {
+            // Re-enable all buttons in the hierarchy, including parent objects
+            foreach (Button button in buttonsInChildren)
+            {
+                button.interactable = true;
+            }
+
+            foreach (Button button in buttonsInParents)
+            {
+                button.interactable = true;
+            }
+        }));
     }
 
     private void RemoveAllOngoingEffects()

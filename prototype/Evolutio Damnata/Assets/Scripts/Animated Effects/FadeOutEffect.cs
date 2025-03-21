@@ -10,12 +10,14 @@ using UnityEngine.UI;
 
 public class FadeOutEffect : MonoBehaviour
 {
-    public IEnumerator FadeOutAndDeactivate(GameObject target, float duration, Sprite outlineSprite = null)
+    public IEnumerator FadeOutAndDeactivate(GameObject target, float duration, Sprite outlineSprite = null, System.Action onComplete = null)
     {
         SpriteRenderer spriteRenderer = target.GetComponent<SpriteRenderer>();
         Image uiImage = target.GetComponent<Image>();
         Slider healthBar = target.GetComponentInChildren<Slider>();
         Image healthBarImage = healthBar != null ? healthBar.GetComponentInChildren<Image>() : null;
+
+        Debug.Log($"Starting FadeOutAndDeactivate for {target.name}");
 
         if (spriteRenderer == null && uiImage == null && healthBarImage == null)
         {
@@ -67,5 +69,8 @@ public class FadeOutEffect : MonoBehaviour
         }
 
         target.SetActive(false);
+        Debug.Log($"FadeOutAndDeactivate completed for {target.name}");
+
+        onComplete?.Invoke();
     }
 }
