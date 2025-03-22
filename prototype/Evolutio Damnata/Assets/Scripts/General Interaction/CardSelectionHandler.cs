@@ -1,10 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/*
- * This class handles the selection of cards and the interaction between cards and entities.
- * It is responsible for handling the logic of playing cards, attacking, and applying spell effects.
- */
 
 public class CardSelectionHandler : MonoBehaviour
 {
@@ -13,14 +9,16 @@ public class CardSelectionHandler : MonoBehaviour
     private CardOutlineManager cardOutlineManager;
     private SpritePositioning spritePositioning;
     private CombatStage combatStage;
+    private PlayerCardSpawner playerCardSpawner;
 
-    public void Initialize(CardManager cardManager, CombatManager combatManager, CardOutlineManager cardOutlineManager, SpritePositioning spritePositioning, CombatStage combatStage)
+    public void Initialize(CardManager cardManager, CombatManager combatManager, CardOutlineManager cardOutlineManager, SpritePositioning spritePositioning, CombatStage combatStage, PlayerCardSpawner playerCardSpawner)
     {
         this.cardManager = cardManager;
         this.combatManager = combatManager;
         this.cardOutlineManager = cardOutlineManager;
         this.spritePositioning = spritePositioning;
         this.combatStage = combatStage;
+        this.playerCardSpawner = playerCardSpawner;
     }
 
     public void OnPlayerButtonClick(int index)
@@ -114,9 +112,17 @@ public class CardSelectionHandler : MonoBehaviour
             return;
         }
 
+        if (combatStage.currentMana < cardData.ManaCost)
+        {
+            Debug.LogError($"Not enough mana. Card costs {cardData.ManaCost}, player has {combatStage.currentMana}");
+            cardOutlineManager.RemoveHighlight();
+            cardManager.currentSelectedCard = null;
+            return; // Bail if there isn't enough mana
+        }
+
         if (cardData.IsMonsterCard)
         {
-            combatStage.spawnPlayerCard(cardManager.currentSelectedCard.name, index);
+            playerCardSpawner.SpawnPlayerCard(cardManager.currentSelectedCard.name, index);
 
             // Remove card from hand
             List<GameObject> handCardObjects = cardManager.getHandCardObjects();

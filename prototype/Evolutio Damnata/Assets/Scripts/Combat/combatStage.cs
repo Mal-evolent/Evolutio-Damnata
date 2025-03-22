@@ -59,15 +59,16 @@ public class CombatStage : MonoBehaviour
     {
         attackLimiter = new AttackLimiter();
 
+        playerCardSpawner = new PlayerCardSpawner(spritePositioning, cardLibrary, damageVisualizer, damageNumberPrefab, wizardOutlineSprite, this, attackLimiter);
+
         cardSelectionHandler = gameObject.AddComponent<CardSelectionHandler>();
-        cardSelectionHandler.Initialize(cardManager, combatManager, cardOutlineManager, spritePositioning, this);
+        cardSelectionHandler.Initialize(cardManager, combatManager, cardOutlineManager, spritePositioning, this, playerCardSpawner);
 
         buttonCreator = gameObject.AddComponent<ButtonCreator>();
         buttonCreator.Initialize(battleField, spritePositioning, cardSelectionHandler);
 
         attackHandler = new AttackHandler(attackLimiter);
         enemySpawner = new EnemySpawner(spritePositioning, cardLibrary, damageVisualizer, damageNumberPrefab, wizardOutlineSprite, attackLimiter);
-        playerCardSpawner = new PlayerCardSpawner(spritePositioning, cardLibrary, cardOutlineManager, cardManager, combatManager, damageVisualizer, damageNumberPrefab, wizardOutlineSprite, manaBar, manaText, this, attackLimiter);
 
         enemySelectionEffectHandler = new EnemySelectionEffectHandler(spritePositioning);
         playerSelectionEffectHandler = new PlayerSelectionEffectHandler(spritePositioning, cardManager);
@@ -82,11 +83,6 @@ public class CombatStage : MonoBehaviour
         buttonCreator.AddButtonsToEnemyEntities();
 
         buttonsInitialized = true;
-    }
-
-    public void spawnPlayerCard(string cardName, int whichOutline)
-    {
-        playerCardSpawner.SpawnPlayerCard(cardName, whichOutline);
     }
 
     public void HandleMonsterAttack(EntityManager playerEntity, EntityManager enemyEntity)
