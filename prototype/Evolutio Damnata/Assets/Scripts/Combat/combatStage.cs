@@ -49,7 +49,7 @@ public class CombatStage : MonoBehaviour
     private ButtonCreator buttonCreator;
     private AttackHandler attackHandler;
     private EnemySpawner enemySpawner;
-    private PlayerCardSpawner playerCardSpawner;
+    private PlayerEntities playerCardSpawner;
     private EnemySelectionEffectHandler enemySelectionEffectHandler;
     private PlayerSelectionEffectHandler playerSelectionEffectHandler;
 
@@ -59,7 +59,7 @@ public class CombatStage : MonoBehaviour
     {
         attackLimiter = new AttackLimiter();
 
-        playerCardSpawner = new PlayerCardSpawner(spritePositioning, cardLibrary, damageVisualizer, damageNumberPrefab, wizardOutlineSprite, this, attackLimiter);
+        playerCardSpawner = new PlayerEntities(spritePositioning, cardLibrary, damageVisualizer, damageNumberPrefab, wizardOutlineSprite, this, attackLimiter);
 
         cardSelectionHandler = gameObject.AddComponent<CardSelectionHandler>();
         cardSelectionHandler.Initialize(cardManager, combatManager, cardOutlineManager, spritePositioning, this, playerCardSpawner);

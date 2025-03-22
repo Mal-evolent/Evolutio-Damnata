@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using System.Linq;
 
 
-public class PlayerCardSpawner
+public class PlayerEntities
 {
     private SpritePositioning spritePositioning;
     private CardLibrary cardLibrary;
@@ -13,7 +13,7 @@ public class PlayerCardSpawner
     private CombatStage combatStage;
     private AttackLimiter attackLimiter;
 
-    public PlayerCardSpawner(SpritePositioning spritePositioning, CardLibrary cardLibrary, DamageVisualizer damageVisualizer, GameObject damageNumberPrefab, Sprite wizardOutlineSprite, CombatStage combatStage, AttackLimiter attackLimiter)
+    public PlayerEntities(SpritePositioning spritePositioning, CardLibrary cardLibrary, DamageVisualizer damageVisualizer, GameObject damageNumberPrefab, Sprite wizardOutlineSprite, CombatStage combatStage, AttackLimiter attackLimiter)
     {
         this.spritePositioning = spritePositioning;
         this.cardLibrary = cardLibrary;
