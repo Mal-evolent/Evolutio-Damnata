@@ -46,13 +46,13 @@ public class MonsterCard : Card
 public class SpellCard : Card
 {
     [ShowIf(nameof(IsSpellCard))]
-    public List<SpellEffect> EffectTypes = new List<SpellEffect>(); // Changed to list
+    public List<SpellEffect> EffectTypes = new List<SpellEffect>();
 
     [ShowIf(nameof(IsSpellCard))]
     public int EffectValue;
 
     [ShowIf(nameof(IsSpellCard))]
-    public int Duration; // Duration for effects like burn
+    public int Duration;
 
     [HideInInspector]
     public bool IsSpellCard = true;
