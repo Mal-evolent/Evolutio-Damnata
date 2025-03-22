@@ -30,13 +30,13 @@ public class CardData
     public List<Keywords.MonsterKeyword> Keywords;
 
     [SerializeField, ShowIf(nameof(IsSpellCard))]
-    public List<SpellEffect> EffectTypes = new List<SpellEffect>(); // Changed to list
+    public List<SpellEffect> EffectTypes = new List<SpellEffect>();
 
     [SerializeField, ShowIf(nameof(IsSpellCard))]
-    public int EffectValue = 0; // Use 0 instead of nullable int
+    public int EffectValue = 0;
 
     [SerializeField, ShowIf(nameof(IsSpellCard))]
-    public int Duration = 0; // Use 0 instead of nullable int
+    public int Duration = 0;
 
     [SerializeField, OnValueChanged(nameof(OnIsSpellCardChanged))]
     public bool IsSpellCard;

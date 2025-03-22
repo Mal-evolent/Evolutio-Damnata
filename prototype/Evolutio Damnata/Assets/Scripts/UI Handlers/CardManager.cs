@@ -60,7 +60,14 @@ public class CardManager : MonoBehaviour
 
             // CARD ATTRIBUTES
             TextMeshProUGUI attrText = cardObject.transform.GetChild(3).GetComponent<TextMeshProUGUI>();
-            attrText.text = $"Health: {card.Health}\n Attack: {card.AttackPower}\n Cost: {card.ManaCost}";
+            if (card is MonsterCard monsterCard)
+            {
+                attrText.text = $"Health: {monsterCard.Health}\nAttack: {monsterCard.AttackPower}\nCost: {monsterCard.ManaCost}";
+            }
+            else if (card is SpellCard spellCard)
+            {
+                attrText.text = $"Effect: {string.Join(", ", spellCard.EffectTypes)}\nValue: {spellCard.EffectValue}\nDuration: {spellCard.Duration}\nCost: {spellCard.ManaCost}";
+            }
 
             Debug.Log($"Displayed {card.CardName} in the UI.");
             deckCardObjects.Add(cardObject);
@@ -97,7 +104,14 @@ public class CardManager : MonoBehaviour
 
             // CARD ATTRIBUTES
             TextMeshProUGUI attrText = cardObject.transform.GetChild(3).GetComponent<TextMeshProUGUI>();
-            attrText.text = $"Health: {card.Health}\n Attack: {card.AttackPower}\n Cost: {card.ManaCost}";
+            if (card is MonsterCard monsterCard)
+            {
+                attrText.text = $"Health: {monsterCard.Health}\nAttack: {monsterCard.AttackPower}\nCost: {monsterCard.ManaCost}";
+            }
+            else if (card is SpellCard spellCard)
+            {
+                attrText.text = $"Effect: {string.Join(", ", spellCard.EffectTypes)}\nValue: {spellCard.EffectValue}\nDuration: {spellCard.Duration}\nCost: {spellCard.ManaCost}";
+            }
 
             Debug.Log($"Displayed {card.CardName} in the UI.");
 
