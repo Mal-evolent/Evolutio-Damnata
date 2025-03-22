@@ -9,6 +9,8 @@ public class EnemyCardSelectionHandler
     private CardOutlineManager cardOutlineManager;
     private SpritePositioning spritePositioning;
     private CombatStage combatStage;
+    private ManaChecker manaChecker;
+    private SpellEffectApplier spellEffectApplier;
 
     public EnemyCardSelectionHandler(CardManager cardManager, CombatManager combatManager, CardOutlineManager cardOutlineManager, SpritePositioning spritePositioning, CombatStage combatStage)
     {
@@ -17,6 +19,8 @@ public class EnemyCardSelectionHandler
         this.cardOutlineManager = cardOutlineManager;
         this.spritePositioning = spritePositioning;
         this.combatStage = combatStage;
+        this.manaChecker = new ManaChecker(combatStage, cardOutlineManager, cardManager);
+        this.spellEffectApplier = new SpellEffectApplier(cardManager);
     }
 
     public void HandleEnemyCardSelection(int index, EntityManager entityManager)
@@ -44,58 +48,31 @@ public class EnemyCardSelectionHandler
 
         if (selectedCardData != null && selectedCardData.IsSpellCard)
         {
-            if (combatStage.currentMana < selectedCardData.ManaCost)
+            if (!manaChecker.HasEnoughMana(selectedCardData))
             {
-                Debug.LogError($"Not enough mana. Card costs {selectedCardData.ManaCost}, player has {combatStage.currentMana}");
-                cardOutlineManager.RemoveHighlight();
-                cardManager.currentSelectedCard = null;
-                return;
+                return; // Bail if there isn't enough mana
             }
 
-            if (entityManager != null && entityManager.placed)
+            spellEffectApplier.ApplySpellEffect(entityManager, selectedCardData, index);
+
+            // Deduct mana
+            manaChecker.DeductMana(selectedCardData);
+
+            // Remove card from hand
+            List<GameObject> handCardObjects = cardManager.getHandCardObjects();
+            foreach (GameObject cardObject in handCardObjects)
             {
-                // Apply spell effect to the enemy monster
-                Debug.Log($"Applying spell {cardManager.currentSelectedCard.name} to enemy monster {index}");
-                SpellCard spellCard = cardManager.currentSelectedCard.GetComponent<SpellCard>();
-                if (spellCard == null)
+                if (cardObject == cardManager.currentSelectedCard)
                 {
-                    Debug.LogWarning("SpellCard component not found on current selected card! Adding SpellCard component.");
-                    spellCard = cardManager.currentSelectedCard.AddComponent<SpellCard>();
-
-                    // Copy properties from CardData to SpellCard
-                    spellCard.CardName = selectedCardData.CardName;
-                    spellCard.CardImage = selectedCardData.CardImage;
-                    spellCard.Description = selectedCardData.Description;
-                    spellCard.ManaCost = selectedCardData.ManaCost;
-                    spellCard.EffectTypes = selectedCardData.EffectTypes;
-                    spellCard.EffectValue = selectedCardData.EffectValue;
-                    spellCard.Duration = selectedCardData.Duration;
+                    handCardObjects.Remove(cardObject);
+                    UnityEngine.Object.Destroy(cardObject);
+                    Debug.Log("Removed card from hand.");
+                    break;
                 }
-                spellCard.targetEntity = entityManager;
-                spellCard.Play();
-
-                // Remove card from hand
-                List<GameObject> handCardObjects = cardManager.getHandCardObjects();
-                foreach (GameObject cardObject in handCardObjects)
-                {
-                    if (cardObject == cardManager.currentSelectedCard)
-                    {
-                        handCardObjects.Remove(cardObject);
-                        UnityEngine.Object.Destroy(cardObject);
-                        Debug.Log("Removed card from hand.");
-                        break;
-                    }
-                }
-
-                cardManager.currentSelectedCard = null;
-                cardOutlineManager.RemoveHighlight();
             }
-            else
-            {
-                Debug.Log("Spells cannot be placed on the field.");
-                cardManager.currentSelectedCard = null;
-                cardOutlineManager.RemoveHighlight();
-            }
+
+            cardManager.currentSelectedCard = null;
+            cardOutlineManager.RemoveHighlight();
         }
         else if (!entityManager.placed)
         {

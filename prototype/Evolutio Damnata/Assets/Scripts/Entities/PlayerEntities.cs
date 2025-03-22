@@ -56,6 +56,12 @@ public class PlayerEntities
             return;
         }
 
+        // Check if there is enough mana
+        if (!HasEnoughMana(selectedCardData))
+        {
+            return; // Bail if there isn't enough mana
+        }
+
         // Set monster attributes
         if (!selectedCardData.IsSpellCard)
         {
@@ -124,9 +130,8 @@ public class PlayerEntities
             placeholder.name = cardName;
         }
 
-        // Decrease current mana
-        combatStage.currentMana -= selectedCardData.ManaCost;
-        combatStage.updateManaUI();
+        // Deduct mana
+        DeductMana(selectedCardData);
 
         // Play summon SFX
         AudioSource churchBells = combatStage.GetComponent<AudioSource>();
@@ -142,6 +147,27 @@ public class PlayerEntities
         {
             Debug.LogError("AudioSource component not found on CombatStage!");
         }
+    }
+
+    private bool HasEnoughMana(CardData cardData)
+    {
+        if (combatStage.currentMana < cardData.ManaCost)
+        {
+            Debug.LogError($"Not enough mana. Card costs {cardData.ManaCost}, player has {combatStage.currentMana}");
+            return false;
+        }
+        return true;
+    }
+
+    private void DeductMana(CardData cardData)
+    {
+        combatStage.currentMana -= cardData.ManaCost;
+        UpdateManaUI();
+    }
+
+    private void UpdateManaUI()
+    {
+        combatStage.updateManaUI();
     }
 
     private void DisplayHealthBar(GameObject entity, bool active)

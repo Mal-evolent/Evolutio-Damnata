@@ -9,6 +9,8 @@ public class PlayerCardSelectionHandler
     private SpritePositioning spritePositioning;
     private CombatStage combatStage;
     private PlayerEntities playerCardSpawner;
+    private ManaChecker manaChecker;
+    private SpellEffectApplier spellEffectApplier;
 
     public PlayerCardSelectionHandler(CardManager cardManager, CombatManager combatManager, CardOutlineManager cardOutlineManager, SpritePositioning spritePositioning, CombatStage combatStage, PlayerEntities playerCardSpawner)
     {
@@ -18,6 +20,8 @@ public class PlayerCardSelectionHandler
         this.spritePositioning = spritePositioning;
         this.combatStage = combatStage;
         this.playerCardSpawner = playerCardSpawner;
+        this.manaChecker = new ManaChecker(combatStage, cardOutlineManager, cardManager);
+        this.spellEffectApplier = new SpellEffectApplier(cardManager);
     }
 
     public void HandlePlayerCardSelection(int index, EntityManager entityManager)
@@ -88,17 +92,17 @@ public class PlayerCardSelectionHandler
             return;
         }
 
-        if (combatStage.currentMana < cardData.ManaCost)
+        if (!manaChecker.HasEnoughMana(cardData))
         {
-            Debug.LogError($"Not enough mana. Card costs {cardData.ManaCost}, player has {combatStage.currentMana}");
-            cardOutlineManager.RemoveHighlight();
-            cardManager.currentSelectedCard = null;
             return; // Bail if there isn't enough mana
         }
 
         if (cardData.IsMonsterCard)
         {
             playerCardSpawner.SpawnPlayerCard(cardManager.currentSelectedCard.name, index);
+
+            // Deduct mana
+            manaChecker.DeductMana(cardData);
 
             // Remove card from hand
             List<GameObject> handCardObjects = cardManager.getHandCardObjects();
@@ -154,61 +158,34 @@ public class PlayerCardSelectionHandler
             return;
         }
 
-        if (combatStage.currentMana < cardData.ManaCost)
+        if (!manaChecker.HasEnoughMana(cardData))
         {
-            Debug.LogError($"Not enough mana. Card costs {cardData.ManaCost}, player has {combatStage.currentMana}");
-            cardOutlineManager.RemoveHighlight();
-            cardManager.currentSelectedCard = null;
-            return;
+            return; // Bail if there isn't enough mana
         }
 
-        if (entityManager != null && entityManager.placed)
+        spellEffectApplier.ApplySpellEffect(entityManager, cardData, index);
+
+        // Deduct mana
+        manaChecker.DeductMana(cardData);
+
+        // Remove card from hand
+        List<GameObject> handCardObjects = cardManager.getHandCardObjects();
+        foreach (GameObject cardObject in handCardObjects)
         {
-            // Apply spell effect to the placed monster
-            Debug.Log($"Applying spell {cardManager.currentSelectedCard.name} to monster {index}");
-            SpellCard spellCard = cardManager.currentSelectedCard.GetComponent<SpellCard>();
-            if (spellCard == null)
+            if (cardObject == cardManager.currentSelectedCard)
             {
-                Debug.LogWarning("SpellCard component not found on current selected card! Adding SpellCard component.");
-                spellCard = cardManager.currentSelectedCard.AddComponent<SpellCard>();
-
-                spellCard.CardType = cardData;
-                spellCard.CardName = cardData.CardName;
-                spellCard.CardImage = cardData.CardImage;
-                spellCard.Description = cardData.Description;
-                spellCard.ManaCost = cardData.ManaCost;
-                spellCard.EffectTypes = cardData.EffectTypes;
-                spellCard.EffectValue = cardData.EffectValue;
-                spellCard.Duration = cardData.Duration;
+                handCardObjects.Remove(cardObject);
+                UnityEngine.Object.Destroy(cardObject);
+                Debug.Log("Removed card from hand.");
+                break;
             }
-            spellCard.targetEntity = entityManager;
-            spellCard.Play();
-
-            // Remove card from hand
-            List<GameObject> handCardObjects = cardManager.getHandCardObjects();
-            foreach (GameObject cardObject in handCardObjects)
-            {
-                if (cardObject == cardManager.currentSelectedCard)
-                {
-                    handCardObjects.Remove(cardObject);
-                    UnityEngine.Object.Destroy(cardObject);
-                    Debug.Log("Removed card from hand.");
-                    break;
-                }
-            }
-
-            // Also remove the card from the player's deck hand
-            cardManager.playerDeck.Hand.Remove(cardComponent);
-
-            cardManager.currentSelectedCard = null;
-            cardOutlineManager.RemoveHighlight();
         }
-        else
-        {
-            Debug.Log("Spells cannot be placed on the field.");
-            cardManager.currentSelectedCard = null;
-            cardOutlineManager.RemoveHighlight();
-        }
+
+        // Also remove the card from the player's deck hand
+        cardManager.playerDeck.Hand.Remove(cardComponent);
+
+        cardManager.currentSelectedCard = null;
+        cardOutlineManager.RemoveHighlight();
     }
 }
 
