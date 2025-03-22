@@ -9,10 +9,12 @@ using UnityEngine;
 public class PhaseManager
 {
     private CombatManager combatManager;
+    private AttackLimiter attackLimiter;
 
-    public PhaseManager(CombatManager combatManager)
+    public PhaseManager(CombatManager combatManager, AttackLimiter attackLimiter)
     {
         this.combatManager = combatManager;
+        this.attackLimiter = attackLimiter;
     }
 
     public IEnumerator PrepPhase()
@@ -109,6 +111,8 @@ public class PhaseManager
             if (entityManager != null)
             {
                 entityManager.ApplyOngoingEffects();
+                Debug.Log($"Resetting attacks for player entity: {entityManager.name}");
+                attackLimiter.ResetAttacks(entityManager);
             }
         }
 
@@ -119,6 +123,8 @@ public class PhaseManager
             if (entityManager != null)
             {
                 entityManager.ApplyOngoingEffects();
+                Debug.Log($"Resetting attacks for enemy entity: {entityManager.name}");
+                attackLimiter.ResetAttacks(entityManager);
             }
         }
 

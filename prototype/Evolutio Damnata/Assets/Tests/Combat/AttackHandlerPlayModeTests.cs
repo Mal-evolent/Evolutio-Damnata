@@ -3,7 +3,7 @@ using UnityEngine.TestTools;
 using NUnit.Framework;
 using System.Collections;
 using UnityEngine.UI;
-using TMPro; // Add this directive
+using TMPro;
 
 public class AttackHandlerPlayModeTests
 {
@@ -16,6 +16,7 @@ public class AttackHandlerPlayModeTests
     private Slider enemyHealthBar;
     private GameObject damageNumberPrefab;
     private GameObject mockCanvas;
+    private AttackLimiter attackLimiter;
 
     [SetUp]
     public void Setup()
@@ -40,17 +41,19 @@ public class AttackHandlerPlayModeTests
         damageNumberPrefab = new GameObject("DamageNumberPrefab");
         damageNumberPrefab.AddComponent<TextMeshProUGUI>();
 
-        playerEntity.InitializeMonster(EntityManager._monsterType.player, 100, 20, playerHealthBar, null, mockDamageVisualizer, damageNumberPrefab, null);
-        enemyEntity.InitializeMonster(EntityManager._monsterType.Enemy, 80, 15, enemyHealthBar, null, mockDamageVisualizer, damageNumberPrefab, null);
+        // Create an instance of AttackLimiter
+        attackLimiter = new AttackLimiter();
 
-        // Instantiate AttackHandler normally
-        attackHandler = new AttackHandler();
+        playerEntity.InitializeMonster(EntityManager._monsterType.player, 100, 20, playerHealthBar, null, mockDamageVisualizer, damageNumberPrefab, null, attackLimiter);
+        enemyEntity.InitializeMonster(EntityManager._monsterType.Enemy, 80, 15, enemyHealthBar, null, mockDamageVisualizer, damageNumberPrefab, null, attackLimiter);
+
+        // Instantiate AttackHandler with the AttackLimiter
+        attackHandler = new AttackHandler(attackLimiter);
     }
 
     [UnityTest]
     public IEnumerator HandleMonsterAttack_UpdatesHealthCorrectly()
     {
-
         // Store initial health values
         float initialPlayerHealth = playerEntity.getHealth();
         float initialEnemyHealth = enemyEntity.getHealth();

@@ -53,17 +53,21 @@ public class CombatStage : MonoBehaviour
     private EnemySelectionEffectHandler enemySelectionEffectHandler;
     private PlayerSelectionEffectHandler playerSelectionEffectHandler;
 
+    private AttackLimiter attackLimiter;
+
     private void Awake()
     {
+        attackLimiter = new AttackLimiter();
+
         cardSelectionHandler = gameObject.AddComponent<CardSelectionHandler>();
         cardSelectionHandler.Initialize(cardManager, combatManager, cardOutlineManager, spritePositioning, this);
 
         buttonCreator = gameObject.AddComponent<ButtonCreator>();
         buttonCreator.Initialize(battleField, spritePositioning, cardSelectionHandler);
 
-        attackHandler = new AttackHandler();
-        enemySpawner = new EnemySpawner(spritePositioning, cardLibrary, damageVisualizer, damageNumberPrefab, wizardOutlineSprite);
-        playerCardSpawner = new PlayerCardSpawner(spritePositioning, cardLibrary, cardOutlineManager, cardManager, combatManager, damageVisualizer, damageNumberPrefab, wizardOutlineSprite, manaBar, manaText, this);
+        attackHandler = new AttackHandler(attackLimiter);
+        enemySpawner = new EnemySpawner(spritePositioning, cardLibrary, damageVisualizer, damageNumberPrefab, wizardOutlineSprite, attackLimiter);
+        playerCardSpawner = new PlayerCardSpawner(spritePositioning, cardLibrary, cardOutlineManager, cardManager, combatManager, damageVisualizer, damageNumberPrefab, wizardOutlineSprite, manaBar, manaText, this, attackLimiter);
 
         enemySelectionEffectHandler = new EnemySelectionEffectHandler(spritePositioning);
         playerSelectionEffectHandler = new PlayerSelectionEffectHandler(spritePositioning, cardManager);
@@ -123,7 +127,7 @@ public class CombatStage : MonoBehaviour
     {
         Slider manaSlider = manaBar.GetComponent<Slider>();
         manaSlider.maxValue = maxMana;
-        manaSlider.value = currentMana; 
+        manaSlider.value = currentMana;
         manaText.GetComponent<TMP_Text>().text = currentMana.ToString();
     }
 

@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
@@ -41,10 +40,13 @@ public class CombatManager : MonoBehaviour
     public bool isEnemyCombatPhase = false;
     public bool isCleanUpPhase = false;
 
+    private AttackLimiter attackLimiter;
+
     public void Start()
     {
+        attackLimiter = new AttackLimiter();
         gameStateManager = new roundManager(this);
-        phaseManager = new PhaseManager(this);
+        phaseManager = new PhaseManager(this, attackLimiter);
         playerActions = new PlayerActions(this);
         enemyActions = new EnemyActions(this);
         uiManager = new UIManager(this);

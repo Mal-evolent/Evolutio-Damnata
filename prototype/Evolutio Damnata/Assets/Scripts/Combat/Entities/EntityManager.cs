@@ -46,13 +46,18 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     [SerializeField]
     GameObject damageNumberPrefab;
 
+    [SerializeField]
+    int allowedAttacks = 1;
+
     public bool dead = false;
     public bool placed = false;
 
     private List<OngoingEffectManager> ongoingEffects = new List<OngoingEffectManager>();
     private OngoingEffectApplier ongoingEffectApplier;
 
-    public void InitializeMonster(_monsterType monsterType, float maxHealth, float atkDamage, Slider healthBarSlider, Image image, DamageVisualizer damageVisualizer, GameObject damageNumberPrefab, Sprite outlineSprite)
+    private AttackLimiter attackLimiter;
+
+    public void InitializeMonster(_monsterType monsterType, float maxHealth, float atkDamage, Slider healthBarSlider, Image image, DamageVisualizer damageVisualizer, GameObject damageNumberPrefab, Sprite outlineSprite, AttackLimiter attackLimiter)
     {
         this.monsterType = monsterType;
         this.maxHealth = maxHealth;
@@ -62,6 +67,10 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         this.damageVisualizer = damageVisualizer;
         this.damageNumberPrefab = damageNumberPrefab;
         this.outlineSprite = outlineSprite;
+        this.attackLimiter = attackLimiter;
+
+        attackLimiter.RegisterEntity(this, allowedAttacks);
+        Debug.Log($"Entity {name} initialized with {allowedAttacks} allowed attacks.");
 
         healthBar = healthBarSlider;
         if (healthBar != null)
@@ -132,7 +141,6 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
             }
         }
     }
-
 
     private void Die()
     {
@@ -238,6 +246,11 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         if (dead) return;
 
         ongoingEffects.Add(effect);
+    }
+
+    public void ModifyAllowedAttacks(int newAllowedAttacks)
+    {
+        attackLimiter.ModifyAllowedAttacks(this, newAllowedAttacks);
     }
 
     void Start()

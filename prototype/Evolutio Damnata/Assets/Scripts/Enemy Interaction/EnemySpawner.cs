@@ -13,14 +13,16 @@ public class EnemySpawner
     private DamageVisualizer damageVisualizer;
     private GameObject damageNumberPrefab;
     private Sprite wizardOutlineSprite;
+    private AttackLimiter attackLimiter;
 
-    public EnemySpawner(SpritePositioning spritePositioning, CardLibrary cardLibrary, DamageVisualizer damageVisualizer, GameObject damageNumberPrefab, Sprite wizardOutlineSprite)
+    public EnemySpawner(SpritePositioning spritePositioning, CardLibrary cardLibrary, DamageVisualizer damageVisualizer, GameObject damageNumberPrefab, Sprite wizardOutlineSprite, AttackLimiter attackLimiter)
     {
         this.spritePositioning = spritePositioning;
         this.cardLibrary = cardLibrary;
         this.damageVisualizer = damageVisualizer;
         this.damageNumberPrefab = damageNumberPrefab;
         this.wizardOutlineSprite = wizardOutlineSprite;
+        this.attackLimiter = attackLimiter;
     }
 
     public void SpawnEnemy(string cardName, int whichOutline)
@@ -84,7 +86,7 @@ public class EnemySpawner
         entityManager.dead = false;
 
         // Initialize the monster with the appropriate type, attributes, and outline image
-        entityManager.InitializeMonster(EntityManager._monsterType.Enemy, selectedCardData.Health, selectedCardData.AttackPower, healthBarSlider, placeholderImage, damageVisualizer, damageNumberPrefab, wizardOutlineSprite);
+        entityManager.InitializeMonster(EntityManager._monsterType.Enemy, selectedCardData.Health, selectedCardData.AttackPower, healthBarSlider, placeholderImage, damageVisualizer, damageNumberPrefab, wizardOutlineSprite, attackLimiter);
 
         // Rename the placeholder to the card name
         enemyPlaceholder.name = cardName;

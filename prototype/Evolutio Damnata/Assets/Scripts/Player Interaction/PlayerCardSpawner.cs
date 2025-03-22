@@ -20,8 +20,9 @@ public class PlayerCardSpawner
     private GameObject manaBar;
     private GameObject manaText;
     private CombatStage combatStage;
+    private AttackLimiter attackLimiter;
 
-    public PlayerCardSpawner(SpritePositioning spritePositioning, CardLibrary cardLibrary, CardOutlineManager cardOutlineManager, CardManager cardManager, CombatManager combatManager, DamageVisualizer damageVisualizer, GameObject damageNumberPrefab, Sprite wizardOutlineSprite, GameObject manaBar, GameObject manaText, CombatStage combatStage)
+    public PlayerCardSpawner(SpritePositioning spritePositioning, CardLibrary cardLibrary, CardOutlineManager cardOutlineManager, CardManager cardManager, CombatManager combatManager, DamageVisualizer damageVisualizer, GameObject damageNumberPrefab, Sprite wizardOutlineSprite, GameObject manaBar, GameObject manaText, CombatStage combatStage, AttackLimiter attackLimiter)
     {
         this.spritePositioning = spritePositioning;
         this.cardLibrary = cardLibrary;
@@ -34,6 +35,7 @@ public class PlayerCardSpawner
         this.manaBar = manaBar;
         this.manaText = manaText;
         this.combatStage = combatStage;
+        this.attackLimiter = attackLimiter;
     }
 
     public void SpawnPlayerCard(string cardName, int whichOutline)
@@ -200,7 +202,7 @@ public class PlayerCardSpawner
         // Initialize the monster with the appropriate type, attributes, and outline image only if it's not a spell card or the placeholder is empty
         if (!selectedCardData.IsSpellCard || (existingEntityManager == null || !existingEntityManager.placed))
         {
-            entityManager.InitializeMonster(EntityManager._monsterType.Friendly, selectedCardData.Health, selectedCardData.AttackPower, healthBarSlider, placeholderImage, damageVisualizer, damageNumberPrefab, wizardOutlineSprite);
+            entityManager.InitializeMonster(EntityManager._monsterType.Friendly, selectedCardData.Health, selectedCardData.AttackPower, healthBarSlider, placeholderImage, damageVisualizer, damageNumberPrefab, wizardOutlineSprite, attackLimiter);
         }
 
         // Check if the placeholder is already occupied by a placed monster card
