@@ -159,7 +159,7 @@ public class PlayerCardSelectionHandler
             Debug.LogError($"Not enough mana. Card costs {cardData.ManaCost}, player has {combatStage.currentMana}");
             cardOutlineManager.RemoveHighlight();
             cardManager.currentSelectedCard = null;
-            return; // Bail if there isn't enough mana
+            return;
         }
 
         if (entityManager != null && entityManager.placed)
