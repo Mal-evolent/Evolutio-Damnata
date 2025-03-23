@@ -48,8 +48,8 @@ public class CombatStage : MonoBehaviour
     private CardSelectionHandler cardSelectionHandler;
     private ButtonCreator buttonCreator;
     private AttackHandler attackHandler;
-    private EnemySpawner enemySpawner;
-    private PlayerEntities playerCardSpawner;
+    private GeneralEntities playerCardSpawner;
+    private GeneralEntities enemyCardSpawner;
     private EnemySelectionEffectHandler enemySelectionEffectHandler;
     private PlayerSelectionEffectHandler playerSelectionEffectHandler;
 
@@ -59,7 +59,8 @@ public class CombatStage : MonoBehaviour
     {
         attackLimiter = new AttackLimiter();
 
-        playerCardSpawner = new PlayerEntities(spritePositioning, cardLibrary, damageVisualizer, damageNumberPrefab, wizardOutlineSprite, this, attackLimiter);
+        playerCardSpawner = new GeneralEntities(spritePositioning, cardLibrary, damageVisualizer, damageNumberPrefab, wizardOutlineSprite, this, attackLimiter, EntityManager._monsterType.Friendly);
+        enemyCardSpawner = new GeneralEntities(spritePositioning, cardLibrary, damageVisualizer, damageNumberPrefab, wizardOutlineSprite, this, attackLimiter, EntityManager._monsterType.Enemy);
 
         cardSelectionHandler = gameObject.AddComponent<CardSelectionHandler>();
         cardSelectionHandler.Initialize(cardManager, combatManager, cardOutlineManager, spritePositioning, this, playerCardSpawner);
@@ -68,7 +69,6 @@ public class CombatStage : MonoBehaviour
         buttonCreator.Initialize(battleField, spritePositioning, cardSelectionHandler);
 
         attackHandler = new AttackHandler(attackLimiter);
-        enemySpawner = new EnemySpawner(spritePositioning, cardLibrary, damageVisualizer, damageNumberPrefab, wizardOutlineSprite, attackLimiter);
 
         enemySelectionEffectHandler = new EnemySelectionEffectHandler(spritePositioning);
         playerSelectionEffectHandler = new PlayerSelectionEffectHandler(spritePositioning, cardManager);
@@ -92,7 +92,7 @@ public class CombatStage : MonoBehaviour
 
     public void spawnEnemy(string cardName, int whichOutline)
     {
-        enemySpawner.SpawnEnemy(cardName, whichOutline);
+        enemyCardSpawner.SpawnCards(cardName, whichOutline);
     }
 
     void Start()

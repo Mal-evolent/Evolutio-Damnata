@@ -19,10 +19,8 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 
     public enum _monsterType
     {
-        player,
         Friendly,
         Enemy,
-        Boss
     }
     _monsterType monsterType;
 

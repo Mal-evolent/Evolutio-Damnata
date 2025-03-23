@@ -8,11 +8,11 @@ public class PlayerCardSelectionHandler
     private CardOutlineManager cardOutlineManager;
     private SpritePositioning spritePositioning;
     private CombatStage combatStage;
-    private PlayerEntities playerCardSpawner;
+    private GeneralEntities playerCardSpawner;
     private ManaChecker manaChecker;
     private SpellEffectApplier spellEffectApplier;
 
-    public PlayerCardSelectionHandler(CardManager cardManager, CombatManager combatManager, CardOutlineManager cardOutlineManager, SpritePositioning spritePositioning, CombatStage combatStage, PlayerEntities playerCardSpawner)
+    public PlayerCardSelectionHandler(CardManager cardManager, CombatManager combatManager, CardOutlineManager cardOutlineManager, SpritePositioning spritePositioning, CombatStage combatStage, GeneralEntities playerCardSpawner)
     {
         this.cardManager = cardManager;
         this.combatManager = combatManager;
@@ -99,7 +99,7 @@ public class PlayerCardSelectionHandler
 
         if (cardData.IsMonsterCard)
         {
-            playerCardSpawner.SpawnPlayerCard(cardManager.currentSelectedCard.name, index);
+            playerCardSpawner.SpawnCards(cardManager.currentSelectedCard.name, index);
 
             // Deduct mana
             manaChecker.DeductMana(cardData);

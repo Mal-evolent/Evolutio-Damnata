@@ -8,11 +8,11 @@ public class CardSelectionHandler : MonoBehaviour
     private CardOutlineManager cardOutlineManager;
     private SpritePositioning spritePositioning;
     private CombatStage combatStage;
-    private PlayerEntities playerCardSpawner;
+    private GeneralEntities playerCardSpawner;
     private PlayerCardSelectionHandler playerCardSelectionHandler;
     private EnemyCardSelectionHandler enemyCardSelectionHandler;
 
-    public void Initialize(CardManager cardManager, CombatManager combatManager, CardOutlineManager cardOutlineManager, SpritePositioning spritePositioning, CombatStage combatStage, PlayerEntities playerCardSpawner)
+    public void Initialize(CardManager cardManager, CombatManager combatManager, CardOutlineManager cardOutlineManager, SpritePositioning spritePositioning, CombatStage combatStage, GeneralEntities playerCardSpawner)
     {
         this.cardManager = cardManager;
         this.combatManager = combatManager;
