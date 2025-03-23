@@ -110,7 +110,6 @@ public class GeneralEntities
             placeholder.name = cardName;
         }
 
-        DeductMana(selectedCardData);
         PlaySummonSFX();
     }
 
@@ -183,17 +182,6 @@ public class GeneralEntities
             return false;
         }
         return true;
-    }
-
-    private void DeductMana(CardData cardData)
-    {
-        combatStage.currentMana -= cardData.ManaCost;
-        UpdateManaUI();
-    }
-
-    private void UpdateManaUI()
-    {
-        combatStage.updateManaUI();
     }
 
     private void DisplayHealthBar(GameObject entity, bool active)

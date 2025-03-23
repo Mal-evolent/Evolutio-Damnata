@@ -94,7 +94,7 @@ public class PlayerCardSelectionHandler
 
         if (!manaChecker.HasEnoughMana(cardData))
         {
-            return; // Bail if there isn't enough mana
+            return;
         }
 
         if (cardData.IsMonsterCard)
@@ -165,7 +165,6 @@ public class PlayerCardSelectionHandler
 
         spellEffectApplier.ApplySpellEffect(entityManager, cardData, index);
 
-        // Deduct mana
         manaChecker.DeductMana(cardData);
 
         // Remove card from hand
