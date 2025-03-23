@@ -14,6 +14,7 @@ public class GeneralEntities
     private AttackLimiter attackLimiter;
     private EntityManager._monsterType monsterType;
     private ManaChecker manaChecker;
+    public bool enemyCardPlayed = false;
 
     public GeneralEntities(SpritePositioning spritePositioning, CardLibrary cardLibrary, DamageVisualizer damageVisualizer, GameObject damageNumberPrefab, Sprite wizardOutlineSprite, CombatStage combatStage, AttackLimiter attackLimiter, EntityManager._monsterType monsterType)
     {
@@ -112,6 +113,7 @@ public class GeneralEntities
 
     private void SpawnEnemyCard(string cardName, int whichOutline)
     {
+        enemyCardPlayed = false;
         if (whichOutline < 0 || whichOutline >= spritePositioning.enemyEntities.Count)
         {
             Debug.LogError($"Invalid outline index: {whichOutline}");
@@ -176,6 +178,7 @@ public class GeneralEntities
         entityManager.gameObject.SetActive(true);
 
         manaChecker.DeductEnemyMana(selectedCardData);
+        enemyCardPlayed = true;
     }
 
     private void DisplayHealthBar(GameObject entity, bool active)

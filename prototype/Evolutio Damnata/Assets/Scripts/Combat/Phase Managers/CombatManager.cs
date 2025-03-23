@@ -48,7 +48,7 @@ public class CombatManager : MonoBehaviour
         gameStateManager = new roundManager(this);
         phaseManager = new PhaseManager(this, attackLimiter);
         playerActions = new PlayerActions(this);
-        enemyActions = new EnemyActions(this);
+        enemyActions = new EnemyActions(this, combatStage.spritePositioning, enemyDeck, combatStage.cardLibrary, combatStage);
         uiManager = new UIManager(this);
 
         gameStateManager.InitializeGame();

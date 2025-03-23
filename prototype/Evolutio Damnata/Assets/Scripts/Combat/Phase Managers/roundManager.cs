@@ -49,6 +49,9 @@ public class roundManager
         combatManager.playerTurn = combatManager.playerGoesFirst;
         combatManager.playerGoesFirst = !combatManager.playerGoesFirst;
 
+        // Initialize the enemy deck
+        combatManager.enemyActions.InitializeDeck();
+
         yield return combatManager.StartCoroutine(combatManager.phaseManager.PrepPhase());
     }
 }

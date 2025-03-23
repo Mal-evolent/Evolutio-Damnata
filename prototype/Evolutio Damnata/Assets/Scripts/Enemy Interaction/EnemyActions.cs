@@ -1,5 +1,7 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
+using System.Collections.Generic;
 
 
 /*
@@ -10,18 +12,39 @@ using UnityEngine;
 public class EnemyActions
 {
     private CombatManager combatManager;
+    private SpritePositioning spritePositioning;
+    private Deck enemyDeck;
+    private CardLibrary cardLibrary;
+    private CombatStage combatStage;
 
-    public EnemyActions(CombatManager combatManager)
+    public EnemyActions(CombatManager combatManager, SpritePositioning spritePositioning, Deck enemyDeck, CardLibrary cardLibrary, CombatStage combatStage)
     {
         this.combatManager = combatManager;
+        this.spritePositioning = spritePositioning;
+        this.enemyDeck = enemyDeck;
+        this.cardLibrary = cardLibrary;
+        this.combatStage = combatStage;
     }
+
+    public void InitializeDeck()
+    {
+        if (enemyDeck == null)
+        {
+            Debug.LogError("Enemy deck is not assigned!");
+            return;
+        }
+
+        enemyDeck.cardLibrary = cardLibrary;
+        enemyDeck.PopulateDeck();
+        Debug.Log("Enemy deck initialized and shuffled.");
+    }
+
 
     public IEnumerator PlayCards()
     {
         Debug.Log("Enemy Playing Cards");
 
         // Simulate AI playing cards
-        bool cardPlayed = false;
         for (int i = 0; i < combatManager.enemyDeck.Hand.Count; i++)
         {
             Card card = combatManager.enemyDeck.Hand[i];
@@ -29,15 +52,19 @@ public class EnemyActions
             {
                 // Play the card
                 combatManager.combatStage.spawnEnemy(card.CardName, i);
-                combatManager.enemyDeck.Hand.Remove(card);
-                combatManager.enemyMana -= card.CardType.ManaCost;
-                cardPlayed = true;
                 Debug.Log($"Enemy played card: {card.CardName}");
+
+                // Check if an enemy card was played
+                if (combatManager.combatStage.enemyCardSpawner.enemyCardPlayed)
+                {
+                    combatManager.enemyDeck.Hand.Remove(card);
+                }
                 break;
             }
         }
 
-        if (!cardPlayed)
+        // Check if no enemy card was played
+        if (!combatManager.combatStage.enemyCardSpawner.enemyCardPlayed)
         {
             Debug.Log("Enemy did not play any cards.");
         }

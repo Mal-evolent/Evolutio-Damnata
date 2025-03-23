@@ -48,7 +48,7 @@ public class CombatStage : MonoBehaviour
     private ButtonCreator buttonCreator;
     private AttackHandler attackHandler;
     private GeneralEntities playerCardSpawner;
-    private GeneralEntities enemyCardSpawner;
+    public GeneralEntities enemyCardSpawner;
     private EnemySelectionEffectHandler enemySelectionEffectHandler;
     private PlayerSelectionEffectHandler playerSelectionEffectHandler;
 
