@@ -22,14 +22,13 @@ public class CombatStage : MonoBehaviour
     public int maxMana;
 
     [SerializeField]
-    CardManager cardManager;
+    public CardManager cardManager;
+    [SerializeField]
+    public CardOutlineManager cardOutlineManager;
     [SerializeField]
     public CardLibrary cardLibrary;
-
     [SerializeField]
-    CardOutlineManager cardOutlineManager;
-    [SerializeField]
-    CombatManager combatManager;
+    public CombatManager combatManager;
 
     [SerializeField]
     Canvas battleField;

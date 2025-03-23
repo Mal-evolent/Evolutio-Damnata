@@ -48,7 +48,7 @@ public class EnemyCardSelectionHandler
 
         if (selectedCardData != null && selectedCardData.IsSpellCard)
         {
-            if (!manaChecker.HasEnoughMana(selectedCardData))
+            if (!manaChecker.HasEnoughPlayerMana(selectedCardData))
             {
                 return; // Bail if there isn't enough mana
             }
@@ -56,7 +56,7 @@ public class EnemyCardSelectionHandler
             spellEffectApplier.ApplySpellEffect(entityManager, selectedCardData, index);
 
             // Deduct mana
-            manaChecker.DeductMana(selectedCardData);
+            manaChecker.DeductPlayerMana(selectedCardData);
 
             // Remove card from hand
             List<GameObject> handCardObjects = cardManager.getHandCardObjects();

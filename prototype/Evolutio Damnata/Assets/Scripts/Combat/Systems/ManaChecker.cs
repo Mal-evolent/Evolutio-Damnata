@@ -15,11 +15,12 @@ public class ManaChecker
         this.cardManager = cardManager;
     }
 
-    public bool HasEnoughMana(CardData cardData)
+    // Check if the player has enough mana
+    public bool HasEnoughPlayerMana(CardData cardData)
     {
         if (combatStage.currentMana < cardData.ManaCost)
         {
-            Debug.LogError($"Not enough mana. Card costs {cardData.ManaCost}, player has {combatStage.currentMana}");
+            Debug.LogError($"Not enough player mana. Card costs {cardData.ManaCost}, player has {combatStage.currentMana}");
             cardOutlineManager.RemoveHighlight();
             cardManager.currentSelectedCard = null;
             return false;
@@ -27,10 +28,29 @@ public class ManaChecker
         return true;
     }
 
-    public void DeductMana(CardData cardData)
+    // Deduct mana from the player
+    public void DeductPlayerMana(CardData cardData)
     {
         combatStage.currentMana -= cardData.ManaCost;
+        combatStage.combatManager.playerMana = combatStage.currentMana;
         UpdateManaUI();
+    }
+
+    // Check if the enemy has enough mana
+    public bool HasEnoughEnemyMana(CardData cardData)
+    {
+        if (combatStage.combatManager.enemyMana < cardData.ManaCost)
+        {
+            Debug.LogError($"Not enough enemy mana. Card costs {cardData.ManaCost}, enemy has {combatStage.combatManager.enemyMana}");
+            return false;
+        }
+        return true;
+    }
+
+    // Deduct mana from the enemy
+    public void DeductEnemyMana(CardData cardData)
+    {
+        combatStage.combatManager.enemyMana -= cardData.ManaCost;
     }
 
     private void UpdateManaUI()

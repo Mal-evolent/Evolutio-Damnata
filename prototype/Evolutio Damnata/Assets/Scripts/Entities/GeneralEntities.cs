@@ -13,6 +13,7 @@ public class GeneralEntities
     private CombatStage combatStage;
     private AttackLimiter attackLimiter;
     private EntityManager._monsterType monsterType;
+    private ManaChecker manaChecker;
 
     public GeneralEntities(SpritePositioning spritePositioning, CardLibrary cardLibrary, DamageVisualizer damageVisualizer, GameObject damageNumberPrefab, Sprite wizardOutlineSprite, CombatStage combatStage, AttackLimiter attackLimiter, EntityManager._monsterType monsterType)
     {
@@ -24,6 +25,7 @@ public class GeneralEntities
         this.combatStage = combatStage;
         this.attackLimiter = attackLimiter;
         this.monsterType = monsterType;
+        this.manaChecker = new ManaChecker(combatStage, combatStage.cardOutlineManager, combatStage.cardManager);
     }
 
     public void SpawnCards(string cardName, int whichOutline)
@@ -65,11 +67,6 @@ public class GeneralEntities
         if (selectedCardData == null)
         {
             Debug.LogError($"Card data not found for card name: {cardName}");
-            return;
-        }
-
-        if (!HasEnoughMana(selectedCardData))
-        {
             return;
         }
 
@@ -142,6 +139,11 @@ public class GeneralEntities
             return;
         }
 
+        if (!manaChecker.HasEnoughEnemyMana(selectedCardData))
+        {
+            return;
+        }
+
         if (!selectedCardData.IsSpellCard)
         {
             placeholderImage.sprite = cardLibrary.cardImageGetter(cardName);
@@ -172,16 +174,8 @@ public class GeneralEntities
         }
 
         entityManager.gameObject.SetActive(true);
-    }
 
-    private bool HasEnoughMana(CardData cardData)
-    {
-        if (combatStage.currentMana < cardData.ManaCost)
-        {
-            Debug.LogError($"Not enough mana. Card costs {cardData.ManaCost}, player has {combatStage.currentMana}");
-            return false;
-        }
-        return true;
+        manaChecker.DeductEnemyMana(selectedCardData);
     }
 
     private void DisplayHealthBar(GameObject entity, bool active)

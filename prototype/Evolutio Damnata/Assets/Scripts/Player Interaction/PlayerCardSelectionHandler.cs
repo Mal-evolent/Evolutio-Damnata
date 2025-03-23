@@ -92,7 +92,7 @@ public class PlayerCardSelectionHandler
             return;
         }
 
-        if (!manaChecker.HasEnoughMana(cardData))
+        if (!manaChecker.HasEnoughPlayerMana(cardData))
         {
             return;
         }
@@ -102,7 +102,7 @@ public class PlayerCardSelectionHandler
             playerCardSpawner.SpawnCards(cardManager.currentSelectedCard.name, index);
 
             // Deduct mana
-            manaChecker.DeductMana(cardData);
+            manaChecker.DeductPlayerMana(cardData);
 
             // Remove card from hand
             List<GameObject> handCardObjects = cardManager.getHandCardObjects();
@@ -158,14 +158,14 @@ public class PlayerCardSelectionHandler
             return;
         }
 
-        if (!manaChecker.HasEnoughMana(cardData))
+        if (!manaChecker.HasEnoughPlayerMana(cardData))
         {
             return; // Bail if there isn't enough mana
         }
 
         spellEffectApplier.ApplySpellEffect(entityManager, cardData, index);
 
-        manaChecker.DeductMana(cardData);
+        manaChecker.DeductPlayerMana(cardData);
 
         // Remove card from hand
         List<GameObject> handCardObjects = cardManager.getHandCardObjects();
