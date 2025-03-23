@@ -47,7 +47,7 @@ public class SpritePositioning : MonoBehaviour
     {
         while (mapScript.currentSelectedRoom == "None")
         {
-            yield return null; // Wait for the next frame
+            yield return null;
         }
         placeHolderManager.TogglePlaceHolders(true, mapScript.currentSelectedRoom);
         enemyPlaceHolderManager.DisplayEnemyPlaceHolders(mapScript.currentSelectedRoom);
@@ -107,7 +107,7 @@ public class SpritePositioning : MonoBehaviour
         // Wait until the list is populated
         while (playerEntities.Count == 0)
         {
-            yield return null; // Wait for the next frame
+            yield return null;
         }
 
         foreach (GameObject placeHolder in playerEntities)

@@ -3,7 +3,7 @@ using UnityEngine;
 
 /**
  * This class is used to position the sprites on the map.
- * It generates placeholders for the player and enemy entities.
+ * It generates placeholders for the player entities.
  */
 
 public class PlaceHolderManager

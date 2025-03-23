@@ -171,6 +171,8 @@ public class GeneralEntities
         {
             placeholder.name = cardName;
         }
+
+        entityManager.gameObject.SetActive(true);
     }
 
     private bool HasEnoughMana(CardData cardData)
