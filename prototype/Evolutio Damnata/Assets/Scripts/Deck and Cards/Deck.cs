@@ -70,7 +70,7 @@ public class Deck : MonoBehaviour
             cardManager.RefreshUI();
         }
 
-        if (Hand.Count >= HandSize)
+        if (Hand.Count == HandSize)
         {
             Debug.Log("Hand is full. Cannot draw more cards.");
         }
@@ -79,7 +79,7 @@ public class Deck : MonoBehaviour
     public void DrawOneCard()
     {
         // Ensure the hand is filled up to the hand size limit
-        if (Hand.Count < HandSize)
+        if (Hand.Count <= HandSize)
         {
             if (Cards.Count == 0)
             {
