@@ -2,129 +2,128 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-/*
- *  This script is used to position the sprites in each room.
- */
-
-public class SpritePositioning : MonoBehaviour
+public class SpritePositioning : MonoBehaviour, ISpritePositioning
 {
-    [SerializeField]
-    GameObject placeHolderPrefab;
-    [SerializeField]
-    MapScript mapScript;
-    [SerializeField]
-    Canvas mainCanvas;
-    [SerializeField]
-    public bool roomReady = false;
+    [SerializeField] private GameObject _placeHolderPrefab;
+    [SerializeField] private MapScript _mapScript;
+    [SerializeField] private Canvas _mainCanvas;
 
-    public Dictionary<string, List<PositionData>> roomPositions;
-    public Dictionary<string, List<PositionData>> enemyRoomPositions;
-    public List<GameObject> playerEntities;
-    public List<GameObject> enemyEntities;
+    public bool RoomReady { get; private set; }
+    public List<GameObject> PlayerEntities { get; private set; }
+    public List<GameObject> EnemyEntities { get; private set; }
 
-    private PlaceHolderManager placeHolderManager;
-    private EnemyPlaceHolderManager enemyPlaceHolderManager;
+    private Dictionary<string, List<PositionData>> _roomPositions;
+    private Dictionary<string, List<PositionData>> _enemyRoomPositions;
+    private IPlaceholderManager _playerPlaceholderManager;
+    private IPlaceholderManager _enemyPlaceholderManager;
 
-    void Start()
+    private void Start()
     {
-        var playerInitializer = new PlayerRoomPositionsInitializer();
-        roomPositions = playerInitializer.InitializePlayerRoomPositions();
-
-        var enemyInitializer = new EnemyRoomPositionsInitializer();
-        enemyRoomPositions = enemyInitializer.InitializeEnemyRoomPositions();
-
-        playerEntities = new List<GameObject>();
-        enemyEntities = new List<GameObject>();
-
-        placeHolderManager = new PlaceHolderManager(placeHolderPrefab, mainCanvas, playerEntities, roomPositions);
-        enemyPlaceHolderManager = new EnemyPlaceHolderManager(placeHolderPrefab, mainCanvas, enemyEntities, enemyRoomPositions);
-
+        InitializePositionData();
+        InitializePlaceholderManagers();
         StartCoroutine(WaitForRoomSelection());
-        roomReady = false;
+        RoomReady = false;
+    }
+
+    private void InitializePositionData()
+    {
+        _roomPositions = new PlayerRoomPositionsInitializer().InitializePlayerRoomPositions();
+        _enemyRoomPositions = new EnemyRoomPositionsInitializer().InitializeEnemyRoomPositions();
+        PlayerEntities = new List<GameObject>();
+        EnemyEntities = new List<GameObject>();
+    }
+
+    private void InitializePlaceholderManagers()
+    {
+        _playerPlaceholderManager = new PlaceHolderManager(
+            _placeHolderPrefab,
+            _mainCanvas,
+            PlayerEntities,
+            _roomPositions);
+
+        _enemyPlaceholderManager = new EnemyPlaceHolderManager(
+            _placeHolderPrefab,
+            _mainCanvas,
+            EnemyEntities,
+            _enemyRoomPositions);
     }
 
     public IEnumerator WaitForRoomSelection()
     {
-        while (mapScript.currentSelectedRoom == "None")
+        while (_mapScript.currentSelectedRoom == "None")
         {
             yield return null;
         }
-        placeHolderManager.TogglePlaceHolders(true, mapScript.currentSelectedRoom);
-        enemyPlaceHolderManager.DisplayEnemyPlaceHolders(mapScript.currentSelectedRoom);
-        roomReady = true;
+
+        _playerPlaceholderManager.TogglePlaceHolders(true, _mapScript.currentSelectedRoom);
+        _enemyPlaceholderManager.DisplayPlaceHolders(_mapScript.currentSelectedRoom);
+        RoomReady = true;
     }
 
     public List<PositionData> GetPlayerPositionsForCurrentRoom()
     {
-        string currentRoom = mapScript.currentSelectedRoom;
-        if (roomPositions.ContainsKey(currentRoom))
-        {
-            return roomPositions[currentRoom];
-        }
-        else
-        {
-            Debug.LogError($"No position data found for room: {currentRoom}");
-            return new List<PositionData>();
-        }
+        string currentRoom = _mapScript.currentSelectedRoom;
+        return GetPositionsForRoom(currentRoom, _roomPositions);
     }
 
     public List<PositionData> GetEnemyPositionsForCurrentRoom()
     {
-        string currentRoom = mapScript.currentSelectedRoom;
-        if (enemyRoomPositions.ContainsKey(currentRoom))
+        string currentRoom = _mapScript.currentSelectedRoom;
+        return GetPositionsForRoom(currentRoom, _enemyRoomPositions);
+    }
+
+    private List<PositionData> GetPositionsForRoom(string roomName, Dictionary<string, List<PositionData>> positionsDict)
+    {
+        if (positionsDict.ContainsKey(roomName))
         {
-            return enemyRoomPositions[currentRoom];
+            return positionsDict[roomName];
         }
-        else
-        {
-            Debug.LogError($"No enemy position data found for room: {currentRoom}");
-            return new List<PositionData>();
-        }
+
+        Debug.LogError($"No position data found for room: {roomName}");
+        return new List<PositionData>();
     }
 
     public Vector2 GetFirstPlaceholderSize()
     {
-        List<PositionData> positions = GetPlayerPositionsForCurrentRoom();
-        if (positions.Count > 0)
-        {
-            return positions[0].Size;
-        }
-        return Vector2.zero;
+        return GetFirstPositionProperty(pos => pos.Size, Vector2.zero);
     }
 
     public Vector3 GetFirstPlaceholderScale()
     {
-        List<PositionData> positions = GetPlayerPositionsForCurrentRoom();
-        if (positions.Count > 0)
-        {
-            return positions[0].Scale;
-        }
-        return Vector3.one;
+        return GetFirstPositionProperty(pos => pos.Scale, Vector3.one);
     }
 
-    public IEnumerator placeHolderActiveState(bool active)
+    private T GetFirstPositionProperty<T>(System.Func<PositionData, T> propertySelector, T defaultValue)
     {
-        // Wait until the list is populated
-        while (playerEntities.Count == 0)
+        var positions = GetPlayerPositionsForCurrentRoom();
+        return positions.Count > 0 ? propertySelector(positions[0]) : defaultValue;
+    }
+
+    public IEnumerator SetPlaceholderActiveState(bool active)
+    {
+        while (PlayerEntities.Count == 0)
         {
             yield return null;
         }
 
-        foreach (GameObject placeHolder in playerEntities)
+        foreach (var placeholder in PlayerEntities)
         {
-            placeHolder.SetActive(active);
+            if (placeholder != null)
+            {
+                placeholder.SetActive(active);
+            }
         }
     }
 
     public IEnumerator SetAllPlaceHoldersInactive()
     {
-        yield return StartCoroutine(placeHolderActiveState(false));
+        yield return StartCoroutine(SetPlaceholderActiveState(false));
         Debug.Log("All placeholders set to inactive!");
     }
 
     public IEnumerator SetAllPlaceHoldersActive()
     {
-        yield return StartCoroutine(placeHolderActiveState(true));
+        yield return StartCoroutine(SetPlaceholderActiveState(true));
         Debug.Log("All placeholders set to active!");
     }
 }

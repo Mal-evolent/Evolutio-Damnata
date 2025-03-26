@@ -15,11 +15,12 @@ public class CombatStage : MonoBehaviour, ICombatStage
     [SerializeField] private CardOutlineManager _cardOutlineManager;
     [SerializeField] private CardLibrary _cardLibrary;
     [SerializeField] private CombatManager _combatManager;
-    [SerializeField] private SpritePositioning _spritePositioning;
+    [SerializeField] private SpritePositioning _spritePositioningComponent;
     [SerializeField] private DamageVisualizer _damageVisualizer;
     [SerializeField] private GameObject _damageNumberPrefab;
 
-    // Services
+    // Interface references
+    private ISpritePositioning _spritePositioning;
     private IAttackHandler _attackHandler;
     private ICardSpawner _playerCardSpawner;
     private ICardSpawner _enemyCardSpawner;
@@ -36,16 +37,15 @@ public class CombatStage : MonoBehaviour, ICombatStage
 
     private void Awake()
     {
-        InitializeDependencies();
+        // Convert components to interfaces
+        _spritePositioning = _spritePositioningComponent;
+        _cardManagerInterface = _cardManager;
+
         InitializeServices();
     }
 
-    private void InitializeDependencies()
+    private void InitializeServices()
     {
-        // Convert concrete implementations to interfaces
-        _cardManagerInterface = _cardManager;
-
-        // Initialize other interface-based dependencies
         var attackLimiter = new AttackLimiter();
         var spawnerFactory = new CardSpawnerFactory(
             _spritePositioning,
@@ -60,10 +60,7 @@ public class CombatStage : MonoBehaviour, ICombatStage
         _playerCardSpawner = spawnerFactory.CreatePlayerSpawner();
         _enemyCardSpawner = spawnerFactory.CreateEnemySpawner();
         _attackHandler = new AttackHandler(attackLimiter);
-    }
 
-    private void InitializeServices()
-    {
         _cardSelectionHandler = new CardSelectionHandler(
             _cardManagerInterface,
             _combatManager,
@@ -162,6 +159,7 @@ public class CombatStage : MonoBehaviour, ICombatStage
     {
         bool shouldShowPlaceholders = _cardManagerInterface.CurrentSelectedCard == null ||
                                     !IsPlacedCardSelected();
+
         SetPlaceholderActiveState(shouldShowPlaceholders);
     }
 
@@ -172,15 +170,6 @@ public class CombatStage : MonoBehaviour, ICombatStage
 
     public void SetPlaceholderActiveState(bool active)
     {
-        foreach (var entity in _spritePositioning.PlayerEntities)
-        {
-            if (entity == null) continue;
-
-            var image = entity.GetComponent<Image>();
-            if (image != null && image.sprite != null && image.sprite.name == "wizard_outline")
-            {
-                entity.SetActive(active);
-            }
-        }
+        StartCoroutine(_spritePositioning.SetPlaceholderActiveState(active));
     }
 }

@@ -1,57 +1,69 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-
-/**
- * This class is used to position the sprites on the map.
- * It generates placeholders for the enemy entities.
- */
-
-public class EnemyPlaceHolderManager
+public class EnemyPlaceHolderManager : IPlaceholderManager
 {
-    private GameObject placeHolderPrefab;
-    private Canvas mainCanvas;
-    private List<GameObject> enemyEntities;
-    private Dictionary<string, List<PositionData>> enemyRoomPositions;
+    private readonly GameObject _placeHolderPrefab;
+    private readonly Canvas _mainCanvas;
+    private readonly List<GameObject> _enemyEntities;
+    private readonly Dictionary<string, List<PositionData>> _enemyRoomPositions;
 
-    public EnemyPlaceHolderManager(GameObject placeHolderPrefab, Canvas mainCanvas, List<GameObject> enemyEntities, Dictionary<string, List<PositionData>> enemyRoomPositions)
+    public EnemyPlaceHolderManager(
+        GameObject placeHolderPrefab,
+        Canvas mainCanvas,
+        List<GameObject> enemyEntities,
+        Dictionary<string, List<PositionData>> enemyRoomPositions)
     {
-        this.placeHolderPrefab = placeHolderPrefab;
-        this.mainCanvas = mainCanvas;
-        this.enemyEntities = enemyEntities;
-        this.enemyRoomPositions = enemyRoomPositions;
+        _placeHolderPrefab = placeHolderPrefab;
+        _mainCanvas = mainCanvas;
+        _enemyEntities = enemyEntities;
+        _enemyRoomPositions = enemyRoomPositions;
     }
 
-    public void DisplayEnemyPlaceHolders(string currentRoom)
+    public void DisplayPlaceHolders(string currentRoom)
     {
-        // Clear previously instantiated enemy placeholders
-        foreach (GameObject placeHolder in enemyEntities)
+        ClearPlaceholders();
+
+        if (!_enemyRoomPositions.TryGetValue(currentRoom, out List<PositionData> positions))
+        {
+            Debug.LogError($"No enemy position data found for room: {currentRoom}");
+            return;
+        }
+
+        CreatePlaceholders(positions, false, "Enemy");
+    }
+
+    public void TogglePlaceHolders(bool active, string currentRoom)
+    {
+        DisplayPlaceHolders(currentRoom);
+    }
+
+    private void ClearPlaceholders()
+    {
+        foreach (GameObject placeHolder in _enemyEntities)
         {
             Object.Destroy(placeHolder);
         }
-        enemyEntities.Clear();
+        _enemyEntities.Clear();
+    }
 
-        // Instantiate new enemy placeholders and store them in the list
-        if (enemyRoomPositions.ContainsKey(currentRoom))
+    private void CreatePlaceholders(List<PositionData> positions, bool active, string prefix)
+    {
+        for (int i = 0; i < positions.Count; i++)
         {
-            List<PositionData> positions = enemyRoomPositions[currentRoom];
-            for (int i = 0; i < positions.Count; i++)
-            {
-                PositionData position = positions[i];
-                GameObject placeHolder = Object.Instantiate(placeHolderPrefab, mainCanvas.transform);
-                placeHolder.GetComponent<RectTransform>().anchoredPosition = position.Position;
-                placeHolder.GetComponent<RectTransform>().sizeDelta = position.Size;
-                placeHolder.transform.localScale = position.Scale;
-                placeHolder.transform.rotation = position.Rotation;
-                placeHolder.name = $"Enemy_Placeholder_{i}";
-                placeHolder.SetActive(false);
-                enemyEntities.Add(placeHolder);
-            }
-        }
-        else
-        {
-            Debug.LogError($"No enemy position data found for room: {currentRoom}");
+            PositionData position = positions[i];
+            GameObject placeHolder = Object.Instantiate(_placeHolderPrefab, _mainCanvas.transform);
+
+            RectTransform rectTransform = placeHolder.GetComponent<RectTransform>();
+            rectTransform.anchoredPosition = position.Position;
+            rectTransform.sizeDelta = position.Size;
+
+            placeHolder.transform.localScale = position.Scale;
+            placeHolder.transform.rotation = position.Rotation;
+            placeHolder.name = $"{prefix}_Placeholder_{i}";
+            placeHolder.SetActive(active);
+
+            _enemyEntities.Add(placeHolder);
         }
     }
 }
-
