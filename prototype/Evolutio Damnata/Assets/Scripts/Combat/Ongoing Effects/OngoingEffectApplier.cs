@@ -1,30 +1,36 @@
 using System.Collections.Generic;
 
-/*
- * The OngoingEffectApplier class is responsible for managing and applying ongoing effects to an entity in a game. 
- * Here's a detailed breakdown of its functionality:
- */
-
-public class OngoingEffectApplier
+public class OngoingEffectApplier : IEffectApplier
 {
-    private List<OngoingEffectManager> ongoingEffects;
+    private readonly List<IOngoingEffect> _ongoingEffects;
 
-    public OngoingEffectApplier(List<OngoingEffectManager> ongoingEffects)
+    public OngoingEffectApplier()
     {
-        this.ongoingEffects = ongoingEffects;
+        _ongoingEffects = new List<IOngoingEffect>();
     }
 
     public void ApplyEffects(EntityManager entity)
     {
-        for (int i = ongoingEffects.Count - 1; i >= 0; i--)
+        for (int i = _ongoingEffects.Count - 1; i >= 0; i--)
         {
-            OngoingEffectManager effect = ongoingEffects[i];
+            var effect = _ongoingEffects[i];
             effect.ApplyEffect(entity);
             effect.DecreaseDuration();
+
             if (effect.IsExpired())
             {
-                ongoingEffects.RemoveAt(i);
+                _ongoingEffects.RemoveAt(i);
             }
         }
+    }
+
+    public void RemoveEffectsForEntity(EntityManager entity)
+    {
+        _ongoingEffects.RemoveAll(e => e.TargetEntity == entity);
+    }
+
+    public void AddEffect(IOngoingEffect effect)
+    {
+        _ongoingEffects.Add(effect);
     }
 }

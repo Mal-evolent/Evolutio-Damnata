@@ -59,7 +59,7 @@ public class CardData
         EffectValue = effectValue;
         Duration = duration;
 
-        IsSpellCard = EffectTypes.Count > 0; // Now properly detects spell cards
+        IsSpellCard = EffectTypes.Count > 0;
         IsMonsterCard = !IsSpellCard;
     }
 

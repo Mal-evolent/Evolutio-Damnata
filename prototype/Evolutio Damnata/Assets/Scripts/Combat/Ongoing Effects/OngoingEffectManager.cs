@@ -5,7 +5,7 @@ using UnityEngine;
  * This class is responsible for managing the ongoing effects of a spell on an entity.
  */
 
-public class OngoingEffectManager
+public class OngoingEffectManager : IOngoingEffect
 {
     public SpellEffect EffectType { get; private set; }
     public int EffectValue { get; private set; }

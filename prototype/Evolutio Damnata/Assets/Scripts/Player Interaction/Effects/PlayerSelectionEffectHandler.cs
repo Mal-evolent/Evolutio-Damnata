@@ -1,29 +1,38 @@
 using UnityEngine;
+using UnityEngine.UI;
 
-/*
- * The PlayerSelectionEffectHandler class is responsible for applying the selection effect to the player.
- * It keeps track of the player entities and the current selected card.
- */
 
-public class PlayerSelectionEffectHandler
+public class PlayerSelectionEffectHandler : ISelectionEffectHandler
 {
-    private SpritePositioning spritePositioning;
-    private CardManager cardManager;
+    private readonly SpritePositioning _spritePositioning;
+    private readonly CardManager _cardManager;
+    private readonly Color _selectionColor = new Color(0.5f, 1f, 0.5f, 1f); // Light green tint
 
     public PlayerSelectionEffectHandler(SpritePositioning spritePositioning, CardManager cardManager)
     {
-        this.spritePositioning = spritePositioning;
-        this.cardManager = cardManager;
+        _spritePositioning = spritePositioning ?? throw new System.ArgumentNullException(nameof(spritePositioning));
+        _cardManager = cardManager ?? throw new System.ArgumentNullException(nameof(cardManager));
     }
 
-    public void ApplyEffect()
+    public void ApplyEffect(bool isSelected = true)
     {
-        for (int i = 0; i < spritePositioning.playerEntities.Count; i++)
+        if (_cardManager.CurrentSelectedCard == null) return;
+
+        foreach (var entity in _spritePositioning.PlayerEntities)
         {
-            if (spritePositioning.playerEntities[i] == cardManager.currentSelectedCard)
+            if (entity == null) continue;
+
+            var image = entity.GetComponent<Image>();
+            if (image != null)
             {
-                //apply selection effect here
-                break;
+                if (entity == _cardManager.CurrentSelectedCard && isSelected)
+                {
+                    image.color = _selectionColor;
+                }
+                else
+                {
+                    image.color = Color.white;
+                }
             }
         }
     }

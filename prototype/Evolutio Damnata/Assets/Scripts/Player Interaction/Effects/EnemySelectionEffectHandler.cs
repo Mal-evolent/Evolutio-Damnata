@@ -1,33 +1,25 @@
 using UnityEngine;
-using UnityEngine.UI;
 
-/*
- * This class is responsible for handling the enemy selection effect.
- */
-
-public class EnemySelectionEffectHandler
+public class EnemySelectionEffectHandler : ISelectionEffectHandler
 {
-    private SpritePositioning spritePositioning;
+    private readonly SpritePositioning _spritePositioning;
+    private readonly Color _selectionColor = new Color(1f, 0.5f, 0.5f, 1f); // Light red tint
 
     public EnemySelectionEffectHandler(SpritePositioning spritePositioning)
     {
-        this.spritePositioning = spritePositioning;
+        _spritePositioning = spritePositioning ?? throw new System.ArgumentNullException(nameof(spritePositioning));
     }
 
-    public void ApplyEffect(bool active)
+    public void ApplyEffect(bool isSelected = true)
     {
-        for (int i = 0; i < spritePositioning.enemyEntities.Count; i++)
+        foreach (var entity in _spritePositioning.EnemyEntities)
         {
-            if (spritePositioning.enemyEntities[i] != null)
+            if (entity == null) continue;
+
+            var image = entity.GetComponent<Image>();
+            if (image != null)
             {
-                Image placeholderImage = spritePositioning.enemyEntities[i].GetComponent<Image>();
-                if (placeholderImage != null && placeholderImage.sprite != null)
-                {
-                    if (placeholderImage.sprite.name != "wizard_outline")
-                    {
-                        //apply effect here
-                    }
-                }
+                image.color = isSelected ? _selectionColor : Color.white;
             }
         }
     }

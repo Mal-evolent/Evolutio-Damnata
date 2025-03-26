@@ -3,13 +3,22 @@ using TMPro;
 using UnityEngine;
 
 /**
- * This class is responsible for creating the damage number visual effect.
- * It creates a text object with the damage number and animates it by moving it up and fading it out.
+ * This class is responsible for creating the damage and healing number visual effects.
+ * It creates a text object with the number and animates it by moving it up and fading it out.
  */
-
 public class DamageVisualizer : MonoBehaviour
 {
     public GameObject CreateDamageNumber(MonoBehaviour callerMono, float damageNumber, Vector3 position, GameObject prefab)
+    {
+        return CreateNumber(callerMono, damageNumber, position, prefab, "-", Color.red);
+    }
+
+    public GameObject CreateHealingNumber(MonoBehaviour callerMono, float healNumber, Vector3 position, GameObject prefab)
+    {
+        return CreateNumber(callerMono, healNumber, position, prefab, "+", Color.green);
+    }
+
+    private GameObject CreateNumber(MonoBehaviour callerMono, float numberValue, Vector3 position, GameObject prefab, string prefix, Color color)
     {
         // Find the Canvas
         GameObject canvas = GameObject.Find("Canvas");
@@ -19,15 +28,16 @@ public class DamageVisualizer : MonoBehaviour
             return null;
         }
 
-        // Instantiate the damage number under the Canvas
-        GameObject number = Instantiate(prefab, canvas.transform);
-        number.transform.position = position;
+        // Instantiate the number under the Canvas
+        GameObject numberObj = Instantiate(prefab, canvas.transform);
+        numberObj.transform.position = position;
 
-        // Set the damage number text
-        TextMeshProUGUI text = number.GetComponent<TextMeshProUGUI>();
+        // Set the number text
+        TextMeshProUGUI text = numberObj.GetComponent<TextMeshProUGUI>();
         if (text != null)
         {
-            text.text = "-" + damageNumber.ToString();
+            text.text = prefix + numberValue.ToString();
+            text.color = color; // Set the appropriate color
         }
         else
         {
@@ -35,9 +45,9 @@ public class DamageVisualizer : MonoBehaviour
         }
 
         // Start the animation coroutine
-        callerMono.StartCoroutine(AnimateText(number));
+        callerMono.StartCoroutine(AnimateText(numberObj));
 
-        return number;
+        return numberObj;
     }
 
     private IEnumerator AnimateText(GameObject visual)
@@ -48,7 +58,7 @@ public class DamageVisualizer : MonoBehaviour
 
         if (text == null)
         {
-            Debug.LogError("Damage number object is missing TextMeshProUGUI component!");
+            Debug.LogError("Number object is missing TextMeshProUGUI component!");
             yield break;
         }
 

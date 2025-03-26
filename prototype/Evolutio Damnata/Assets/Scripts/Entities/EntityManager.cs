@@ -2,13 +2,8 @@ using System.Resources;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using System.Collections;
 
-/**
- * This class is responsible for managing the entity's health, attack damage, and ongoing effects.
- * It implements the IDamageable and IAttacker interfaces to handle damage and attack logic.
- */
-
-//---------------interfaces for different attributes--------------------------------//
 
 public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 {
@@ -55,6 +50,8 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 
     private AttackLimiter attackLimiter;
 
+    private float turnDuration = 1.0f;
+
     public void InitializeMonster(_monsterType monsterType, float maxHealth, float atkDamage, Slider healthBarSlider, Image image, DamageVisualizer damageVisualizer, GameObject damageNumberPrefab, Sprite outlineSprite, AttackLimiter attackLimiter)
     {
         this.monsterType = monsterType;
@@ -82,16 +79,6 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         {
             Debug.LogError("Health bar Slider component not found!");
         }
-    }
-
-    public void loadMonster()
-    {
-        gameObject.SetActive(true);
-    }
-
-    public void unloadMonster()
-    {
-        gameObject.SetActive(false);
     }
 
     public _monsterType getMonsterType()
@@ -147,6 +134,8 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         RemoveAllOngoingEffects();
         Debug.Log("Monster is dead.");
 
+        ongoingEffectApplier?.RemoveEffectsForEntity(this);
+
         // Disable all buttons in the hierarchy, including parent objects
         Button[] buttonsInChildren = GetComponentsInChildren<Button>(true);
         Button[] buttonsInParents = GetComponentsInParent<Button>(true);
@@ -182,7 +171,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         ongoingEffects.Clear();
     }
 
-    public void heal(float healAmount)
+    public void healAmount(float healAmount)
     {
         if (dead) return;
 
@@ -253,7 +242,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 
     void Start()
     {
-        ongoingEffectApplier = new OngoingEffectApplier(ongoingEffects);
+        ongoingEffectApplier = new OngoingEffectApplier();
         // Other initialization logic if needed
     }
 
@@ -261,4 +250,61 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     {
 
     }
+
+    // New methods
+    public void Heal(float healAmount)
+    {
+        if (dead) return;
+
+        health = Mathf.Min(health + healAmount, maxHealth);
+        if (healthBar != null)
+        {
+            healthBar.value = health / maxHealth;
+        }
+
+        // Optional: Add healing visual effect
+        if (damageVisualizer != null && damageNumberPrefab != null)
+        {
+            Vector3 position = transform.position;
+            damageVisualizer.CreateHealingNumber(this, healAmount, position, damageNumberPrefab);
+        }
+    }
+
+    public void ModifyAttack(float modifier)
+    {
+        if (dead) return;
+        atkDamage += modifier;
+        Debug.Log($"{name} attack modified by {modifier}. New damage: {atkDamage}");
+    }
+
+    public void SetDoubleAttack(int duration = 1)
+    {
+        if (dead) return;
+
+        StartCoroutine(DoubleAttackRoutine(duration));
+    }
+
+    private IEnumerator DoubleAttackRoutine(int duration)
+    {
+        int originalAttacks = allowedAttacks;
+        allowedAttacks *= 2;
+        attackLimiter.ModifyAllowedAttacks(this, allowedAttacks);
+
+        Debug.Log($"{name} gained double attack for {duration} turn(s)");
+
+        // Wait for one turn duration
+        yield return new WaitForSeconds(turnDuration);
+
+        allowedAttacks = originalAttacks;
+        attackLimiter.ModifyAllowedAttacks(this, allowedAttacks);
+        Debug.Log($"{name}'s double attack expired");
+    }
+
+    // Updated methods to match interface capitalization
+    public void TakeDamage(float damageAmount) => takeDamage(damageAmount);
+    public float GetHealth() => getHealth();
+    public void AttackBuff(float buffAmount) => attackBuff(buffAmount);
+    public void AttackDebuff(float debuffAmount) => attackDebuff(debuffAmount);
+    public void Attack(int damage) => attack(damage);
+    public float GetAttackDamage() => getAttackDamage();
 }

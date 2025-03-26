@@ -3,169 +3,125 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/*
- * CardManager is responsible for managing the player's deck and hand of cards.
- * It displays the deck and hand in the UI and handles card selection.
- */
-
-public class CardManager : MonoBehaviour
+public class CardManager : MonoBehaviour, ICardManager
 {
-    public Deck playerDeck;
-    public RectTransform cardUIContainer;
-    public RectTransform deckPanelRect;
-    public Sprite cardTemplate;
-    public GameObject cardPrefab;
+    [Header("References")]
+    [SerializeField] private Deck _playerDeck;
+    [SerializeField] private RectTransform _cardUIContainer;
+    [SerializeField] private RectTransform _deckPanelRect;
+    [SerializeField] private Sprite _cardTemplate;
+    [SerializeField] private GameObject _cardPrefab;
+    [SerializeField] private CardOutlineManager _cardOutlineManager;
+    [SerializeField] private CombatManager _combatManager;
 
-    public CardOutlineManager cardOutlineManager;
+    private List<GameObject> _deckCardObjects = new List<GameObject>();
+    private List<GameObject> _handCardObjects = new List<GameObject>();
 
-    private List<GameObject> deckCardObjects = new List<GameObject>();
-    private List<GameObject> handCardObjects = new List<GameObject>();
-    [SerializeField]
-    CombatManager combatManager;
+    public GameObject CurrentSelectedCard { get; set; }
+    public Deck PlayerDeck => _playerDeck;
+    public List<GameObject> DeckCardObjects => _deckCardObjects;
+    public List<GameObject> HandCardObjects => _handCardObjects;
 
-    public GameObject currentSelectedCard;
-
-    public List<GameObject> getDeckCardObjects() { return deckCardObjects; }
-    public List<GameObject> getHandCardObjects() { return handCardObjects; }
-
-    // Displays deck in the UI
     public void DisplayDeck()
     {
-        // Loop through deck and instantiate UI for each card
-        for (int i = playerDeck.Cards.Count - 1; i >= 0; i--) // i is useful for ordering
+        foreach (Transform t in _deckPanelRect.transform)
+            Destroy(t.gameObject);
+        _deckCardObjects.Clear();
+
+        for (int i = _playerDeck.Cards.Count - 1; i >= 0; i--)
         {
-            Card card = playerDeck.Cards[i];
-
-            // CARD
-            GameObject cardObject = Instantiate(cardPrefab, new Vector3(0.0f, 0.0f, 0.0f), Quaternion.identity);
-            RectTransform cardRectTransform = cardObject.GetComponent<RectTransform>();
-            cardRectTransform.SetParent(deckPanelRect, false);
-            cardObject.name = card.CardName;
-
-            // Assign the Card reference to the CardUI component
-            CardUI cardUI = cardObject.AddComponent<CardUI>();
-            cardUI.card = card;
-
-            // IMAGE
-            Image image = cardObject.transform.GetChild(0).GetComponent<Image>();
-            image.sprite = card.CardImage;
-
-            // NAME
-            TextMeshProUGUI nameText = cardObject.transform.GetChild(1).GetComponent<TextMeshProUGUI>();
-            nameText.text = card.CardName;
-
-            // DESCRIPTION
-            TextMeshProUGUI descText = cardObject.transform.GetChild(2).GetComponent<TextMeshProUGUI>();
-            descText.text = card.Description;
-
-            // CARD ATTRIBUTES
-            TextMeshProUGUI attrText = cardObject.transform.GetChild(3).GetComponent<TextMeshProUGUI>();
-            if (card is MonsterCard monsterCard)
-            {
-                attrText.text = $"Health: {monsterCard.Health}\nAttack: {monsterCard.AttackPower}\nCost: {monsterCard.ManaCost}";
-            }
-            else if (card is SpellCard spellCard)
-            {
-                attrText.text = $"Effect: {string.Join(", ", spellCard.EffectTypes)}\nValue: {spellCard.EffectValue}\nDuration: {spellCard.Duration}\nCost: {spellCard.ManaCost}";
-            }
-
-            Debug.Log($"Displayed {card.CardName} in the UI.");
-            deckCardObjects.Add(cardObject);
+            Card card = _playerDeck.Cards[i];
+            GameObject cardObject = CreateCardUI(card, _deckPanelRect);
+            _deckCardObjects.Add(cardObject);
         }
     }
 
-    // Displays hand in the UI
     public void DisplayHand()
     {
-        // Loop through hand and instantiate UI for each card
-        foreach (Card card in playerDeck.Hand)
+        foreach (Card card in _playerDeck.Hand)
         {
-            // CARD
-            GameObject cardObject = Instantiate(cardPrefab, new Vector3(0.0f, 0.0f, 0.0f), Quaternion.identity);
-            RectTransform cardRectTransform = cardObject.GetComponent<RectTransform>();
-            cardRectTransform.SetParent(cardUIContainer, false);
-            cardObject.name = card.CardName;
-
-            // Assign the Card reference to the CardUI component
-            CardUI cardUI = cardObject.AddComponent<CardUI>();
-            cardUI.card = card;
-
-            // IMAGE
-            Image image = cardObject.transform.GetChild(0).GetComponent<Image>();
-            image.sprite = card.CardImage;
-
-            // NAME
-            TextMeshProUGUI nameText = cardObject.transform.GetChild(1).GetComponent<TextMeshProUGUI>();
-            nameText.text = card.CardName;
-
-            // DESCRIPTION
-            TextMeshProUGUI descText = cardObject.transform.GetChild(2).GetComponent<TextMeshProUGUI>();
-            descText.text = card.Description;
-
-            // CARD ATTRIBUTES
-            TextMeshProUGUI attrText = cardObject.transform.GetChild(3).GetComponent<TextMeshProUGUI>();
-            if (card is MonsterCard monsterCard)
-            {
-                attrText.text = $"Health: {monsterCard.Health}\nAttack: {monsterCard.AttackPower}\nCost: {monsterCard.ManaCost}";
-            }
-            else if (card is SpellCard spellCard)
-            {
-                attrText.text = $"Effect: {string.Join(", ", spellCard.EffectTypes)}\nValue: {spellCard.EffectValue}\nDuration: {spellCard.Duration}\nCost: {spellCard.ManaCost}";
-            }
-
-            Debug.Log($"Displayed {card.CardName} in the UI.");
-
-            // Add Button or Event Trigger
-            Button cardButton = cardObject.GetComponent<Button>();
-            if (cardButton == null)
-            {
-                cardButton = cardObject.AddComponent<Button>();
-            }
-
-            // Use the assigned CardOutlineManager to highlight the card
-            cardButton.onClick.AddListener(() =>
-            {
-                if (cardOutlineManager != null)
-                {
-                    cardOutlineManager.HighlightCard(cardObject);
-                }
-                else
-                {
-                    Debug.LogError("CardOutlineManager is not assigned!");
-                }
-
-                if (cardOutlineManager.cardIsHighlighted)
-                {
-                    currentSelectedCard = cardObject;
-                    Debug.Log($"Selected Card: {currentSelectedCard.name}");
-                }
-
-                if (!cardOutlineManager.cardIsHighlighted)
-                {
-                    currentSelectedCard = null;
-                    Debug.Log("Deselected Card.");
-                }
-            });
-
-            handCardObjects.Add(cardObject);
+            GameObject cardObject = CreateCardUI(card, _cardUIContainer);
+            SetupCardInteraction(cardObject);
+            _handCardObjects.Add(cardObject);
         }
     }
 
-    // Update UI elements (for use with Odin Inspector or similar)
+    private GameObject CreateCardUI(Card card, Transform parent)
+    {
+        GameObject cardObject = Instantiate(_cardPrefab, parent);
+        cardObject.name = card.CardName;
+
+        CardUI cardUI = cardObject.AddComponent<CardUI>();
+        cardUI.card = card;
+
+        Transform cardTransform = cardObject.transform;
+        cardTransform.GetChild(0).GetComponent<Image>().sprite = card.CardImage;
+        cardTransform.GetChild(1).GetComponent<TextMeshProUGUI>().text = card.CardName;
+        cardTransform.GetChild(2).GetComponent<TextMeshProUGUI>().text = card.Description;
+
+        string attributes = card switch
+        {
+            MonsterCard monster => $"Health: {monster.Health}\nAttack: {monster.AttackPower}\nCost: {monster.ManaCost}",
+            SpellCard spell => $"Effect: {string.Join(", ", spell.EffectTypes)}\nValue: {spell.EffectValue}\nDuration: {spell.Duration}\nCost: {spell.ManaCost}",
+            _ => string.Empty
+        };
+        cardTransform.GetChild(3).GetComponent<TextMeshProUGUI>().text = attributes;
+
+        return cardObject;
+    }
+
+    private void SetupCardInteraction(GameObject cardObject)
+    {
+        Button cardButton = cardObject.GetComponent<Button>() ?? cardObject.AddComponent<Button>();
+        cardButton.onClick.RemoveAllListeners();
+        cardButton.onClick.AddListener(() => ToggleCardSelection(cardObject));
+    }
+
+    private void ToggleCardSelection(GameObject cardObject)
+    {
+        if (_cardOutlineManager == null)
+        {
+            Debug.LogError("CardOutlineManager is not assigned!");
+            return;
+        }
+
+        _cardOutlineManager.HighlightCard(cardObject);
+        CurrentSelectedCard = _cardOutlineManager.cardIsHighlighted ? cardObject : null;
+        Debug.Log(CurrentSelectedCard != null
+            ? $"Selected Card: {CurrentSelectedCard.name}"
+            : "Deselected Card");
+    }
+
+    public void RemoveCard(GameObject cardObject)
+    {
+        if (!_handCardObjects.Contains(cardObject))
+        {
+            Debug.LogWarning($"Card {cardObject.name} not found in hand");
+            return;
+        }
+
+        _handCardObjects.Remove(cardObject);
+        if (cardObject.GetComponent<CardUI>()?.card is Card card)
+            _playerDeck.Hand.Remove(card);
+
+        Destroy(cardObject);
+        RefreshUI();
+    }
+
     public void RefreshUI()
     {
-        foreach (Transform t in cardUIContainer.transform)
-        {
-            Destroy(t.gameObject);
-        }
-        foreach (Transform t in deckPanelRect.transform)
-        {
-            Destroy(t.gameObject);
-        }
-        deckCardObjects.Clear();
-        handCardObjects.Clear();
+        ClearContainer(_cardUIContainer);
+        ClearContainer(_deckPanelRect);
+        _deckCardObjects.Clear();
+        _handCardObjects.Clear();
 
         DisplayDeck();
         DisplayHand();
+    }
+
+    private void ClearContainer(Transform container)
+    {
+        foreach (Transform t in container)
+            Destroy(t.gameObject);
     }
 }

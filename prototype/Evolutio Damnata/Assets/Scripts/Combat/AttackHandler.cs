@@ -1,44 +1,43 @@
 using UnityEngine;
 
-/**
- * Handles the attack between two monsters.
- * 
- * @param playerEntity The attacking monster.
- * @param enemyEntity The defending monster.
- */
-
-public class AttackHandler
+public class AttackHandler : IAttackHandler
 {
-    private AttackLimiter attackLimiter;
+    private readonly AttackLimiter _attackLimiter;
 
     public AttackHandler(AttackLimiter attackLimiter)
     {
-        this.attackLimiter = attackLimiter;
+        _attackLimiter = attackLimiter;
     }
 
-    public void HandleMonsterAttack(EntityManager playerEntity, EntityManager enemyEntity)
+    public void HandleAttack(EntityManager attacker, EntityManager target)
     {
-        if (playerEntity == null || enemyEntity == null)
+        if (attacker == null || target == null)
         {
             Debug.LogError("One of the entities is null!");
             return;
         }
 
-        if (!attackLimiter.CanAttack(playerEntity))
+        if (!CanAttack(attacker))
         {
-            Debug.LogWarning($"{playerEntity.name} cannot attack anymore this turn.");
+            Debug.LogWarning($"{attacker.name} cannot attack anymore this turn.");
             return;
         }
 
-        // Both entities take damage according to their attack values
-        float playerAttackDamage = playerEntity.getAttackDamage();
-        float enemyAttackDamage = enemyEntity.getAttackDamage();
+        float attackerDamage = attacker.GetAttackDamage();
+        float targetDamage = target.GetAttackDamage();
 
-        playerEntity.takeDamage(enemyAttackDamage);
-        enemyEntity.takeDamage(playerAttackDamage);
+        attacker.TakeDamage(targetDamage);
+        target.TakeDamage(attackerDamage);
 
-        attackLimiter.RegisterAttack(playerEntity);
+        _attackLimiter.RegisterAttack(attacker);
 
-        Debug.Log($"Player monster attacked enemy monster. Player monster took {enemyAttackDamage} damage. Enemy monster took {playerAttackDamage} damage.");
+        Debug.Log($"{attacker.name} attacked {target.name}. " +
+                 $"{attacker.name} took {targetDamage} damage. " +
+                 $"{target.name} took {attackerDamage} damage.");
+    }
+
+    public bool CanAttack(EntityManager entity)
+    {
+        return _attackLimiter.CanAttack(entity);
     }
 }

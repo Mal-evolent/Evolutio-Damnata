@@ -2,208 +2,192 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Linq;
 
-
-public class GeneralEntities
+public class GeneralEntities : ICardSpawner
 {
-    private SpritePositioning spritePositioning;
-    private CardLibrary cardLibrary;
-    private DamageVisualizer damageVisualizer;
-    private GameObject damageNumberPrefab;
-    private Sprite wizardOutlineSprite;
-    private CombatStage combatStage;
-    private AttackLimiter attackLimiter;
-    private EntityManager._monsterType monsterType;
-    private ManaChecker manaChecker;
-    public bool enemyCardPlayed = false;
+    // Dependencies
+    private readonly SpritePositioning _spritePositioning;
+    private readonly CardLibrary _cardLibrary;
+    private readonly IManaProvider _manaProvider;
+    private readonly DamageVisualizer _damageVisualizer;
+    private readonly AttackLimiter _attackLimiter;
+    private readonly CombatStage _combatStage;
 
-    public GeneralEntities(SpritePositioning spritePositioning, CardLibrary cardLibrary, DamageVisualizer damageVisualizer, GameObject damageNumberPrefab, Sprite wizardOutlineSprite, CombatStage combatStage, AttackLimiter attackLimiter, EntityManager._monsterType monsterType)
+    // Visual/Audio
+    private readonly GameObject _damageNumberPrefab;
+    private readonly Sprite _wizardOutlineSprite;
+
+    // State
+    public bool EnemyCardPlayed { get; private set; }
+    private readonly EntityManager._monsterType _monsterType;
+
+    public GeneralEntities(
+        SpritePositioning spritePositioning,
+        CardLibrary cardLibrary,
+        IManaProvider manaProvider,
+        DamageVisualizer damageVisualizer,
+        GameObject damageNumberPrefab,
+        Sprite wizardOutlineSprite,
+        CombatStage combatStage,
+        AttackLimiter attackLimiter,
+        EntityManager._monsterType monsterType)
     {
-        this.spritePositioning = spritePositioning;
-        this.cardLibrary = cardLibrary;
-        this.damageVisualizer = damageVisualizer;
-        this.damageNumberPrefab = damageNumberPrefab;
-        this.wizardOutlineSprite = wizardOutlineSprite;
-        this.combatStage = combatStage;
-        this.attackLimiter = attackLimiter;
-        this.monsterType = monsterType;
-        this.manaChecker = new ManaChecker(combatStage, combatStage.cardOutlineManager, combatStage.cardManager);
+        _spritePositioning = spritePositioning;
+        _cardLibrary = cardLibrary;
+        _manaProvider = manaProvider;
+        _damageVisualizer = damageVisualizer;
+        _damageNumberPrefab = damageNumberPrefab;
+        _wizardOutlineSprite = wizardOutlineSprite;
+        _combatStage = combatStage;
+        _attackLimiter = attackLimiter;
+        _monsterType = monsterType;
     }
 
     public void SpawnCards(string cardName, int whichOutline)
     {
-        if (monsterType == EntityManager._monsterType.Friendly)
+        if (string.IsNullOrEmpty(cardName))
         {
-            SpawnPlayerCard(cardName, whichOutline);
+            Debug.LogError("Card name cannot be null or empty");
+            return;
         }
-        else if (monsterType == EntityManager._monsterType.Enemy)
+
+        try
         {
-            SpawnEnemyCard(cardName, whichOutline);
+            if (_monsterType == EntityManager._monsterType.Friendly)
+            {
+                SpawnPlayerCard(cardName, whichOutline);
+            }
+            else if (_monsterType == EntityManager._monsterType.Enemy)
+            {
+                SpawnEnemyCard(cardName, whichOutline);
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"Failed to spawn card: {ex.Message}");
         }
     }
 
     private void SpawnPlayerCard(string cardName, int whichOutline)
     {
-        if (whichOutline < 0 || whichOutline >= spritePositioning.playerEntities.Count)
+        ValidateOutlineIndex(whichOutline, _spritePositioning.playerEntities.Count);
+        GameObject placeholder = GetValidPlaceholder(whichOutline, _spritePositioning.playerEntities);
+
+        CardData cardData = GetCardData(cardName);
+        EntityManager entityManager = InitializeEntity(placeholder, cardData);
+
+        if (!cardData.IsSpellCard)
         {
-            Debug.LogError($"Invalid outline index: {whichOutline}");
-            return;
+            UpdateCardVisuals(placeholder, cardData);
+            entityManager.placed = true;
+            entityManager.dead = false;
         }
 
-        GameObject placeholder = spritePositioning.playerEntities[whichOutline];
-        if (placeholder == null)
-        {
-            Debug.LogError($"Placeholder at index {whichOutline} is null!");
-            return;
-        }
-
-        Image placeholderImage = placeholder.GetComponent<Image>();
-        if (placeholderImage == null)
-        {
-            Debug.LogError("Image component not found on placeholder!");
-            return;
-        }
-        EntityManager existingEntityManager = placeholder.GetComponent<EntityManager>();
-
-        CardData selectedCardData = cardLibrary.cardDataList.FirstOrDefault(cardData => cardName == cardData.CardName);
-        if (selectedCardData == null)
-        {
-            Debug.LogError($"Card data not found for card name: {cardName}");
-            return;
-        }
-
-        if (!selectedCardData.IsSpellCard)
-        {
-            placeholderImage.sprite = cardLibrary.cardImageGetter(cardName);
-        }
-
-        EntityManager entityManager = placeholder.GetComponent<EntityManager>();
-        if (entityManager == null)
-        {
-            entityManager = placeholder.AddComponent<EntityManager>();
-        }
-
-        Transform healthBarTransform = placeholder.transform.Find("healthBar");
-        Slider healthBarSlider = healthBarTransform != null ? healthBarTransform.GetComponent<Slider>() : null;
-
-        if (!selectedCardData.IsSpellCard || (existingEntityManager == null || !existingEntityManager.placed))
-        {
-            entityManager.InitializeMonster(EntityManager._monsterType.Friendly, selectedCardData.Health, selectedCardData.AttackPower, healthBarSlider, placeholderImage, damageVisualizer, damageNumberPrefab, wizardOutlineSprite, attackLimiter);
-        }
-
-        bool isOccupied = existingEntityManager != null && existingEntityManager.placed;
-
-        if (!isOccupied)
-        {
-            entityManager.placed = !selectedCardData.IsSpellCard;
-            if (entityManager.placed)
-            {
-                entityManager.dead = false;
-            }
-        }
-
-        DisplayHealthBar(placeholder, !selectedCardData.IsSpellCard || !isOccupied);
-
-        if (!selectedCardData.IsSpellCard)
-        {
-            placeholder.name = cardName;
-        }
-
+        DisplayHealthBar(placeholder, !cardData.IsSpellCard);
         PlaySummonSFX();
     }
 
     private void SpawnEnemyCard(string cardName, int whichOutline)
     {
-        enemyCardPlayed = false;
-        if (whichOutline < 0 || whichOutline >= spritePositioning.enemyEntities.Count)
+        EnemyCardPlayed = false;
+        ValidateOutlineIndex(whichOutline, _spritePositioning.enemyEntities.Count);
+        GameObject placeholder = GetValidPlaceholder(whichOutline, _spritePositioning.enemyEntities);
+
+        CardData cardData = GetCardData(cardName);
+
+        if (_manaProvider.EnemyMana < cardData.ManaCost)
         {
-            Debug.LogError($"Invalid outline index: {whichOutline}");
+            Debug.Log($"Not enough enemy mana: {cardData.ManaCost} needed");
             return;
         }
 
-        GameObject placeholder = spritePositioning.enemyEntities[whichOutline];
-        if (placeholder == null)
+        EntityManager entityManager = InitializeEntity(placeholder, cardData);
+
+        if (!cardData.IsSpellCard)
         {
-            Debug.LogError($"Placeholder at index {whichOutline} is null!");
-            return;
-        }
-
-        Image placeholderImage = placeholder.GetComponent<Image>();
-        if (placeholderImage == null)
-        {
-            Debug.LogError("Image component not found on placeholder!");
-            return;
-        }
-
-        CardData selectedCardData = cardLibrary.cardDataList.FirstOrDefault(cardData => cardName == cardData.CardName);
-        if (selectedCardData == null)
-        {
-            Debug.LogError($"Card data not found for card name: {cardName}");
-            return;
-        }
-
-        if (!manaChecker.HasEnoughEnemyMana(selectedCardData))
-        {
-            return;
-        }
-
-        if (!selectedCardData.IsSpellCard)
-        {
-            placeholderImage.sprite = cardLibrary.cardImageGetter(cardName);
-        }
-
-        EntityManager entityManager = placeholder.GetComponent<EntityManager>();
-        if (entityManager == null)
-        {
-            entityManager = placeholder.AddComponent<EntityManager>();
-        }
-
-        Transform healthBarTransform = placeholder.transform.Find("healthBar");
-        Slider healthBarSlider = healthBarTransform != null ? healthBarTransform.GetComponent<Slider>() : null;
-
-        entityManager.InitializeMonster(EntityManager._monsterType.Enemy, selectedCardData.Health, selectedCardData.AttackPower, healthBarSlider, placeholderImage, damageVisualizer, damageNumberPrefab, wizardOutlineSprite, attackLimiter);
-
-        entityManager.placed = !selectedCardData.IsSpellCard;
-        if (entityManager.placed)
-        {
+            UpdateCardVisuals(placeholder, cardData);
+            entityManager.placed = true;
             entityManager.dead = false;
         }
 
-        DisplayHealthBar(placeholder, !selectedCardData.IsSpellCard);
-
-        if (!selectedCardData.IsSpellCard)
-        {
-            placeholder.name = cardName;
-        }
-
-        entityManager.gameObject.SetActive(true);
-
-        manaChecker.DeductEnemyMana(selectedCardData);
-        enemyCardPlayed = true;
+        DisplayHealthBar(placeholder, !cardData.IsSpellCard);
+        _manaProvider.EnemyMana -= cardData.ManaCost;
+        EnemyCardPlayed = true;
     }
+
+    #region Helper Methods
+    private void ValidateOutlineIndex(int index, int maxCount)
+    {
+        if (index < 0 || index >= maxCount)
+            throw new System.ArgumentOutOfRangeException($"Invalid outline index: {index}");
+    }
+
+    private GameObject GetValidPlaceholder(int index, System.Collections.Generic.List<GameObject> entities)
+    {
+        GameObject placeholder = entities[index];
+        if (placeholder == null)
+            throw new System.NullReferenceException($"Placeholder at index {index} is null");
+
+        if (placeholder.GetComponent<Image>() == null)
+            throw new MissingComponentException("Image component not found on placeholder");
+
+        return placeholder;
+    }
+
+    private CardData GetCardData(string cardName)
+    {
+        CardData cardData = _cardLibrary.cardDataList.FirstOrDefault(c => cardName == c.CardName);
+        if (cardData == null)
+            throw new System.ArgumentException($"Card data not found: {cardName}");
+
+        return cardData;
+    }
+
+    private EntityManager InitializeEntity(GameObject placeholder, CardData cardData)
+    {
+        EntityManager entityManager = placeholder.GetComponent<EntityManager>() ??
+                                    placeholder.AddComponent<EntityManager>();
+
+        Slider healthBar = placeholder.transform.Find("healthBar")?.GetComponent<Slider>();
+        Image placeholderImage = placeholder.GetComponent<Image>();
+
+        entityManager.InitializeMonster(
+            _monsterType,
+            cardData.Health,
+            cardData.AttackPower,
+            healthBar,
+            placeholderImage,
+            _damageVisualizer,
+            _damageNumberPrefab,
+            _wizardOutlineSprite,
+            _attackLimiter
+        );
+
+        return entityManager;
+    }
+
+    private void UpdateCardVisuals(GameObject placeholder, CardData cardData)
+    {
+        placeholder.GetComponent<Image>().sprite = _cardLibrary.cardImageGetter(cardData.CardName);
+        placeholder.name = cardData.CardName;
+    }
+    #endregion
 
     private void DisplayHealthBar(GameObject entity, bool active)
     {
-        Transform healthBarTransform = entity.transform.Find("healthBar");
-        if (healthBarTransform != null)
-        {
-            healthBarTransform.gameObject.SetActive(active);
-        }
+        Transform healthBar = entity.transform.Find("healthBar");
+        healthBar?.gameObject.SetActive(active);
     }
 
     private void PlaySummonSFX()
     {
-        AudioSource churchBells = combatStage.GetComponent<AudioSource>();
-        if (churchBells != null)
+        if (_combatStage.TryGetComponent(out AudioSource audioSource))
         {
-            if (churchBells.isPlaying)
-            {
-                churchBells.Stop();
-            }
-            churchBells.Play();
+            if (audioSource.isPlaying) audioSource.Stop();
+            audioSource.Play();
         }
         else
         {
-            Debug.LogError("AudioSource component not found on CombatStage!");
+            Debug.LogError("AudioSource missing on CombatStage");
         }
     }
 }

@@ -1,171 +1,185 @@
-using System.Collections;
-using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
+using TMPro;
+using System.Collections;
 
-
-/*
- * The CombatStage class is responsible for managing the combat stage of the game.
- * It keeps track of the game state, player and enemy health, mana, and turn count.
- * It also handles the end phase and end turn buttons, and the player and enemy actions.
- */
-
-public class CombatStage : MonoBehaviour
+public class CombatStage : MonoBehaviour, ICombatStage
 {
-    public Sprite wizardOutlineSprite;
+    [Header("UI References")]
+    [SerializeField] private Sprite _wizardOutlineSprite;
+    [SerializeField] private GameObject _manaBar;
+    [SerializeField] private GameObject _manaText;
+    [SerializeField] private Canvas _battleField;
 
-    [SerializeField]
-    public GameObject manaBar;
-    [SerializeField]
-    public GameObject manaText;
-    public int currentMana;
-    public int maxMana;
+    [Header("Dependencies")]
+    [SerializeField] private CardManager _cardManager;
+    [SerializeField] private CardOutlineManager _cardOutlineManager;
+    [SerializeField] private CardLibrary _cardLibrary;
+    [SerializeField] private CombatManager _combatManager;
+    [SerializeField] private SpritePositioning _spritePositioning;
+    [SerializeField] private DamageVisualizer _damageVisualizer;
+    [SerializeField] private GameObject _damageNumberPrefab;
 
-    [SerializeField]
-    public CardManager cardManager;
-    [SerializeField]
-    public CardOutlineManager cardOutlineManager;
-    [SerializeField]
-    public CardLibrary cardLibrary;
-    [SerializeField]
-    public CombatManager combatManager;
+    // Services
+    private IAttackHandler _attackHandler;
+    private ICardSpawner _playerCardSpawner;
+    private ICardSpawner _enemyCardSpawner;
+    private ISelectionEffectHandler _enemySelectionEffectHandler;
+    private ISelectionEffectHandler _playerSelectionEffectHandler;
+    private IButtonCreator _buttonCreator;
+    private ICardSelectionHandler _cardSelectionHandler;
+    private ICardManager _cardManagerInterface;
 
-    [SerializeField]
-    Canvas battleField;
-
-    [SerializeField]
-    public SpritePositioning spritePositioning;
-
-    [SerializeField]
-    DamageVisualizer damageVisualizer;
-
-    [SerializeField]
-    GameObject damageNumberPrefab;
-
-    private bool buttonsInitialized = false;
-
-    private CardSelectionHandler cardSelectionHandler;
-    private ButtonCreator buttonCreator;
-    private AttackHandler attackHandler;
-    private GeneralEntities playerCardSpawner;
-    public GeneralEntities enemyCardSpawner;
-    private EnemySelectionEffectHandler enemySelectionEffectHandler;
-    private PlayerSelectionEffectHandler playerSelectionEffectHandler;
-
-    private AttackLimiter attackLimiter;
+    // State
+    public int CurrentMana { get; private set; }
+    public int MaxMana { get; private set; }
+    private bool _buttonsInitialized = false;
 
     private void Awake()
     {
-        attackLimiter = new AttackLimiter();
-
-        playerCardSpawner = new GeneralEntities(spritePositioning, cardLibrary, damageVisualizer, damageNumberPrefab, wizardOutlineSprite, this, attackLimiter, EntityManager._monsterType.Friendly);
-        enemyCardSpawner = new GeneralEntities(spritePositioning, cardLibrary, damageVisualizer, damageNumberPrefab, wizardOutlineSprite, this, attackLimiter, EntityManager._monsterType.Enemy);
-
-        cardSelectionHandler = gameObject.AddComponent<CardSelectionHandler>();
-        cardSelectionHandler.Initialize(cardManager, combatManager, cardOutlineManager, spritePositioning, this, playerCardSpawner);
-
-        buttonCreator = gameObject.AddComponent<ButtonCreator>();
-        buttonCreator.Initialize(battleField, spritePositioning, cardSelectionHandler);
-
-        attackHandler = new AttackHandler(attackLimiter);
-
-        enemySelectionEffectHandler = new EnemySelectionEffectHandler(spritePositioning);
-        playerSelectionEffectHandler = new PlayerSelectionEffectHandler(spritePositioning, cardManager);
+        InitializeDependencies();
+        InitializeServices();
     }
 
-    // This function will be kept
-    public void interactableHighlights()
+    private void InitializeDependencies()
     {
-        if (buttonsInitialized) return;
+        // Convert concrete implementations to interfaces
+        _cardManagerInterface = _cardManager;
 
-        buttonCreator.AddButtonsToPlayerEntities();
-        buttonCreator.AddButtonsToEnemyEntities();
+        // Initialize other interface-based dependencies
+        var attackLimiter = new AttackLimiter();
+        var spawnerFactory = new CardSpawnerFactory(
+            _spritePositioning,
+            _cardLibrary,
+            _combatManager,
+            _damageVisualizer,
+            _damageNumberPrefab,
+            _wizardOutlineSprite,
+            this,
+            attackLimiter);
 
-        buttonsInitialized = true;
+        _playerCardSpawner = spawnerFactory.CreatePlayerSpawner();
+        _enemyCardSpawner = spawnerFactory.CreateEnemySpawner();
+        _attackHandler = new AttackHandler(attackLimiter);
     }
 
-    public void HandleMonsterAttack(EntityManager playerEntity, EntityManager enemyEntity)
+    private void InitializeServices()
     {
-        attackHandler.HandleMonsterAttack(playerEntity, enemyEntity);
+        _cardSelectionHandler = new CardSelectionHandler(
+            _cardManagerInterface,
+            _combatManager,
+            _cardOutlineManager,
+            _spritePositioning,
+            this,
+            _playerCardSpawner);
+
+        _buttonCreator = new ButtonCreator(
+            _battleField,
+            _spritePositioning,
+            _cardSelectionHandler);
+
+        InitializeSelectionEffectHandlers();
     }
 
-    public void spawnEnemy(string cardName, int whichOutline)
+    private void InitializeSelectionEffectHandlers()
     {
-        enemyCardSpawner.SpawnCards(cardName, whichOutline);
+        _playerSelectionEffectHandler = new PlayerSelectionEffectHandler(
+            _spritePositioning,
+            _cardManagerInterface,
+            new Color(0.5f, 1f, 0.5f, 1f));
+
+        _enemySelectionEffectHandler = new EnemySelectionEffectHandler(
+            _spritePositioning,
+            new Color(1f, 0.5f, 0.5f, 1f));
     }
 
-    void Start()
+    private void Start()
     {
-        // Start the coroutine to wait for room selection
-        StartCoroutine(spritePositioning.WaitForRoomSelection());
+        StartCoroutine(InitializeGameElements());
+    }
 
-        // Set all placeholders to be inactive initially
-        StartCoroutine(spritePositioning.SetAllPlaceHoldersInactive());
-
-        // Initialize interactable highlights
-        StartCoroutine(InitializeInteractableHighlights());
+    private IEnumerator InitializeGameElements()
+    {
+        yield return StartCoroutine(_spritePositioning.WaitForRoomSelection());
+        yield return StartCoroutine(_spritePositioning.SetAllPlaceHoldersInactive());
+        yield return StartCoroutine(InitializeInteractableHighlights());
     }
 
     private IEnumerator InitializeInteractableHighlights()
     {
-        // Wait until placeholders are instantiated
-        while (spritePositioning.playerEntities.Count == 0)
-        {
-            yield return null; // Wait for the next frame
-        }
+        while (_spritePositioning.PlayerEntities.Count == 0)
+            yield return null;
 
-        // Initialize interactable highlights
-        interactableHighlights();
+        InitializeButtons();
     }
 
-    public void updateManaUI()
+    public void InitializeButtons()
     {
-        Slider manaSlider = manaBar.GetComponent<Slider>();
-        manaSlider.maxValue = maxMana;
-        manaSlider.value = currentMana;
-        manaText.GetComponent<TMP_Text>().text = currentMana.ToString();
+        if (_buttonsInitialized) return;
+
+        _buttonCreator.AddButtonsToPlayerEntities();
+        _buttonCreator.AddButtonsToEnemyEntities();
+        _buttonsInitialized = true;
+    }
+
+    public void HandleMonsterAttack(EntityManager attacker, EntityManager target)
+    {
+        _attackHandler.HandleAttack(attacker, target);
+    }
+
+    public void SpawnEnemyCard(string cardName, int position)
+    {
+        _enemyCardSpawner.SpawnCard(cardName, position);
+    }
+
+    public void UpdateManaUI()
+    {
+        if (_manaBar == null || _manaText == null) return;
+
+        var manaSlider = _manaBar.GetComponent<Slider>();
+        manaSlider.maxValue = MaxMana;
+        manaSlider.value = CurrentMana;
+        _manaText.GetComponent<TMP_Text>().text = CurrentMana.ToString();
     }
 
     private void Update()
     {
-        // Check if a card is selected and update placeholder visibility
-        if (cardManager.currentSelectedCard != null)
-        {
-            EntityManager selectedCardEntityManager = cardManager.currentSelectedCard.GetComponent<EntityManager>();
-            if (selectedCardEntityManager != null && selectedCardEntityManager.placed)
-            {
-                placeHolderActiveState(false);
-                enemySelectionEffectHandler.ApplyEffect(true);
+        UpdateSelectionEffects();
+        UpdatePlaceholderVisibility();
+    }
 
-                playerSelectionEffectHandler.ApplyEffect();
-            }
-            else
-            {
-                placeHolderActiveState(true);
-                enemySelectionEffectHandler.ApplyEffect(false);
-            }
-        }
-        else
+    private void UpdateSelectionEffects()
+    {
+        bool hasSelectedCard = _cardManagerInterface.CurrentSelectedCard != null;
+        _enemySelectionEffectHandler.ApplyEffect(hasSelectedCard);
+
+        if (hasSelectedCard && IsPlacedCardSelected())
         {
-            placeHolderActiveState(false);
-            enemySelectionEffectHandler.ApplyEffect(false);
+            _playerSelectionEffectHandler.ApplyEffect();
         }
     }
 
-    public void placeHolderActiveState(bool active)
+    private void UpdatePlaceholderVisibility()
     {
-        for (int i = 0; i < spritePositioning.playerEntities.Count; i++)
+        bool shouldShowPlaceholders = _cardManagerInterface.CurrentSelectedCard == null ||
+                                    !IsPlacedCardSelected();
+        SetPlaceholderActiveState(shouldShowPlaceholders);
+    }
+
+    private bool IsPlacedCardSelected()
+    {
+        return _cardManagerInterface.CurrentSelectedCard?.GetComponent<EntityManager>()?.placed ?? false;
+    }
+
+    public void SetPlaceholderActiveState(bool active)
+    {
+        foreach (var entity in _spritePositioning.PlayerEntities)
         {
-            if (spritePositioning.playerEntities[i] != null)
+            if (entity == null) continue;
+
+            var image = entity.GetComponent<Image>();
+            if (image != null && image.sprite != null && image.sprite.name == "wizard_outline")
             {
-                Image placeholderImage = spritePositioning.playerEntities[i].GetComponent<Image>();
-                if (placeholderImage != null && placeholderImage.sprite != null)
-                {
-                    if (placeholderImage.sprite.name == "wizard_outline")
-                    {
-                        spritePositioning.playerEntities[i].SetActive(active);
-                    }
-                }
+                entity.SetActive(active);
             }
         }
     }

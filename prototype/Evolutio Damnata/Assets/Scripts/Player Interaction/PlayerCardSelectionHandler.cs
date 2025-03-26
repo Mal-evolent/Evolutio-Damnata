@@ -1,145 +1,96 @@
-using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerCardSelectionHandler
+public class PlayerCardSelectionHandler : IPlayerCardHandler
 {
+    private readonly ICardValidator _cardValidator;
+    private readonly ICardRemover _cardRemover;
+    private readonly CardOutlineManager _cardOutlineManager;
+    private readonly ICardSpawner _cardSpawner;
+    private readonly IManaProvider _manaProvider;
+    private readonly ISpellEffectApplier _spellEffectApplier;
     private readonly CardManager _cardManager;
     private readonly ICombatManager _combatManager;
-    private readonly CardOutlineManager _cardOutlineManager;
-    private readonly SpritePositioning _spritePositioning;
-    private readonly CombatStage _combatStage;
-    private readonly GeneralEntities _playerCardSpawner;
-    private readonly ManaChecker _manaChecker;
-    private readonly SpellEffectApplier _spellEffectApplier;
 
     public PlayerCardSelectionHandler(
         CardManager cardManager,
         ICombatManager combatManager,
+        ICardValidator cardValidator,
+        ICardRemover cardRemover,
         CardOutlineManager cardOutlineManager,
-        SpritePositioning spritePositioning,
-        CombatStage combatStage,
-        GeneralEntities playerCardSpawner)
+        ICardSpawner cardSpawner,
+        IManaProvider manaProvider,
+        ISpellEffectApplier spellEffectApplier)
     {
         _cardManager = cardManager;
         _combatManager = combatManager;
+        _cardValidator = cardValidator;
+        _cardRemover = cardRemover;
         _cardOutlineManager = cardOutlineManager;
-        _spritePositioning = spritePositioning;
-        _combatStage = combatStage;
-        _playerCardSpawner = playerCardSpawner;
-        _manaChecker = new ManaChecker(combatStage, cardOutlineManager, cardManager);
-        _spellEffectApplier = new SpellEffectApplier(cardManager);
+        _cardSpawner = cardSpawner;
+        _manaProvider = manaProvider;
+        _spellEffectApplier = spellEffectApplier;
     }
 
     public void HandlePlayerCardSelection(int index, EntityManager entityManager)
     {
-        if (_cardManager.currentSelectedCard == null)
+        if (!ValidateSelection(entityManager))
+            return;
+
+        var cardUI = _cardManager.currentSelectedCard.GetComponent<CardUI>();
+        var cardData = cardUI?.card?.CardType;
+
+        if (!_cardValidator.ValidateCardPlay(cardData, _combatManager.CurrentPhase, entityManager.placed))
         {
-            if (!entityManager.placed)
-            {
-                Debug.LogError("No card selected!");
-            }
+            Debug.LogError("Invalid card play conditions");
+            ResetCardSelection();
             return;
         }
 
-        CardUI cardUI = _cardManager.currentSelectedCard.GetComponent<CardUI>();
-        Card cardComponent = cardUI?.card;
-        CardData cardData = cardComponent?.CardType;
+        ProcessValidCard(index, entityManager, cardData);
+    }
 
-        if (!ValidateCardComponents(cardUI, cardComponent, cardData, entityManager))
+    private bool ValidateSelection(EntityManager entityManager)
+    {
+        if (_cardManager.currentSelectedCard != null)
+            return true;
+
+        if (!entityManager.placed)
+            Debug.LogError("No card selected!");
+
+        return false;
+    }
+
+    private void ProcessValidCard(int index, EntityManager entityManager, CardData cardData)
+    {
+        if (_manaProvider.PlayerMana < cardData.ManaCost)
         {
+            Debug.Log($"Not enough mana. Required: {cardData.ManaCost}");
             return;
         }
 
         if (cardData.IsMonsterCard)
-        {
-            HandleMonsterCardSelection(index, cardUI, cardComponent, cardData);
-        }
-        else if (cardData.IsSpellCard)
-        {
-            HandleSpellCardSelection(index, entityManager, cardUI, cardComponent, cardData);
-        }
-        else if (!entityManager.placed)
-        {
-            Debug.LogError("Unsupported card type!");
-        }
+            HandleMonsterCard(index, cardData);
+        else
+            HandleSpellCard(index, entityManager, cardData);
+
+        FinalizeCardPlay(cardData);
     }
 
-    private bool ValidateCardComponents(CardUI cardUI, Card cardComponent, CardData cardData, EntityManager entityManager)
+    private void HandleMonsterCard(int index, CardData cardData)
     {
-        if (cardUI == null && !entityManager.placed)
-        {
-            Debug.LogError("CardUI component not found!");
-            return false;
-        }
-
-        if (cardComponent == null && !entityManager.placed)
-        {
-            Debug.LogError("Card component not found!");
-            return false;
-        }
-
-        if (cardData == null && !entityManager.placed)
-        {
-            Debug.LogError("CardData is null!");
-            return false;
-        }
-
-        return true;
+        _cardSpawner.SpawnCards(_cardManager.currentSelectedCard.name, index);
     }
 
-    private void HandleMonsterCardSelection(int index, CardUI cardUI, Card cardComponent, CardData cardData)
+    private void HandleSpellCard(int index, EntityManager entityManager, CardData cardData)
     {
-        if (_combatManager.CurrentPhase != CombatPhase.PlayerPrep)
-        {
-            Debug.LogError("Can only play monsters in Prep phase!");
-            ResetCardSelection();
-            return;
-        }
+        _spellEffectApplier.ApplySpellEffects(entityManager, cardData, index);
+    }
 
-        if (!_manaChecker.HasEnoughPlayerMana(cardData))
-        {
-            return;
-        }
-
-        _playerCardSpawner.SpawnCards(_cardManager.currentSelectedCard.name, index);
-        _manaChecker.DeductPlayerMana(cardData);
-        RemoveCardFromHand(cardComponent);
+    private void FinalizeCardPlay(CardData cardData)
+    {
+        _manaProvider.PlayerMana -= cardData.ManaCost;
+        _cardRemover.RemoveCardFromHand(_cardManager.currentSelectedCard);
         ResetCardSelection();
-        _combatStage.placeHolderActiveState(false);
-    }
-
-    private void HandleSpellCardSelection(int index, EntityManager entityManager, CardUI cardUI, Card cardComponent, CardData cardData)
-    {
-        if (_combatManager.CurrentPhase == CombatPhase.CleanUp)
-        {
-            Debug.LogError("Cannot cast spells in CleanUp phase!");
-            ResetCardSelection();
-            return;
-        }
-
-        if (!_manaChecker.HasEnoughPlayerMana(cardData))
-        {
-            return;
-        }
-
-        _spellEffectApplier.ApplySpellEffect(entityManager, cardData, index);
-        _manaChecker.DeductPlayerMana(cardData);
-        RemoveCardFromHand(cardComponent);
-        ResetCardSelection();
-    }
-
-    private void RemoveCardFromHand(Card cardComponent)
-    {
-        List<GameObject> handCardObjects = _cardManager.getHandCardObjects();
-        GameObject cardToRemove = _cardManager.currentSelectedCard;
-
-        if (handCardObjects.Contains(cardToRemove))
-        {
-            handCardObjects.Remove(cardToRemove);
-            GameObject.Destroy(cardToRemove);
-            _cardManager.playerDeck.Hand.Remove(cardComponent);
-            Debug.Log("Card removed from hand.");
-        }
     }
 
     private void ResetCardSelection()
