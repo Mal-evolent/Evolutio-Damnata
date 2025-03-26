@@ -1,57 +1,56 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 
-
-/*
- * The roundManager class is responsible for managing the game state.
- * It keeps track of the combat manager and initializes the game.
- */
-
-public class roundManager
+public class RoundManager : IRoundManager
 {
-    private CombatManager combatManager;
+    private readonly ICombatManager _combatManager;
+    private readonly IPhaseManager _phaseManager;
+    private readonly IEnemyActions _enemyActions;
+    private readonly IUIManager _uiManager;
 
-    public roundManager(CombatManager combatManager)
+    public RoundManager(
+        ICombatManager combatManager,
+        IPhaseManager phaseManager,
+        IEnemyActions enemyActions,
+        IUIManager uiManager)
     {
-        this.combatManager = combatManager;
+        _combatManager = combatManager;
+        _phaseManager = phaseManager;
+        _enemyActions = enemyActions;
+        _uiManager = uiManager;
     }
 
     public void InitializeGame()
     {
         Debug.Log("Initializing Game");
-        combatManager.uiManager.SetButtonState(combatManager.endPhaseButton, true);
-        combatManager.uiManager.SetButtonState(combatManager.endTurnButton, false);
+        _uiManager.SetButtonState(_combatManager.EndPhaseButton, true);
+        _uiManager.SetButtonState(_combatManager.EndTurnButton, false);
 
-        combatManager.playerTurn = combatManager.playerGoesFirst;
-
-        combatManager.StartCoroutine(RoundStart());
+        _combatManager.PlayerTurn = _combatManager.PlayerGoesFirst;
+        ((MonoBehaviour)_combatManager).StartCoroutine(RoundStart());
     }
 
     public IEnumerator RoundStart()
     {
         Debug.Log("Starting New Round");
-        combatManager.turnCount++;
-        combatManager.turnUI.text = "turn: " + combatManager.turnCount;
+        _combatManager.TurnCount++;
+        _combatManager.TurnUI.text = "turn: " + _combatManager.TurnCount;
 
-        // Set maxMana to the current turn count
-        combatManager.combatStage.maxMana = combatManager.turnCount;
+        // Set mana values
+        _combatManager.CombatStage.maxMana = _combatManager.TurnCount;
+        _combatManager.CombatStage.currentMana = _combatManager.CombatStage.maxMana;
+        _combatManager.PlayerMana = _combatManager.CombatStage.currentMana;
+        _combatManager.EnemyMana = _combatManager.CombatStage.currentMana;
 
-        // Set currentMana to maxMana
-        combatManager.combatStage.currentMana = combatManager.combatStage.maxMana;
+        _combatManager.CombatStage.updateManaUI();
 
-        // Update player and enemy mana
-        combatManager.playerMana = combatManager.combatStage.currentMana;
-        combatManager.enemyMana = combatManager.combatStage.currentMana;
+        _combatManager.PlayerTurn = _combatManager.PlayerGoesFirst;
+        _combatManager.PlayerGoesFirst = !_combatManager.PlayerGoesFirst;
 
-        // Update the mana UI
-        combatManager.combatStage.updateManaUI();
+        _enemyActions.InitializeDeck();
 
-        combatManager.playerTurn = combatManager.playerGoesFirst;
-        combatManager.playerGoesFirst = !combatManager.playerGoesFirst;
-
-        // Initialize the enemy deck
-        combatManager.enemyActions.InitializeDeck();
-
-        yield return combatManager.StartCoroutine(combatManager.phaseManager.PrepPhase());
+        yield return ((MonoBehaviour)_combatManager).StartCoroutine(_phaseManager.PrepPhase());
     }
 }

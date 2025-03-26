@@ -4,23 +4,22 @@ using UnityEngine;
 
 public class ManaChecker
 {
-    private CombatStage combatStage;
+    private IManaProvider manaProvider;
     private CardOutlineManager cardOutlineManager;
     private CardManager cardManager;
 
-    public ManaChecker(CombatStage combatStage, CardOutlineManager cardOutlineManager, CardManager cardManager)
+    public ManaChecker(IManaProvider manaProvider, CardOutlineManager cardOutlineManager, CardManager cardManager)
     {
-        this.combatStage = combatStage;
+        this.manaProvider = manaProvider;
         this.cardOutlineManager = cardOutlineManager;
         this.cardManager = cardManager;
     }
 
-    // Check if the player has enough mana
     public bool HasEnoughPlayerMana(CardData cardData)
     {
-        if (combatStage.currentMana < cardData.ManaCost)
+        if (manaProvider.PlayerMana < cardData.ManaCost)
         {
-            Debug.LogError($"Not enough player mana. Card costs {cardData.ManaCost}, player has {combatStage.currentMana}");
+            Debug.LogError($"Not enough player mana. Card costs {cardData.ManaCost}, player has {manaProvider.PlayerMana}");
             cardOutlineManager.RemoveHighlight();
             cardManager.currentSelectedCard = null;
             return false;
@@ -28,33 +27,23 @@ public class ManaChecker
         return true;
     }
 
-    // Deduct mana from the player
     public void DeductPlayerMana(CardData cardData)
     {
-        combatStage.currentMana -= cardData.ManaCost;
-        combatStage.combatManager.playerMana = combatStage.currentMana;
-        UpdateManaUI();
+        manaProvider.PlayerMana -= cardData.ManaCost;
     }
 
-    // Check if the enemy has enough mana
     public bool HasEnoughEnemyMana(CardData cardData)
     {
-        if (combatStage.combatManager.enemyMana < cardData.ManaCost)
+        if (manaProvider.EnemyMana < cardData.ManaCost)
         {
-            Debug.LogError($"Not enough enemy mana. Card costs {cardData.ManaCost}, enemy has {combatStage.combatManager.enemyMana}");
+            Debug.LogError($"Not enough enemy mana. Card costs {cardData.ManaCost}, enemy has {manaProvider.EnemyMana}");
             return false;
         }
         return true;
     }
 
-    // Deduct mana from the enemy
     public void DeductEnemyMana(CardData cardData)
     {
-        combatStage.combatManager.enemyMana -= cardData.ManaCost;
-    }
-
-    private void UpdateManaUI()
-    {
-        combatStage.updateManaUI();
+        manaProvider.EnemyMana -= cardData.ManaCost;
     }
 }

@@ -1,73 +1,62 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.UI;
-using System.Collections.Generic;
 
-
-/*
- * The EnemyActions class is responsible for handling the enemy's actions during combat.
- * It contains methods for playing cards and attacking the player.
- */
-
-public class EnemyActions
+public class EnemyActions : IEnemyActions
 {
-    private CombatManager combatManager;
-    private SpritePositioning spritePositioning;
-    private Deck enemyDeck;
-    private CardLibrary cardLibrary;
-    private CombatStage combatStage;
+    private readonly ICombatManager _combatManager;
+    private readonly SpritePositioning _spritePositioning;
+    private readonly Deck _enemyDeck;
+    private readonly CardLibrary _cardLibrary;
+    private readonly CombatStage _combatStage;
 
-    public EnemyActions(CombatManager combatManager, SpritePositioning spritePositioning, Deck enemyDeck, CardLibrary cardLibrary, CombatStage combatStage)
+    public EnemyActions(
+        ICombatManager combatManager,
+        SpritePositioning spritePositioning,
+        Deck enemyDeck,
+        CardLibrary cardLibrary,
+        CombatStage combatStage)
     {
-        this.combatManager = combatManager;
-        this.spritePositioning = spritePositioning;
-        this.enemyDeck = enemyDeck;
-        this.cardLibrary = cardLibrary;
-        this.combatStage = combatStage;
+        _combatManager = combatManager;
+        _spritePositioning = spritePositioning;
+        _enemyDeck = enemyDeck;
+        _cardLibrary = cardLibrary;
+        _combatStage = combatStage;
     }
 
     public void InitializeDeck()
     {
-        if (enemyDeck == null)
+        if (_enemyDeck == null)
         {
             Debug.LogError("Enemy deck is not assigned!");
             return;
         }
 
-        enemyDeck.cardLibrary = cardLibrary;
-        enemyDeck.PopulateDeck();
+        _enemyDeck.cardLibrary = _cardLibrary;
+        _enemyDeck.PopulateDeck();
         Debug.Log("Enemy deck initialized and shuffled.");
     }
-
 
     public IEnumerator PlayCards()
     {
         Debug.Log("Enemy Playing Cards");
 
-        // Simulate AI playing cards
-        for (int i = 0; i < combatManager.enemyDeck.Hand.Count; i++)
+        if (!ValidateCombatState())
         {
-            Card card = combatManager.enemyDeck.Hand[i];
-            if (card != null && card.CardType.IsMonsterCard && combatManager.enemyMana >= card.CardType.ManaCost)
-            {
-                // Play the card
-                combatManager.combatStage.spawnEnemy(card.CardName, i);
-                Debug.Log($"Enemy played card: {card.CardName}");
-
-                // Check if an enemy card was played
-                if (combatManager.combatStage.enemyCardSpawner.enemyCardPlayed)
-                {
-                    combatManager.enemyDeck.Hand.Remove(card);
-                }
-                break;
-            }
+            Debug.LogWarning("Cannot play cards in current combat state");
+            yield break;
         }
 
-        // Check if no enemy card was played
-        if (!combatManager.combatStage.enemyCardSpawner.enemyCardPlayed)
+        // Phase 1: Find playable card (no yielding)
+        var (card, index) = FindPlayableCard();
+        if (card == null)
         {
-            Debug.Log("Enemy did not play any cards.");
+            Debug.Log("Enemy has no playable cards");
+            yield return new WaitForSeconds(2);
+            yield break;
         }
+
+        // Phase 2: Execute card play (with yield)
+        yield return ExecuteCardPlay(card, index);
 
         yield return new WaitForSeconds(2);
     }
@@ -75,6 +64,64 @@ public class EnemyActions
     public IEnumerator Attack()
     {
         Debug.Log("Enemy Attacks");
+
+        if (!ValidateCombatState())
+        {
+            Debug.LogWarning("Cannot attack in current combat state");
+            yield break;
+        }
+
+        // Simple attack delay
         yield return new WaitForSeconds(2);
+    }
+
+    private (Card card, int index) FindPlayableCard()
+    {
+        for (int i = 0; i < _combatManager.EnemyDeck.Hand.Count; i++)
+        {
+            Card card = _combatManager.EnemyDeck.Hand[i];
+            if (IsPlayableCard(card))
+            {
+                return (card, i);
+            }
+        }
+        return (null, -1);
+    }
+
+    private IEnumerator ExecuteCardPlay(Card card, int index)
+    {
+        Debug.Log($"Enemy attempting to play: {card.CardName}");
+
+        try
+        {
+            _combatStage.spawnEnemy(card.CardName, index);
+
+            if (_combatStage.enemyCardSpawner.enemyCardPlayed)
+            {
+                _combatManager.EnemyDeck.Hand.Remove(card);
+                Debug.Log($"Enemy successfully played: {card.CardName}");
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"Failed to play enemy card: {ex.Message}");
+        }
+
+        yield return null;
+    }
+
+    private bool ValidateCombatState()
+    {
+        return _combatManager != null &&
+               _combatStage != null &&
+               _combatManager.EnemyDeck != null;
+    }
+
+    private bool IsPlayableCard(Card card)
+    {
+        return card != null &&
+               card.CardType != null &&
+               card.CardType.IsMonsterCard &&
+               _combatManager.EnemyMana >= card.CardType.ManaCost;
     }
 }

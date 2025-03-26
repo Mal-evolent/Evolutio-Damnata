@@ -1,16 +1,11 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-/**
- * The UIManager class is responsible for managing the UI elements of the game.
- * It handles the visibility of the buttons and other UI elements.
- */
-
-public class UIManager
+public class UIManager : IUIManager
 {
-    private CombatManager combatManager;
+    private readonly ICombatManager combatManager;
 
-    public UIManager(CombatManager combatManager)
+    public UIManager(ICombatManager combatManager)
     {
         this.combatManager = combatManager;
     }

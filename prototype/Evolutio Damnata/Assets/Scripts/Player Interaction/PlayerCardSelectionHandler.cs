@@ -3,188 +3,148 @@ using UnityEngine;
 
 public class PlayerCardSelectionHandler
 {
-    private CardManager cardManager;
-    private CombatManager combatManager;
-    private CardOutlineManager cardOutlineManager;
-    private SpritePositioning spritePositioning;
-    private CombatStage combatStage;
-    private GeneralEntities playerCardSpawner;
-    private ManaChecker manaChecker;
-    private SpellEffectApplier spellEffectApplier;
+    private readonly CardManager _cardManager;
+    private readonly ICombatManager _combatManager;
+    private readonly CardOutlineManager _cardOutlineManager;
+    private readonly SpritePositioning _spritePositioning;
+    private readonly CombatStage _combatStage;
+    private readonly GeneralEntities _playerCardSpawner;
+    private readonly ManaChecker _manaChecker;
+    private readonly SpellEffectApplier _spellEffectApplier;
 
-    public PlayerCardSelectionHandler(CardManager cardManager, CombatManager combatManager, CardOutlineManager cardOutlineManager, SpritePositioning spritePositioning, CombatStage combatStage, GeneralEntities playerCardSpawner)
+    public PlayerCardSelectionHandler(
+        CardManager cardManager,
+        ICombatManager combatManager,
+        CardOutlineManager cardOutlineManager,
+        SpritePositioning spritePositioning,
+        CombatStage combatStage,
+        GeneralEntities playerCardSpawner)
     {
-        this.cardManager = cardManager;
-        this.combatManager = combatManager;
-        this.cardOutlineManager = cardOutlineManager;
-        this.spritePositioning = spritePositioning;
-        this.combatStage = combatStage;
-        this.playerCardSpawner = playerCardSpawner;
-        this.manaChecker = new ManaChecker(combatStage, cardOutlineManager, cardManager);
-        this.spellEffectApplier = new SpellEffectApplier(cardManager);
+        _cardManager = cardManager;
+        _combatManager = combatManager;
+        _cardOutlineManager = cardOutlineManager;
+        _spritePositioning = spritePositioning;
+        _combatStage = combatStage;
+        _playerCardSpawner = playerCardSpawner;
+        _manaChecker = new ManaChecker(combatStage, cardOutlineManager, cardManager);
+        _spellEffectApplier = new SpellEffectApplier(cardManager);
     }
 
     public void HandlePlayerCardSelection(int index, EntityManager entityManager)
     {
-        CardUI cardUI = cardManager.currentSelectedCard.GetComponent<CardUI>();
-        if (cardUI == null && !entityManager.placed)
+        if (_cardManager.currentSelectedCard == null)
         {
-            Debug.LogError("CardUI component not found on current selected card!");
+            if (!entityManager.placed)
+            {
+                Debug.LogError("No card selected!");
+            }
             return;
         }
 
+        CardUI cardUI = _cardManager.currentSelectedCard.GetComponent<CardUI>();
         Card cardComponent = cardUI?.card;
-        if (cardComponent == null && !entityManager.placed)
-        {
-            Debug.LogError("Card component not found on current selected card!");
-            return;
-        }
-
         CardData cardData = cardComponent?.CardType;
-        if (cardData == null && !entityManager.placed)
-        {
-            Debug.LogError("CardType is null on current selected card!");
-            return;
-        }
 
-        if (cardData != null && cardData.IsMonsterCard)
-        {
-            HandleMonsterCardSelection(index);
-        }
-        else if (cardData != null && cardData.IsSpellCard)
-        {
-            HandleSpellCardSelection(index, entityManager);
-        }
-        else if (!entityManager.placed)
-        {
-            Debug.LogError("Card type not found!");
-        }
-    }
-
-    private void HandleMonsterCardSelection(int index)
-    {
-        if (!combatManager.isPlayerPrepPhase)
-        {
-            Debug.LogError("Cannot spawn monster card outside of the preparation phase.");
-            cardOutlineManager.RemoveHighlight();
-            cardManager.currentSelectedCard = null;
-            return;
-        }
-
-        CardUI cardUI = cardManager.currentSelectedCard.GetComponent<CardUI>();
-        if (cardUI == null)
-        {
-            Debug.LogError("CardUI component not found on current selected card!");
-            return;
-        }
-
-        Card cardComponent = cardUI.card;
-        if (cardComponent == null)
-        {
-            Debug.LogError("Card component not found on current selected card!");
-            return;
-        }
-
-        CardData cardData = cardComponent.CardType;
-        if (cardData == null)
-        {
-            Debug.LogError("CardType is null on current selected card!");
-            return;
-        }
-
-        if (!manaChecker.HasEnoughPlayerMana(cardData))
+        if (!ValidateCardComponents(cardUI, cardComponent, cardData, entityManager))
         {
             return;
         }
 
         if (cardData.IsMonsterCard)
         {
-            playerCardSpawner.SpawnCards(cardManager.currentSelectedCard.name, index);
-
-            // Deduct mana
-            manaChecker.DeductPlayerMana(cardData);
-
-            // Remove card from hand
-            List<GameObject> handCardObjects = cardManager.getHandCardObjects();
-            foreach (GameObject cardObject in handCardObjects)
-            {
-                if (cardObject == cardManager.currentSelectedCard)
-                {
-                    handCardObjects.Remove(cardObject);
-                    UnityEngine.Object.Destroy(cardObject);
-                    Debug.Log("Removed card from hand.");
-                    break;
-                }
-            }
-
-            // Also remove the card from the player's deck hand
-            cardManager.playerDeck.Hand.Remove(cardComponent);
-
-            cardManager.currentSelectedCard = null;
-
-            // Deactivate placeholders
-            combatStage.placeHolderActiveState(false);
+            HandleMonsterCardSelection(index, cardUI, cardComponent, cardData);
+        }
+        else if (cardData.IsSpellCard)
+        {
+            HandleSpellCardSelection(index, entityManager, cardUI, cardComponent, cardData);
+        }
+        else if (!entityManager.placed)
+        {
+            Debug.LogError("Unsupported card type!");
         }
     }
 
-    private void HandleSpellCardSelection(int index, EntityManager entityManager)
+    private bool ValidateCardComponents(CardUI cardUI, Card cardComponent, CardData cardData, EntityManager entityManager)
     {
-        if (combatManager.isCleanUpPhase)
+        if (cardUI == null && !entityManager.placed)
         {
-            Debug.LogError("Cannot play spell cards during the Clean Up phase.");
-            cardOutlineManager.RemoveHighlight();
-            cardManager.currentSelectedCard = null;
+            Debug.LogError("CardUI component not found!");
+            return false;
+        }
+
+        if (cardComponent == null && !entityManager.placed)
+        {
+            Debug.LogError("Card component not found!");
+            return false;
+        }
+
+        if (cardData == null && !entityManager.placed)
+        {
+            Debug.LogError("CardData is null!");
+            return false;
+        }
+
+        return true;
+    }
+
+    private void HandleMonsterCardSelection(int index, CardUI cardUI, Card cardComponent, CardData cardData)
+    {
+        if (_combatManager.CurrentPhase != CombatPhase.PlayerPrep)
+        {
+            Debug.LogError("Can only play monsters in Prep phase!");
+            ResetCardSelection();
             return;
         }
 
-        CardUI cardUI = cardManager.currentSelectedCard.GetComponent<CardUI>();
-        if (cardUI == null)
+        if (!_manaChecker.HasEnoughPlayerMana(cardData))
         {
-            Debug.LogError("CardUI component not found on current selected card!");
             return;
         }
 
-        Card cardComponent = cardUI.card;
-        if (cardComponent == null)
+        _playerCardSpawner.SpawnCards(_cardManager.currentSelectedCard.name, index);
+        _manaChecker.DeductPlayerMana(cardData);
+        RemoveCardFromHand(cardComponent);
+        ResetCardSelection();
+        _combatStage.placeHolderActiveState(false);
+    }
+
+    private void HandleSpellCardSelection(int index, EntityManager entityManager, CardUI cardUI, Card cardComponent, CardData cardData)
+    {
+        if (_combatManager.CurrentPhase == CombatPhase.CleanUp)
         {
-            Debug.LogError("Card component not found on current selected card!");
+            Debug.LogError("Cannot cast spells in CleanUp phase!");
+            ResetCardSelection();
             return;
         }
 
-        CardData cardData = cardComponent.CardType;
-        if (cardData == null)
+        if (!_manaChecker.HasEnoughPlayerMana(cardData))
         {
-            Debug.LogError("CardType is null on current selected card!");
             return;
         }
 
-        if (!manaChecker.HasEnoughPlayerMana(cardData))
+        _spellEffectApplier.ApplySpellEffect(entityManager, cardData, index);
+        _manaChecker.DeductPlayerMana(cardData);
+        RemoveCardFromHand(cardComponent);
+        ResetCardSelection();
+    }
+
+    private void RemoveCardFromHand(Card cardComponent)
+    {
+        List<GameObject> handCardObjects = _cardManager.getHandCardObjects();
+        GameObject cardToRemove = _cardManager.currentSelectedCard;
+
+        if (handCardObjects.Contains(cardToRemove))
         {
-            return; // Bail if there isn't enough mana
+            handCardObjects.Remove(cardToRemove);
+            GameObject.Destroy(cardToRemove);
+            _cardManager.playerDeck.Hand.Remove(cardComponent);
+            Debug.Log("Card removed from hand.");
         }
+    }
 
-        spellEffectApplier.ApplySpellEffect(entityManager, cardData, index);
-
-        manaChecker.DeductPlayerMana(cardData);
-
-        // Remove card from hand
-        List<GameObject> handCardObjects = cardManager.getHandCardObjects();
-        foreach (GameObject cardObject in handCardObjects)
-        {
-            if (cardObject == cardManager.currentSelectedCard)
-            {
-                handCardObjects.Remove(cardObject);
-                UnityEngine.Object.Destroy(cardObject);
-                Debug.Log("Removed card from hand.");
-                break;
-            }
-        }
-
-        // Also remove the card from the player's deck hand
-        cardManager.playerDeck.Hand.Remove(cardComponent);
-
-        cardManager.currentSelectedCard = null;
-        cardOutlineManager.RemoveHighlight();
+    private void ResetCardSelection()
+    {
+        _cardManager.currentSelectedCard = null;
+        _cardOutlineManager.RemoveHighlight();
     }
 }
-

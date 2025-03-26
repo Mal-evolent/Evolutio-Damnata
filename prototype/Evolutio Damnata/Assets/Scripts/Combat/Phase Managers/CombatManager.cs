@@ -1,77 +1,141 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using System.Collections;
 
-/*
- * The CombatManager class is responsible for managing the combat stage of the game.
- * It keeps track of the game state, player and enemy health, mana, and turn count.
- * It also handles the end phase and end turn buttons, and the player and enemy actions.
- */
-
-public class CombatManager : MonoBehaviour
+public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
 {
-    public CombatStage combatStage;
-    public TMP_Text turnUI;
+    [Header("References")]
+    [SerializeField] private CombatStage _combatStage;
+    [SerializeField] private TMP_Text _turnUI;
+    [SerializeField] private Button _endPhaseButton;
+    [SerializeField] private Button _endTurnButton;
+    [SerializeField] private Deck _playerDeck;
+    [SerializeField] private Deck _enemyDeck;
 
-    public int turnCount = 0;
-    public int playerMana = 0;
-    public int enemyMana = 0;
-    public int playerHealth = 30;
-    public int enemyHealth = 30;
+    [Header("UI References")]
+    [SerializeField] private TMP_Text _playerManaText;
 
-    public Button endPhaseButton;
-    public Button endTurnButton;
+    [Header("Game State")]
+    [SerializeField] private int _turnCount = 0;
+    [SerializeField] private int _playerMana = 0;
+    [SerializeField] private int _enemyMana = 0;
+    [SerializeField] private int _playerHealth = 30;
+    [SerializeField] private int _enemyHealth = 30;
+    [SerializeField] private bool _playerGoesFirst = true;
+    [SerializeField] private bool _playerTurn;
+    [SerializeField] private CombatPhase _currentPhase = CombatPhase.None;
 
-    public bool playerGoesFirst = true;
-    public bool playerTurn;
+    private IRoundManager _roundManager;
+    private IPhaseManager _phaseManager;
+    private IPlayerActions _playerActions;
+    private IEnemyActions _enemyActions;
+    private IUIManager _uiManager;
 
-    public Deck playerDeck;
-    public Deck enemyDeck;
+    // Properties
+    public int TurnCount { get => _turnCount; set => _turnCount = value; }
+    public int PlayerHealth { get => _playerHealth; set => _playerHealth = value; }
+    public int EnemyHealth { get => _enemyHealth; set => _enemyHealth = value; }
+    public bool PlayerTurn { get => _playerTurn; set => _playerTurn = value; }
+    public bool PlayerGoesFirst { get => _playerGoesFirst; set => _playerGoesFirst = value; }
+    public CombatPhase CurrentPhase { get => _currentPhase; set => _currentPhase = value; }
+    public CombatStage CombatStage => _combatStage;
+    public Deck PlayerDeck => _playerDeck;
+    public Deck EnemyDeck => _enemyDeck;
+    public Button EndPhaseButton => _endPhaseButton;
+    public Button EndTurnButton => _endTurnButton;
+    public TMP_Text TurnUI => _turnUI;
 
-    public roundManager gameStateManager;
-    public PhaseManager phaseManager;
-    public PlayerActions playerActions;
-    public EnemyActions enemyActions;
-    public UIManager uiManager;
-
-    public bool isPlayerPrepPhase = false;
-    public bool isPlayerCombatPhase = false;
-    public bool isEnemyPrepPhase = false;
-    public bool isEnemyCombatPhase = false;
-    public bool isCleanUpPhase = false;
-
-    private AttackLimiter attackLimiter;
-
-    public void Start()
+    // IManaProvider implementation
+    public int PlayerMana
     {
-        attackLimiter = new AttackLimiter();
-        gameStateManager = new roundManager(this);
-        phaseManager = new PhaseManager(this, attackLimiter);
-        playerActions = new PlayerActions(this);
-        enemyActions = new EnemyActions(this, combatStage.spritePositioning, enemyDeck, combatStage.cardLibrary, combatStage);
-        uiManager = new UIManager(this);
-
-        gameStateManager.InitializeGame();
+        get => _playerMana;
+        set
+        {
+            _playerMana = value;
+            UpdatePlayerManaUI();
+        }
     }
 
+    public int EnemyMana
+    {
+        get => _enemyMana;
+        set => _enemyMana = value;
+    }
+
+    private void Awake()
+    {
+        // Initialize dependencies
+        _uiManager = new UIManager(this);
+        _playerActions = new PlayerActions(this);
+
+        _enemyActions = new EnemyActions(
+            this,
+            _combatStage.spritePositioning,
+            _enemyDeck,
+            _combatStage.cardLibrary,
+            _combatStage
+        );
+
+        var attackLimiter = new AttackLimiter();
+
+        // Create RoundManager first with null PhaseManager
+        _roundManager = new RoundManager(this, null, _enemyActions, _uiManager);
+
+        // Now create PhaseManager with all dependencies
+        _phaseManager = new PhaseManager(
+            combatManager: this,
+            attackLimiter: attackLimiter,
+            uiManager: _uiManager,
+            enemyActions: _enemyActions,
+            playerActions: _playerActions,
+            roundManager: _roundManager
+        );
+
+        // Update RoundManager with actual PhaseManager
+        _roundManager = new RoundManager(this, _phaseManager, _enemyActions, _uiManager);
+    }
+
+    private void Start()
+    {
+        _roundManager.InitializeGame();
+    }
+
+    // IManaProvider implementation
+    public void UpdatePlayerManaUI()
+    {
+        if (_playerManaText != null)
+        {
+            _playerManaText.text = $"Mana: {PlayerMana}";
+        }
+    }
+
+    // Gameplay methods
     public void EndPhase()
     {
-        uiManager.SetButtonState(endPhaseButton, false);
-        phaseManager.EndPhase();
+        _uiManager.SetButtonState(_endPhaseButton, false);
+        _phaseManager.EndPhase();
     }
 
     public void EndTurn()
     {
-        uiManager.SetButtonState(endTurnButton, false);
-        playerActions.EndTurn();
+        _uiManager.SetButtonState(_endTurnButton, false);
+        _playerActions.EndTurn();
     }
 
-    public void ResetPhaseStates()
+    public void ResetPhaseState()
     {
-        isPlayerPrepPhase = false;
-        isPlayerCombatPhase = false;
-        isEnemyPrepPhase = false;
-        isEnemyCombatPhase = false;
-        isCleanUpPhase = false;
+        _currentPhase = CombatPhase.None;
     }
+
+    // Phase check methods
+    public bool IsPlayerPrepPhase() => _currentPhase == CombatPhase.PlayerPrep;
+    public bool IsPlayerCombatPhase() => _currentPhase == CombatPhase.PlayerCombat;
+    public bool IsEnemyPrepPhase() => _currentPhase == CombatPhase.EnemyPrep;
+    public bool IsEnemyCombatPhase() => _currentPhase == CombatPhase.EnemyCombat;
+    public bool IsCleanUpPhase() => _currentPhase == CombatPhase.CleanUp;
+
+    // Unity method implementations
+    public Coroutine StartCoroutine(IEnumerator routine) => base.StartCoroutine(routine);
+    public T GetComponent<T>() where T : Component => base.GetComponent<T>();
 }

@@ -1,138 +1,140 @@
 using System.Collections;
 using UnityEngine;
 
-/**
- * The PhaseManager class is responsible for managing the different phases of the combat stage.
- * It handles the preparation phase, combat phase, and clean-up phase of the game.
- */
-
-public class PhaseManager
+public class PhaseManager : IPhaseManager
 {
-    private CombatManager combatManager;
-    private AttackLimiter attackLimiter;
+    private readonly ICombatManager _combatManager;
+    private readonly AttackLimiter _attackLimiter;
+    private readonly IUIManager _uiManager;
+    private readonly IEnemyActions _enemyActions;
+    private readonly IPlayerActions _playerActions;
+    private readonly IRoundManager _roundManager;
 
-    public PhaseManager(CombatManager combatManager, AttackLimiter attackLimiter)
+    public PhaseManager(
+        ICombatManager combatManager,
+        AttackLimiter attackLimiter,
+        IUIManager uiManager,
+        IEnemyActions enemyActions,
+        IPlayerActions playerActions,
+        IRoundManager roundManager)
     {
-        this.combatManager = combatManager;
-        this.attackLimiter = attackLimiter;
+        _combatManager = combatManager;
+        _attackLimiter = attackLimiter;
+        _uiManager = uiManager;
+        _enemyActions = enemyActions;
+        _playerActions = playerActions;
+        _roundManager = roundManager;
     }
 
     public IEnumerator PrepPhase()
     {
         Debug.Log("Entering Prep Phase");
-        combatManager.ResetPhaseStates();
+        _combatManager.ResetPhaseState();
 
-        if (combatManager.playerTurn)
+        if (_combatManager.PlayerTurn)
         {
-            combatManager.isPlayerPrepPhase = true;
+            _combatManager.CurrentPhase = CombatPhase.PlayerPrep;
             Debug.Log("Player's Prep Phase");
-            combatManager.uiManager.SetButtonState(combatManager.endPhaseButton, true);
-            yield return new WaitUntil(() => combatManager.endPhaseButton.gameObject.activeSelf == false);
+            _uiManager.SetButtonState(_combatManager.EndPhaseButton, true);
+            yield return new WaitUntil(() => _combatManager.EndPhaseButton.gameObject.activeSelf == false);
 
-            combatManager.isPlayerPrepPhase = false;
-            combatManager.playerTurn = false;
-            combatManager.isEnemyPrepPhase = true;
+            _combatManager.CurrentPhase = CombatPhase.EnemyPrep;
+            _combatManager.PlayerTurn = false;
             Debug.Log("Enemy's Prep Phase");
-            yield return combatManager.StartCoroutine(combatManager.enemyActions.PlayCards());
-            combatManager.isEnemyPrepPhase = false;
+            yield return ((MonoBehaviour)_combatManager).StartCoroutine(_enemyActions.PlayCards());
         }
         else
         {
-            combatManager.isEnemyPrepPhase = true;
+            _combatManager.CurrentPhase = CombatPhase.EnemyPrep;
             Debug.Log("Enemy's Prep Phase");
-            yield return combatManager.StartCoroutine(combatManager.enemyActions.PlayCards());
-            combatManager.isEnemyPrepPhase = false;
+            yield return ((MonoBehaviour)_combatManager).StartCoroutine(_enemyActions.PlayCards());
 
-            combatManager.isPlayerPrepPhase = true;
-            combatManager.playerTurn = true;
+            _combatManager.CurrentPhase = CombatPhase.PlayerPrep;
+            _combatManager.PlayerTurn = true;
             Debug.Log("Player's Prep Phase");
-            combatManager.uiManager.SetButtonState(combatManager.endPhaseButton, true);
-            yield return new WaitUntil(() => combatManager.endPhaseButton.gameObject.activeSelf == false);
-            combatManager.isPlayerPrepPhase = false;
+            _uiManager.SetButtonState(_combatManager.EndPhaseButton, true);
+            yield return new WaitUntil(() => _combatManager.EndPhaseButton.gameObject.activeSelf == false);
         }
 
-        yield return combatManager.StartCoroutine(CombatPhase());
+        _combatManager.CurrentPhase = CombatPhase.None;
+        yield return ((MonoBehaviour)_combatManager).StartCoroutine(ExecuteCombatPhase());
     }
 
-    public IEnumerator CombatPhase()
+    public IEnumerator ExecuteCombatPhase()
     {
         Debug.Log("Entering Combat Phase");
-        combatManager.ResetPhaseStates();
+        _combatManager.ResetPhaseState();
 
-        if (combatManager.playerTurn)
+        if (_combatManager.PlayerTurn)
         {
-            combatManager.isPlayerCombatPhase = true;
+            _combatManager.CurrentPhase = CombatPhase.PlayerCombat;
             Debug.Log("Player Attacks - Start");
-            combatManager.uiManager.SetButtonState(combatManager.endTurnButton, true);
-            combatManager.playerActions.playerTurnEnded = false;
-            yield return new WaitUntil(() => combatManager.playerActions.playerTurnEnded);
-            combatManager.isPlayerCombatPhase = false;
+            _uiManager.SetButtonState(_combatManager.EndTurnButton, true);
+            _playerActions.PlayerTurnEnded = false;
+            yield return new WaitUntil(() => _playerActions.PlayerTurnEnded);
             Debug.Log("Player Attacks - End");
 
-            combatManager.playerTurn = false;
-
-            combatManager.isEnemyCombatPhase = true;
+            _combatManager.PlayerTurn = false;
+            _combatManager.CurrentPhase = CombatPhase.EnemyCombat;
             Debug.Log("Enemy Attacks - Start");
-            yield return combatManager.StartCoroutine(combatManager.enemyActions.Attack());
-            combatManager.isEnemyCombatPhase = false;
+            yield return ((MonoBehaviour)_combatManager).StartCoroutine(_enemyActions.Attack());
             Debug.Log("Enemy Attacks - End");
         }
         else
         {
-            combatManager.isEnemyCombatPhase = true;
+            _combatManager.CurrentPhase = CombatPhase.EnemyCombat;
             Debug.Log("Enemy Attacks - Start");
-            yield return combatManager.StartCoroutine(combatManager.enemyActions.Attack());
-            combatManager.isEnemyCombatPhase = false;
+            yield return ((MonoBehaviour)_combatManager).StartCoroutine(_enemyActions.Attack());
             Debug.Log("Enemy Attacks - End");
 
-            combatManager.playerTurn = true;
-
-            combatManager.isPlayerCombatPhase = true;
+            _combatManager.PlayerTurn = true;
+            _combatManager.CurrentPhase = CombatPhase.PlayerCombat;
             Debug.Log("Player Attacks - Start");
-            combatManager.uiManager.SetButtonState(combatManager.endTurnButton, true);
-            combatManager.playerActions.playerTurnEnded = false;
-            yield return new WaitUntil(() => combatManager.playerActions.playerTurnEnded);
-            combatManager.isPlayerCombatPhase = false;
+            _uiManager.SetButtonState(_combatManager.EndTurnButton, true);
+            _playerActions.PlayerTurnEnded = false;
+            yield return new WaitUntil(() => _playerActions.PlayerTurnEnded);
             Debug.Log("Player Attacks - End");
         }
 
-        yield return combatManager.StartCoroutine(CleanUpPhase());
+        _combatManager.CurrentPhase = CombatPhase.None;
+        yield return ((MonoBehaviour)_combatManager).StartCoroutine(CleanUpPhase());
     }
 
-    public IEnumerator CleanUpPhase()
+    private IEnumerator CleanUpPhase()
     {
         Debug.Log("Entering Clean-Up Phase");
-        combatManager.isCleanUpPhase = true;
+        _combatManager.CurrentPhase = CombatPhase.CleanUp;
 
         // Apply ongoing effects to all player entities
-        foreach (var entity in combatManager.combatStage.spritePositioning.playerEntities)
+        foreach (var entity in _combatManager.CombatStage.spritePositioning.playerEntities)
         {
-            EntityManager entityManager = entity.GetComponent<EntityManager>();
+            var entityManager = entity.GetComponent<EntityManager>();
             if (entityManager != null)
             {
                 entityManager.ApplyOngoingEffects();
                 Debug.Log($"Resetting attacks for player entity: {entityManager.name}");
-                attackLimiter.ResetAttacks(entityManager);
+                _attackLimiter.ResetAttacks(entityManager);
             }
         }
 
         // Apply ongoing effects to all enemy entities
-        foreach (var entity in combatManager.combatStage.spritePositioning.enemyEntities)
+        foreach (var entity in _combatManager.CombatStage.spritePositioning.enemyEntities)
         {
-            EntityManager entityManager = entity.GetComponent<EntityManager>();
+            var entityManager = entity.GetComponent<EntityManager>();
             if (entityManager != null)
             {
                 entityManager.ApplyOngoingEffects();
                 Debug.Log($"Resetting attacks for enemy entity: {entityManager.name}");
-                attackLimiter.ResetAttacks(entityManager);
+                _attackLimiter.ResetAttacks(entityManager);
             }
         }
 
-        combatManager.playerDeck.DrawOneCard();
-        combatManager.enemyDeck.DrawOneCard();
+        _combatManager.PlayerDeck.DrawOneCard();
+        _combatManager.EnemyDeck.DrawOneCard();
         yield return new WaitForSeconds(1);
-        combatManager.StartCoroutine(combatManager.gameStateManager.RoundStart());
-        combatManager.ResetPhaseStates();
+
+        ((MonoBehaviour)_combatManager).StartCoroutine(_roundManager.RoundStart());
+        _combatManager.ResetPhaseState();
     }
 
     public void EndPhase()

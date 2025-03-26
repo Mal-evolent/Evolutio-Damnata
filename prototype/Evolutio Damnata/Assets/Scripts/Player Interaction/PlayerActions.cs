@@ -1,23 +1,19 @@
 using UnityEngine;
 
-/*
- * The PlayerActions class is responsible for managing the player's actions during the combat phase.
- * It keeps track of the player's turn state and provides methods for the player to end their turn.
- */
-
-public class PlayerActions
+public class PlayerActions : IPlayerActions
 {
-    private CombatManager combatManager;
-    public bool playerTurnEnded = false;
+    private readonly ICombatManager _combatManager;
 
-    public PlayerActions(CombatManager combatManager)
+    public bool PlayerTurnEnded { get; set; } = false;
+
+    public PlayerActions(ICombatManager combatManager)
     {
-        this.combatManager = combatManager;
+        _combatManager = combatManager;
     }
 
     public void EndTurn()
     {
         Debug.Log("Ending Turn");
-        playerTurnEnded = true;
+        PlayerTurnEnded = true;
     }
 }
