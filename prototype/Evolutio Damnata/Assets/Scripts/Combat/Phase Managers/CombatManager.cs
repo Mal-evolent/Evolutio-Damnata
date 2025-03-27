@@ -128,12 +128,12 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
         _currentPhase = CombatPhase.None;
     }
 
-    // Phase check methods
-    public bool IsPlayerPrepPhase() => _currentPhase == CombatPhase.PlayerPrep;
-    public bool IsPlayerCombatPhase() => _currentPhase == CombatPhase.PlayerCombat;
-    public bool IsEnemyPrepPhase() => _currentPhase == CombatPhase.EnemyPrep;
-    public bool IsEnemyCombatPhase() => _currentPhase == CombatPhase.EnemyCombat;
-    public bool IsCleanUpPhase() => _currentPhase == CombatPhase.CleanUp;
+    // Explicit interface implementations for phase checks
+    bool ICombatManager.IsPlayerPrepPhase() => _currentPhase == CombatPhase.PlayerPrep;
+    bool ICombatManager.IsPlayerCombatPhase() => _currentPhase == CombatPhase.PlayerCombat;
+    bool ICombatManager.IsEnemyPrepPhase() => _currentPhase == CombatPhase.EnemyPrep;
+    bool ICombatManager.IsEnemyCombatPhase() => _currentPhase == CombatPhase.EnemyCombat;
+    bool ICombatManager.IsCleanUpPhase() => _currentPhase == CombatPhase.CleanUp;
 
     // Unity method implementations
     public Coroutine StartCoroutine(IEnumerator routine) => base.StartCoroutine(routine);

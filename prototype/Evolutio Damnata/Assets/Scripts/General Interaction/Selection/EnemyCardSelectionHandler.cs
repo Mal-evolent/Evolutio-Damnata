@@ -86,7 +86,7 @@ public class EnemyCardSelectionHandler : IEnemyCardHandler
         if (!_manaChecker.HasEnoughPlayerMana(cardData))
             return;
 
-        _spellEffectApplier.ApplySpellEffect(entityManager, cardData, index);
+        _spellEffectApplier.ApplySpellEffects(entityManager, cardData, index);
         _manaChecker.DeductPlayerMana(cardData);
         RemoveCardFromHand();
         ResetSelection();
@@ -94,13 +94,10 @@ public class EnemyCardSelectionHandler : IEnemyCardHandler
 
     private void RemoveCardFromHand()
     {
-        var handCardObjects = _cardManager.GetHandCardObjects();
         var selectedCard = _cardManager.CurrentSelectedCard;
-
-        if (handCardObjects.Contains(selectedCard))
+        if (selectedCard != null)
         {
-            handCardObjects.Remove(selectedCard);
-            Object.Destroy(selectedCard);
+            _cardManager.RemoveCard(selectedCard);
             Debug.Log("Removed spell card from hand.");
         }
     }

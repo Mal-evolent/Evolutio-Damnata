@@ -24,10 +24,10 @@ public class SpellEffectApplier : ISpellEffectApplier
     public void ApplySpellEffects(EntityManager target, CardData spellData, int positionIndex)
     {
         // Get or create SpellCard component
-        SpellCard spellCard = _cardManager.currentSelectedCard.GetComponent<SpellCard>();
+        SpellCard spellCard = _cardManager.CurrentSelectedCard.GetComponent<SpellCard>();
         if (spellCard == null)
         {
-            spellCard = _cardManager.currentSelectedCard.AddComponent<SpellCard>();
+            spellCard = _cardManager.CurrentSelectedCard.AddComponent<SpellCard>();
             spellCard.CardType = spellData;
             spellCard.CardName = spellData.CardName;
             spellCard.EffectTypes = spellData.EffectTypes;
@@ -71,7 +71,7 @@ public class SpellEffectApplier : ISpellEffectApplier
             }
         }
 
-        _cardManager.RemoveCard(_cardManager.currentSelectedCard);
+        _cardManager.RemoveCard(_cardManager.CurrentSelectedCard);
     }
 
     private void ApplyDamageEffect(EntityManager target, int damage)

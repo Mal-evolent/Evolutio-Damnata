@@ -2,21 +2,21 @@ using UnityEngine;
 
 public class PlayerCardSelectionHandler : IPlayerCardHandler
 {
+    private readonly ICardManager _cardManager;
     private readonly ICardValidator _cardValidator;
     private readonly ICardRemover _cardRemover;
-    private readonly CardOutlineManager _cardOutlineManager;
+    private readonly ICardOutlineManager _cardOutlineManager;
     private readonly ICardSpawner _cardSpawner;
     private readonly IManaProvider _manaProvider;
     private readonly ISpellEffectApplier _spellEffectApplier;
-    private readonly CardManager _cardManager;
     private readonly ICombatManager _combatManager;
 
     public PlayerCardSelectionHandler(
-        CardManager cardManager,
+        ICardManager cardManager,
         ICombatManager combatManager,
         ICardValidator cardValidator,
         ICardRemover cardRemover,
-        CardOutlineManager cardOutlineManager,
+        ICardOutlineManager cardOutlineManager,
         ICardSpawner cardSpawner,
         IManaProvider manaProvider,
         ISpellEffectApplier spellEffectApplier)
@@ -36,7 +36,7 @@ public class PlayerCardSelectionHandler : IPlayerCardHandler
         if (!ValidateSelection(entityManager))
             return;
 
-        var cardUI = _cardManager.currentSelectedCard.GetComponent<CardUI>();
+        var cardUI = _cardManager.CurrentSelectedCard.GetComponent<CardUI>();
         var cardData = cardUI?.card?.CardType;
 
         if (!_cardValidator.ValidateCardPlay(cardData, _combatManager.CurrentPhase, entityManager.placed))
@@ -51,7 +51,7 @@ public class PlayerCardSelectionHandler : IPlayerCardHandler
 
     private bool ValidateSelection(EntityManager entityManager)
     {
-        if (_cardManager.currentSelectedCard != null)
+        if (_cardManager.CurrentSelectedCard != null)
             return true;
 
         if (!entityManager.placed)
@@ -78,7 +78,7 @@ public class PlayerCardSelectionHandler : IPlayerCardHandler
 
     private void HandleMonsterCard(int index, CardData cardData)
     {
-        _cardSpawner.SpawnCards(_cardManager.currentSelectedCard.name, index);
+        _cardSpawner.SpawnCards(_cardManager.CurrentSelectedCard.name, index);
     }
 
     private void HandleSpellCard(int index, EntityManager entityManager, CardData cardData)
@@ -89,13 +89,13 @@ public class PlayerCardSelectionHandler : IPlayerCardHandler
     private void FinalizeCardPlay(CardData cardData)
     {
         _manaProvider.PlayerMana -= cardData.ManaCost;
-        _cardRemover.RemoveCardFromHand(_cardManager.currentSelectedCard);
+        _cardRemover.RemoveCardFromHand(_cardManager.CurrentSelectedCard);
         ResetCardSelection();
     }
 
     private void ResetCardSelection()
     {
-        _cardManager.currentSelectedCard = null;
-        _cardOutlineManager.RemoveHighlight();
+        _cardManager.CurrentSelectedCard = null;
+        _cardOutlineManager.RemoveHighlight(); 
     }
 }

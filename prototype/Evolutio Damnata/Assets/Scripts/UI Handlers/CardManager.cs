@@ -86,7 +86,7 @@ public class CardManager : MonoBehaviour, ICardManager
         }
 
         _cardOutlineManager.HighlightCard(cardObject);
-        CurrentSelectedCard = _cardOutlineManager.cardIsHighlighted ? cardObject : null;
+        CurrentSelectedCard = _cardOutlineManager.CardIsHighlighted ? cardObject : null;
         Debug.Log(CurrentSelectedCard != null
             ? $"Selected Card: {CurrentSelectedCard.name}"
             : "Deselected Card");

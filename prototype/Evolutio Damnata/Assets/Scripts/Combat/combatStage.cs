@@ -2,7 +2,7 @@ using UnityEngine;
 using TMPro;
 using System.Collections;
 
-public class CombatStage : MonoBehaviour, ICombatStage
+public class CombatStage : MonoBehaviour, ICombatStage, IManaProvider
 {
     [Header("UI References")]
     [SerializeField] private Sprite _wizardOutlineSprite;
@@ -19,6 +19,10 @@ public class CombatStage : MonoBehaviour, ICombatStage
     [SerializeField] private DamageVisualizer _damageVisualizer;
     [SerializeField] private GameObject _damageNumberPrefab;
 
+    [Header("Mana Settings")]
+    [SerializeField] private int _playerMana;
+    [SerializeField] private int _enemyMana;
+
     // Interface references
     private ISpritePositioning _spritePositioning;
     private IAttackHandler _attackHandler;
@@ -31,10 +35,11 @@ public class CombatStage : MonoBehaviour, ICombatStage
     private ICardManager _cardManager;
     private ICombatManager _combatManager;
     private ICardOutlineManager _cardOutlineManager;
+    private OngoingEffectApplier _ongoingEffectApplier;
 
     // State
-    public int CurrentMana { get; private set; }
-    public int MaxMana { get; private set; }
+    public int PlayerMana { get => _playerMana; set => _playerMana = value; }
+    public int EnemyMana { get; set; }
     private bool _buttonsInitialized = false;
 
     private void Awake()
@@ -50,36 +55,62 @@ public class CombatStage : MonoBehaviour, ICombatStage
 
     private void InitializeServices()
     {
+        // 1. Initialize core combat systems
         var attackLimiter = new AttackLimiter();
         var spawnerFactory = new CardSpawnerFactory(
-            _spritePositioning,
-            _cardLibrary,
-            _combatManager,
-            _damageVisualizer,
-            _damageNumberPrefab,
-            _wizardOutlineSprite,
-            this,
-            attackLimiter);
+            _spritePositioning,      // ISpritePositioning
+            _cardLibrary,            // CardLibrary (concrete is fine as it's data)
+            _combatManager,          // ICombatManager
+            _damageVisualizer,       // DamageVisualizer
+            _damageNumberPrefab,     // GameObject
+            _wizardOutlineSprite,    // Sprite
+            this,                    // ICombatStage + IManaProvider
+            attackLimiter            // AttackLimiter
+        );
 
-        _playerCardSpawner = spawnerFactory.CreatePlayerSpawner();
-        _enemyCardSpawner = spawnerFactory.CreateEnemySpawner();
-        _attackHandler = new AttackHandler(attackLimiter);
+        // 2. Create spawners
+        _playerCardSpawner = spawnerFactory.CreatePlayerSpawner();  // ICardSpawner
+        _enemyCardSpawner = spawnerFactory.CreateEnemySpawner();    // ICardSpawner
+        _attackHandler = new AttackHandler(attackLimiter);          // IAttackHandler
 
+        // 3. Initialize effect systems
+        _ongoingEffectApplier = new OngoingEffectApplier();         // IEffectApplier
+        var spellEffectApplier = new SpellEffectApplier(
+            _cardManager,           // ICardManager
+            _ongoingEffectApplier,  // IEffectApplier
+            _damageVisualizer,      // Consider interface if needed
+            _damageNumberPrefab     // GameObject
+        );
+
+        // 4. Create mana system
+        var manaChecker = new ManaChecker(
+            this,                   // IManaProvider (via CombatStage)
+            _cardOutlineManager,    // ICardOutlineManager
+            _cardManager            // ICardManager
+        );
+
+        // 5. Initialize card selection
         _cardSelectionHandler = new CardSelectionHandler();
         _cardSelectionHandler.Initialize(
-            _cardManager,
-            _combatManager,
-            _cardOutlineManager,
-            _spritePositioning,
-            this,
-            _playerCardSpawner);
+            _cardManager,           // ICardManager
+            _combatManager,         // ICombatManager
+            _cardOutlineManager,    // ICardOutlineManager
+            _spritePositioning,     // ISpritePositioning
+            this,                   // ICombatStage
+            _playerCardSpawner,     // ICardSpawner
+            manaChecker,            // IManaChecker
+            spellEffectApplier      // ISpellEffectApplier
+        );
 
+        // 6. Set up UI
         _buttonCreator = gameObject.AddComponent<ButtonCreator>();
         (_buttonCreator as ButtonCreator).Initialize(
-            _battleField,
-            _spritePositioning,
-            _cardSelectionHandler);
+            _battleField,           // Canvas
+            _spritePositioning,     // ISpritePositioning
+            _cardSelectionHandler   // ICardSelectionHandler
+        );
 
+        // 7. Initialize visual effects
         InitializeSelectionEffectHandlers();
     }
 
@@ -142,6 +173,17 @@ public class CombatStage : MonoBehaviour, ICombatStage
         manaSlider.maxValue = MaxMana;
         manaSlider.value = CurrentMana;
         _manaText.GetComponent<TMP_Text>().text = CurrentMana.ToString();
+    }
+
+    public void UpdatePlayerManaUI()
+    {
+        // Your existing mana UI update logic
+        if (_manaBar == null || _manaText == null) return;
+
+        var manaSlider = _manaBar.GetComponent<Slider>();
+        manaSlider.maxValue = MaxMana;
+        manaSlider.value = PlayerMana;
+        _manaText.GetComponent<TMP_Text>().text = PlayerMana.ToString();
     }
 
     private void Update()

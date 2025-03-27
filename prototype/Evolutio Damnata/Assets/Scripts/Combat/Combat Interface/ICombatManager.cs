@@ -25,6 +25,12 @@ public interface ICombatManager
     void EndPhase();
     void EndTurn();
     void ResetPhaseState();
+
+    bool IsPlayerCombatPhase();
+    bool IsPlayerPrepPhase();
+    bool IsEnemyPrepPhase();
+    bool IsEnemyCombatPhase();
+    bool IsCleanUpPhase();
 }
 
 // IUIManager.cs
