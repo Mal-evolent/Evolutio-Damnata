@@ -42,7 +42,7 @@ public class GeneralEntities : ICardSpawner
         _monsterType = monsterType;
     }
 
-    public void SpawnCards(string cardName, int whichOutline)
+    public void SpawnCard(string cardName, int whichOutline)
     {
         if (string.IsNullOrEmpty(cardName))
         {

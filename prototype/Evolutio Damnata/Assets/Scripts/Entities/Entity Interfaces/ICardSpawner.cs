@@ -6,5 +6,5 @@ public interface ICardSpawner
     /// </summary>
     /// <param name="cardName">Name of the card to spawn</param>
     /// <param name="whichOutline">Position index to spawn at</param>
-    void SpawnCards(string cardName, int whichOutline);
+    void SpawnCard(string cardName, int whichOutline);
 }
