@@ -105,8 +105,11 @@ public class PhaseManager : IPhaseManager
         Debug.Log("Entering Clean-Up Phase");
         _combatManager.CurrentPhase = CombatPhase.CleanUp;
 
+        // Get the sprite positioning from combat stage
+        ISpritePositioning spritePositioning = _combatManager.CombatStage.SpritePositioning;
+
         // Apply ongoing effects to all player entities
-        foreach (var entity in _combatManager.CombatStage.spritePositioning.playerEntities)
+        foreach (var entity in spritePositioning.PlayerEntities)
         {
             var entityManager = entity.GetComponent<EntityManager>();
             if (entityManager != null)
@@ -118,7 +121,7 @@ public class PhaseManager : IPhaseManager
         }
 
         // Apply ongoing effects to all enemy entities
-        foreach (var entity in _combatManager.CombatStage.spritePositioning.enemyEntities)
+        foreach (var entity in spritePositioning.EnemyEntities)
         {
             var entityManager = entity.GetComponent<EntityManager>();
             if (entityManager != null)
