@@ -23,7 +23,7 @@ public class CombatStage : MonoBehaviour, ICombatStage, IManaProvider
     [Header("Mana Settings")]
     [SerializeField] private int _playerMana;
     [SerializeField] private int _enemyMana;
-    [SerializeField] private int _maxMana = 10;
+    [SerializeField] private int _maxMana = 0;
 
     // Interface references
     private ISpritePositioning _spritePositioning;

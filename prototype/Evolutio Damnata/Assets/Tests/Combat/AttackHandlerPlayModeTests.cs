@@ -59,7 +59,7 @@ public class AttackHandlerPlayModeTests
         float initialEnemyHealth = enemyEntity.getHealth();
 
         // Perform attack
-        attackHandler.HandleMonsterAttack(playerEntity, enemyEntity);
+        attackHandler.HandleAttack(playerEntity, enemyEntity);
         yield return null;
 
         // Check if health updated correctly

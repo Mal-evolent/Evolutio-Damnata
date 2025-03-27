@@ -552,7 +552,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16869d47dbb0db648a88ebe63e04907f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cardIsHighlighted: 0
+  _selectAudioSource: {fileID: 0}
 --- !u!4 &210388636
 Transform:
   m_ObjectHideFlags: 0
@@ -862,7 +862,7 @@ MonoBehaviour:
   Hand: []
   MaxDeckSize: 10
   HandSize: 5
-  cardLibrary: {fileID: 1159794893}
+  _cardLibrary: {fileID: 0}
   cardManager: {fileID: 1201594250}
 --- !u!4 &294774780
 Transform:
@@ -1909,7 +1909,7 @@ MonoBehaviour:
   Hand: []
   MaxDeckSize: 10
   HandSize: 5
-  cardLibrary: {fileID: 1159794893}
+  _cardLibrary: {fileID: 0}
   cardManager: {fileID: 1201594250}
 --- !u!4 &825410031
 Transform:
@@ -2023,21 +2023,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 38b2a36d0ad21464c9502127b056c695, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerDeck: {fileID: 294774779}
-  cardDataList:
-  - CardName: 
-    CardImage: {fileID: 0}
-    Description: 
-    ManaCost: 0
-    AttackPower: 0
-    Health: 0
-    Keywords: 
-    EffectTypes: 00000000
-    EffectValue: 0
-    Duration: 0
-    IsSpellCard: 1
-    IsMonsterCard: 0
-  defaultCardSprite: {fileID: 21300000, guid: cfc01b4a01660a74992bfb87771ebd33, type: 3}
+  _playerDeck: {fileID: 0}
+  _cardDataList: []
+  _defaultCardSprite: {fileID: 0}
 --- !u!4 &1159794894
 Transform:
   m_ObjectHideFlags: 0
@@ -2264,14 +2252,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0fc3f934722d3e340ac7d202f8ff0edd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerDeck: {fileID: 294774779}
-  cardUIContainer: {fileID: 404896485}
-  deckPanelRect: {fileID: 298523279}
-  cardTemplate: {fileID: 21300000, guid: 5a112041cc08f0440b2d7cadf11cc69d, type: 3}
-  cardPrefab: {fileID: 8404733209785131298, guid: 071d931bace1dd4499f34a21bd75c309, type: 3}
-  cardOutlineManager: {fileID: 210388635}
-  combatManager: {fileID: 1394303771}
-  currentSelectedCard: {fileID: 0}
+  _playerDeck: {fileID: 0}
+  _cardUIContainer: {fileID: 0}
+  _deckPanelRect: {fileID: 0}
+  _cardTemplate: {fileID: 0}
+  _cardPrefab: {fileID: 0}
+  _cardOutlineManager: {fileID: 0}
+  _combatManager: {fileID: 0}
 --- !u!1 &1281395480
 GameObject:
   m_ObjectHideFlags: 0
@@ -2503,24 +2490,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10f936ff672b18a43813d2a89356911b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  combatStage: {fileID: 6081315368044828686}
-  turnUI: {fileID: 352670599}
-  turnCount: 0
-  playerMana: 0
-  enemyMana: 0
-  playerHealth: 0
-  enemyHealth: 0
-  endPhaseButton: {fileID: 143301893}
-  endTurnButton: {fileID: 192387895}
-  playerGoesFirst: 1
-  playerTurn: 1
-  playerDeck: {fileID: 294774779}
-  enemyDeck: {fileID: 825410030}
-  isPlayerPrepPhase: 0
-  isPlayerCombatPhase: 0
-  isEnemyPrepPhase: 0
-  isEnemyCombatPhase: 0
-  isCleanUpPhase: 0
+  _combatStage: {fileID: 0}
+  _turnUI: {fileID: 0}
+  _endPhaseButton: {fileID: 0}
+  _endTurnButton: {fileID: 0}
+  _playerDeck: {fileID: 0}
+  _enemyDeck: {fileID: 0}
+  _manaSlider: {fileID: 0}
+  _manaText: {fileID: 0}
+  _playerManaText: {fileID: 0}
+  _turnCount: 0
+  _playerMana: 0
+  _enemyMana: 0
+  _maxMana: 0
+  _playerHealth: 30
+  _enemyHealth: 30
+  _playerGoesFirst: 1
+  _playerTurn: 0
+  _currentPhase: 0
 --- !u!4 &1394303772
 Transform:
   m_ObjectHideFlags: 0
@@ -2769,12 +2756,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0e3237df6ae10e444b98007248dc9c5c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  placeHolderPrefab: {fileID: 4984019819858904803, guid: feb6f16f3491b3c44ab3ac9bf11c14cc, type: 3}
-  mapScript: {fileID: 559180382}
-  mainCanvas: {fileID: 2123307026}
-  roomReady: 0
-  playerEntities: []
-  enemyEntities: []
+  _placeHolderPrefab: {fileID: 0}
+  _mapScript: {fileID: 0}
+  _mainCanvas: {fileID: 0}
 --- !u!4 &1417216790
 Transform:
   m_ObjectHideFlags: 0
@@ -3551,19 +3535,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8070a9404e525da42bbf3234b8e66da0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  wizardOutlineSprite: {fileID: 21300000, guid: f37c6e0e3bb934a4d85b500b2c9ee2c6, type: 3}
-  manaBar: {fileID: 1793571144}
-  manaText: {fileID: 1870554165}
-  currentMana: 10
-  maxMana: 10
-  cardManager: {fileID: 1201594250}
-  cardOutlineManager: {fileID: 210388635}
-  cardLibrary: {fileID: 1159794893}
-  combatManager: {fileID: 1394303771}
-  battleField: {fileID: 2123307026}
-  spritePositioning: {fileID: 1417216789}
-  damageVisualizer: {fileID: 389717233}
-  damageNumberPrefab: {fileID: 7701005947219011525, guid: a68dba72d8724e94989227a650a79328, type: 3}
+  _wizardOutlineSprite: {fileID: 21300000, guid: 6bcc5bcd60555644a916f3bf816cc40a, type: 3}
+  _manaBar: {fileID: 0}
+  _manaText: {fileID: 0}
+  _battleField: {fileID: 0}
+  _cardManagerComponent: {fileID: 0}
+  _cardOutlineManagerComponent: {fileID: 0}
+  _cardLibrary: {fileID: 0}
+  _combatManagerComponent: {fileID: 0}
+  _spritePositioningComponent: {fileID: 0}
+  _damageVisualizer: {fileID: 0}
+  _damageNumberPrefab: {fileID: 0}
+  _playerMana: 0
+  _enemyMana: 0
+  _maxMana: 10
 --- !u!4 &6081315368044828687
 Transform:
   m_ObjectHideFlags: 0
