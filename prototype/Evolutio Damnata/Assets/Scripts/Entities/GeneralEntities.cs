@@ -5,12 +5,12 @@ using System.Linq;
 public class GeneralEntities : ICardSpawner
 {
     // Dependencies
-    private readonly SpritePositioning _spritePositioning;
+    private readonly ISpritePositioning _spritePositioning;
     private readonly CardLibrary _cardLibrary;
     private readonly IManaProvider _manaProvider;
     private readonly DamageVisualizer _damageVisualizer;
     private readonly AttackLimiter _attackLimiter;
-    private readonly CombatStage _combatStage;
+    private readonly ICombatStage _combatStage;
 
     // Visual/Audio
     private readonly GameObject _damageNumberPrefab;
@@ -21,13 +21,13 @@ public class GeneralEntities : ICardSpawner
     private readonly EntityManager._monsterType _monsterType;
 
     public GeneralEntities(
-        SpritePositioning spritePositioning,
+        ISpritePositioning spritePositioning,
         CardLibrary cardLibrary,
         IManaProvider manaProvider,
         DamageVisualizer damageVisualizer,
         GameObject damageNumberPrefab,
         Sprite wizardOutlineSprite,
-        CombatStage combatStage,
+        ICombatStage combatStage,
         AttackLimiter attackLimiter,
         EntityManager._monsterType monsterType)
     {
@@ -180,7 +180,9 @@ public class GeneralEntities : ICardSpawner
 
     private void PlaySummonSFX()
     {
-        if (_combatStage.TryGetComponent(out AudioSource audioSource))
+        // Changed to use GetComponent through the interface
+        var combatStageObj = _combatStage as MonoBehaviour;
+        if (combatStageObj != null && combatStageObj.TryGetComponent(out AudioSource audioSource))
         {
             if (audioSource.isPlaying) audioSource.Stop();
             audioSource.Play();

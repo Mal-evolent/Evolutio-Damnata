@@ -1,87 +1,98 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-/*
- * This script is used to manage the outline of a card when it is selected by the player.
- * It allows the player to select a card and have it highlighted with a green outline.
- * If the player selects a different card, the outline will be removed from the previously selected card.
- * If the player selects the same card again, the outline will be removed.
- * 
- * This script is attached to the GameManager object in the scene.
- */
-public class CardOutlineManager : MonoBehaviour
-{
-    private GameObject currentlyHighlightedCard;
-    public bool cardIsHighlighted;
 
-    //highlight card
+public class CardOutlineManager : MonoBehaviour, ICardOutlineManager
+{
+    [Header("Audio Settings")]
+    [SerializeField] private AudioSource _selectAudioSource;
+
+    private GameObject _currentlyHighlightedCard;
+
+    public bool CardIsHighlighted { get; private set; }
+
     public void HighlightCard(GameObject cardObject)
     {
-        //if there's already a highlighted card, remove its outline
-        if (currentlyHighlightedCard != null && currentlyHighlightedCard != cardObject)
+        // Null check for safety
+        if (cardObject == null) return;
+
+        // If clicking a different card, remove previous highlight
+        if (_currentlyHighlightedCard != null && _currentlyHighlightedCard != cardObject)
         {
-            RemoveHighlight(currentlyHighlightedCard);
+            RemoveHighlight(_currentlyHighlightedCard);
         }
 
-        //remove the outline for the card if it's already highlighted
-        if(currentlyHighlightedCard == cardObject)
+        // Toggle highlight if clicking same card
+        if (_currentlyHighlightedCard == cardObject)
         {
             RemoveHighlight(cardObject);
             return;
         }
 
-        //add or enable the outline for a selected card
-        Outline outline = cardObject.GetComponent<Outline>();
+        // Add or enable outline
+        var outline = GetOrAddOutlineComponent(cardObject);
+        outline.enabled = true;
+        _currentlyHighlightedCard = cardObject;
+        CardIsHighlighted = true;
+
+        PlaySelectionSound();
+    }
+
+    public void RemoveHighlight(GameObject cardObject)
+    {
+        if (cardObject == null) return;
+
+        var outline = cardObject.GetComponent<Outline>();
+        if (outline != null)
+        {
+            outline.enabled = false;
+        }
+
+        if (_currentlyHighlightedCard == cardObject)
+        {
+            _currentlyHighlightedCard = null;
+            CardIsHighlighted = false;
+        }
+    }
+
+    public void RemoveHighlight()
+    {
+        if (_currentlyHighlightedCard == null) return;
+
+        var outline = _currentlyHighlightedCard.GetComponent<Outline>();
+        if (outline != null)
+        {
+            outline.enabled = false;
+        }
+
+        _currentlyHighlightedCard = null;
+        CardIsHighlighted = false;
+    }
+
+    private Outline GetOrAddOutlineComponent(GameObject cardObject)
+    {
+        var outline = cardObject.GetComponent<Outline>();
         if (outline == null)
         {
             outline = cardObject.AddComponent<Outline>();
             outline.effectColor = Color.green;
             outline.effectDistance = new Vector2(6f, 6f);
         }
-
-        outline.enabled = true;
-        currentlyHighlightedCard = cardObject;
-        cardIsHighlighted = true;
-
-        // Player select SFX
-        AudioSource select = GetComponent<AudioSource>();
-        if (select.isPlaying)
-        {
-            select.Stop();
-        }
-        select.Play();
+        return outline;
     }
 
-    public void RemoveHighlight(GameObject cardObject)
+    private void PlaySelectionSound()
     {
-        Outline outline = cardObject.GetComponent<Outline>();
-        if (outline != null)
+        if (_selectAudioSource == null)
         {
-            outline.enabled = false;
+            _selectAudioSource = GetComponent<AudioSource>();
+            if (_selectAudioSource == null) return;
         }
 
-        //clear the highlighted card reference if it matches the one being unhighlighted
-        if (currentlyHighlightedCard == cardObject)
+        if (_selectAudioSource.isPlaying)
         {
-            currentlyHighlightedCard = null;
+            _selectAudioSource.Stop();
         }
-        cardIsHighlighted = false;
-    }
-
-    // Overloaded function to remove highlight from currentlyHighlightedCard
-    public void RemoveHighlight()
-    {
-        if(currentlyHighlightedCard != null)
-        {
-            Outline outline = currentlyHighlightedCard.GetComponent<Outline>();
-            if (outline != null)
-            {
-                outline.enabled = false;
-            }
-
-            //clear the highlighted card reference if it matches the one being unhighlighted
-            currentlyHighlightedCard = null;
-            cardIsHighlighted = false;
-        }
+        _selectAudioSource.Play();
     }
 }

@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class CardSpawnerFactory : ICardSpawnerFactory
 {
-    private readonly SpritePositioning _spritePositioning;
+    private readonly ISpritePositioning _spritePositioning;
     private readonly CardLibrary _cardLibrary;
     private readonly IManaProvider _manaProvider;
     private readonly DamageVisualizer _damageVisualizer;
@@ -12,13 +12,13 @@ public class CardSpawnerFactory : ICardSpawnerFactory
     private readonly AttackLimiter _attackLimiter;
 
     public CardSpawnerFactory(
-        SpritePositioning spritePositioning,
+        ISpritePositioning spritePositioning,
         CardLibrary cardLibrary,
         IManaProvider manaProvider,
         DamageVisualizer damageVisualizer,
         GameObject damageNumberPrefab,
         Sprite wizardOutlineSprite,
-        ICombatStage combatStage,
+        ICombatStage combatStage, 
         AttackLimiter attackLimiter)
     {
         _spritePositioning = spritePositioning ?? throw new System.ArgumentNullException(nameof(spritePositioning));
@@ -40,7 +40,7 @@ public class CardSpawnerFactory : ICardSpawnerFactory
             _damageVisualizer,
             _damageNumberPrefab,
             _wizardOutlineSprite,
-            _combatStage,
+            _combatStage, 
             _attackLimiter,
             EntityManager._monsterType.Friendly);
     }
@@ -54,7 +54,7 @@ public class CardSpawnerFactory : ICardSpawnerFactory
             _damageVisualizer,
             _damageNumberPrefab,
             _wizardOutlineSprite,
-            _combatStage,
+            _combatStage, 
             _attackLimiter,
             EntityManager._monsterType.Enemy);
     }

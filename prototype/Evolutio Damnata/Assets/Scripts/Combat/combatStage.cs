@@ -11,10 +11,10 @@ public class CombatStage : MonoBehaviour, ICombatStage
     [SerializeField] private Canvas _battleField;
 
     [Header("Dependencies")]
-    [SerializeField] private CardManager _cardManager;
-    [SerializeField] private CardOutlineManager _cardOutlineManager;
+    [SerializeField] private CardManager _cardManagerComponent;
+    [SerializeField] private CardOutlineManager _cardOutlineManagerComponent;
     [SerializeField] private CardLibrary _cardLibrary;
-    [SerializeField] private CombatManager _combatManager;
+    [SerializeField] private CombatManager _combatManagerComponent;
     [SerializeField] private SpritePositioning _spritePositioningComponent;
     [SerializeField] private DamageVisualizer _damageVisualizer;
     [SerializeField] private GameObject _damageNumberPrefab;
@@ -28,7 +28,9 @@ public class CombatStage : MonoBehaviour, ICombatStage
     private ISelectionEffectHandler _playerSelectionEffectHandler;
     private IButtonCreator _buttonCreator;
     private ICardSelectionHandler _cardSelectionHandler;
-    private ICardManager _cardManagerInterface;
+    private ICardManager _cardManager;
+    private ICombatManager _combatManager;
+    private ICardOutlineManager _cardOutlineManager;
 
     // State
     public int CurrentMana { get; private set; }
@@ -37,9 +39,11 @@ public class CombatStage : MonoBehaviour, ICombatStage
 
     private void Awake()
     {
-        // Convert components to interfaces
+        // Initialize interface references
         _spritePositioning = _spritePositioningComponent;
-        _cardManagerInterface = _cardManager;
+        _cardManager = _cardManagerComponent;
+        _combatManager = _combatManagerComponent;
+        _cardOutlineManager = _cardOutlineManagerComponent;
 
         InitializeServices();
     }
@@ -61,15 +65,17 @@ public class CombatStage : MonoBehaviour, ICombatStage
         _enemyCardSpawner = spawnerFactory.CreateEnemySpawner();
         _attackHandler = new AttackHandler(attackLimiter);
 
-        _cardSelectionHandler = new CardSelectionHandler(
-            _cardManagerInterface,
+        _cardSelectionHandler = new CardSelectionHandler();
+        _cardSelectionHandler.Initialize(
+            _cardManager,
             _combatManager,
             _cardOutlineManager,
             _spritePositioning,
             this,
             _playerCardSpawner);
 
-        _buttonCreator = new ButtonCreator(
+        _buttonCreator = gameObject.AddComponent<ButtonCreator>();
+        (_buttonCreator as ButtonCreator).Initialize(
             _battleField,
             _spritePositioning,
             _cardSelectionHandler);
@@ -81,7 +87,7 @@ public class CombatStage : MonoBehaviour, ICombatStage
     {
         _playerSelectionEffectHandler = new PlayerSelectionEffectHandler(
             _spritePositioning,
-            _cardManagerInterface,
+            _cardManager,
             new Color(0.5f, 1f, 0.5f, 1f));
 
         _enemySelectionEffectHandler = new EnemySelectionEffectHandler(
@@ -146,7 +152,7 @@ public class CombatStage : MonoBehaviour, ICombatStage
 
     private void UpdateSelectionEffects()
     {
-        bool hasSelectedCard = _cardManagerInterface.CurrentSelectedCard != null;
+        bool hasSelectedCard = _cardManager.CurrentSelectedCard != null;
         _enemySelectionEffectHandler.ApplyEffect(hasSelectedCard);
 
         if (hasSelectedCard && IsPlacedCardSelected())
@@ -157,7 +163,7 @@ public class CombatStage : MonoBehaviour, ICombatStage
 
     private void UpdatePlaceholderVisibility()
     {
-        bool shouldShowPlaceholders = _cardManagerInterface.CurrentSelectedCard == null ||
+        bool shouldShowPlaceholders = _cardManager.CurrentSelectedCard == null ||
                                     !IsPlacedCardSelected();
 
         SetPlaceholderActiveState(shouldShowPlaceholders);
@@ -165,7 +171,7 @@ public class CombatStage : MonoBehaviour, ICombatStage
 
     private bool IsPlacedCardSelected()
     {
-        return _cardManagerInterface.CurrentSelectedCard?.GetComponent<EntityManager>()?.placed ?? false;
+        return _cardManager.CurrentSelectedCard?.GetComponent<EntityManager>()?.placed ?? false;
     }
 
     public void SetPlaceholderActiveState(bool active)
