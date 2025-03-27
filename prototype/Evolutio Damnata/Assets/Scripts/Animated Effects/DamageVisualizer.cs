@@ -2,23 +2,19 @@ using System.Collections;
 using TMPro;
 using UnityEngine;
 
-/**
- * This class is responsible for creating the damage and healing number visual effects.
- * It creates a text object with the number and animates it by moving it up and fading it out.
- */
-public class DamageVisualizer : MonoBehaviour
+public class DamageVisualizer : MonoBehaviour, IDamageVisualizer
 {
-    public GameObject CreateDamageNumber(MonoBehaviour callerMono, float damageNumber, Vector3 position, GameObject prefab)
+    public GameObject CreateDamageNumber(EntityManager target, float damageNumber, Vector3 position, GameObject prefab)
     {
-        return CreateNumber(callerMono, damageNumber, position, prefab, "-", Color.red);
+        return CreateNumber(target, damageNumber, position, prefab, "-", Color.red);
     }
 
-    public GameObject CreateHealingNumber(MonoBehaviour callerMono, float healNumber, Vector3 position, GameObject prefab)
+    public GameObject CreateHealingNumber(EntityManager target, float healNumber, Vector3 position, GameObject prefab)
     {
-        return CreateNumber(callerMono, healNumber, position, prefab, "+", Color.green);
+        return CreateNumber(target, healNumber, position, prefab, "+", Color.green);
     }
 
-    private GameObject CreateNumber(MonoBehaviour callerMono, float numberValue, Vector3 position, GameObject prefab, string prefix, Color color)
+    private GameObject CreateNumber(EntityManager target, float numberValue, Vector3 position, GameObject prefab, string prefix, Color color)
     {
         // Find the Canvas
         GameObject canvas = GameObject.Find("Canvas");
@@ -37,7 +33,7 @@ public class DamageVisualizer : MonoBehaviour
         if (text != null)
         {
             text.text = prefix + numberValue.ToString();
-            text.color = color; // Set the appropriate color
+            text.color = color;
         }
         else
         {
@@ -45,14 +41,14 @@ public class DamageVisualizer : MonoBehaviour
         }
 
         // Start the animation coroutine
-        callerMono.StartCoroutine(AnimateText(numberObj));
+        StartCoroutine(AnimateText(numberObj));
 
         return numberObj;
     }
 
     private IEnumerator AnimateText(GameObject visual)
     {
-        float duration = 1f; // Animation duration in seconds
+        float duration = 1f;
         float elapsedTime = 0f;
         TextMeshProUGUI text = visual.GetComponent<TextMeshProUGUI>();
 
@@ -69,13 +65,8 @@ public class DamageVisualizer : MonoBehaviour
         while (elapsedTime < duration)
         {
             float t = elapsedTime / duration;
-
-            // Smoothly move the text upwards
             visual.transform.position = Vector3.Lerp(startPosition, targetPosition, t);
-
-            // Gradually fade out the text
             text.color = new Color(startColor.r, startColor.g, startColor.b, Mathf.Lerp(1, 0, t));
-
             elapsedTime += Time.deltaTime;
             yield return null;
         }

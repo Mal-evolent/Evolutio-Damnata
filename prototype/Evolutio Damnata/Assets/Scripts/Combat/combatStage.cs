@@ -58,14 +58,14 @@ public class CombatStage : MonoBehaviour, ICombatStage, IManaProvider
         // 1. Initialize core combat systems
         var attackLimiter = new AttackLimiter();
         var spawnerFactory = new CardSpawnerFactory(
-            _spritePositioning,      // ISpritePositioning
-            _cardLibrary,            // CardLibrary (concrete is fine as it's data)
-            _combatManager,          // ICombatManager
-            _damageVisualizer,       // DamageVisualizer
-            _damageNumberPrefab,     // GameObject
-            _wizardOutlineSprite,    // Sprite
-            this,                    // ICombatStage + IManaProvider
-            attackLimiter            // AttackLimiter
+            _spritePositioning,
+            _cardLibrary,
+            this,
+            _damageVisualizer,
+            _damageNumberPrefab,
+            _wizardOutlineSprite,
+            this,
+            attackLimiter
         );
 
         // 2. Create spawners

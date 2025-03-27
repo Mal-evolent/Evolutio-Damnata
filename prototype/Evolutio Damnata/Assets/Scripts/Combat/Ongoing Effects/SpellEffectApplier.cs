@@ -1,41 +1,62 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class SpellEffectApplier : ISpellEffectApplier
 {
-    private readonly CardManager _cardManager;
-    private readonly OngoingEffectApplier _ongoingEffectApplier;
-    private readonly DamageVisualizer _damageVisualizer;
+    private readonly ICardManager _cardManager;
+    private readonly IEffectApplier _effectApplier;
+    private readonly IDamageVisualizer _damageVisualizer;
     private readonly GameObject _damageNumberPrefab;
 
     public SpellEffectApplier(
-        CardManager cardManager,
-        OngoingEffectApplier effectApplier,
-        DamageVisualizer damageVisualizer,
+        ICardManager cardManager,
+        IEffectApplier effectApplier,
+        IDamageVisualizer damageVisualizer,
         GameObject damageNumberPrefab)
     {
-        _cardManager = cardManager;
-        _ongoingEffectApplier = effectApplier;
-        _damageVisualizer = damageVisualizer;
-        _damageNumberPrefab = damageNumberPrefab;
+        _cardManager = cardManager ?? throw new System.ArgumentNullException(nameof(cardManager));
+        _effectApplier = effectApplier ?? throw new System.ArgumentNullException(nameof(effectApplier));
+        _damageVisualizer = damageVisualizer ?? throw new System.ArgumentNullException(nameof(damageVisualizer));
+        _damageNumberPrefab = damageNumberPrefab ?? throw new System.ArgumentNullException(nameof(damageNumberPrefab));
     }
 
     public void ApplySpellEffects(EntityManager target, CardData spellData, int positionIndex)
     {
-        // Get or create SpellCard component
-        SpellCard spellCard = _cardManager.CurrentSelectedCard.GetComponent<SpellCard>();
-        if (spellCard == null)
+        if (target == null || spellData == null)
         {
-            spellCard = _cardManager.CurrentSelectedCard.AddComponent<SpellCard>();
-            spellCard.CardType = spellData;
-            spellCard.CardName = spellData.CardName;
-            spellCard.EffectTypes = spellData.EffectTypes;
-            spellCard.EffectValue = spellData.EffectValue;
-            spellCard.Duration = spellData.Duration;
+            Debug.LogError("Invalid spell effect parameters");
+            return;
         }
 
-        // Process all effects
+        var selectedCard = _cardManager.CurrentSelectedCard;
+        if (selectedCard == null)
+        {
+            Debug.LogError("No card selected for spell effect");
+            return;
+        }
+
+        // Get or create SpellCard component
+        var spellCard = selectedCard.GetComponent<SpellCard>();
+        if (spellCard == null)
+        {
+            spellCard = selectedCard.AddComponent<SpellCard>();
+            InitializeSpellCard(spellCard, spellData);
+        }
+
+        ApplyEffectsToTarget(target, spellData);
+        _cardManager.RemoveCard(selectedCard);
+    }
+
+    private void InitializeSpellCard(SpellCard spellCard, CardData spellData)
+    {
+        spellCard.CardType = spellData;
+        spellCard.CardName = spellData.CardName;
+        spellCard.EffectTypes = spellData.EffectTypes;
+        spellCard.EffectValue = spellData.EffectValue;
+        spellCard.Duration = spellData.Duration;
+    }
+
+    private void ApplyEffectsToTarget(EntityManager target, CardData spellData)
+    {
         foreach (var effectType in spellData.EffectTypes)
         {
             switch (effectType)
@@ -66,39 +87,37 @@ public class SpellEffectApplier : ISpellEffectApplier
                         spellData.EffectValue,
                         spellData.Duration,
                         target);
-                    _ongoingEffectApplier.AddEffect(burnEffect);
+                    _effectApplier.AddEffect(burnEffect);
+                    break;
+
+                default:
+                    Debug.LogWarning($"Unknown effect type: {effectType}");
                     break;
             }
         }
-
-        _cardManager.RemoveCard(_cardManager.CurrentSelectedCard);
     }
 
     private void ApplyDamageEffect(EntityManager target, int damage)
     {
-        target.takeDamage(damage);
-        if (_damageVisualizer != null && _damageNumberPrefab != null)
-        {
-            Vector3 position = target.transform.position;
-            _damageVisualizer.CreateDamageNumber(target, damage, position, _damageNumberPrefab);
-        }
+        target.TakeDamage(damage);
+        _damageVisualizer?.CreateDamageNumber(target, damage, target.transform.position, _damageNumberPrefab);
     }
 
     private void ApplyBuff(EntityManager target, int value, int duration)
     {
-        target.ModifyAttack(value); // Assuming this exists
+        target.ModifyAttack(value);
         Debug.Log($"Buffed {target.name}'s attack by {value} for {duration} turns");
     }
 
     private void ApplyDebuff(EntityManager target, int value, int duration)
     {
-        target.ModifyAttack(-value); // Assuming this exists
+        target.ModifyAttack(-value);
         Debug.Log($"Debuffed {target.name}'s attack by {value} for {duration} turns");
     }
 
     private void ApplyDoubleAttack(EntityManager target, int duration)
     {
-        target.SetDoubleAttack(duration); // Assuming this exists
+        target.SetDoubleAttack(duration);
         Debug.Log($"{target.name} gains double attack for {duration} turns");
     }
 }
