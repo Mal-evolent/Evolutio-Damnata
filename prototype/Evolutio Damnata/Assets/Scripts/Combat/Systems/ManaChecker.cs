@@ -1,49 +1,76 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class ManaChecker
+public class ManaChecker : IManaChecker
 {
-    private IManaProvider manaProvider;
-    private CardOutlineManager cardOutlineManager;
-    private CardManager cardManager;
+    private readonly IManaProvider _manaProvider;
+    private readonly ICardOutlineManager _cardOutlineManager;
+    private readonly ICardManager _cardManager;
 
-    public ManaChecker(IManaProvider manaProvider, CardOutlineManager cardOutlineManager, CardManager cardManager)
+    public ManaChecker(
+        IManaProvider manaProvider,
+        ICardOutlineManager cardOutlineManager,
+        ICardManager cardManager)
     {
-        this.manaProvider = manaProvider;
-        this.cardOutlineManager = cardOutlineManager;
-        this.cardManager = cardManager;
+        _manaProvider = manaProvider ?? throw new System.ArgumentNullException(nameof(manaProvider));
+        _cardOutlineManager = cardOutlineManager ?? throw new System.ArgumentNullException(nameof(cardOutlineManager));
+        _cardManager = cardManager ?? throw new System.ArgumentNullException(nameof(cardManager));
     }
 
     public bool HasEnoughPlayerMana(CardData cardData)
     {
-        if (manaProvider.PlayerMana < cardData.ManaCost)
+        if (cardData == null)
         {
-            Debug.LogError($"Not enough player mana. Card costs {cardData.ManaCost}, player has {manaProvider.PlayerMana}");
-            cardOutlineManager.RemoveHighlight();
-            cardManager.currentSelectedCard = null;
+            Debug.LogError("CardData is null!");
             return false;
         }
-        return true;
-    }
 
-    public void DeductPlayerMana(CardData cardData)
-    {
-        manaProvider.PlayerMana -= cardData.ManaCost;
+        bool hasEnoughMana = _manaProvider.PlayerMana >= cardData.ManaCost;
+
+        if (!hasEnoughMana)
+        {
+            HandleInsufficientPlayerMana(cardData);
+        }
+
+        return hasEnoughMana;
     }
 
     public bool HasEnoughEnemyMana(CardData cardData)
     {
-        if (manaProvider.EnemyMana < cardData.ManaCost)
+        if (cardData == null)
         {
-            Debug.LogError($"Not enough enemy mana. Card costs {cardData.ManaCost}, enemy has {manaProvider.EnemyMana}");
+            Debug.LogError("CardData is null!");
             return false;
         }
-        return true;
+
+        bool hasEnoughMana = _manaProvider.EnemyMana >= cardData.ManaCost;
+
+        if (!hasEnoughMana)
+        {
+            Debug.Log($"Not enough enemy mana. Required: {cardData.ManaCost}, Available: {_manaProvider.EnemyMana}");
+        }
+
+        return hasEnoughMana;
+    }
+
+    public void DeductPlayerMana(CardData cardData)
+    {
+        if (cardData == null) return;
+
+        _manaProvider.PlayerMana -= cardData.ManaCost;
+        _manaProvider.UpdatePlayerManaUI();
     }
 
     public void DeductEnemyMana(CardData cardData)
     {
-        manaProvider.EnemyMana -= cardData.ManaCost;
+        if (cardData == null) return;
+
+        _manaProvider.EnemyMana -= cardData.ManaCost;
+    }
+
+    private void HandleInsufficientPlayerMana(CardData cardData)
+    {
+        Debug.Log($"Not enough player mana. Required: {cardData.ManaCost}, Available: {_manaProvider.PlayerMana}");
+        _cardOutlineManager.RemoveHighlight();
+        _cardManager.CurrentSelectedCard = null;
     }
 }

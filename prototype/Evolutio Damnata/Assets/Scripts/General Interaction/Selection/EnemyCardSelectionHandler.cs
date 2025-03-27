@@ -1,82 +1,113 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class EnemyCardSelectionHandler
+public class EnemyCardSelectionHandler : IEnemyCardHandler
 {
-    private CardManager cardManager;
-    private CombatManager combatManager;
-    private CardOutlineManager cardOutlineManager;
-    private SpritePositioning spritePositioning;
-    private CombatStage combatStage;
-    private ManaChecker manaChecker;
-    private SpellEffectApplier spellEffectApplier;
+    private readonly ICardManager _cardManager;
+    private readonly ICombatManager _combatManager;
+    private readonly ICardOutlineManager _cardOutlineManager;
+    private readonly ISpritePositioning _spritePositioning;
+    private readonly ICombatStage _combatStage;
+    private readonly IManaChecker _manaChecker;
+    private readonly ISpellEffectApplier _spellEffectApplier;
 
-    public EnemyCardSelectionHandler(CardManager cardManager, CombatManager combatManager, CardOutlineManager cardOutlineManager, SpritePositioning spritePositioning, CombatStage combatStage)
+    public EnemyCardSelectionHandler(
+        ICardManager cardManager,
+        ICombatManager combatManager,
+        ICardOutlineManager cardOutlineManager,
+        ISpritePositioning spritePositioning,
+        ICombatStage combatStage,
+        IManaChecker manaChecker,
+        ISpellEffectApplier spellEffectApplier)
     {
-        this.cardManager = cardManager;
-        this.combatManager = combatManager;
-        this.cardOutlineManager = cardOutlineManager;
-        this.spritePositioning = spritePositioning;
-        this.combatStage = combatStage;
-        this.manaChecker = new ManaChecker(combatStage, cardOutlineManager, cardManager);
-        this.spellEffectApplier = new SpellEffectApplier(cardManager);
+        _cardManager = cardManager ?? throw new System.ArgumentNullException(nameof(cardManager));
+        _combatManager = combatManager ?? throw new System.ArgumentNullException(nameof(combatManager));
+        _cardOutlineManager = cardOutlineManager ?? throw new System.ArgumentNullException(nameof(cardOutlineManager));
+        _spritePositioning = spritePositioning ?? throw new System.ArgumentNullException(nameof(spritePositioning));
+        _combatStage = combatStage ?? throw new System.ArgumentNullException(nameof(combatStage));
+        _manaChecker = manaChecker ?? throw new System.ArgumentNullException(nameof(manaChecker));
+        _spellEffectApplier = spellEffectApplier ?? throw new System.ArgumentNullException(nameof(spellEffectApplier));
     }
 
     public void HandleEnemyCardSelection(int index, EntityManager entityManager)
     {
-        CardUI cardUI = cardManager.currentSelectedCard.GetComponent<CardUI>();
-        if (cardUI == null && !entityManager.placed)
+        if (!ValidateSelection(entityManager))
+            return;
+
+        var cardUI = _cardManager.CurrentSelectedCard.GetComponent<CardUI>();
+        var cardData = cardUI?.card?.CardType;
+
+        if (!ValidateCardData(cardData, entityManager))
         {
-            Debug.LogError("CardUI component not found on current selected card!");
+            Debug.LogError("Invalid card data!");
+            ResetSelection();
             return;
         }
 
-        Card cardComponent = cardUI?.card;
-        if (cardComponent == null && !entityManager.placed)
+        if (cardData.IsSpellCard)
         {
-            Debug.LogError("Card component not found on current selected card!");
-            return;
-        }
-
-        CardData selectedCardData = cardComponent?.CardType;
-        if (selectedCardData == null && !entityManager.placed)
-        {
-            Debug.LogError("CardType is null on current selected card!");
-            return;
-        }
-
-        if (selectedCardData != null && selectedCardData.IsSpellCard)
-        {
-            if (!manaChecker.HasEnoughPlayerMana(selectedCardData))
-            {
-                return; // Bail if there isn't enough mana
-            }
-
-            spellEffectApplier.ApplySpellEffect(entityManager, selectedCardData, index);
-
-            // Deduct mana
-            manaChecker.DeductPlayerMana(selectedCardData);
-
-            // Remove card from hand
-            List<GameObject> handCardObjects = cardManager.getHandCardObjects();
-            foreach (GameObject cardObject in handCardObjects)
-            {
-                if (cardObject == cardManager.currentSelectedCard)
-                {
-                    handCardObjects.Remove(cardObject);
-                    UnityEngine.Object.Destroy(cardObject);
-                    Debug.Log("Removed card from hand.");
-                    break;
-                }
-            }
-
-            cardManager.currentSelectedCard = null;
-            cardOutlineManager.RemoveHighlight();
+            HandleSpellCard(index, entityManager, cardData);
         }
         else if (!entityManager.placed)
         {
-            Debug.LogError("Card type not found!");
+            Debug.LogError("Invalid card type for enemy selection!");
         }
+    }
+
+    private bool ValidateSelection(EntityManager entityManager)
+    {
+        if (_cardManager.CurrentSelectedCard == null)
+        {
+            Debug.LogError("No card selected!");
+            return false;
+        }
+
+        if (entityManager == null)
+        {
+            Debug.LogError("EntityManager is null!");
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool ValidateCardData(CardData cardData, EntityManager entityManager)
+    {
+        if (cardData == null && !entityManager.placed)
+        {
+            Debug.LogError("Card data is null!");
+            return false;
+        }
+
+        return true;
+    }
+
+    private void HandleSpellCard(int index, EntityManager entityManager, CardData cardData)
+    {
+        if (!_manaChecker.HasEnoughPlayerMana(cardData))
+            return;
+
+        _spellEffectApplier.ApplySpellEffect(entityManager, cardData, index);
+        _manaChecker.DeductPlayerMana(cardData);
+        RemoveCardFromHand();
+        ResetSelection();
+    }
+
+    private void RemoveCardFromHand()
+    {
+        var handCardObjects = _cardManager.GetHandCardObjects();
+        var selectedCard = _cardManager.CurrentSelectedCard;
+
+        if (handCardObjects.Contains(selectedCard))
+        {
+            handCardObjects.Remove(selectedCard);
+            Object.Destroy(selectedCard);
+            Debug.Log("Removed spell card from hand.");
+        }
+    }
+
+    private void ResetSelection()
+    {
+        _cardManager.CurrentSelectedCard = null;
+        _cardOutlineManager.RemoveHighlight();
     }
 }

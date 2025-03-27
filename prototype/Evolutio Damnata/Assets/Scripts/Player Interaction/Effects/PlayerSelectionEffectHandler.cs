@@ -1,22 +1,25 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-
 public class PlayerSelectionEffectHandler : ISelectionEffectHandler
 {
-    private readonly SpritePositioning _spritePositioning;
-    private readonly CardManager _cardManager;
-    private readonly Color _selectionColor = new Color(0.5f, 1f, 0.5f, 1f); // Light green tint
+    private readonly ISpritePositioning _spritePositioning;
+    private readonly ICardManager _cardManager;
+    private readonly Color _selectionColor;
 
-    public PlayerSelectionEffectHandler(SpritePositioning spritePositioning, CardManager cardManager)
+    public PlayerSelectionEffectHandler(
+        ISpritePositioning spritePositioning,
+        ICardManager cardManager,
+        Color selectionColor)
     {
         _spritePositioning = spritePositioning ?? throw new System.ArgumentNullException(nameof(spritePositioning));
         _cardManager = cardManager ?? throw new System.ArgumentNullException(nameof(cardManager));
+        _selectionColor = selectionColor;
     }
 
     public void ApplyEffect(bool isSelected = true)
     {
-        if (_cardManager.CurrentSelectedCard == null) return;
+        if (_cardManager.CurrentSelectedCard == null || _spritePositioning.PlayerEntities == null) return;
 
         foreach (var entity in _spritePositioning.PlayerEntities)
         {
@@ -25,14 +28,9 @@ public class PlayerSelectionEffectHandler : ISelectionEffectHandler
             var image = entity.GetComponent<Image>();
             if (image != null)
             {
-                if (entity == _cardManager.CurrentSelectedCard && isSelected)
-                {
-                    image.color = _selectionColor;
-                }
-                else
-                {
-                    image.color = Color.white;
-                }
+                image.color = (entity == _cardManager.CurrentSelectedCard && isSelected)
+                    ? _selectionColor
+                    : Color.white;
             }
         }
     }

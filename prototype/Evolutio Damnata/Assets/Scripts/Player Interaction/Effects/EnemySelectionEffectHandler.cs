@@ -3,16 +3,19 @@ using UnityEngine.UI;
 
 public class EnemySelectionEffectHandler : ISelectionEffectHandler
 {
-    private readonly SpritePositioning _spritePositioning;
-    private readonly Color _selectionColor = new Color(1f, 0.5f, 0.5f, 1f); // Light red tint
+    private readonly ISpritePositioning _spritePositioning;
+    private readonly Color _selectionColor;
 
-    public EnemySelectionEffectHandler(SpritePositioning spritePositioning)
+    public EnemySelectionEffectHandler(ISpritePositioning spritePositioning, Color selectionColor)
     {
         _spritePositioning = spritePositioning ?? throw new System.ArgumentNullException(nameof(spritePositioning));
+        _selectionColor = selectionColor;
     }
 
     public void ApplyEffect(bool isSelected = true)
     {
+        if (_spritePositioning.EnemyEntities == null) return;
+
         foreach (var entity in _spritePositioning.EnemyEntities)
         {
             if (entity == null) continue;
