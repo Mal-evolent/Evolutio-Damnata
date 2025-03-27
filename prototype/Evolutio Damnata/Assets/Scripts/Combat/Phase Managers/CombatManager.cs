@@ -22,7 +22,7 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     [SerializeField] private int _turnCount = 0;
     [SerializeField] private int _playerMana = 0;
     [SerializeField] private int _enemyMana = 0;
-    [SerializeField] private int _maxMana = 10;
+    [SerializeField] private int _maxMana = 0;
     [SerializeField] private int _playerHealth = 30;
     [SerializeField] private int _enemyHealth = 30;
     [SerializeField] private bool _playerGoesFirst = true;
@@ -61,7 +61,18 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     }
 
     public int EnemyMana { get => _enemyMana; set => _enemyMana = value; }
-    public int MaxMana => _maxMana;
+    // Change from:
+    // public int MaxMana => _maxMana;
+    // To:
+    public int MaxMana
+    {
+        get => _maxMana;
+        set
+        {
+            _maxMana = Mathf.Max(1, value); // Ensure at least 1 mana
+            UpdateAllManaUI();
+        }
+    }
 
     private void Awake()
     {
@@ -123,7 +134,7 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
 
         if (_manaText != null)
         {
-            _manaText.text = $"{PlayerMana}/{MaxMana}";
+            _manaText.text = $"{PlayerMana}";
         }
     }
 
@@ -165,8 +176,4 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     bool ICombatManager.IsEnemyPrepPhase() => _currentPhase == CombatPhase.EnemyPrep;
     bool ICombatManager.IsEnemyCombatPhase() => _currentPhase == CombatPhase.EnemyCombat;
     bool ICombatManager.IsCleanUpPhase() => _currentPhase == CombatPhase.CleanUp;
-
-    // Unity method implementations
-    public Coroutine StartCoroutine(IEnumerator routine) => base.StartCoroutine(routine);
-    public T GetComponent<T>() where T : Component => base.GetComponent<T>();
 }

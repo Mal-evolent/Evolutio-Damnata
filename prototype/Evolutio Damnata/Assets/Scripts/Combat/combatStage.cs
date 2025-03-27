@@ -40,9 +40,33 @@ public class CombatStage : MonoBehaviour, ICombatStage, IManaProvider
     private OngoingEffectApplier _ongoingEffectApplier;
 
     // IManaProvider implementation
-    public int PlayerMana { get => _playerMana; set => _playerMana = value; }
-    public int EnemyMana { get => _enemyMana; set => _enemyMana = value; }
-    public int MaxMana => _maxMana;
+    public int PlayerMana
+    {
+        get => _playerMana;
+        set
+        {
+            _playerMana = Mathf.Clamp(value, 0, _maxMana);
+            UpdateManaUI();
+        }
+    }
+
+    public int EnemyMana
+    {
+        get => _enemyMana;
+        set => _enemyMana = Mathf.Clamp(value, 0, _maxMana);
+    }
+
+    public int MaxMana
+    {
+        get => _maxMana;
+        set
+        {
+            _maxMana = Mathf.Max(1, value);
+            PlayerMana = Mathf.Min(PlayerMana, _maxMana);
+            EnemyMana = Mathf.Min(EnemyMana, _maxMana);
+            UpdateManaUI();
+        }
+    }
 
     // Expose dependencies through properties
     public CardLibrary CardLibrary => _cardLibrary;
