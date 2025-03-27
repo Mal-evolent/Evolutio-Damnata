@@ -17,8 +17,8 @@ public class GeneralEntities : ICardSpawner
     private readonly Sprite _wizardOutlineSprite;
 
     // State
-    public bool EnemyCardPlayed { get; private set; }
-    private readonly EntityManager._monsterType _monsterType;
+    public bool CardPlayed { get; private set; }
+    private readonly EntityManager.MonsterType _monsterType;
 
     public GeneralEntities(
         ISpritePositioning spritePositioning,
@@ -29,7 +29,7 @@ public class GeneralEntities : ICardSpawner
         Sprite wizardOutlineSprite,
         ICombatStage combatStage,
         AttackLimiter attackLimiter,
-        EntityManager._monsterType monsterType)
+        EntityManager.MonsterType monsterType)
     {
         _spritePositioning = spritePositioning;
         _cardLibrary = cardLibrary;
@@ -42,76 +42,75 @@ public class GeneralEntities : ICardSpawner
         _monsterType = monsterType;
     }
 
-    public void SpawnCard(string cardName, int whichOutline)
+    public bool SpawnCard(string cardName, int positionIndex)
     {
         if (string.IsNullOrEmpty(cardName))
         {
             Debug.LogError("Card name cannot be null or empty");
-            return;
+            return false;
         }
 
         try
         {
-            if (_monsterType == EntityManager._monsterType.Friendly)
+            if (_monsterType == EntityManager.MonsterType.Friendly)
             {
-                SpawnPlayerCard(cardName, whichOutline);
+                return SpawnPlayerCard(cardName, positionIndex);
             }
-            else if (_monsterType == EntityManager._monsterType.Enemy)
+            else if (_monsterType == EntityManager.MonsterType.Enemy)
             {
-                SpawnEnemyCard(cardName, whichOutline);
+                return SpawnEnemyCard(cardName, positionIndex);
             }
         }
         catch (System.Exception ex)
         {
             Debug.LogError($"Failed to spawn card: {ex.Message}");
         }
+
+        return false;
     }
 
-    private void SpawnPlayerCard(string cardName, int whichOutline)
+    private bool SpawnPlayerCard(string cardName, int positionIndex)
     {
-        ValidateOutlineIndex(whichOutline, _spritePositioning.playerEntities.Count);
-        GameObject placeholder = GetValidPlaceholder(whichOutline, _spritePositioning.playerEntities);
-
-        CardData cardData = GetCardData(cardName);
-        EntityManager entityManager = InitializeEntity(placeholder, cardData);
+        var placeholder = GetValidPlaceholder(positionIndex, _spritePositioning.PlayerEntities);
+        var cardData = GetCardData(cardName);
+        var entityManager = InitializeEntity(placeholder, cardData);
 
         if (!cardData.IsSpellCard)
         {
             UpdateCardVisuals(placeholder, cardData);
-            entityManager.placed = true;
-            entityManager.dead = false;
+            entityManager.SetPlaced(true);
         }
 
         DisplayHealthBar(placeholder, !cardData.IsSpellCard);
         PlaySummonSFX();
+
+        return true;
     }
 
-    private void SpawnEnemyCard(string cardName, int whichOutline)
+    private bool SpawnEnemyCard(string cardName, int positionIndex)
     {
-        EnemyCardPlayed = false;
-        ValidateOutlineIndex(whichOutline, _spritePositioning.enemyEntities.Count);
-        GameObject placeholder = GetValidPlaceholder(whichOutline, _spritePositioning.enemyEntities);
-
-        CardData cardData = GetCardData(cardName);
+        var placeholder = GetValidPlaceholder(positionIndex, _spritePositioning.EnemyEntities);
+        var cardData = GetCardData(cardName);
 
         if (_manaProvider.EnemyMana < cardData.ManaCost)
         {
             Debug.Log($"Not enough enemy mana: {cardData.ManaCost} needed");
-            return;
+            return false;
         }
 
-        EntityManager entityManager = InitializeEntity(placeholder, cardData);
+        var entityManager = InitializeEntity(placeholder, cardData);
 
         if (!cardData.IsSpellCard)
         {
             UpdateCardVisuals(placeholder, cardData);
-            entityManager.placed = true;
-            entityManager.dead = false;
+            entityManager.SetPlaced(true);
         }
 
         DisplayHealthBar(placeholder, !cardData.IsSpellCard);
         _manaProvider.EnemyMana -= cardData.ManaCost;
-        EnemyCardPlayed = true;
+        CardPlayed = true;
+
+        return true;
     }
 
     #region Helper Methods
@@ -135,11 +134,8 @@ public class GeneralEntities : ICardSpawner
 
     private CardData GetCardData(string cardName)
     {
-        CardData cardData = _cardLibrary.cardDataList.FirstOrDefault(c => cardName == c.CardName);
-        if (cardData == null)
-            throw new System.ArgumentException($"Card data not found: {cardName}");
-
-        return cardData;
+        return _cardLibrary.CardDataList.FirstOrDefault(c => cardName == c.CardName)
+            ?? throw new System.ArgumentException($"Card data not found: {cardName}");
     }
 
     private EntityManager InitializeEntity(GameObject placeholder, CardData cardData)
@@ -167,7 +163,7 @@ public class GeneralEntities : ICardSpawner
 
     private void UpdateCardVisuals(GameObject placeholder, CardData cardData)
     {
-        placeholder.GetComponent<Image>().sprite = _cardLibrary.cardImageGetter(cardData.CardName);
+        placeholder.GetComponent<Image>().sprite = _cardLibrary.GetCardImage(cardData.CardName); // Changed from cardImageGetter
         placeholder.name = cardData.CardName;
     }
     #endregion

@@ -42,7 +42,7 @@ public class CardSpawnerFactory : ICardSpawnerFactory
             _wizardOutlineSprite,
             _combatStage, 
             _attackLimiter,
-            EntityManager._monsterType.Friendly);
+            EntityManager.MonsterType.Friendly);
     }
 
     public ICardSpawner CreateEnemySpawner()
@@ -56,15 +56,15 @@ public class CardSpawnerFactory : ICardSpawnerFactory
             _wizardOutlineSprite,
             _combatStage, 
             _attackLimiter,
-            EntityManager._monsterType.Enemy);
+            EntityManager.MonsterType.Enemy);
     }
 
-    public ICardSpawner CreateSpawner(EntityManager._monsterType monsterType)
+    public ICardSpawner CreateSpawner(EntityManager.MonsterType monsterType)
     {
         return monsterType switch
         {
-            EntityManager._monsterType.Friendly => CreatePlayerSpawner(),
-            EntityManager._monsterType.Enemy => CreateEnemySpawner(),
+            EntityManager.MonsterType.Friendly => CreatePlayerSpawner(),
+            EntityManager.MonsterType.Enemy => CreateEnemySpawner(),
             _ => throw new System.ArgumentException($"Unknown monster type: {monsterType}")
         };
     }

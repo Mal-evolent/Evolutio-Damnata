@@ -2,13 +2,6 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-/* 
- * Deck class is used to manage the player's and Enemy's deck of cards.
- * It contains a list of Card objects that represent the cards in the deck.
- * It also contains methods to shuffle the deck, draw cards, and add/remove cards from the deck.
- */
-
-
 public class Deck : MonoBehaviour
 {
     public List<Card> Cards = new List<Card>();
@@ -16,12 +9,13 @@ public class Deck : MonoBehaviour
     public int MaxDeckSize = 30;
     public int HandSize = 5;
 
-    public CardLibrary cardLibrary;
+    [SerializeField] private CardLibrary _cardLibrary;
     public CardManager cardManager;
 
-    void Start()
+    public ICardLibrary CardLibrary
     {
-        
+        get => _cardLibrary;
+        set => _cardLibrary = value as CardLibrary;
     }
 
     public void PopulateDeck()
@@ -29,7 +23,13 @@ public class Deck : MonoBehaviour
         Cards.Clear();
         Hand.Clear();
 
-        List<Card> newDeck = cardLibrary.CreateDeckFromLibrary();
+        if (_cardLibrary == null)
+        {
+            Debug.LogError("CardLibrary reference is not set!");
+            return;
+        }
+
+        List<Card> newDeck = _cardLibrary.CreateDeckFromLibrary();
         foreach (Card card in newDeck)
         {
             AddCard(card);

@@ -12,12 +12,12 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     [SerializeField]
     ResourceManager resourceManager;
 
-    public enum _monsterType
+    public enum MonsterType
     {
         Friendly,
         Enemy,
     }
-    _monsterType monsterType;
+    MonsterType monsterType;
 
     [SerializeField]
     Image spriteImage;
@@ -52,7 +52,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 
     private float turnDuration = 1.0f;
 
-    public void InitializeMonster(_monsterType monsterType, float maxHealth, float atkDamage, Slider healthBarSlider, Image image, DamageVisualizer damageVisualizer, GameObject damageNumberPrefab, Sprite outlineSprite, AttackLimiter attackLimiter)
+    public void InitializeMonster(MonsterType monsterType, float maxHealth, float atkDamage, Slider healthBarSlider, Image image, DamageVisualizer damageVisualizer, GameObject damageNumberPrefab, Sprite outlineSprite, AttackLimiter attackLimiter)
     {
         this.monsterType = monsterType;
         this.maxHealth = maxHealth;
@@ -81,10 +81,16 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         }
     }
 
-    public _monsterType getMonsterType()
+    public MonsterType GetMonsterType() 
     {
         return monsterType;
     }
+
+    public void SetPlaced(bool isPlaced)
+    {
+        placed = isPlaced;
+    }
+
 
     public void takeDamage(float damageAmount)
     {

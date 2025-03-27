@@ -94,9 +94,9 @@ public class EnemyActions : IEnemyActions
 
         try
         {
-            _combatStage.spawnEnemy(card.CardName, index);
+            bool success = _combatStage.EnemyCardSpawner.SpawnCard(card.CardName, index);
 
-            if (_combatStage.enemyCardSpawner.enemyCardPlayed)
+            if (success)
             {
                 _combatManager.EnemyDeck.Hand.Remove(card);
                 Debug.Log($"Enemy successfully played: {card.CardName}");

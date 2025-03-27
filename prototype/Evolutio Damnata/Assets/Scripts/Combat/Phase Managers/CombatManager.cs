@@ -71,7 +71,7 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
 
         _enemyActions = new EnemyActions(
             this,
-            _combatStage.SpritePositioning,
+            _combatStage.SpritePositioning as SpritePositioning,
             _enemyDeck,
             _combatStage.CardLibrary,
             _combatStage

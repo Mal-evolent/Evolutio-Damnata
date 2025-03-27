@@ -44,6 +44,11 @@ public class CombatStage : MonoBehaviour, ICombatStage, IManaProvider
     public int EnemyMana { get => _enemyMana; set => _enemyMana = value; }
     public int MaxMana => _maxMana;
 
+    // Expose dependencies through properties
+    public CardLibrary CardLibrary => _cardLibrary;
+    public ISpritePositioning SpritePositioning => _spritePositioning;
+    public ICardSpawner EnemyCardSpawner => _enemyCardSpawner;
+
     private bool _buttonsInitialized = false;
 
     private void Awake()

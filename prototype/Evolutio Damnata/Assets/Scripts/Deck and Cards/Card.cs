@@ -2,12 +2,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using Sirenix.OdinInspector;
 
-/* 
- * Card class is the base class for all card types. It contains common properties and methods that are shared by all card types.
- * MonsterCard, SpellCard, and RitualCard are derived classes that inherit from the Card class.
- * MonsterCard and SpellCard override the Play method to provide specific implementations for playing the card.
- */
-
 public class Card : MonoBehaviour
 {
     public string CardName;
@@ -40,6 +34,26 @@ public class MonsterCard : Card
         Debug.Log("Playing Monster Card: " + CardName + "\n" + "Attack Power: " + AttackPower + "\n" + "Health: " + Health);
         // monster summoning logic here
     }
+
+    public void Initialize(
+        string cardName,
+        Sprite cardImage,
+        string description,
+        int manaCost,
+        int attackPower,
+        int health,
+        List<string> keywords,
+        CardData cardType)
+    {
+        this.CardName = cardName;
+        this.CardImage = cardImage;
+        this.Description = description;
+        this.ManaCost = manaCost;
+        this.AttackPower = attackPower;
+        this.Health = health;
+        this.Keywords = keywords ?? new List<string>();
+        this.CardType = cardType;
+    }
 }
 
 // Spell Card (Derived Class from Card)
@@ -64,6 +78,27 @@ public class SpellCard : Card
     {
         Debug.Log($"Spell card {CardName} triggered");
         // Effect logic moved to SpellEffectApplier
+    }
+
+    public void Initialize(
+        string cardName,
+        Sprite cardImage,
+        string description,
+        int manaCost,
+        List<SpellEffect> effectTypes,
+        int effectValue,
+        int duration,
+        CardData cardType)
+    {
+        this.CardName = cardName;
+        this.CardImage = cardImage;
+        this.Description = description;
+        this.ManaCost = manaCost;
+        this.EffectTypes = effectTypes ?? new List<SpellEffect>();
+        this.EffectValue = effectValue;
+        this.Duration = duration;
+        this.CardType = cardType;
+        this.IsSpellCard = true;
     }
 }
 
