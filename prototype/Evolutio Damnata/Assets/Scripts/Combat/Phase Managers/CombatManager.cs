@@ -16,7 +16,6 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     [Header("Mana UI References")]
     [SerializeField] private Slider _manaSlider;
     [SerializeField] private TMP_Text _manaText;
-    [SerializeField] private TMP_Text _playerManaText;
 
     [Header("Game State")]
     [SerializeField] private int _turnCount = 0;
@@ -138,18 +137,9 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
         }
     }
 
-    public void UpdatePlayerManaUI()
-    {
-        if (_playerManaText != null)
-        {
-            _playerManaText.text = $"Mana: {PlayerMana}";
-        }
-    }
-
     private void UpdateAllManaUI()
     {
         UpdateManaUI();
-        UpdatePlayerManaUI();
     }
 
     // Gameplay methods

@@ -57,7 +57,7 @@ public class ManaChecker : IManaChecker
         if (cardData == null) return;
 
         _manaProvider.PlayerMana -= cardData.ManaCost;
-        _manaProvider.UpdatePlayerManaUI();
+        _manaProvider.UpdateManaUI();
     }
 
     public void DeductEnemyMana(CardData cardData)

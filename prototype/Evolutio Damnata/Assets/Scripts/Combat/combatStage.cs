@@ -118,7 +118,7 @@ public class CombatStage : MonoBehaviour, ICombatStage, IManaProvider
             _cardManager
         );
 
-        _cardSelectionHandler = new CardSelectionHandler();
+        _cardSelectionHandler = gameObject.AddComponent<CardSelectionHandler>();
         _cardSelectionHandler.Initialize(
             _cardManager,
             _combatManager,
