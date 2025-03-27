@@ -13,13 +13,16 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     [SerializeField] private Deck _playerDeck;
     [SerializeField] private Deck _enemyDeck;
 
-    [Header("UI References")]
+    [Header("Mana UI References")]
+    [SerializeField] private Slider _manaSlider;
+    [SerializeField] private TMP_Text _manaText;
     [SerializeField] private TMP_Text _playerManaText;
 
     [Header("Game State")]
     [SerializeField] private int _turnCount = 0;
     [SerializeField] private int _playerMana = 0;
     [SerializeField] private int _enemyMana = 0;
+    [SerializeField] private int _maxMana = 10;
     [SerializeField] private int _playerHealth = 30;
     [SerializeField] private int _enemyHealth = 30;
     [SerializeField] private bool _playerGoesFirst = true;
@@ -52,16 +55,13 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
         get => _playerMana;
         set
         {
-            _playerMana = value;
-            UpdatePlayerManaUI();
+            _playerMana = Mathf.Clamp(value, 0, MaxMana);
+            UpdateAllManaUI();
         }
     }
 
-    public int EnemyMana
-    {
-        get => _enemyMana;
-        set => _enemyMana = value;
-    }
+    public int EnemyMana { get => _enemyMana; set => _enemyMana = value; }
+    public int MaxMana => _maxMana;
 
     private void Awake()
     {
@@ -71,9 +71,9 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
 
         _enemyActions = new EnemyActions(
             this,
-            _combatStage.spritePositioning,
+            _combatStage.SpritePositioning,
             _enemyDeck,
-            _combatStage.cardLibrary,
+            _combatStage.CardLibrary,
             _combatStage
         );
 
@@ -98,16 +98,47 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
 
     private void Start()
     {
+        InitializeManaUI();
         _roundManager.InitializeGame();
     }
 
+    private void InitializeManaUI()
+    {
+        if (_manaSlider != null)
+        {
+            _manaSlider.minValue = 0;
+            _manaSlider.maxValue = MaxMana;
+            _manaSlider.value = PlayerMana;
+        }
+        UpdateAllManaUI();
+    }
+
     // IManaProvider implementation
+    public void UpdateManaUI()
+    {
+        if (_manaSlider != null)
+        {
+            _manaSlider.value = PlayerMana;
+        }
+
+        if (_manaText != null)
+        {
+            _manaText.text = $"{PlayerMana}/{MaxMana}";
+        }
+    }
+
     public void UpdatePlayerManaUI()
     {
         if (_playerManaText != null)
         {
             _playerManaText.text = $"Mana: {PlayerMana}";
         }
+    }
+
+    private void UpdateAllManaUI()
+    {
+        UpdateManaUI();
+        UpdatePlayerManaUI();
     }
 
     // Gameplay methods
