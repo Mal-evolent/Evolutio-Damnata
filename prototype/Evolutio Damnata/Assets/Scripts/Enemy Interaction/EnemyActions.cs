@@ -31,7 +31,7 @@ public class EnemyActions : IEnemyActions
             return;
         }
 
-        _enemyDeck.cardLibrary = _cardLibrary;
+        _enemyDeck.CardLibrary = _cardLibrary;
         _enemyDeck.PopulateDeck();
         Debug.Log("Enemy deck initialized and shuffled.");
     }
