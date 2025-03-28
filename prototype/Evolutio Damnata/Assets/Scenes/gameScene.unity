@@ -2102,7 +2102,7 @@ MonoBehaviour:
   maxHealth: 0
   atkDamage: 0
   atkDamageMulti: 1
-  healthBar: {fileID: 0}
+  healthBar: {fileID: 6675986941918603225, guid: 13811d77f45b76e46a27b229ca045f5e, type: 3}
   damageVisualizer: {fileID: 389717233}
   damageNumberPrefab: {fileID: 7701005947219011525, guid: a68dba72d8724e94989227a650a79328, type: 3}
   allowedAttacks: 1
