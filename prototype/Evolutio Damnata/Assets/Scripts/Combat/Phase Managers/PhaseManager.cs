@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using System.Collections.Generic;
 
 public class PhaseManager : IPhaseManager
 {
@@ -33,31 +34,17 @@ public class PhaseManager : IPhaseManager
 
         if (_combatManager.PlayerTurn)
         {
-            _combatManager.CurrentPhase = CombatPhase.PlayerPrep;
-            Debug.Log("Player's Prep Phase");
-            _uiManager.SetButtonState(_combatManager.EndPhaseButton, true);
-            yield return new WaitUntil(() => _combatManager.EndPhaseButton.gameObject.activeSelf == false);
-
-            _combatManager.CurrentPhase = CombatPhase.EnemyPrep;
-            _combatManager.PlayerTurn = false;
-            Debug.Log("Enemy's Prep Phase");
-            yield return ((MonoBehaviour)_combatManager).StartCoroutine(_enemyActions.PlayCards());
+            yield return RunSafely(PlayerPrepPhase(), "Player Prep Phase");
+            yield return RunSafely(EnemyPrepPhase(), "Enemy Prep Phase");
         }
         else
         {
-            _combatManager.CurrentPhase = CombatPhase.EnemyPrep;
-            Debug.Log("Enemy's Prep Phase");
-            yield return ((MonoBehaviour)_combatManager).StartCoroutine(_enemyActions.PlayCards());
-
-            _combatManager.CurrentPhase = CombatPhase.PlayerPrep;
-            _combatManager.PlayerTurn = true;
-            Debug.Log("Player's Prep Phase");
-            _uiManager.SetButtonState(_combatManager.EndPhaseButton, true);
-            yield return new WaitUntil(() => _combatManager.EndPhaseButton.gameObject.activeSelf == false);
+            yield return RunSafely(EnemyPrepPhase(), "Enemy Prep Phase");
+            yield return RunSafely(PlayerPrepPhase(), "Player Prep Phase");
         }
 
         _combatManager.CurrentPhase = CombatPhase.None;
-        yield return ((MonoBehaviour)_combatManager).StartCoroutine(ExecuteCombatPhase());
+        yield return RunSafely(ExecuteCombatPhase(), "Execute Combat Phase");
     }
 
     public IEnumerator ExecuteCombatPhase()
@@ -67,146 +54,144 @@ public class PhaseManager : IPhaseManager
 
         if (_combatManager.PlayerTurn)
         {
-            _combatManager.CurrentPhase = CombatPhase.PlayerCombat;
-            Debug.Log("Player Attacks - Start");
-            _uiManager.SetButtonState(_combatManager.EndTurnButton, true);
-            _playerActions.PlayerTurnEnded = false;
-            yield return new WaitUntil(() => _playerActions.PlayerTurnEnded);
-            Debug.Log("Player Attacks - End");
-
-            _combatManager.PlayerTurn = false;
-            _combatManager.CurrentPhase = CombatPhase.EnemyCombat;
-            Debug.Log("Enemy Attacks - Start");
-            yield return ((MonoBehaviour)_combatManager).StartCoroutine(_enemyActions.Attack());
-            Debug.Log("Enemy Attacks - End");
+            yield return RunSafely(PlayerCombatPhase(), "Player Combat Phase");
+            yield return RunSafely(EnemyCombatPhase(), "Enemy Combat Phase");
         }
         else
         {
-            _combatManager.CurrentPhase = CombatPhase.EnemyCombat;
-            Debug.Log("Enemy Attacks - Start");
-            yield return ((MonoBehaviour)_combatManager).StartCoroutine(_enemyActions.Attack());
-            Debug.Log("Enemy Attacks - End");
-
-            _combatManager.PlayerTurn = true;
-            _combatManager.CurrentPhase = CombatPhase.PlayerCombat;
-            Debug.Log("Player Attacks - Start");
-            _uiManager.SetButtonState(_combatManager.EndTurnButton, true);
-            _playerActions.PlayerTurnEnded = false;
-            yield return new WaitUntil(() => _playerActions.PlayerTurnEnded);
-            Debug.Log("Player Attacks - End");
+            yield return RunSafely(EnemyCombatPhase(), "Enemy Combat Phase");
+            yield return RunSafely(PlayerCombatPhase(), "Player Combat Phase");
         }
 
         _combatManager.CurrentPhase = CombatPhase.None;
-        yield return ((MonoBehaviour)_combatManager).StartCoroutine(CleanUpPhase());
+        yield return RunSafely(CleanUpPhase(), "Clean Up Phase");
     }
 
     private IEnumerator CleanUpPhase()
     {
         Debug.Log("[PhaseManager] ===== ENTERING CLEAN-UP PHASE =====");
-
         _combatManager.CurrentPhase = CombatPhase.CleanUp;
-        Debug.Log("[PhaseManager] Set phase to CleanUp");
 
-        // Verify dependencies
-        if (_combatManager.CombatStage == null)
+        if (_combatManager.CombatStage == null || _combatManager.CombatStage.SpritePositioning == null)
         {
-            Debug.LogError("[PhaseManager] CRITICAL: CombatStage is null!");
+            Debug.LogError("[PhaseManager] CombatStage references missing!");
             yield break;
         }
 
-        ISpritePositioning spritePositioning = _combatManager.CombatStage.SpritePositioning;
-        if (spritePositioning == null)
-        {
-            Debug.LogError("[PhaseManager] CRITICAL: SpritePositioning is null!");
-            yield break;
-        }
+        var spritePositioning = _combatManager.CombatStage.SpritePositioning;
 
-        Debug.Log($"[PhaseManager] Found {spritePositioning.PlayerEntities.Count} player entities and {spritePositioning.EnemyEntities.Count} enemy entities");
+        yield return RunSafely(ProcessEntities(spritePositioning.PlayerEntities, "Player"), "Process Player Entities");
+        yield return RunSafely(ProcessEntities(spritePositioning.EnemyEntities, "Enemy"), "Process Enemy Entities");
 
-        // Process player entities with error handling per entity
-        Debug.Log("[PhaseManager] --- Processing Player Entities ---");
-        for (int i = 0; i < spritePositioning.PlayerEntities.Count; i++)
-        {
-            try
-            {
-                var entity = spritePositioning.PlayerEntities[i];
-                if (entity == null)
-                {
-                    Debug.LogWarning($"[PhaseManager] Player entity at index {i} is null (likely destroyed)");
-                    continue;
-                }
-
-                var entityManager = entity.GetComponent<EntityManager>();
-                if (entityManager == null)
-                {
-                    Debug.LogWarning($"[PhaseManager] {entity.name} has no EntityManager component");
-                    continue;
-                }
-
-                Debug.Log($"[PhaseManager] Processing player entity #{i}: {entityManager.name}");
-                entityManager.ApplyOngoingEffects();
-                Debug.Log($"[PhaseManager] Applied effects to {entityManager.name}");
-
-                _attackLimiter.ResetAttacks(entityManager);
-                Debug.Log($"[PhaseManager] Reset attacks for {entityManager.name}");
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"[PhaseManager] Error processing player entity: {e.Message}");
-            }
-        }
-
-        // Process enemy entities with error handling per entity
-        Debug.Log("[PhaseManager] --- Processing Enemy Entities ---");
-        for (int i = 0; i < spritePositioning.EnemyEntities.Count; i++)
-        {
-            try
-            {
-                var entity = spritePositioning.EnemyEntities[i];
-                if (entity == null)
-                {
-                    Debug.LogWarning($"[PhaseManager] Enemy entity at index {i} is null (likely destroyed)");
-                    continue;
-                }
-
-                var entityManager = entity.GetComponent<EntityManager>();
-                if (entityManager == null)
-                {
-                    Debug.LogWarning($"[PhaseManager] {entity.name} has no EntityManager component");
-                    continue;
-                }
-
-                Debug.Log($"[PhaseManager] Processing enemy entity #{i}: {entityManager.name}");
-                entityManager.ApplyOngoingEffects();
-                Debug.Log($"[PhaseManager] Applied effects to {entityManager.name}");
-
-                _attackLimiter.ResetAttacks(entityManager);
-                Debug.Log($"[PhaseManager] Reset attacks for {entityManager.name}");
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"[PhaseManager] Error processing enemy entity: {e.Message}");
-            }
-        }
-
-        // Card drawing
-        Debug.Log("[PhaseManager] Drawing cards for both players");
-        _combatManager.PlayerDeck.DrawOneCard();
-        _combatManager.EnemyDeck.DrawOneCard();
-
-        Debug.Log("[PhaseManager] Waiting 1 second before next round");
+        yield return RunSafely(DrawCards(), "Draw Cards");
         yield return new WaitForSeconds(1);
 
-        // Start next round
         Debug.Log("[PhaseManager] Starting new round");
-        ((MonoBehaviour)_combatManager).StartCoroutine(_roundManager.RoundStart());
+        yield return RunSafely(_roundManager.RoundStart(), "Round Start");
         _combatManager.ResetPhaseState();
-
-        Debug.Log("[PhaseManager] ===== CLEAN-UP PHASE COMPLETED =====");
     }
 
     public void EndPhase()
     {
-        Debug.Log("Ending Prep Phase");
+        Debug.Log("[PhaseManager] Ending current phase");
     }
+
+    #region Phase Handlers
+    private IEnumerator PlayerPrepPhase()
+    {
+        _combatManager.CurrentPhase = CombatPhase.PlayerPrep;
+        Debug.Log("[PhaseManager] Player's Prep Phase");
+        _uiManager.SetButtonState(_combatManager.EndPhaseButton, true);
+        yield return new WaitUntil(() => !_combatManager.EndPhaseButton.gameObject.activeSelf);
+        _combatManager.PlayerTurn = false;
+    }
+
+    private IEnumerator EnemyPrepPhase()
+    {
+        _combatManager.CurrentPhase = CombatPhase.EnemyPrep;
+        Debug.Log("[PhaseManager] Enemy's Prep Phase");
+        yield return _enemyActions.PlayCards();
+    }
+
+    private IEnumerator PlayerCombatPhase()
+    {
+        _combatManager.CurrentPhase = CombatPhase.PlayerCombat;
+        Debug.Log("[PhaseManager] Player's Combat Phase");
+        _uiManager.SetButtonState(_combatManager.EndTurnButton, true);
+        _playerActions.PlayerTurnEnded = false;
+        yield return new WaitUntil(() => _playerActions.PlayerTurnEnded);
+        _combatManager.PlayerTurn = false;
+    }
+
+    private IEnumerator EnemyCombatPhase()
+    {
+        _combatManager.CurrentPhase = CombatPhase.EnemyCombat;
+        Debug.Log("[PhaseManager] Enemy's Combat Phase");
+        yield return _enemyActions.Attack();
+    }
+    #endregion
+
+    #region Helper Methods
+    private IEnumerator RunSafely(IEnumerator coroutine, string context)
+    {
+        if (coroutine == null) yield break;
+
+        while (true)
+        {
+            bool moveNext;
+            try
+            {
+                moveNext = coroutine.MoveNext();
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[PhaseManager] Error in {context}: {e.Message}");
+                yield break;
+            }
+
+            if (!moveNext) break;
+            yield return coroutine.Current;
+        }
+    }
+
+    private IEnumerator ProcessEntities(List<GameObject> entities, string entityType)
+    {
+        Debug.Log($"[PhaseManager] Processing {entityType} entities");
+        for (int i = 0; i < entities.Count; i++)
+        {
+            var entity = entities[i];
+            if (entity == null || !entity.activeInHierarchy)
+            {
+                Debug.LogWarning($"[PhaseManager] {entityType} entity {i} is null/destroyed");
+                continue;
+            }
+
+            var entityManager = entity.GetComponent<EntityManager>();
+            if (entityManager == null || entityManager.dead)
+            {
+                Debug.LogWarning($"[PhaseManager] Skipping {entityType} entity {i}");
+                continue;
+            }
+
+            try
+            {
+                entityManager.ApplyOngoingEffects();
+                _attackLimiter.ResetAttacks(entityManager);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[PhaseManager] Error processing {entityType} entity {i}: {e.Message}");
+            }
+            yield return null;
+        }
+    }
+
+    private IEnumerator DrawCards()
+    {
+        Debug.Log("[PhaseManager] Drawing cards");
+        _combatManager.PlayerDeck?.DrawOneCard();
+        _combatManager.EnemyDeck?.DrawOneCard();
+        yield return null;
+    }
+    #endregion
 }

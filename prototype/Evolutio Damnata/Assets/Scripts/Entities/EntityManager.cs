@@ -261,8 +261,6 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     {
 
     }
-
-    // New methods
     public void Heal(float healAmount)
     {
         if (dead) return;
