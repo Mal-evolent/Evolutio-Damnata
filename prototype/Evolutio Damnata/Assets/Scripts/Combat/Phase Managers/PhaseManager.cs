@@ -156,32 +156,53 @@ public class PhaseManager : IPhaseManager
 
     private IEnumerator ProcessEntities(List<GameObject> entities, string entityType)
     {
-        Debug.Log($"[PhaseManager] Processing {entityType} entities");
-        for (int i = 0; i < entities.Count; i++)
+        if (entities == null) yield break;
+
+        Debug.Log($"[PhaseManager] Processing {entityType} entities (Count: {entities.Count})");
+
+        // Create a new list to avoid modification during iteration
+        var entitiesToProcess = new List<GameObject>(entities);
+
+        for (int i = 0; i < entitiesToProcess.Count; i++)
         {
-            var entity = entities[i];
-            if (entity == null || !entity.activeInHierarchy)
+            var entity = entitiesToProcess[i];
+            if (entity == null)
             {
-                Debug.LogWarning($"[PhaseManager] {entityType} entity {i} is null/destroyed");
+                Debug.LogWarning($"[PhaseManager] {entityType} entity {i} is null - removing from list");
+                entities.Remove(entity);
+                continue;
+            }
+
+            if (!entity.activeInHierarchy)
+            {
+                Debug.Log($"[PhaseManager] {entityType} entity {i} is inactive - skipping");
                 continue;
             }
 
             var entityManager = entity.GetComponent<EntityManager>();
-            if (entityManager == null || entityManager.dead)
+            if (entityManager == null)
             {
-                Debug.LogWarning($"[PhaseManager] Skipping {entityType} entity {i}");
+                Debug.LogWarning($"[PhaseManager] {entityType} entity {i} has no EntityManager");
+                continue;
+            }
+
+            if (entityManager.dead)
+            {
+                Debug.Log($"[PhaseManager] Skipping dead {entityType} entity: {entity.name}");
                 continue;
             }
 
             try
             {
+                Debug.Log($"[PhaseManager] Processing {entityType} entity: {entity.name}");
                 entityManager.ApplyOngoingEffects();
                 _attackLimiter.ResetAttacks(entityManager);
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"[PhaseManager] Error processing {entityType} entity {i}: {e.Message}");
+                Debug.LogError($"[PhaseManager] Error processing {entityType} entity {entity.name}: {e.Message}");
             }
+
             yield return null;
         }
     }
