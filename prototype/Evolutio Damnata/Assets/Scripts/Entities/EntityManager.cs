@@ -7,20 +7,17 @@ using System.Collections;
 
 public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 {
+    // Public Variables
     public Sprite outlineSprite;
+    public bool dead = false;
+    public bool placed = false;
 
+    // Serialized Fields
+    [Header("Resource Management")]
     [SerializeField]
     ResourceManager resourceManager;
 
-    public enum MonsterType
-    {
-        Friendly,
-        Enemy,
-    }
-    MonsterType monsterType;
-
-    [SerializeField]
-    Image spriteImage;
+    [Header("Monster Attributes")]
     [SerializeField]
     float health;
     [SerializeField]
@@ -30,27 +27,32 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     [SerializeField]
     float atkDamageMulti = 1.0f;
 
+    [Header("UI Elements")]
+    [SerializeField]
+    Image spriteImage;
     [SerializeField]
     Slider healthBar;
-
     [SerializeField]
     DamageVisualizer damageVisualizer;
-
     [SerializeField]
     GameObject damageNumberPrefab;
 
+    [Header("Attack Settings")]
     [SerializeField]
     int allowedAttacks = 1;
 
-    public bool dead = false;
-    public bool placed = false;
-
+    // Private Variables
+    private MonsterType monsterType;
     private List<OngoingEffectManager> ongoingEffects = new List<OngoingEffectManager>();
     private OngoingEffectApplier ongoingEffectApplier;
-
     private AttackLimiter attackLimiter;
-
     private float turnDuration = 1.0f;
+
+    public enum MonsterType
+    {
+        Friendly,
+        Enemy,
+    }
 
     public void InitializeMonster(MonsterType monsterType, float maxHealth, float atkDamage, Slider healthBarSlider, Image image, DamageVisualizer damageVisualizer, GameObject damageNumberPrefab, Sprite outlineSprite, AttackLimiter attackLimiter)
     {
@@ -261,6 +263,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     {
 
     }
+
     public void Heal(float healAmount)
     {
         if (dead) return;

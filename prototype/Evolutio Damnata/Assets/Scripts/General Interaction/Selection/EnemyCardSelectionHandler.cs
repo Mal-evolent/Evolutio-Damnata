@@ -30,26 +30,21 @@ public class EnemyCardSelectionHandler : IEnemyCardHandler
 
     public void HandleEnemyCardSelection(int index, EntityManager entityManager)
     {
-        if (!ValidateSelection(entityManager))
+        if (!ValidateSelection(entityManager) || _cardManager.CurrentSelectedCard == null)
+        {
             return;
+        }
 
         var cardUI = _cardManager.CurrentSelectedCard.GetComponent<CardUI>();
-        var cardData = cardUI?.Card?.CardType;
 
-        if (!ValidateCardData(cardData, entityManager))
+        if (cardUI != null && cardUI.Card != null && cardUI.Card.CardType != null)
         {
-            Debug.LogError("Invalid card data!");
-            ResetSelection();
-            return;
-        }
-
-        if (cardData.IsSpellCard)
-        {
-            HandleSpellCard(index, entityManager, cardData);
-        }
-        else if (!entityManager.placed)
-        {
-            Debug.LogError("Invalid card type for enemy selection!");
+            if (cardUI.Card.CardType.IsSpellCard)
+            {
+                HandleSpellCard(index, entityManager, cardUI.Card.CardType);
+                _cardManager.CurrentSelectedCard = null;
+                return;
+            }
         }
     }
 

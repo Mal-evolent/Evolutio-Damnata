@@ -92,16 +92,28 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
 
         if (_cardManager.CurrentSelectedCard != null && _combatManager.PlayerTurn)
         {
+            // Try spell handling first
             _enemyCardSelectionHandler.HandleEnemyCardSelection(index, entityManager);
+
+            if (_cardManager.CurrentSelectedCard != null)
+            {
+                var attacker = _cardManager.CurrentSelectedCard.GetComponent<EntityManager>();
+                if (attacker != null && attacker.placed)
+                {
+                    HandlePossibleAttack(entityManager);
+                }
+                else
+                {
+                    Debug.Log("Selected monster is not valid for attacking!");
+                    _cardManager.CurrentSelectedCard = null;
+                }
+            }
         }
         else
         {
             Debug.Log("No card selected or not the players turn!");
             _cardOutlineManager.RemoveHighlight();
-            return;
         }
-
-        HandlePossibleAttack(entityManager);
     }
 
     private bool ValidateSelection(int index, System.Collections.Generic.List<GameObject> entities, out EntityManager entityManager)
