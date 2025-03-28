@@ -38,13 +38,10 @@ public class RoundManager : IRoundManager
         _combatManager.TurnCount++;
         _combatManager.TurnUI.text = "turn: " + _combatManager.TurnCount;
 
-        // Get the mana provider
-        IManaProvider mana = _combatManager.CombatStage;
-
-        // Set mana values through the interface
-        mana.MaxMana = _combatManager.TurnCount;
-        mana.PlayerMana = mana.MaxMana;
-        mana.EnemyMana = mana.MaxMana;
+        // Use _combatManager directly since it implements IManaProvider
+        _combatManager.MaxMana = _combatManager.TurnCount;
+        _combatManager.PlayerMana = _combatManager.MaxMana;
+        _combatManager.EnemyMana = _combatManager.MaxMana;
 
         _combatManager.PlayerTurn = _combatManager.PlayerGoesFirst;
         _combatManager.PlayerGoesFirst = !_combatManager.PlayerGoesFirst;

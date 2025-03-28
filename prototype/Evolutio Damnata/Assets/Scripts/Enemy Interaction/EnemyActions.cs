@@ -77,6 +77,8 @@ public class EnemyActions : IEnemyActions
 
     private (Card card, int index) FindPlayableCard()
     {
+        LogCardsInHand();
+
         for (int i = 0; i < _combatManager.EnemyDeck.Hand.Count; i++)
         {
             Card card = _combatManager.EnemyDeck.Hand[i];
@@ -86,6 +88,16 @@ public class EnemyActions : IEnemyActions
             }
         }
         return (null, -1);
+    }
+
+    private void LogCardsInHand()
+    {
+        Debug.Log("Enemy's cards in hand:");
+        for (int i = 0; i < _combatManager.EnemyDeck.Hand.Count; i++)
+        {
+            Card card = _combatManager.EnemyDeck.Hand[i];
+            Debug.Log($"Card {i}: {card.CardName}, Mana Cost: {card.CardType.ManaCost}, IsMonsterCard: {card.CardType.IsMonsterCard}");
+        }
     }
 
     private IEnumerator ExecuteCardPlay(Card card, int index)
@@ -119,9 +131,30 @@ public class EnemyActions : IEnemyActions
 
     private bool IsPlayableCard(Card card)
     {
-        return card != null &&
-               card.CardType != null &&
-               card.CardType.IsMonsterCard &&
-               _combatManager.EnemyMana >= card.CardType.ManaCost;
+        if (card == null)
+        {
+            Debug.Log("Card is null");
+            return false;
+        }
+
+        if (card.CardType == null)
+        {
+            Debug.Log($"Card {card.CardName} has no CardType");
+            return false;
+        }
+
+        if (!card.CardType.IsMonsterCard)
+        {
+            Debug.Log($"Card {card.CardName} is not a Monster Card");
+            return false;
+        }
+
+        if (_combatManager.EnemyMana < card.CardType.ManaCost)
+        {
+            Debug.Log($"Not enough mana to play card {card.CardName}. Required: {card.CardType.ManaCost}, Available: {_combatManager.EnemyMana}");
+            return false;
+        }
+
+        return true;
     }
 }

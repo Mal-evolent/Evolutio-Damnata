@@ -4,7 +4,7 @@ using System.Collections;
 using UnityEngine.UI;
 using System.Collections.Generic;
 
-public class CombatStage : MonoBehaviour, ICombatStage, IManaProvider
+public class CombatStage : MonoBehaviour, ICombatStage
 {
     [Header("UI References")]
     [SerializeField] private Sprite _wizardOutlineSprite;
@@ -21,11 +21,6 @@ public class CombatStage : MonoBehaviour, ICombatStage, IManaProvider
     [SerializeField] private DamageVisualizer _damageVisualizer;
     [SerializeField] private GameObject _damageNumberPrefab;
 
-    [Header("Mana Settings")]
-    [SerializeField] private int _playerMana;
-    [SerializeField] private int _enemyMana;
-    [SerializeField] private int _maxMana = 0;
-
     // Interface references
     private ISpritePositioning _spritePositioning;
     private IAttackHandler _attackHandler;
@@ -39,35 +34,6 @@ public class CombatStage : MonoBehaviour, ICombatStage, IManaProvider
     private ICombatManager _combatManager;
     private ICardOutlineManager _cardOutlineManager;
     private OngoingEffectApplier _ongoingEffectApplier;
-
-    // IManaProvider implementation
-    public int PlayerMana
-    {
-        get => _playerMana;
-        set
-        {
-            _playerMana = Mathf.Clamp(value, 0, _maxMana);
-            UpdateManaUI();
-        }
-    }
-
-    public int EnemyMana
-    {
-        get => _enemyMana;
-        set => _enemyMana = Mathf.Clamp(value, 0, _maxMana);
-    }
-
-    public int MaxMana
-    {
-        get => _maxMana;
-        set
-        {
-            _maxMana = Mathf.Max(1, value);
-            PlayerMana = Mathf.Min(PlayerMana, _maxMana);
-            EnemyMana = Mathf.Min(EnemyMana, _maxMana);
-            UpdateManaUI();
-        }
-    }
 
     // Expose dependencies through properties
     public CardLibrary CardLibrary => _cardLibrary;
@@ -93,11 +59,11 @@ public class CombatStage : MonoBehaviour, ICombatStage, IManaProvider
         var spawnerFactory = new CardSpawnerFactory(
             _spritePositioning,
             _cardLibrary,
-            this, // IManaProvider
+            _combatManagerComponent, // Now using CombatManager's IManaProvider
             _damageVisualizer,
             _damageNumberPrefab,
             _wizardOutlineSprite,
-            this, // ICombatStage
+            this,
             attackLimiter
         );
 
@@ -114,7 +80,7 @@ public class CombatStage : MonoBehaviour, ICombatStage, IManaProvider
         );
 
         var manaChecker = new ManaChecker(
-            this, // IManaProvider
+            _combatManagerComponent,
             _cardOutlineManager,
             _cardManager
         );
@@ -125,7 +91,7 @@ public class CombatStage : MonoBehaviour, ICombatStage, IManaProvider
             _combatManager,
             _cardOutlineManager,
             _spritePositioning,
-            this, // ICombatStage
+            this,
             _playerCardSpawner,
             manaChecker,
             spellEffectApplier
@@ -141,18 +107,15 @@ public class CombatStage : MonoBehaviour, ICombatStage, IManaProvider
         InitializeSelectionEffectHandlers();
     }
 
-    // IManaProvider implementation
     public void UpdateManaUI()
     {
         if (_manaBar == null || _manaText == null) return;
 
         var manaSlider = _manaBar.GetComponent<Slider>();
-        manaSlider.maxValue = MaxMana;
-        manaSlider.value = PlayerMana;
-        _manaText.GetComponent<TMP_Text>().text = PlayerMana.ToString();
+        manaSlider.maxValue = _combatManagerComponent.MaxMana;
+        manaSlider.value = _combatManagerComponent.PlayerMana;
+        _manaText.GetComponent<TMP_Text>().text = _combatManagerComponent.PlayerMana.ToString();
     }
-
-    public void UpdatePlayerManaUI() => UpdateManaUI();
 
     private void InitializeSelectionEffectHandlers()
     {

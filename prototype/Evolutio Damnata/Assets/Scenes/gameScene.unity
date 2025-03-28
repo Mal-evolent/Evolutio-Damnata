@@ -2475,14 +2475,14 @@ MonoBehaviour:
   _manaSlider: {fileID: 1793571146}
   _manaText: {fileID: 1870554167}
   _turnCount: 0
-  _playerMana: 0
-  _enemyMana: 0
-  _maxMana: 0
   _playerHealth: 30
   _enemyHealth: 30
   _playerGoesFirst: 1
   _playerTurn: 0
   _currentPhase: 0
+  _playerMana: 0
+  _enemyMana: 0
+  _maxMana: 0
 --- !u!4 &1394303772
 Transform:
   m_ObjectHideFlags: 0
@@ -3526,9 +3526,6 @@ MonoBehaviour:
   _spritePositioningComponent: {fileID: 1417216789}
   _damageVisualizer: {fileID: 389717233}
   _damageNumberPrefab: {fileID: 7701005947219011525, guid: a68dba72d8724e94989227a650a79328, type: 3}
-  _playerMana: 0
-  _enemyMana: 0
-  _maxMana: 0
 --- !u!4 &6081315368044828687
 Transform:
   m_ObjectHideFlags: 0
@@ -3550,8 +3547,8 @@ SceneRoots:
   m_Roots:
   - {fileID: 519420032}
   - {fileID: 559180383}
-  - {fileID: 6081315368044828687}
   - {fileID: 1394303772}
+  - {fileID: 6081315368044828687}
   - {fileID: 671977324}
   - {fileID: 1201594249}
   - {fileID: 1159794894}

@@ -9,6 +9,7 @@ public interface ICombatManager
     int TurnCount { get; set; }
     int PlayerMana { get; set; }
     int EnemyMana { get; set; }
+    int MaxMana { get; set; }
     int PlayerHealth { get; set; }
     int EnemyHealth { get; set; }
     bool PlayerTurn { get; set; }

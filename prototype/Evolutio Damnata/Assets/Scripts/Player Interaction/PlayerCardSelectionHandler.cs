@@ -7,7 +7,6 @@ public class PlayerCardSelectionHandler : IPlayerCardHandler
     private readonly ICardRemover _cardRemover;
     private readonly ICardOutlineManager _cardOutlineManager;
     private readonly ICardSpawner _cardSpawner;
-    private readonly IManaProvider _manaProvider;
     private readonly ISpellEffectApplier _spellEffectApplier;
     private readonly ICombatManager _combatManager;
 
@@ -18,7 +17,6 @@ public class PlayerCardSelectionHandler : IPlayerCardHandler
         ICardRemover cardRemover,
         ICardOutlineManager cardOutlineManager,
         ICardSpawner cardSpawner,
-        IManaProvider manaProvider,
         ISpellEffectApplier spellEffectApplier)
     {
         _cardManager = cardManager;
@@ -27,7 +25,6 @@ public class PlayerCardSelectionHandler : IPlayerCardHandler
         _cardRemover = cardRemover;
         _cardOutlineManager = cardOutlineManager;
         _cardSpawner = cardSpawner;
-        _manaProvider = manaProvider;
         _spellEffectApplier = spellEffectApplier;
     }
 
@@ -37,7 +34,7 @@ public class PlayerCardSelectionHandler : IPlayerCardHandler
             return;
 
         var cardUI = _cardManager.CurrentSelectedCard.GetComponent<CardUI>();
-        var cardData = cardUI?.card?.CardType;
+        var cardData = cardUI?.Card?.CardType;
 
         if (!_cardValidator.ValidateCardPlay(cardData, _combatManager.CurrentPhase, entityManager.placed))
         {
@@ -62,7 +59,7 @@ public class PlayerCardSelectionHandler : IPlayerCardHandler
 
     private void ProcessValidCard(int index, EntityManager entityManager, CardData cardData)
     {
-        if (_manaProvider.PlayerMana < cardData.ManaCost)
+        if (_combatManager.PlayerMana < cardData.ManaCost)
         {
             Debug.Log($"Not enough mana. Required: {cardData.ManaCost}");
             return;
@@ -88,7 +85,7 @@ public class PlayerCardSelectionHandler : IPlayerCardHandler
 
     private void FinalizeCardPlay(CardData cardData)
     {
-        _manaProvider.PlayerMana -= cardData.ManaCost;
+        _combatManager.PlayerMana -= cardData.ManaCost;
         _cardRemover.RemoveCardFromHand(_cardManager.CurrentSelectedCard);
         ResetCardSelection();
     }
@@ -96,6 +93,6 @@ public class PlayerCardSelectionHandler : IPlayerCardHandler
     private void ResetCardSelection()
     {
         _cardManager.CurrentSelectedCard = null;
-        _cardOutlineManager.RemoveHighlight(); 
+        _cardOutlineManager.RemoveHighlight();
     }
 }

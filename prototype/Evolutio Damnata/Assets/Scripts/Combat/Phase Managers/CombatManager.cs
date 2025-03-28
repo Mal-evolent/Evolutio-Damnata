@@ -19,14 +19,17 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
 
     [Header("Game State")]
     [SerializeField] private int _turnCount = 0;
-    [SerializeField] private int _playerMana = 0;
-    [SerializeField] private int _enemyMana = 0;
-    [SerializeField] private int _maxMana = 0;
     [SerializeField] private int _playerHealth = 30;
     [SerializeField] private int _enemyHealth = 30;
     [SerializeField] private bool _playerGoesFirst = true;
     [SerializeField] private bool _playerTurn;
     [SerializeField] private CombatPhase _currentPhase = CombatPhase.None;
+
+    // Mana fields - now the single source of truth
+    [Header("Mana Settings")]
+    [SerializeField] private int _playerMana = 0;
+    [SerializeField] private int _enemyMana = 0;
+    [SerializeField] private int _maxMana = 0;
 
     private IRoundManager _roundManager;
     private IPhaseManager _phaseManager;
@@ -48,7 +51,7 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     public Button EndTurnButton => _endTurnButton;
     public TMP_Text TurnUI => _turnUI;
 
-    // IManaProvider implementation
+    // IManaProvider implementation (now the sole source)
     public int PlayerMana
     {
         get => _playerMana;
@@ -59,7 +62,15 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
         }
     }
 
-    public int EnemyMana { get => _enemyMana; set => _enemyMana = value; }
+    public int EnemyMana
+    {
+        get => _enemyMana;
+        set
+        {
+            _enemyMana = Mathf.Clamp(value, 0, MaxMana);
+            UpdateAllManaUI();
+        }
+    }
 
     public int MaxMana
     {
@@ -67,6 +78,8 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
         set
         {
             _maxMana = Mathf.Max(1, value);
+            PlayerMana = Mathf.Min(PlayerMana, _maxMana);
+            EnemyMana = Mathf.Min(EnemyMana, _maxMana);
             UpdateAllManaUI();
         }
     }
@@ -121,7 +134,7 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
         UpdateAllManaUI();
     }
 
-    // IManaProvider implementation
+    // Consolidated mana UI updates
     public void UpdateManaUI()
     {
         if (_manaSlider != null)
@@ -138,6 +151,7 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     private void UpdateAllManaUI()
     {
         UpdateManaUI();
+        _combatStage.UpdateManaUI();
     }
 
     // Gameplay methods
@@ -158,7 +172,7 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
         _currentPhase = CombatPhase.None;
     }
 
-    // Explicit interface implementations for phase checks
+    // Phase checks
     bool ICombatManager.IsPlayerPrepPhase() => _currentPhase == CombatPhase.PlayerPrep;
     bool ICombatManager.IsPlayerCombatPhase() => _currentPhase == CombatPhase.PlayerCombat;
     bool ICombatManager.IsEnemyPrepPhase() => _currentPhase == CombatPhase.EnemyPrep;

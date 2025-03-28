@@ -34,7 +34,7 @@ public class EnemyCardSelectionHandler : IEnemyCardHandler
             return;
 
         var cardUI = _cardManager.CurrentSelectedCard.GetComponent<CardUI>();
-        var cardData = cardUI?.card?.CardType;
+        var cardData = cardUI?.Card?.CardType;
 
         if (!ValidateCardData(cardData, entityManager))
         {

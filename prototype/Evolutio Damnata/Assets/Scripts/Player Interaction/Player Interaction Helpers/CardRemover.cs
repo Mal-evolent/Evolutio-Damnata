@@ -20,7 +20,7 @@ public class CardRemover : ICardRemover
         _cardManager.RemoveCard(cardObject);
         GameObject.Destroy(cardObject);
 
-        var cardComponent = cardObject.GetComponent<CardUI>()?.card;
+        var cardComponent = cardObject.GetComponent<CardUI>()?.Card;
         if (cardComponent != null)
         {
             _cardManager.PlayerDeck.Hand.Remove(cardComponent);

@@ -47,8 +47,7 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
             cardValidator,
             cardRemover,
             _cardOutlineManager,
-            _playerCardSpawner,
-            _combatStage as IManaProvider,  
+            _playerCardSpawner, 
             _spellEffectApplier
         );
 

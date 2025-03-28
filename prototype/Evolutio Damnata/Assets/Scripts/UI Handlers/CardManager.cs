@@ -49,22 +49,6 @@ public class CardManager : MonoBehaviour, ICardManager
         }
     }
 
-
-    private void CreateTextElement(Transform parent, string name, Vector2 position, int fontSize)
-    {
-        GameObject textObj = new GameObject(name);
-        textObj.transform.SetParent(parent);
-
-        RectTransform rt = textObj.AddComponent<RectTransform>();
-        rt.anchoredPosition = position;
-        rt.sizeDelta = new Vector2(180, 40);
-
-        TextMeshProUGUI text = textObj.AddComponent<TextMeshProUGUI>();
-        text.text = name;
-        text.fontSize = fontSize;
-        text.alignment = TextAlignmentOptions.Center;
-    }
-
     private void ValidateReferences()
     {
         if (_cardUIContainer == null)
@@ -143,7 +127,7 @@ public class CardManager : MonoBehaviour, ICardManager
         try
         {
             CardUI cardUI = cardObject.GetComponent<CardUI>() ?? cardObject.AddComponent<CardUI>();
-            cardUI.card = card;
+            cardUI.Card = card;
 
             Transform cardTransform = cardObject.transform;
             cardTransform.GetChild(0).GetComponent<Image>().sprite = card.CardImage;
@@ -205,9 +189,9 @@ public class CardManager : MonoBehaviour, ICardManager
         }
 
         _handCardObjects.Remove(cardObject);
-        if (cardObject.TryGetComponent<CardUI>(out var cardUI) && cardUI.card != null)
+        if (cardObject.TryGetComponent<CardUI>(out var cardUI) && cardUI.Card != null)
         {
-            _playerDeck.Hand.Remove(cardUI.card);
+            _playerDeck.Hand.Remove(cardUI.Card);
         }
 
         Destroy(cardObject);
