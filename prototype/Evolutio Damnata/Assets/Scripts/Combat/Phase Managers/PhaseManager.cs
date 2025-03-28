@@ -28,7 +28,7 @@ public class PhaseManager : IPhaseManager
 
     public IEnumerator PrepPhase()
     {
-        Debug.Log("Entering Prep Phase");
+        Debug.Log("[PhaseManager] ===== ENTERING PREP PHASE =====");
         _combatManager.ResetPhaseState();
 
         if (_combatManager.PlayerTurn)
@@ -62,7 +62,7 @@ public class PhaseManager : IPhaseManager
 
     public IEnumerator ExecuteCombatPhase()
     {
-        Debug.Log("Entering Combat Phase");
+        Debug.Log("[PhaseManager] ===== ENTERING COMBAT PHASE =====");
         _combatManager.ResetPhaseState();
 
         if (_combatManager.PlayerTurn)
@@ -102,42 +102,107 @@ public class PhaseManager : IPhaseManager
 
     private IEnumerator CleanUpPhase()
     {
-        Debug.Log("Entering Clean-Up Phase");
+        Debug.Log("[PhaseManager] ===== ENTERING CLEAN-UP PHASE =====");
+
         _combatManager.CurrentPhase = CombatPhase.CleanUp;
+        Debug.Log("[PhaseManager] Set phase to CleanUp");
 
-        // Get the sprite positioning from combat stage
+        // Verify dependencies
+        if (_combatManager.CombatStage == null)
+        {
+            Debug.LogError("[PhaseManager] CRITICAL: CombatStage is null!");
+            yield break;
+        }
+
         ISpritePositioning spritePositioning = _combatManager.CombatStage.SpritePositioning;
-
-        // Apply ongoing effects to all player entities
-        foreach (var entity in spritePositioning.PlayerEntities)
+        if (spritePositioning == null)
         {
-            var entityManager = entity.GetComponent<EntityManager>();
-            if (entityManager != null)
+            Debug.LogError("[PhaseManager] CRITICAL: SpritePositioning is null!");
+            yield break;
+        }
+
+        Debug.Log($"[PhaseManager] Found {spritePositioning.PlayerEntities.Count} player entities and {spritePositioning.EnemyEntities.Count} enemy entities");
+
+        // Process player entities with error handling per entity
+        Debug.Log("[PhaseManager] --- Processing Player Entities ---");
+        for (int i = 0; i < spritePositioning.PlayerEntities.Count; i++)
+        {
+            try
             {
+                var entity = spritePositioning.PlayerEntities[i];
+                if (entity == null)
+                {
+                    Debug.LogWarning($"[PhaseManager] Player entity at index {i} is null (likely destroyed)");
+                    continue;
+                }
+
+                var entityManager = entity.GetComponent<EntityManager>();
+                if (entityManager == null)
+                {
+                    Debug.LogWarning($"[PhaseManager] {entity.name} has no EntityManager component");
+                    continue;
+                }
+
+                Debug.Log($"[PhaseManager] Processing player entity #{i}: {entityManager.name}");
                 entityManager.ApplyOngoingEffects();
-                Debug.Log($"Resetting attacks for player entity: {entityManager.name}");
+                Debug.Log($"[PhaseManager] Applied effects to {entityManager.name}");
+
                 _attackLimiter.ResetAttacks(entityManager);
+                Debug.Log($"[PhaseManager] Reset attacks for {entityManager.name}");
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[PhaseManager] Error processing player entity: {e.Message}");
             }
         }
 
-        // Apply ongoing effects to all enemy entities
-        foreach (var entity in spritePositioning.EnemyEntities)
+        // Process enemy entities with error handling per entity
+        Debug.Log("[PhaseManager] --- Processing Enemy Entities ---");
+        for (int i = 0; i < spritePositioning.EnemyEntities.Count; i++)
         {
-            var entityManager = entity.GetComponent<EntityManager>();
-            if (entityManager != null)
+            try
             {
+                var entity = spritePositioning.EnemyEntities[i];
+                if (entity == null)
+                {
+                    Debug.LogWarning($"[PhaseManager] Enemy entity at index {i} is null (likely destroyed)");
+                    continue;
+                }
+
+                var entityManager = entity.GetComponent<EntityManager>();
+                if (entityManager == null)
+                {
+                    Debug.LogWarning($"[PhaseManager] {entity.name} has no EntityManager component");
+                    continue;
+                }
+
+                Debug.Log($"[PhaseManager] Processing enemy entity #{i}: {entityManager.name}");
                 entityManager.ApplyOngoingEffects();
-                Debug.Log($"Resetting attacks for enemy entity: {entityManager.name}");
+                Debug.Log($"[PhaseManager] Applied effects to {entityManager.name}");
+
                 _attackLimiter.ResetAttacks(entityManager);
+                Debug.Log($"[PhaseManager] Reset attacks for {entityManager.name}");
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[PhaseManager] Error processing enemy entity: {e.Message}");
             }
         }
 
+        // Card drawing
+        Debug.Log("[PhaseManager] Drawing cards for both players");
         _combatManager.PlayerDeck.DrawOneCard();
         _combatManager.EnemyDeck.DrawOneCard();
+
+        Debug.Log("[PhaseManager] Waiting 1 second before next round");
         yield return new WaitForSeconds(1);
 
+        // Start next round
+        Debug.Log("[PhaseManager] Starting new round");
         ((MonoBehaviour)_combatManager).StartCoroutine(_roundManager.RoundStart());
         _combatManager.ResetPhaseState();
+
+        Debug.Log("[PhaseManager] ===== CLEAN-UP PHASE COMPLETED =====");
     }
 
     public void EndPhase()

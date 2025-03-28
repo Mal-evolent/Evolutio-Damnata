@@ -2,6 +2,7 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using System.Collections;
+using System;
 
 public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
 {
@@ -86,35 +87,62 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
 
     private void Awake()
     {
-        // Initialize dependencies
-        _uiManager = new UIManager(this);
-        _playerActions = new PlayerActions(this);
+        try
+        {
+            Debug.Log("[CombatManager] Initializing dependencies...");
 
-        _enemyActions = new EnemyActions(
-            this,
-            _combatStage.SpritePositioning as SpritePositioning,
-            _enemyDeck,
-            _combatStage.CardLibrary,
-            _combatStage
-        );
+            // Initialize core dependencies
+            _uiManager = new UIManager(this);
+            _playerActions = new PlayerActions(this);
 
-        var attackLimiter = new AttackLimiter();
+            // Validate combat stage before creating EnemyActions
+            if (_combatStage == null)
+            {
+                throw new NullReferenceException("CombatStage reference is not set in inspector");
+            }
 
-        // Create RoundManager first with null PhaseManager
-        _roundManager = new RoundManager(this, null, _enemyActions, _uiManager);
+            _enemyActions = new EnemyActions(
+                this,
+                _combatStage.SpritePositioning as SpritePositioning,
+                _enemyDeck,
+                _combatStage.CardLibrary,
+                _combatStage
+            );
 
-        // Now create PhaseManager with all dependencies
-        _phaseManager = new PhaseManager(
-            combatManager: this,
-            attackLimiter: attackLimiter,
-            uiManager: _uiManager,
-            enemyActions: _enemyActions,
-            playerActions: _playerActions,
-            roundManager: _roundManager
-        );
+            var attackLimiter = new AttackLimiter();
 
-        // Update RoundManager with actual PhaseManager
-        _roundManager = new RoundManager(this, _phaseManager, _enemyActions, _uiManager);
+            Debug.Log("[CombatManager] Creating RoundManager (PhaseManager will be set later)...");
+            // Create RoundManager first with minimal dependencies
+            var roundManagerImpl = new RoundManager(
+                combatManager: this,
+                enemyActions: _enemyActions,
+                uiManager: _uiManager
+            );
+            _roundManager = roundManagerImpl;
+
+            Debug.Log("[CombatManager] Creating PhaseManager with all dependencies...");
+            //create PhaseManager with all dependencies
+            _phaseManager = new PhaseManager(
+                combatManager: this,
+                attackLimiter: attackLimiter,
+                uiManager: _uiManager,
+                enemyActions: _enemyActions,
+                playerActions: _playerActions,
+                roundManager: _roundManager
+            );
+
+            Debug.Log("[CombatManager] Setting PhaseManager in RoundManager...");
+            // Complete the dependency chain
+            roundManagerImpl.SetPhaseManager(_phaseManager);
+
+            Debug.Log("[CombatManager] All managers initialized successfully");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[CombatManager] Initialization failed: {ex.Message}");
+            Debug.LogException(ex);
+            enabled = false; // Disable the component to prevent further errors
+        }
     }
 
     private void Start()
