@@ -60,15 +60,13 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     }
 
     public int EnemyMana { get => _enemyMana; set => _enemyMana = value; }
-    // Change from:
-    // public int MaxMana => _maxMana;
-    // To:
+
     public int MaxMana
     {
         get => _maxMana;
         set
         {
-            _maxMana = Mathf.Max(1, value); // Ensure at least 1 mana
+            _maxMana = Mathf.Max(1, value);
             UpdateAllManaUI();
         }
     }

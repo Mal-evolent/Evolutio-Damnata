@@ -1366,7 +1366,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7825382905349663433, guid: 071d931bace1dd4499f34a21bd75c309, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7825382905349663433, guid: 071d931bace1dd4499f34a21bd75c309, type: 3}
       propertyPath: m_AnchorMin.x
@@ -1374,7 +1374,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7825382905349663433, guid: 071d931bace1dd4499f34a21bd75c309, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7825382905349663433, guid: 071d931bace1dd4499f34a21bd75c309, type: 3}
       propertyPath: m_SizeDelta.x
@@ -1414,11 +1414,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7825382905349663433, guid: 071d931bace1dd4499f34a21bd75c309, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 191.5
       objectReference: {fileID: 0}
     - target: {fileID: 7825382905349663433, guid: 071d931bace1dd4499f34a21bd75c309, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -200
       objectReference: {fileID: 0}
     - target: {fileID: 7825382905349663433, guid: 071d931bace1dd4499f34a21bd75c309, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -1438,7 +1438,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8404733209785131298, guid: 071d931bace1dd4499f34a21bd75c309, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1975,7 +1975,31 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _playerDeck: {fileID: 294774779}
-  _cardDataList: []
+  _cardDataList:
+  - CardName: Wizard
+    CardImage: {fileID: 21300000, guid: 6bcc5bcd60555644a916f3bf816cc40a, type: 3}
+    Description: A corrupt wizzard lost in the dungeon
+    ManaCost: 5
+    AttackPower: 5
+    Health: 5
+    Keywords: 00000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Fireball
+    CardImage: {fileID: 21300000, guid: 6bcc5bcd60555644a916f3bf816cc40a, type: 3}
+    Description: Call a fireball from the heavens
+    ManaCost: 3
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 01000000
+    EffectValue: 5
+    Duration: 0
+    IsSpellCard: 1
+    IsMonsterCard: 0
   _defaultCardSprite: {fileID: 21300000, guid: 6bcc5bcd60555644a916f3bf816cc40a, type: 3}
 --- !u!4 &1159794894
 Transform:
@@ -2443,7 +2467,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _combatStage: {fileID: 6081315368044828686}
-  _turnUI: {fileID: 352670599}
+  _turnUI: {fileID: 1870554167}
   _endPhaseButton: {fileID: 143301893}
   _endTurnButton: {fileID: 192387895}
   _playerDeck: {fileID: 294774779}
@@ -3491,7 +3515,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8070a9404e525da42bbf3234b8e66da0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _wizardOutlineSprite: {fileID: 21300000, guid: 6bcc5bcd60555644a916f3bf816cc40a, type: 3}
+  _wizardOutlineSprite: {fileID: 21300000, guid: f37c6e0e3bb934a4d85b500b2c9ee2c6, type: 3}
   _manaBar: {fileID: 1793571144}
   _manaText: {fileID: 1870554165}
   _battleField: {fileID: 2123307026}

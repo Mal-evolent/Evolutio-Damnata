@@ -118,13 +118,7 @@ public class CardLibrary : MonoBehaviour, ICardLibrary
 
     private void AddDefaultCards()
     {
-        _cardDataList.Add(new CardData("Wizard", null, "A powerful wizard with fire spells", 5, 7, 10,
-            new List<Keywords.MonsterKeyword> { Keywords.MonsterKeyword.Spellcaster, Keywords.MonsterKeyword.Fire }));
 
-        _cardDataList.Add(new CardData("Warrior", null, "A brave warrior", 3, 6, 8,
-            new List<Keywords.MonsterKeyword> { Keywords.MonsterKeyword.Taunt }));
-
-        // Add other default cards...
     }
 
     private void ValidateCards()

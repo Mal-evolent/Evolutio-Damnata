@@ -226,11 +226,12 @@ public class CombatStage : MonoBehaviour, ICombatStage, IManaProvider
 
     private void UpdatePlaceholderVisibility()
     {
-        bool shouldShowPlaceholders = _cardManager.CurrentSelectedCard == null ||
-                                    !IsPlacedCardSelected();
+        bool shouldShowPlaceholders = _cardManager.CurrentSelectedCard != null &&
+                                      !IsPlacedCardSelected();
 
         SetPlaceholderActiveState(shouldShowPlaceholders);
     }
+
 
     private bool IsPlacedCardSelected()
     {
