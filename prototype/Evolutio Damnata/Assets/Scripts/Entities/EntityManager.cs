@@ -81,7 +81,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         }
     }
 
-    public MonsterType GetMonsterType() 
+    public MonsterType GetMonsterType()
     {
         return monsterType;
     }
@@ -89,8 +89,13 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     public void SetPlaced(bool isPlaced)
     {
         placed = isPlaced;
+        SetGameObjectActive(placed);
     }
 
+    private void SetGameObjectActive(bool isActive)
+    {
+        gameObject.SetActive(isActive);
+    }
 
     public void takeDamage(float damageAmount)
     {

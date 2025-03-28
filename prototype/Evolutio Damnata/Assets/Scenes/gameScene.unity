@@ -2467,7 +2467,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _combatStage: {fileID: 6081315368044828686}
-  _turnUI: {fileID: 1870554167}
+  _turnUI: {fileID: 352670599}
   _endPhaseButton: {fileID: 143301893}
   _endTurnButton: {fileID: 192387895}
   _playerDeck: {fileID: 294774779}
