@@ -70,6 +70,7 @@ public class PhaseManager : IPhaseManager
     private IEnumerator CleanUpPhase()
     {
         Debug.Log("[PhaseManager] ===== ENTERING CLEAN-UP PHASE =====");
+        _combatManager.PlayerTurn = false;
         _combatManager.CurrentPhase = CombatPhase.CleanUp;
 
         if (_combatManager.CombatStage == null || _combatManager.CombatStage.SpritePositioning == null)
@@ -103,11 +104,12 @@ public class PhaseManager : IPhaseManager
         Debug.Log("[PhaseManager] Player's Prep Phase");
         _uiManager.SetButtonState(_combatManager.EndPhaseButton, true);
         yield return new WaitUntil(() => !_combatManager.EndPhaseButton.gameObject.activeSelf);
-        _combatManager.PlayerTurn = false;
+        _combatManager.PlayerTurn = true;
     }
 
     private IEnumerator EnemyPrepPhase()
     {
+        _combatManager.PlayerTurn = false;
         _combatManager.CurrentPhase = CombatPhase.EnemyPrep;
         Debug.Log("[PhaseManager] Enemy's Prep Phase");
         yield return _enemyActions.PlayCards();
@@ -115,16 +117,17 @@ public class PhaseManager : IPhaseManager
 
     private IEnumerator PlayerCombatPhase()
     {
+        _combatManager.PlayerTurn = true;
         _combatManager.CurrentPhase = CombatPhase.PlayerCombat;
         Debug.Log("[PhaseManager] Player's Combat Phase");
         _uiManager.SetButtonState(_combatManager.EndTurnButton, true);
         _playerActions.PlayerTurnEnded = false;
         yield return new WaitUntil(() => _playerActions.PlayerTurnEnded);
-        _combatManager.PlayerTurn = false;
     }
 
     private IEnumerator EnemyCombatPhase()
     {
+        _combatManager.PlayerTurn = false;
         _combatManager.CurrentPhase = CombatPhase.EnemyCombat;
         Debug.Log("[PhaseManager] Enemy's Combat Phase");
         yield return _enemyActions.Attack();
