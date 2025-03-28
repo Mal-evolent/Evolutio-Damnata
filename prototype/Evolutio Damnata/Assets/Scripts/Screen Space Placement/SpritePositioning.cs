@@ -99,14 +99,14 @@ public class SpritePositioning : MonoBehaviour, ISpritePositioning
         return positions.Count > 0 ? propertySelector(positions[0]) : defaultValue;
     }
 
-    public IEnumerator SetPlaceholderActiveState(bool active)
+    public IEnumerator SetPlaceholderActiveState(List<GameObject> placeholders, bool active)
     {
-        while (PlayerEntities.Count == 0)
+        while (placeholders.Count == 0)
         {
             yield return null;
         }
 
-        foreach (var placeholder in PlayerEntities)
+        foreach (var placeholder in placeholders)
         {
             if (placeholder != null)
             {
@@ -117,13 +117,13 @@ public class SpritePositioning : MonoBehaviour, ISpritePositioning
 
     public IEnumerator SetAllPlaceHoldersInactive()
     {
-        yield return StartCoroutine(SetPlaceholderActiveState(false));
+        yield return StartCoroutine(SetPlaceholderActiveState(PlayerEntities, false));
         Debug.Log("All placeholders set to inactive!");
     }
 
     public IEnumerator SetAllPlaceHoldersActive()
     {
-        yield return StartCoroutine(SetPlaceholderActiveState(true));
+        yield return StartCoroutine(SetPlaceholderActiveState(PlayerEntities, true));
         Debug.Log("All placeholders set to active!");
     }
 }

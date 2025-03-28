@@ -12,7 +12,7 @@ public interface ISpritePositioning
     List<PositionData> GetEnemyPositionsForCurrentRoom();
     Vector2 GetFirstPlaceholderSize();
     Vector3 GetFirstPlaceholderScale();
-    IEnumerator SetPlaceholderActiveState(bool active);
+    IEnumerator SetPlaceholderActiveState(List<GameObject> placeholders, bool active);
     IEnumerator SetAllPlaceHoldersInactive();
     IEnumerator SetAllPlaceHoldersActive();
 }

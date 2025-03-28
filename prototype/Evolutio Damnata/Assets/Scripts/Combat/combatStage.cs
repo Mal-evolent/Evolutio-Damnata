@@ -2,6 +2,7 @@ using UnityEngine;
 using TMPro;
 using System.Collections;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 public class CombatStage : MonoBehaviour, ICombatStage, IManaProvider
 {
@@ -153,9 +154,6 @@ public class CombatStage : MonoBehaviour, ICombatStage, IManaProvider
 
     public void UpdatePlayerManaUI() => UpdateManaUI();
 
-    // Rest of the CombatStage implementation remains the same...
-    // [Previous methods like InitializeSelectionEffectHandlers, HandleMonsterAttack, etc.]
-
     private void InitializeSelectionEffectHandlers()
     {
         _playerSelectionEffectHandler = new PlayerSelectionEffectHandler(
@@ -229,17 +227,22 @@ public class CombatStage : MonoBehaviour, ICombatStage, IManaProvider
         bool shouldShowPlaceholders = _cardManager.CurrentSelectedCard != null &&
                                       !IsPlacedCardSelected();
 
-        SetPlaceholderActiveState(shouldShowPlaceholders);
+        foreach (var placeholder in _spritePositioning.PlayerEntities)
+        {
+            var entityManager = placeholder.GetComponent<EntityManager>();
+            if (entityManager != null && entityManager.placed)
+            {
+                placeholder.SetActive(true);
+            }
+            else
+            {
+                placeholder.SetActive(shouldShowPlaceholders);
+            }
+        }
     }
-
 
     private bool IsPlacedCardSelected()
     {
         return _cardManager.CurrentSelectedCard?.GetComponent<EntityManager>()?.placed ?? false;
-    }
-
-    public void SetPlaceholderActiveState(bool active)
-    {
-        StartCoroutine(_spritePositioning.SetPlaceholderActiveState(active));
     }
 }
