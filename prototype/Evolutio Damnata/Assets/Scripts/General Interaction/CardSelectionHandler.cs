@@ -115,13 +115,6 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
             return false;
         }
 
-        entityManager = entities[index]?.GetComponent<EntityManager>();
-        if (entityManager == null)
-        {
-            Debug.LogError($"No EntityManager found at index {index}");
-            return false;
-        }
-
         return true;
     }
 
