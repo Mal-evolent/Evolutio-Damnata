@@ -75,9 +75,6 @@ public class RoundManager : IRoundManager
         // Phase 3: Mana Update
         yield return HandlePhaseSafely(HandleManaUpdate(), "Mana update failed");
 
-        // Phase 4: Deck Initialization
-        yield return HandlePhaseSafely(HandleDeckInitialization(), "Deck initialization failed");
-
         // Phase 5: Prep Phase
         yield return HandlePhaseSafely(HandlePrepPhase(), "Prep phase failed");
 
@@ -175,20 +172,6 @@ public class RoundManager : IRoundManager
         _combatManager.PlayerGoesFirst = !_combatManager.PlayerGoesFirst;
         Debug.Log($"[RoundManager] Turn order updated");
 
-        yield return null;
-    }
-
-    private IEnumerator HandleDeckInitialization()
-    {
-        Debug.Log("[RoundManager] -- Initializing Deck --");
-
-        if (_enemyActions == null)
-        {
-            Debug.LogError("[RoundManager] EnemyActions is null in HandleDeckInitialization");
-            yield break;
-        }
-
-        _enemyActions.InitializeDeck();
         yield return null;
     }
 

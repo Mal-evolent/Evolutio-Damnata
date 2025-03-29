@@ -52,7 +52,6 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     public Button EndTurnButton => _endTurnButton;
     public TMP_Text TurnUI => _turnUI;
 
-    // IManaProvider implementation (now the sole source)
     public int PlayerMana
     {
         get => _playerMana;

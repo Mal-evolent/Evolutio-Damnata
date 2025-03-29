@@ -7,6 +7,9 @@ public class CardLibrary : MonoBehaviour, ICardLibrary
     [Header("Player Deck")]
     [SerializeField] private Deck _playerDeck;
 
+    [Header("Enemy Deck")]  // New header section
+    [SerializeField] private Deck _enemyDeck;
+
     [Header("Card Data")]
     [SerializeField] private List<CardData> _cardDataList = new List<CardData>();
 
@@ -18,6 +21,7 @@ public class CardLibrary : MonoBehaviour, ICardLibrary
     // ICardLibrary implementation
     public Sprite DefaultCardSprite => _defaultCardSprite;
     public Deck PlayerDeck { get => _playerDeck; set => _playerDeck = value; }
+    public Deck EnemyDeck { get => _enemyDeck; set => _enemyDeck = value; }
     public IReadOnlyList<CardData> CardDataList => _cardDataList.AsReadOnly();
 
     public Card CreateCardFromData(CardData cardData)
@@ -114,11 +118,12 @@ public class CardLibrary : MonoBehaviour, ICardLibrary
         ValidateCards();
         BuildImageDictionary();
         InitializePlayerDeck();
+        InitializeEnemyDeck();  // New initialization call
     }
 
     private void AddDefaultCards()
     {
-
+        // Implementation for adding default cards
     }
 
     private void ValidateCards()
@@ -155,6 +160,20 @@ public class CardLibrary : MonoBehaviour, ICardLibrary
         {
             _playerDeck.CardLibrary = this;
             _playerDeck.PopulateDeck();
+        }
+    }
+
+    private void InitializeEnemyDeck()
+    {
+        if (_enemyDeck != null)
+        {
+            _enemyDeck.CardLibrary = this;
+            _enemyDeck.PopulateDeck();
+            Debug.Log("Enemy deck initialized with library cards");
+        }
+        else
+        {
+            Debug.LogWarning("No enemy deck assigned in CardLibrary");
         }
     }
 }

@@ -8,6 +8,7 @@ public class EnemyActions : IEnemyActions
     private readonly Deck _enemyDeck;
     private readonly CardLibrary _cardLibrary;
     private readonly CombatStage _combatStage;
+    private bool _isProcessingCard = false;
 
     public EnemyActions(
         ICombatManager combatManager,
@@ -23,42 +24,36 @@ public class EnemyActions : IEnemyActions
         _combatStage = combatStage;
     }
 
-    public void InitializeDeck()
-    {
-        if (_enemyDeck == null)
-        {
-            Debug.LogError("Enemy deck is not assigned!");
-            return;
-        }
-
-        _enemyDeck.CardLibrary = _cardLibrary;
-        _enemyDeck.PopulateDeck();
-        Debug.Log("Enemy deck initialized and shuffled.");
-    }
-
     public IEnumerator PlayCards()
     {
-        Debug.Log("Enemy Playing Cards");
+        if (_isProcessingCard) yield break;
+        _isProcessingCard = true;
 
-        if (!ValidateCombatState())
+        try
         {
-            Debug.LogWarning("Cannot play cards in current combat state");
-            yield break;
-        }
+            Debug.Log("Enemy Playing Cards");
 
-        // Phase 1: Find playable card (no yielding)
-        var (card, index) = FindPlayableCard();
-        if (card == null)
-        {
-            Debug.Log("Enemy has no playable cards");
+            if (!ValidateCombatState())
+            {
+                Debug.LogWarning("Cannot play cards in current combat state");
+                yield break;
+            }
+
+            var (card, index) = FindPlayableCard();
+            if (card == null)
+            {
+                Debug.Log("Enemy has no playable cards");
+                yield return new WaitForSeconds(2);
+                yield break;
+            }
+
+            yield return ExecuteCardPlay(card, index);
             yield return new WaitForSeconds(2);
-            yield break;
         }
-
-        // Phase 2: Execute card play (with yield)
-        yield return ExecuteCardPlay(card, index);
-
-        yield return new WaitForSeconds(2);
+        finally
+        {
+            _isProcessingCard = false;
+        }
     }
 
     public IEnumerator Attack()
@@ -82,6 +77,8 @@ public class EnemyActions : IEnemyActions
         for (int i = 0; i < _combatManager.EnemyDeck.Hand.Count; i++)
         {
             Card card = _combatManager.EnemyDeck.Hand[i];
+            if (card == null) continue;
+
             if (IsPlayableCard(card))
             {
                 return (card, i);
@@ -102,21 +99,29 @@ public class EnemyActions : IEnemyActions
 
     private IEnumerator ExecuteCardPlay(Card card, int index)
     {
-        Debug.Log($"Enemy attempting to play: {card.CardName}");
-
-        try
+        if (card == null || _combatManager.EnemyDeck.Hand.Count <= index ||
+            _combatManager.EnemyDeck.Hand[index] != card)
         {
-            bool success = _combatStage.EnemyCardSpawner.SpawnCard(card.CardName, index);
-
-            if (success)
-            {
-                _combatManager.EnemyDeck.Hand.Remove(card);
-                Debug.Log($"Enemy successfully played: {card.CardName}");
-            }
+            Debug.LogWarning($"Card {card?.CardName} not found at index {index}");
+            yield break;
         }
-        catch (System.Exception ex)
+
+        if (!_combatManager.EnemyDeck.TryRemoveCardAt(index, out Card removedCard))
         {
-            Debug.LogError($"Failed to play enemy card: {ex.Message}");
+            Debug.LogError($"Failed to remove card {card.CardName} from hand");
+            yield break;
+        }
+
+        bool success = _combatStage.EnemyCardSpawner.SpawnCard(card.CardName, index);
+        if (!success)
+        {
+            Debug.LogError($"Failed to spawn card {card.CardName}");
+            _combatManager.EnemyDeck.Hand.Insert(index, removedCard);
+        }
+        else
+        {
+            Debug.Log($"Enemy successfully played and removed: {card.CardName}");
+            LogCardsInHand();
         }
 
         yield return null;
@@ -131,9 +136,9 @@ public class EnemyActions : IEnemyActions
 
     private bool IsPlayableCard(Card card)
     {
-        if (card == null)
+        if (card == null || !_combatManager.EnemyDeck.Hand.Contains(card))
         {
-            Debug.Log("Card is null");
+            Debug.Log("Card is null or not in hand");
             return false;
         }
 

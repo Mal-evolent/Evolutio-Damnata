@@ -57,7 +57,6 @@ public interface IPlayerActions
 // IEnemyActions.cs
 public interface IEnemyActions
 {
-    void InitializeDeck();
     IEnumerator PlayCards();
     IEnumerator Attack();
 }

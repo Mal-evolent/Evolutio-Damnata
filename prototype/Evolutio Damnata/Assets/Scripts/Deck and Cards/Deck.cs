@@ -6,8 +6,8 @@ public class Deck : MonoBehaviour
 {
     public List<Card> Cards = new List<Card>();
     public List<Card> Hand = new List<Card>();
-    public int MaxDeckSize = 30;
-    public int HandSize = 5;
+    public int MaxDeckSize;
+    public int HandSize;
 
     [SerializeField] private CardLibrary _cardLibrary;
     public CardManager cardManager;
@@ -111,17 +111,38 @@ public class Deck : MonoBehaviour
         Debug.Log("Added Card: " + card.CardName);
     }
 
+    public bool TryRemoveCardAt(int index, out Card removedCard)
+    {
+        removedCard = null;
+
+        if (index < 0 || index >= Hand.Count)
+        {
+            Debug.LogWarning($"Invalid card index {index} for removal");
+            return false;
+        }
+
+        removedCard = Hand[index];
+        Hand.RemoveAt(index);
+
+        if (cardManager != null)
+        {
+            cardManager.RefreshUI();
+        }
+
+        return true;
+    }
+
     public void RemoveCard(Card card)
     {
-        if (Cards.Remove(card))
+        int index = Hand.IndexOf(card);
+        if (index >= 0)
         {
-            Debug.Log("Removed Card: " + card.CardName);
+            TryRemoveCardAt(index, out _);
         }
         else
         {
-            Debug.Log("Card not found in deck");
+            Debug.Log("Card not found in hand");
         }
-        cardManager.RefreshUI();
     }
 
     public void Reset()
