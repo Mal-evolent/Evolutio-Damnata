@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class CardSpawnerFactory : ICardSpawnerFactory
 {
+    // Add this to existing fields
+    private readonly OngoingEffectApplier _ongoingEffectApplier;
     private readonly ISpritePositioning _spritePositioning;
     private readonly CardLibrary _cardLibrary;
     private readonly IManaProvider _manaProvider;
@@ -18,8 +20,9 @@ public class CardSpawnerFactory : ICardSpawnerFactory
         DamageVisualizer damageVisualizer,
         GameObject damageNumberPrefab,
         Sprite wizardOutlineSprite,
-        ICombatStage combatStage, 
-        AttackLimiter attackLimiter)
+        ICombatStage combatStage,
+        AttackLimiter attackLimiter,
+        OngoingEffectApplier ongoingEffectApplier)
     {
         _spritePositioning = spritePositioning ?? throw new System.ArgumentNullException(nameof(spritePositioning));
         _cardLibrary = cardLibrary ?? throw new System.ArgumentNullException(nameof(cardLibrary));
@@ -29,6 +32,7 @@ public class CardSpawnerFactory : ICardSpawnerFactory
         _wizardOutlineSprite = wizardOutlineSprite ?? throw new System.ArgumentNullException(nameof(wizardOutlineSprite));
         _combatStage = combatStage ?? throw new System.ArgumentNullException(nameof(combatStage));
         _attackLimiter = attackLimiter ?? throw new System.ArgumentNullException(nameof(attackLimiter));
+        _ongoingEffectApplier = ongoingEffectApplier ?? throw new System.ArgumentNullException(nameof(ongoingEffectApplier));
     }
 
     public ICardSpawner CreatePlayerSpawner()
@@ -40,8 +44,9 @@ public class CardSpawnerFactory : ICardSpawnerFactory
             _damageVisualizer,
             _damageNumberPrefab,
             _wizardOutlineSprite,
-            _combatStage, 
+            _combatStage,
             _attackLimiter,
+            _ongoingEffectApplier,
             EntityManager.MonsterType.Friendly);
     }
 
@@ -54,8 +59,9 @@ public class CardSpawnerFactory : ICardSpawnerFactory
             _damageVisualizer,
             _damageNumberPrefab,
             _wizardOutlineSprite,
-            _combatStage, 
+            _combatStage,
             _attackLimiter,
+            _ongoingEffectApplier,
             EntityManager.MonsterType.Enemy);
     }
 

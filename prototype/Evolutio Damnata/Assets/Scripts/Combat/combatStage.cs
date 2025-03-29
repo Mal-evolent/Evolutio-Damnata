@@ -56,6 +56,8 @@ public class CombatStage : MonoBehaviour, ICombatStage
     private void InitializeServices()
     {
         var attackLimiter = new AttackLimiter();
+        var ongoingEffectApplier = new OngoingEffectApplier();
+
         var spawnerFactory = new CardSpawnerFactory(
             _spritePositioning,
             _cardLibrary,
@@ -64,17 +66,17 @@ public class CombatStage : MonoBehaviour, ICombatStage
             _damageNumberPrefab,
             _wizardOutlineSprite,
             this,
-            attackLimiter
+            attackLimiter,
+            ongoingEffectApplier
         );
 
         _playerCardSpawner = spawnerFactory.CreatePlayerSpawner();
         _enemyCardSpawner = spawnerFactory.CreateEnemySpawner();
         _attackHandler = new AttackHandler(attackLimiter);
 
-        _ongoingEffectApplier = new OngoingEffectApplier();
         var spellEffectApplier = new SpellEffectApplier(
             _cardManager,
-            _ongoingEffectApplier,
+            ongoingEffectApplier,
             _damageVisualizer,
             _damageNumberPrefab
         );

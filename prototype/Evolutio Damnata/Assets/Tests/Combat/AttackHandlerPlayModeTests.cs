@@ -44,8 +44,34 @@ public class AttackHandlerPlayModeTests
         // Create an instance of AttackLimiter
         attackLimiter = new AttackLimiter();
 
-        playerEntity.InitializeMonster(EntityManager.MonsterType.Friendly, 100, 20, playerHealthBar, null, mockDamageVisualizer, damageNumberPrefab, null, attackLimiter);
-        enemyEntity.InitializeMonster(EntityManager.MonsterType.Enemy, 80, 15, enemyHealthBar, null, mockDamageVisualizer, damageNumberPrefab, null, attackLimiter);
+        // Create an instance of OngoingEffectApplier for testing
+        OngoingEffectApplier effectApplier = new OngoingEffectApplier();
+
+        playerEntity.InitializeMonster(
+            EntityManager.MonsterType.Friendly,
+            100,
+            20,
+            playerHealthBar,
+            null,
+            mockDamageVisualizer,
+            damageNumberPrefab,
+            null,
+            attackLimiter,
+            effectApplier
+        );
+
+        enemyEntity.InitializeMonster(
+            EntityManager.MonsterType.Enemy,
+            80,
+            15,
+            enemyHealthBar,
+            null,
+            mockDamageVisualizer,
+            damageNumberPrefab,
+            null,
+            attackLimiter,
+            effectApplier
+        );
 
         // Instantiate AttackHandler with the AttackLimiter
         attackHandler = new AttackHandler(attackLimiter);

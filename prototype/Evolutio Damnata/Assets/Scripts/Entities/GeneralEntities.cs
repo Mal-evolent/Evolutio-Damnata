@@ -11,6 +11,7 @@ public class GeneralEntities : ICardSpawner
     private readonly DamageVisualizer _damageVisualizer;
     private readonly AttackLimiter _attackLimiter;
     private readonly ICombatStage _combatStage;
+    private readonly OngoingEffectApplier _ongoingEffectApplier;
 
     // Visual/Audio
     private readonly GameObject _damageNumberPrefab;
@@ -29,6 +30,7 @@ public class GeneralEntities : ICardSpawner
         Sprite wizardOutlineSprite,
         ICombatStage combatStage,
         AttackLimiter attackLimiter,
+        OngoingEffectApplier ongoingEffectApplier,
         EntityManager.MonsterType monsterType)
     {
         _spritePositioning = spritePositioning;
@@ -39,6 +41,7 @@ public class GeneralEntities : ICardSpawner
         _wizardOutlineSprite = wizardOutlineSprite;
         _combatStage = combatStage;
         _attackLimiter = attackLimiter;
+        _ongoingEffectApplier = ongoingEffectApplier;
         _monsterType = monsterType;
     }
 
@@ -114,12 +117,6 @@ public class GeneralEntities : ICardSpawner
     }
 
     #region Helper Methods
-    private void ValidateOutlineIndex(int index, int maxCount)
-    {
-        if (index < 0 || index >= maxCount)
-            throw new System.ArgumentOutOfRangeException($"Invalid outline index: {index}");
-    }
-
     private GameObject GetValidPlaceholder(int index, System.Collections.Generic.List<GameObject> entities)
     {
         GameObject placeholder = entities[index];
@@ -155,7 +152,8 @@ public class GeneralEntities : ICardSpawner
             _damageVisualizer,
             _damageNumberPrefab,
             _wizardOutlineSprite,
-            _attackLimiter
+            _attackLimiter,
+            _ongoingEffectApplier
         );
 
         return entityManager;
@@ -163,7 +161,7 @@ public class GeneralEntities : ICardSpawner
 
     private void UpdateCardVisuals(GameObject placeholder, CardData cardData)
     {
-        placeholder.GetComponent<Image>().sprite = _cardLibrary.GetCardImage(cardData.CardName); // Changed from cardImageGetter
+        placeholder.GetComponent<Image>().sprite = _cardLibrary.GetCardImage(cardData.CardName);
         placeholder.name = cardData.CardName;
     }
     #endregion

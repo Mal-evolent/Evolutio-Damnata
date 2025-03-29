@@ -1979,9 +1979,9 @@ MonoBehaviour:
   - CardName: Wizard
     CardImage: {fileID: 21300000, guid: 6bcc5bcd60555644a916f3bf816cc40a, type: 3}
     Description: A corrupt wizzard lost in the dungeon
-    ManaCost: 5
-    AttackPower: 5
-    Health: 5
+    ManaCost: 0
+    AttackPower: 1
+    Health: 100
     Keywords: 00000000
     EffectTypes: 
     EffectValue: 0
@@ -1991,11 +1991,11 @@ MonoBehaviour:
   - CardName: Fireball
     CardImage: {fileID: 21300000, guid: 6bcc5bcd60555644a916f3bf816cc40a, type: 3}
     Description: Call a fireball from the heavens
-    ManaCost: 3
+    ManaCost: 0
     AttackPower: 0
     Health: 0
     Keywords: 
-    EffectTypes: 01000000
+    EffectTypes: 0100000006000000
     EffectValue: 5
     Duration: 0
     IsSpellCard: 1
@@ -2097,17 +2097,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   outlineSprite: {fileID: 0}
-  spriteImage: {fileID: 0}
+  dead: 0
+  placed: 0
   health: 0
   maxHealth: 0
   atkDamage: 0
   atkDamageMulti: 1
+  spriteImage: {fileID: 0}
   healthBar: {fileID: 6675986941918603225, guid: 13811d77f45b76e46a27b229ca045f5e, type: 3}
   damageVisualizer: {fileID: 389717233}
   damageNumberPrefab: {fileID: 7701005947219011525, guid: a68dba72d8724e94989227a650a79328, type: 3}
   allowedAttacks: 1
-  dead: 0
-  placed: 0
 --- !u!1 &1187307910
 GameObject:
   m_ObjectHideFlags: 0

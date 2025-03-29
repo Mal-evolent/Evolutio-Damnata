@@ -55,7 +55,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         Enemy,
     }
 
-    public void InitializeMonster(MonsterType monsterType, float maxHealth, float atkDamage, Slider healthBarSlider, Image image, DamageVisualizer damageVisualizer, GameObject damageNumberPrefab, Sprite outlineSprite, AttackLimiter attackLimiter)
+    public void InitializeMonster(MonsterType monsterType, float maxHealth, float atkDamage, Slider healthBarSlider, Image image, DamageVisualizer damageVisualizer, GameObject damageNumberPrefab, Sprite outlineSprite, AttackLimiter attackLimiter, OngoingEffectApplier effectApplier)
     {
         this.monsterType = monsterType;
         this.maxHealth = maxHealth;
@@ -66,6 +66,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         this.damageNumberPrefab = damageNumberPrefab;
         this.outlineSprite = outlineSprite;
         this.attackLimiter = attackLimiter;
+        this.ongoingEffectApplier = effectApplier;
 
         attackLimiter.RegisterEntity(this, allowedAttacks);
         Debug.Log($"Entity {name} initialized with {allowedAttacks} allowed attacks.");
@@ -253,16 +254,6 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     public void ModifyAllowedAttacks(int newAllowedAttacks)
     {
         attackLimiter.ModifyAllowedAttacks(this, newAllowedAttacks);
-    }
-
-    void Start()
-    {
-        ongoingEffectApplier = new OngoingEffectApplier();
-    }
-
-    void Update()
-    {
-
     }
 
     public void Heal(float healAmount)

@@ -63,10 +63,12 @@ public class SpellEffectApplier : ISpellEffectApplier
             {
                 case SpellEffect.Damage:
                     ApplyDamageEffect(target, spellData.EffectValue);
+                    Debug.Log($"Dealt {spellData.EffectValue} damage to {target.name}");
                     break;
 
                 case SpellEffect.Heal:
                     target.Heal(spellData.EffectValue);
+                    Debug.Log($"Healed {target.name} for {spellData.EffectValue}");
                     break;
 
                 case SpellEffect.Buff:
