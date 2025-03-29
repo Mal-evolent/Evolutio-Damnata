@@ -59,7 +59,7 @@ public class CombatStage : MonoBehaviour, ICombatStage
         var spawnerFactory = new CardSpawnerFactory(
             _spritePositioning,
             _cardLibrary,
-            _combatManagerComponent, // Now using CombatManager's IManaProvider
+            _combatManagerComponent,
             _damageVisualizer,
             _damageNumberPrefab,
             _wizardOutlineSprite,
@@ -188,18 +188,18 @@ public class CombatStage : MonoBehaviour, ICombatStage
     private void UpdatePlaceholderVisibility()
     {
         bool shouldShowPlaceholders = _cardManager.CurrentSelectedCard != null &&
-                                      !IsPlacedCardSelected();
+                                    !IsPlacedCardSelected();
 
         foreach (var placeholder in _spritePositioning.PlayerEntities)
         {
             var entityManager = placeholder.GetComponent<EntityManager>();
-            if (entityManager != null && entityManager.placed)
+            if (entityManager != null)
             {
-                placeholder.SetActive(true);
-            }
-            else
-            {
-                placeholder.SetActive(shouldShowPlaceholders);
+                // Skip if entity is fading out
+                if (entityManager.IsFadingOut) continue;
+
+                // Original logic
+                placeholder.SetActive(entityManager.placed || shouldShowPlaceholders);
             }
         }
     }

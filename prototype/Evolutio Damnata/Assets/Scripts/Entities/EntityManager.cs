@@ -11,6 +11,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     public Sprite outlineSprite;
     public bool dead = false;
     public bool placed = false;
+    public bool IsFadingOut { get; private set; } = false;
 
     // Serialized Fields
     [Header("Resource Management")]
@@ -144,6 +145,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     {
         dead = true;
         placed = false;
+        IsFadingOut = true;
         RemoveAllOngoingEffects();
         Debug.Log("Monster is dead.");
 
@@ -166,7 +168,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         FadeOutEffect fadeOutEffect = gameObject.AddComponent<FadeOutEffect>();
         StartCoroutine(fadeOutEffect.FadeOutAndDeactivate(gameObject, 6.5f, outlineSprite, () =>
         {
-            // Re-enable all buttons in the hierarchy, including parent objects
+            IsFadingOut = false;
             foreach (Button button in buttonsInChildren)
             {
                 button.interactable = true;
@@ -256,7 +258,6 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     void Start()
     {
         ongoingEffectApplier = new OngoingEffectApplier();
-        // Other initialization logic if needed
     }
 
     void Update()
