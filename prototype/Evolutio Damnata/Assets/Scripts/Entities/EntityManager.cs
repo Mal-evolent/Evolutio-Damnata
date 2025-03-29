@@ -313,7 +313,6 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         Debug.Log($"{name}'s double attack expired");
     }
 
-    // Updated methods to match interface capitalization
     public void TakeDamage(float damageAmount) => takeDamage(damageAmount);
     public float GetHealth() => getHealth();
     public void AttackBuff(float buffAmount) => attackBuff(buffAmount);

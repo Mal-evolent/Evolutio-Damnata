@@ -65,17 +65,6 @@ public class EnemyCardSelectionHandler : IEnemyCardHandler
         return true;
     }
 
-    private bool ValidateCardData(CardData cardData, EntityManager entityManager)
-    {
-        if (cardData == null && !entityManager.placed)
-        {
-            Debug.LogError("Card data is null!");
-            return false;
-        }
-
-        return true;
-    }
-
     private void HandleSpellCard(int index, EntityManager entityManager, CardData cardData)
     {
         if (!_manaChecker.HasEnoughPlayerMana(cardData))
