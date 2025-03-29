@@ -81,10 +81,10 @@ public class PhaseManager : IPhaseManager
 
         var spritePositioning = _combatManager.CombatStage.SpritePositioning;
 
-        yield return RunSafely(ProcessEntities(spritePositioning.PlayerEntities, "Player"), "Process Player Entities");
-        yield return RunSafely(ProcessEntities(spritePositioning.EnemyEntities, "Enemy"), "Process Enemy Entities");
-
+        yield return RunSafely(ProcessPlayerEntities(spritePositioning.PlayerEntities), "Process Player Entities");
+        yield return RunSafely(ProcessEnemyEntities(spritePositioning.EnemyEntities), "Process Enemy Entities");
         yield return RunSafely(DrawCards(), "Draw Cards");
+
         yield return new WaitForSeconds(1);
 
         Debug.Log("[PhaseManager] Starting new round");
@@ -134,36 +134,23 @@ public class PhaseManager : IPhaseManager
     }
     #endregion
 
-    #region Helper Methods
-    private IEnumerator RunSafely(IEnumerator coroutine, string context)
+    #region Cleanup Processing
+    private IEnumerator ProcessPlayerEntities(List<GameObject> playerEntities)
     {
-        if (coroutine == null) yield break;
-
-        while (true)
-        {
-            bool moveNext;
-            try
-            {
-                moveNext = coroutine.MoveNext();
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"[PhaseManager] Error in {context}: {e.Message}");
-                yield break;
-            }
-
-            if (!moveNext) break;
-            yield return coroutine.Current;
-        }
+        yield return ProcessEntities(playerEntities, "Player", true);
     }
 
-    private IEnumerator ProcessEntities(List<GameObject> entities, string entityType)
+    private IEnumerator ProcessEnemyEntities(List<GameObject> enemyEntities)
+    {
+        yield return ProcessEntities(enemyEntities, "Enemy", true);
+    }
+
+    private IEnumerator ProcessEntities(List<GameObject> entities, string entityType, bool applyEffects)
     {
         if (entities == null) yield break;
 
         Debug.Log($"[PhaseManager] Processing {entityType} entities (Count: {entities.Count})");
 
-        // Create a new list to avoid modification during iteration
         var entitiesToProcess = new List<GameObject>(entities);
 
         for (int i = 0; i < entitiesToProcess.Count; i++)
@@ -198,7 +185,13 @@ public class PhaseManager : IPhaseManager
             try
             {
                 Debug.Log($"[PhaseManager] Processing {entityType} entity: {entity.name}");
-                entityManager.ApplyOngoingEffects();
+
+                // Only apply effects if specified (during cleanup phase)
+                if (applyEffects)
+                {
+                    entityManager.ApplyOngoingEffects();
+                }
+
                 _attackLimiter.ResetAttacks(entityManager);
             }
             catch (System.Exception e)
@@ -207,6 +200,30 @@ public class PhaseManager : IPhaseManager
             }
 
             yield return null;
+        }
+    }
+    #endregion
+
+    #region Helper Methods
+    private IEnumerator RunSafely(IEnumerator coroutine, string context)
+    {
+        if (coroutine == null) yield break;
+
+        while (true)
+        {
+            bool moveNext;
+            try
+            {
+                moveNext = coroutine.MoveNext();
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[PhaseManager] Error in {context}: {e.Message}");
+                yield break;
+            }
+
+            if (!moveNext) break;
+            yield return coroutine.Current;
         }
     }
 

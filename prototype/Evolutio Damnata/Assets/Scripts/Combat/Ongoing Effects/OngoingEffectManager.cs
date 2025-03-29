@@ -1,16 +1,13 @@
 using UnityEngine;
 
 
-/**
- * This class is responsible for managing the ongoing effects of a spell on an entity.
- */
-
 public class OngoingEffectManager : IOngoingEffect
 {
     public SpellEffect EffectType { get; private set; }
     public int EffectValue { get; private set; }
     public int Duration { get; private set; }
     public EntityManager TargetEntity { get; private set; }
+    private int _roundsApplied = 0;
 
     public OngoingEffectManager(SpellEffect effectType, int effectValue, int duration, EntityManager targetEntity)
     {
@@ -30,17 +27,19 @@ public class OngoingEffectManager : IOngoingEffect
                 entity.takeDamage(EffectValue);
                 Debug.Log($"Applying burn effect: {EffectValue} damage to {entity.name}");
                 break;
-                // Add other effects as needed
         }
+
+        _roundsApplied++;
     }
 
-    public void DecreaseDuration()
+    public void ResetRounds()
     {
-        Duration--;
+        _roundsApplied = 0;
     }
 
     public bool IsExpired()
     {
-        return Duration <= 0;
+        // Effect expires after it's been applied Duration times
+        return _roundsApplied >= Duration;
     }
 }

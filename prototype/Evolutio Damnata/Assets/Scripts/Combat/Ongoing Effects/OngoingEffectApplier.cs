@@ -15,10 +15,10 @@ public class OngoingEffectApplier : IEffectApplier
         {
             var effect = _ongoingEffects[i];
             effect.ApplyEffect(entity);
-            effect.DecreaseDuration();
 
             if (effect.IsExpired())
             {
+                effect.ResetRounds();
                 _ongoingEffects.RemoveAt(i);
             }
         }
@@ -26,7 +26,15 @@ public class OngoingEffectApplier : IEffectApplier
 
     public void RemoveEffectsForEntity(EntityManager entity)
     {
-        _ongoingEffects.RemoveAll(e => e.TargetEntity == entity);
+        _ongoingEffects.RemoveAll(e =>
+        {
+            if (e.TargetEntity == entity)
+            {
+                e.ResetRounds();
+                return true;
+            }
+            return false;
+        });
     }
 
     public void AddEffect(IOngoingEffect effect)
