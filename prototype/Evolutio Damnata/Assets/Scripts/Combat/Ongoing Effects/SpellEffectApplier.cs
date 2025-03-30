@@ -89,7 +89,7 @@ public class SpellEffectApplier : ISpellEffectApplier
                         spellData.EffectValue,
                         spellData.Duration,
                         target);
-                    _effectApplier.AddEffect(burnEffect);
+                    _effectApplier.AddEffect(burnEffect, spellData.Duration);
                     break;
 
                 default:

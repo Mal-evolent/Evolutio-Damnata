@@ -1,7 +1,10 @@
 public interface IOngoingEffect
 {
-    void ApplyEffect(EntityManager entity);
-    void ResetRounds();
-    bool IsExpired();
+    SpellEffect EffectType { get; }
+    int EffectValue { get; }
     EntityManager TargetEntity { get; }
+    int InitialDuration { get; }
+
+    void ApplyEffect(EntityManager entity);
+    bool IsExpired();
 }

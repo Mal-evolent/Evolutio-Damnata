@@ -1,85 +1,148 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-public class StackManager : MonoBehaviour, IEffectStack
+public class StackManager : MonoBehaviour
 {
-    public static IEffectStack Instance { get; private set; }
+    public static StackManager Instance { get; private set; }
 
-    [Header("Debug Settings")]
-    [SerializeField] private bool _enableDebugLogs = true;
-
-    [Header("Stack Contents (Readonly)")]
-    [SerializeField] private List<string> _stackContents = new List<string>();
-
-    private readonly Stack<IOngoingEffect> _stack = new Stack<IOngoingEffect>();
-    public IReadOnlyCollection<IOngoingEffect> CurrentStack => _stack;
-    public int Count => _stack.Count;
-
-    private void Awake()
+    [System.Serializable]
+    public class TimedEffect
     {
-        if (Instance != null && Instance != this)
+        public IOngoingEffect effect;
+        public int remainingTurns;
+        public bool needsApplication;
+
+        public TimedEffect(IOngoingEffect effect, int duration)
         {
-            Destroy(gameObject);
-            return;
+            this.effect = effect;
+            this.remainingTurns = duration;
+            this.needsApplication = true;
         }
-        Instance = this;
     }
 
-    public void Push(IOngoingEffect effect)
+    [Header("Debug View")]
+    [SerializeField] private List<TimedEffect> _stackView = new List<TimedEffect>();
+    private Stack<TimedEffect> _executionStack = new Stack<TimedEffect>();
+    private Stack<TimedEffect> _carryOverStack = new Stack<TimedEffect>();
+
+    private void Awake() => Instance = this;
+
+    public void RegisterEffect(IOngoingEffect effect, int duration)
     {
-        _stack.Push(effect);
-        UpdateStackView();
-        if (_enableDebugLogs) Debug.Log($"[Stack] Pushed: {effect.GetType().Name} on {effect.TargetEntity.name}");
+        var newEffect = new TimedEffect(effect, duration);
+        _executionStack.Push(newEffect);
+        UpdateDebugView();
+        Debug.Log($"Registered {effect.GetType().Name} on {effect.TargetEntity.name} for {duration} turns");
     }
 
-    public void ResolveStack()
+    public void PushEffect(IOngoingEffect effect, int duration)
     {
-        if (_stack.Count == 0) return;
+        RegisterEffect(effect, duration);
+    }
 
-        var survivingEffects = new Stack<IOngoingEffect>();
-        int processedCount = 0;
-
-        while (_stack.Count > 0)
+    public void ProcessStack()
+    {
+        while (_executionStack.Count > 0)
         {
-            var effect = _stack.Pop();
-            effect.ApplyEffect(effect.TargetEntity);
-            processedCount++;
+            var timedEffect = _executionStack.Pop();
 
-            if (!effect.IsExpired())
+            // Apply effect if it needs application (first turn) or has remaining turns
+            if (timedEffect.needsApplication || timedEffect.remainingTurns > 0)
             {
-                survivingEffects.Push(effect);
+                timedEffect.effect.ApplyEffect(timedEffect.effect.TargetEntity);
+                timedEffect.needsApplication = false;
+                Debug.Log($"Applied {timedEffect.effect.GetType().Name} to {timedEffect.effect.TargetEntity.name}");
+            }
+
+            // Only decrement if we're not on the first application
+            if (!timedEffect.needsApplication)
+            {
+                timedEffect.remainingTurns--;
+            }
+
+            // Carry over if duration remains or this was first application
+            if (timedEffect.remainingTurns > 0 || timedEffect.needsApplication)
+            {
+                _carryOverStack.Push(timedEffect);
             }
         }
 
-        while (survivingEffects.Count > 0)
+        _executionStack = _carryOverStack;
+        _carryOverStack = new Stack<TimedEffect>();
+        UpdateDebugView();
+    }
+
+    public void ProcessStackForEntity(EntityManager entity)
+    {
+        var tempStack = new Stack<TimedEffect>();
+
+        while (_executionStack.Count > 0)
         {
-            _stack.Push(survivingEffects.Pop());
+            var timedEffect = _executionStack.Pop();
+
+            if (timedEffect.effect.TargetEntity == entity)
+            {
+                if (timedEffect.needsApplication || timedEffect.remainingTurns > 0)
+                {
+                    timedEffect.effect.ApplyEffect(entity);
+                    timedEffect.needsApplication = false;
+                }
+
+                if (!timedEffect.needsApplication)
+                {
+                    timedEffect.remainingTurns--;
+                }
+
+                if (timedEffect.remainingTurns > 0 || timedEffect.needsApplication)
+                {
+                    tempStack.Push(timedEffect);
+                }
+            }
+            else
+            {
+                tempStack.Push(timedEffect);
+            }
         }
 
-        UpdateStackView();
-        if (_enableDebugLogs) Debug.Log($"[Stack] Resolved {processedCount} effects");
-    }
-
-    public void Clear()
-    {
-        _stack.Clear();
-        UpdateStackView();
-        if (_enableDebugLogs) Debug.Log("[Stack] Cleared all effects");
-    }
-
-    private void UpdateStackView()
-    {
-        _stackContents.Clear();
-        foreach (var effect in _stack)
+        while (tempStack.Count > 0)
         {
-            _stackContents.Add($"{effect.GetType().Name} on {effect.TargetEntity.name}");
+            _executionStack.Push(tempStack.Pop());
         }
+
+        UpdateDebugView();
     }
 
-    // Optional: Editor button for testing
-    [ContextMenu("Resolve Stack Now")]
-    private void ResolveStackEditor()
+    public void RemoveEffectsForEntity(EntityManager entity)
     {
-        ResolveStack();
+        var tempStack = new Stack<TimedEffect>();
+
+        while (_executionStack.Count > 0)
+        {
+            var timedEffect = _executionStack.Pop();
+            if (timedEffect.effect.TargetEntity != entity)
+            {
+                tempStack.Push(timedEffect);
+            }
+        }
+
+        while (tempStack.Count > 0)
+        {
+            _executionStack.Push(tempStack.Pop());
+        }
+
+        UpdateDebugView();
     }
+
+    private void UpdateDebugView()
+    {
+        _stackView.Clear();
+        foreach (var entry in _executionStack)
+        {
+            _stackView.Add(entry);
+        }
+        _stackView.Reverse();
+    }
+
+    [ContextMenu("Process Stack Now")]
+    public void ProcessStackEditor() => ProcessStack();
 }

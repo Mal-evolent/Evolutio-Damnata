@@ -81,20 +81,20 @@ public class AttackHandlerPlayModeTests
     public IEnumerator HandleMonsterAttack_UpdatesHealthCorrectly()
     {
         // Store initial health values
-        float initialPlayerHealth = playerEntity.getHealth();
-        float initialEnemyHealth = enemyEntity.getHealth();
+        float initialPlayerHealth = playerEntity.GetHealth();
+        float initialEnemyHealth = enemyEntity.GetHealth();
 
         // Perform attack
         attackHandler.HandleAttack(playerEntity, enemyEntity);
         yield return null;
 
         // Check if health updated correctly
-        Assert.AreEqual(initialPlayerHealth - enemyEntity.getAttackDamage(), playerEntity.getHealth(), "Player's health did not decrease correctly.");
-        Assert.AreEqual(initialEnemyHealth - playerEntity.getAttackDamage(), enemyEntity.getHealth(), "Enemy's health did not decrease correctly.");
+        Assert.AreEqual(initialPlayerHealth - enemyEntity.GetAttackDamage(), playerEntity.GetHealth(), "Player's health did not decrease correctly.");
+        Assert.AreEqual(initialEnemyHealth - playerEntity.GetAttackDamage(), enemyEntity.GetHealth(), "Enemy's health did not decrease correctly.");
 
         // Check if health bars updated correctly
-        Assert.AreEqual(playerEntity.getHealth() / 100, playerHealthBar.value, "Player health bar did not update correctly.");
-        Assert.AreEqual(enemyEntity.getHealth() / 80, enemyHealthBar.value, "Enemy health bar did not update correctly.");
+        Assert.AreEqual(playerEntity.GetHealth() / 100, playerHealthBar.value, "Player health bar did not update correctly.");
+        Assert.AreEqual(enemyEntity.GetHealth() / 80, enemyHealthBar.value, "Enemy health bar did not update correctly.");
     }
 
     [TearDown]

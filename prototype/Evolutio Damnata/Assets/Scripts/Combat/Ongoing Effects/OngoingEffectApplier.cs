@@ -1,44 +1,33 @@
-using System.Collections.Generic;
+using UnityEngine;
 
 public class OngoingEffectApplier : IEffectApplier
 {
-    private readonly List<IOngoingEffect> _ongoingEffects;
-
-    public OngoingEffectApplier()
-    {
-        _ongoingEffects = new List<IOngoingEffect>();
-    }
-
     public void ApplyEffects(EntityManager entity)
     {
-        for (int i = _ongoingEffects.Count - 1; i >= 0; i--)
-        {
-            var effect = _ongoingEffects[i];
-            effect.ApplyEffect(entity);
+        if (entity == null || entity.dead) return;
 
-            if (effect.IsExpired())
-            {
-                effect.ResetRounds();
-                _ongoingEffects.RemoveAt(i);
-            }
-        }
+        // Process all stack effects for this entity
+        StackManager.Instance?.ProcessStackForEntity(entity);
+    }
+
+    public void AddEffect(IOngoingEffect effect, int duration)
+    {
+        if (effect == null || effect.TargetEntity == null || effect.TargetEntity.dead) return;
+
+        // Add effect directly to the stack system
+        StackManager.Instance?.PushEffect(effect, duration);
+
+        Debug.Log($"Added {effect.EffectType} effect to {effect.TargetEntity.name} " +
+                 $"with value {effect.EffectValue} for {duration} turns");
     }
 
     public void RemoveEffectsForEntity(EntityManager entity)
     {
-        _ongoingEffects.RemoveAll(e =>
-        {
-            if (e.TargetEntity == entity)
-            {
-                e.ResetRounds();
-                return true;
-            }
-            return false;
-        });
-    }
+        if (entity == null || entity.dead) return;
 
-    public void AddEffect(IOngoingEffect effect)
-    {
-        _ongoingEffects.Add(effect);
+        // Clean up all effects for this entity
+        StackManager.Instance?.RemoveEffectsForEntity(entity);
+
+        Debug.Log($"Removed all ongoing effects from {entity.name}");
     }
 }

@@ -1,9 +1,7 @@
-using System.Resources;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Collections.Generic;
 using System.Collections;
-
+using System.Resources;
 
 public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 {
@@ -15,47 +13,36 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 
     // Serialized Fields
     [Header("Resource Management")]
-    [SerializeField]
-    ResourceManager resourceManager;
+    [SerializeField] private ResourceManager resourceManager;
 
     [Header("Monster Attributes")]
-    [SerializeField]
-    float health;
-    [SerializeField]
-    float maxHealth;
-    [SerializeField]
-    float atkDamage;
-    [SerializeField]
-    float atkDamageMulti = 1.0f;
+    [SerializeField] private float health;
+    [SerializeField] private float maxHealth;
+    [SerializeField] private float atkDamage;
+    [SerializeField] private float atkDamageMulti = 1.0f;
 
     [Header("UI Elements")]
-    [SerializeField]
-    Image spriteImage;
-    [SerializeField]
-    Slider healthBar;
-    [SerializeField]
-    DamageVisualizer damageVisualizer;
-    [SerializeField]
-    GameObject damageNumberPrefab;
+    [SerializeField] private Image spriteImage;
+    [SerializeField] private Slider healthBar;
+    [SerializeField] private DamageVisualizer damageVisualizer;
+    [SerializeField] private GameObject damageNumberPrefab;
 
     [Header("Attack Settings")]
-    [SerializeField]
-    int allowedAttacks = 1;
+    [SerializeField] private int allowedAttacks = 1;
 
     // Private Variables
     private MonsterType monsterType;
-    private List<OngoingEffectManager> ongoingEffects = new List<OngoingEffectManager>();
     private OngoingEffectApplier ongoingEffectApplier;
     private AttackLimiter attackLimiter;
     private float turnDuration = 1.0f;
 
-    public enum MonsterType
-    {
-        Friendly,
-        Enemy,
-    }
+    public enum MonsterType { Friendly, Enemy }
 
-    public void InitializeMonster(MonsterType monsterType, float maxHealth, float atkDamage, Slider healthBarSlider, Image image, DamageVisualizer damageVisualizer, GameObject damageNumberPrefab, Sprite outlineSprite, AttackLimiter attackLimiter, OngoingEffectApplier effectApplier)
+    #region Initialization
+    public void InitializeMonster(MonsterType monsterType, float maxHealth, float atkDamage,
+        Slider healthBarSlider, Image image, DamageVisualizer damageVisualizer,
+        GameObject damageNumberPrefab, Sprite outlineSprite, AttackLimiter attackLimiter,
+        OngoingEffectApplier effectApplier)
     {
         this.monsterType = monsterType;
         this.maxHealth = maxHealth;
@@ -69,245 +56,191 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         this.ongoingEffectApplier = effectApplier;
 
         attackLimiter.RegisterEntity(this, allowedAttacks);
-        Debug.Log($"Entity {name} initialized with {allowedAttacks} allowed attacks.");
+        InitializeHealthBar(healthBarSlider);
+        gameObject.SetActive(false);
+    }
 
+    private void InitializeHealthBar(Slider healthBarSlider)
+    {
         healthBar = healthBarSlider;
         if (healthBar != null)
         {
             healthBar.maxValue = 1;
             healthBar.value = health / maxHealth;
             healthBar.gameObject.SetActive(true);
-            Debug.Log($"Health bar initialized with value: {healthBar.value}");
         }
-        else
-        {
-            Debug.LogError("Health bar Slider component not found!");
-        }
+        else Debug.LogError("Health bar Slider component not found!");
     }
+    #endregion
 
-    public MonsterType GetMonsterType()
-    {
-        return monsterType;
-    }
-
+    #region Placement Control
     public void SetPlaced(bool isPlaced)
     {
         placed = isPlaced;
-        SetGameObjectActive(placed);
-    }
+        gameObject.SetActive(isPlaced);
 
-    private void SetGameObjectActive(bool isActive)
-    {
-        gameObject.SetActive(isActive);
+        if (isPlaced)
+        {
+            dead = false;
+            health = maxHealth;
+            UpdateHealthUI();
+        }
     }
+    #endregion
 
-    public void takeDamage(float damageAmount)
+    #region Effect Management
+    public void ApplyOngoingEffect()
     {
         if (dead) return;
-
-        health -= damageAmount;
-        health = Mathf.Clamp(health, 0, maxHealth);
-        if (healthBar != null)
-        {
-            healthBar.value = health / maxHealth;
-        }
-        Debug.Log($"Health is now {health}");
-        if (health <= 0)
-        {
-            Die();
-        }
-
-        if (damageVisualizer != null && damageNumberPrefab != null)
-        {
-            if (gameObject.activeInHierarchy)
-            {
-                Vector3 position = transform.position;
-                damageVisualizer.CreateDamageNumber(this, damageAmount, position, damageNumberPrefab);
-            }
-            else
-            {
-                Debug.LogWarning("Cannot start coroutine on inactive game object.");
-            }
-        }
-        else
-        {
-            if (damageVisualizer == null)
-            {
-                Debug.LogError("DamageVisualizer is not set.");
-            }
-            if (damageNumberPrefab == null)
-            {
-                Debug.LogError("damageNumberPrefab is not set.");
-            }
-        }
+        ongoingEffectApplier?.ApplyEffects(this);
     }
 
-    private void Die()
+    public void ApplyOngoingEffect(IOngoingEffect effect, int duration)
     {
-        dead = true;
-        placed = false;
-        IsFadingOut = true;
-        RemoveAllOngoingEffects();
-        Debug.Log("Monster is dead.");
+        if (dead || effect == null) return;
+        ongoingEffectApplier?.AddEffect(effect, duration);
+    }
 
+    public void RemoveAllOngoingEffects()
+    {
         ongoingEffectApplier?.RemoveEffectsForEntity(this);
-
-        // Disable all buttons in the hierarchy, including parent objects
-        Button[] buttonsInChildren = GetComponentsInChildren<Button>(true);
-        Button[] buttonsInParents = GetComponentsInParent<Button>(true);
-
-        foreach (Button button in buttonsInChildren)
-        {
-            button.interactable = false;
-        }
-
-        foreach (Button button in buttonsInParents)
-        {
-            button.interactable = false;
-        }
-
-        FadeOutEffect fadeOutEffect = gameObject.AddComponent<FadeOutEffect>();
-        StartCoroutine(fadeOutEffect.FadeOutAndDeactivate(gameObject, 6.5f, outlineSprite, () =>
-        {
-            IsFadingOut = false;
-            foreach (Button button in buttonsInChildren)
-            {
-                button.interactable = true;
-            }
-
-            foreach (Button button in buttonsInParents)
-            {
-                button.interactable = true;
-            }
-        }));
     }
+    #endregion
 
-    private void RemoveAllOngoingEffects()
+    #region IDamageable Implementation
+    public void TakeDamage(float damageAmount)
     {
-        ongoingEffects.Clear();
-    }
+        if (dead || !placed) return;
 
-    public void healAmount(float healAmount)
-    {
-        if (dead) return;
+        health = Mathf.Clamp(health - damageAmount, 0, maxHealth);
+        UpdateHealthUI();
 
-        health += healAmount;
-        health = Mathf.Clamp(health, 0, maxHealth);
-        if (healthBar != null)
-        {
-            healthBar.value = health / maxHealth;
-        }
-    }
-
-    public float getHealth()
-    {
-        return health;
-    }
-
-    public void attackBuff(float buffAmount)
-    {
-        if (dead) return;
-
-        atkDamage += buffAmount;
-    }
-
-    public void attackDebuff(float buffAmount)
-    {
-        if (dead) return;
-
-        atkDamage -= buffAmount;
-    }
-
-    public void attack(int damage)
-    {
-        if (dead) return;
-
-        Debug.Log($"Attacking with {damage} damage.");
-    }
-
-    public float getAttackDamage()
-    {
-        return atkDamage * atkDamageMulti;
-    }
-
-    public void AddOngoingEffect(OngoingEffectManager effect)
-    {
-        if (dead) return;
-
-        ongoingEffects.Add(effect);
-    }
-
-    public void ApplyOngoingEffects()
-    {
-        if (dead) return;
-
-        ongoingEffectApplier.ApplyEffects(this);
-    }
-
-    public void AddNewOngoingEffect(OngoingEffectManager effect)
-    {
-        if (dead) return;
-
-        ongoingEffects.Add(effect);
-    }
-
-    public void ModifyAllowedAttacks(int newAllowedAttacks)
-    {
-        attackLimiter.ModifyAllowedAttacks(this, newAllowedAttacks);
+        if (health <= 0) Die();
     }
 
     public void Heal(float healAmount)
     {
-        if (dead) return;
+        if (dead || !placed) return;
 
         health = Mathf.Min(health + healAmount, maxHealth);
-        if (healthBar != null)
-        {
-            healthBar.value = health / maxHealth;
-        }
-
-        // Optional: Add healing visual effect
-        if (damageVisualizer != null && damageNumberPrefab != null)
-        {
-            Vector3 position = transform.position;
-            damageVisualizer.CreateHealingNumber(this, healAmount, position, damageNumberPrefab);
-        }
+        UpdateHealthUI();
+        ShowHealingNumber(healAmount);
     }
+
+    public float GetHealth() => health;
 
     public void ModifyAttack(float modifier)
     {
-        if (dead) return;
+        if (dead || !placed) return;
         atkDamage += modifier;
         Debug.Log($"{name} attack modified by {modifier}. New damage: {atkDamage}");
     }
+    #endregion
+
+    #region Damage Visualization
+    public void ShowDamageNumber(float damageAmount)
+    {
+        if (damageVisualizer != null &&
+            damageNumberPrefab != null &&
+            gameObject.activeInHierarchy &&
+            !dead)
+        {
+            damageVisualizer.CreateDamageNumber(
+                this,
+                damageAmount,
+                transform.position,
+                damageNumberPrefab
+            );
+        }
+    }
+
+    private void ShowHealingNumber(float healAmount)
+    {
+        if (damageVisualizer != null && damageNumberPrefab != null)
+        {
+            damageVisualizer.CreateHealingNumber(
+                this,
+                healAmount,
+                transform.position,
+                damageNumberPrefab
+            );
+        }
+    }
+    #endregion
+
+    #region IAttacker Implementation
+    public void AttackBuff(float buffAmount) => ModifyAttack(buffAmount);
+    public void AttackDebuff(float debuffAmount) => ModifyAttack(-debuffAmount);
+
+    public void Attack(int damage)
+    {
+        if (dead || !placed) return;
+        Debug.Log($"Attacking with {damage} damage.");
+    }
+
+    public float GetAttackDamage() => atkDamage * atkDamageMulti;
 
     public void SetDoubleAttack(int duration = 1)
     {
-        if (dead) return;
-
+        if (dead || !placed) return;
         StartCoroutine(DoubleAttackRoutine(duration));
     }
+    #endregion
 
+    #region Combat Utilities
     private IEnumerator DoubleAttackRoutine(int duration)
     {
         int originalAttacks = allowedAttacks;
         allowedAttacks *= 2;
         attackLimiter.ModifyAllowedAttacks(this, allowedAttacks);
 
-        Debug.Log($"{name} gained double attack for {duration} turn(s)");
-
-        // Wait for one turn duration
-        yield return new WaitForSeconds(turnDuration);
+        yield return new WaitForSeconds(turnDuration * duration);
 
         allowedAttacks = originalAttacks;
         attackLimiter.ModifyAllowedAttacks(this, allowedAttacks);
-        Debug.Log($"{name}'s double attack expired");
     }
 
-    public void TakeDamage(float damageAmount) => takeDamage(damageAmount);
-    public float GetHealth() => getHealth();
-    public void AttackBuff(float buffAmount) => attackBuff(buffAmount);
-    public void AttackDebuff(float debuffAmount) => attackDebuff(debuffAmount);
-    public void Attack(int damage) => attack(damage);
-    public float GetAttackDamage() => getAttackDamage();
+    private void UpdateHealthUI()
+    {
+        if (healthBar != null) healthBar.value = health / maxHealth;
+    }
+    #endregion
+
+    #region Lifecycle Management
+    private void Die()
+    {
+        dead = true;
+        placed = false;
+        IsFadingOut = true;
+
+        RemoveAllOngoingEffects();
+        DisableAllButtons();
+        StartCoroutine(PlayDeathAnimation());
+    }
+
+    private IEnumerator PlayDeathAnimation()
+    {
+        FadeOutEffect fadeOutEffect = gameObject.AddComponent<FadeOutEffect>();
+        yield return StartCoroutine(fadeOutEffect.FadeOutAndDeactivate(gameObject, 6.5f, outlineSprite, () =>
+        {
+            IsFadingOut = false;
+            EnableAllButtons();
+        }));
+    }
+
+    private void DisableAllButtons() => SetButtonsInteractable(false);
+    private void EnableAllButtons() => SetButtonsInteractable(true);
+
+    private void SetButtonsInteractable(bool interactable)
+    {
+        foreach (Button button in GetComponentsInChildren<Button>(true))
+            button.interactable = interactable;
+        foreach (Button button in GetComponentsInParent<Button>(true))
+            button.interactable = interactable;
+    }
+    #endregion
+
+    #region Utility Methods
+    public MonsterType GetMonsterType() => monsterType;
+    #endregion
 }

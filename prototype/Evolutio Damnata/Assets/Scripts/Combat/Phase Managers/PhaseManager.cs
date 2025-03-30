@@ -70,26 +70,19 @@ public class PhaseManager : IPhaseManager
     private IEnumerator CleanUpPhase()
     {
         Debug.Log("[PhaseManager] ===== ENTERING CLEAN-UP PHASE =====");
-        _combatManager.PlayerTurn = false;
         _combatManager.CurrentPhase = CombatPhase.CleanUp;
 
-        if (_combatManager.CombatStage == null || _combatManager.CombatStage.SpritePositioning == null)
-        {
-            Debug.LogError("[PhaseManager] CombatStage references missing!");
-            yield break;
-        }
+        // Process entities first (buffs, heals, etc.)
+        yield return ProcessEntities(_combatManager.CombatStage.SpritePositioning.PlayerEntities, "Player", false);
+        yield return ProcessEntities(_combatManager.CombatStage.SpritePositioning.EnemyEntities, "Enemy", false);
 
-        var spritePositioning = _combatManager.CombatStage.SpritePositioning;
+        // Resolve all stack effects (burns, poisons, etc.)
+        StackManager.Instance.ProcessStack();
 
-        yield return RunSafely(ProcessPlayerEntities(spritePositioning.PlayerEntities), "Process Player Entities");
-        yield return RunSafely(ProcessEnemyEntities(spritePositioning.EnemyEntities), "Process Enemy Entities");
-        yield return RunSafely(DrawCards(), "Draw Cards");
-
+        // Continue with normal cleanup
+        yield return DrawCards();
         yield return new WaitForSeconds(1);
-
-        Debug.Log("[PhaseManager] Starting new round");
-        yield return RunSafely(_roundManager.RoundStart(), "Round Start");
-        _combatManager.ResetPhaseState();
+        yield return _roundManager.RoundStart();
     }
 
     public void EndPhase()
@@ -186,13 +179,14 @@ public class PhaseManager : IPhaseManager
             {
                 Debug.Log($"[PhaseManager] Processing {entityType} entity: {entity.name}");
 
-                // Only apply effects if specified (during cleanup phase)
+                // Reset attacks regardless
+                _attackLimiter.ResetAttacks(entityManager);
+
+                // Only apply non-stack effects if needed
                 if (applyEffects)
                 {
-                    entityManager.ApplyOngoingEffects();
+                    entityManager.ApplyOngoingEffect();
                 }
-
-                _attackLimiter.ResetAttacks(entityManager);
             }
             catch (System.Exception e)
             {
