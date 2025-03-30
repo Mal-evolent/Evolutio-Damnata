@@ -1975,6 +1975,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _playerDeck: {fileID: 294774779}
+  _enemyDeck: {fileID: 825410030}
   _cardDataList:
   - CardName: Wizard
     CardImage: {fileID: 21300000, guid: 6bcc5bcd60555644a916f3bf816cc40a, type: 3}
@@ -1997,7 +1998,7 @@ MonoBehaviour:
     Keywords: 
     EffectTypes: 0100000006000000
     EffectValue: 5
-    Duration: 0
+    Duration: 2
     IsSpellCard: 1
     IsMonsterCard: 0
   _defaultCardSprite: {fileID: 21300000, guid: 6bcc5bcd60555644a916f3bf816cc40a, type: 3}
@@ -2227,6 +2228,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0fc3f934722d3e340ac7d202f8ff0edd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _isEnemy: 0
   _playerDeck: {fileID: 294774779}
   _cardUIContainer: {fileID: 404896485}
   _deckPanelRect: {fileID: 298523279}
@@ -2436,6 +2438,50 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1284858364}
   m_CullTransparentMesh: 1
+--- !u!1 &1316461464
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1316461466}
+  - component: {fileID: 1316461465}
+  m_Layer: 0
+  m_Name: Stack Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1316461465
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1316461464}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7af92319d6028fc40ab8a5d0dc44d051, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &1316461466
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1316461464}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1076.8436, y: 173.6322, z: -1.775533}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1394303770
 GameObject:
   m_ObjectHideFlags: 0
@@ -3560,3 +3606,4 @@ SceneRoots:
   - {fileID: 1011744916}
   - {fileID: 389717232}
   - {fileID: 2123307027}
+  - {fileID: 1316461466}
