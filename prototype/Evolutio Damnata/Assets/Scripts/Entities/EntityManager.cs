@@ -115,6 +115,8 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         health = Mathf.Clamp(health - damageAmount, 0, maxHealth);
         UpdateHealthUI();
 
+        ShowDamageNumber(damageAmount);
+
         if (health <= 0) Die();
     }
 
