@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections.Generic;
 
 public class StackManager : MonoBehaviour
@@ -10,17 +10,24 @@ public class StackManager : MonoBehaviour
     {
         public IOngoingEffect effect;
         [Tooltip("The name of the card that created this effect")]
-        public string sourceCardName;
+        public string cardName;
+        [SerializeField] private string _effectType;
+        [SerializeField] private string _targetName;
         public int remainingTurns;
         public bool needsApplication;
 
+        public void UpdateDebugData()
+        {
+            _targetName = effect?.TargetEntity?.name ?? "NULL";
+            _effectType = effect?.EffectType.ToString() ?? "NULL";
+        }
 
         public TimedEffect(IOngoingEffect effect, int duration, string cardName)
         {
             this.effect = effect;
             this.remainingTurns = duration;
             this.needsApplication = true;
-            this.sourceCardName = cardName;
+            this.cardName = cardName;
         }
     }
 
@@ -143,6 +150,7 @@ public class StackManager : MonoBehaviour
         _stackView.Clear();
         foreach (var entry in _executionStack)
         {
+            entry.UpdateDebugData();  // Refresh names before displaying
             _stackView.Add(entry);
         }
         _stackView.Reverse(); // Show in execution order
@@ -154,7 +162,7 @@ public class StackManager : MonoBehaviour
         Debug.Log("Current Stack Contents:");
         foreach (var effect in _stackView)
         {
-            Debug.Log($"- Card: {effect.sourceCardName} | " +
+            Debug.Log($"- Card: {effect.cardName} | " +
                      $"Effect: {effect.effect.EffectType} | " +
                      $"Turns Left: {effect.remainingTurns} | " +
                      $"Target: {effect.effect.TargetEntity.name}");
