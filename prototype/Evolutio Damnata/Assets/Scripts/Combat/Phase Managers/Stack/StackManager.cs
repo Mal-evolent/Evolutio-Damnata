@@ -9,35 +9,40 @@ public class StackManager : MonoBehaviour
     public class TimedEffect
     {
         public IOngoingEffect effect;
+        [Tooltip("The name of the card that created this effect")]
+        public string sourceCardName;
         public int remainingTurns;
         public bool needsApplication;
 
-        public TimedEffect(IOngoingEffect effect, int duration)
+
+        public TimedEffect(IOngoingEffect effect, int duration, string cardName)
         {
             this.effect = effect;
             this.remainingTurns = duration;
             this.needsApplication = true;
+            this.sourceCardName = cardName;
         }
     }
 
-    [Header("Debug View")]
+    [Header("Stack Contents (Read Only)")]
     [SerializeField] private List<TimedEffect> _stackView = new List<TimedEffect>();
+
     private Stack<TimedEffect> _executionStack = new Stack<TimedEffect>();
     private Stack<TimedEffect> _carryOverStack = new Stack<TimedEffect>();
 
     private void Awake() => Instance = this;
 
-    public void RegisterEffect(IOngoingEffect effect, int duration)
+    public void RegisterEffect(IOngoingEffect effect, int duration, string cardName)
     {
-        var newEffect = new TimedEffect(effect, duration);
+        var newEffect = new TimedEffect(effect, duration, cardName);
         _executionStack.Push(newEffect);
         UpdateDebugView();
-        Debug.Log($"Registered {effect.GetType().Name} on {effect.TargetEntity.name} for {duration} turns");
+        Debug.Log($"Registered {effect.GetType().Name} from {cardName} on {effect.TargetEntity.name} for {duration} turns");
     }
 
-    public void PushEffect(IOngoingEffect effect, int duration)
+    public void PushEffect(IOngoingEffect effect, int duration, string cardName)
     {
-        RegisterEffect(effect, duration);
+        RegisterEffect(effect, duration, cardName);
     }
 
     public void ProcessStack()
@@ -140,9 +145,19 @@ public class StackManager : MonoBehaviour
         {
             _stackView.Add(entry);
         }
-        _stackView.Reverse();
+        _stackView.Reverse(); // Show in execution order
     }
 
-    [ContextMenu("Process Stack Now")]
-    public void ProcessStackEditor() => ProcessStack();
+    [ContextMenu("Log Stack Contents")]
+    public void LogStackContents()
+    {
+        Debug.Log("Current Stack Contents:");
+        foreach (var effect in _stackView)
+        {
+            Debug.Log($"- Card: {effect.sourceCardName} | " +
+                     $"Effect: {effect.effect.EffectType} | " +
+                     $"Turns Left: {effect.remainingTurns} | " +
+                     $"Target: {effect.effect.TargetEntity.name}");
+        }
+    }
 }

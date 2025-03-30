@@ -4,6 +4,7 @@ using NUnit.Framework;
 using System.Collections;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections.Generic;
 
 public class AttackHandlerPlayModeTests
 {
@@ -18,6 +19,20 @@ public class AttackHandlerPlayModeTests
     private GameObject mockCanvas;
     private AttackLimiter attackLimiter;
 
+    // Simple test implementation of ICardManager
+    private class TestCardManager : ICardManager
+    {
+        public GameObject CurrentSelectedCard { get; set; }
+        public Deck PlayerDeck => null;
+        public List<GameObject> DeckCardObjects => new List<GameObject>();
+        public List<GameObject> HandCardObjects => new List<GameObject>();
+
+        public void DisplayDeck() { }
+        public void DisplayHand() { }
+        public void RemoveCard(GameObject cardObject) { }
+        public void RefreshUI() { }
+    }
+
     [SetUp]
     public void Setup()
     {
@@ -25,55 +40,59 @@ public class AttackHandlerPlayModeTests
         mockCanvas = new GameObject("Canvas");
         mockCanvas.AddComponent<Canvas>();
 
+        // Create entities
         playerGameObject = new GameObject("PlayerEntity");
         enemyGameObject = new GameObject("EnemyEntity");
 
+        // Add EntityManager components
         playerEntity = playerGameObject.AddComponent<EntityManager>();
         enemyEntity = enemyGameObject.AddComponent<EntityManager>();
 
+        // Create health bars
         playerHealthBar = new GameObject("PlayerHealthBar").AddComponent<Slider>();
         enemyHealthBar = new GameObject("EnemyHealthBar").AddComponent<Slider>();
 
-        // Mock DamageVisualizer (empty behavior)
+        // Mock DamageVisualizer
         DamageVisualizer mockDamageVisualizer = new GameObject("MockDamageVisualizer").AddComponent<DamageVisualizer>();
 
-        // Create a mock damage number prefab
+        // Create damage number prefab
         damageNumberPrefab = new GameObject("DamageNumberPrefab");
         damageNumberPrefab.AddComponent<TextMeshProUGUI>();
 
-        // Create an instance of AttackLimiter
+        // Initialize dependencies
         attackLimiter = new AttackLimiter();
+        var testCardManager = new TestCardManager();
+        var effectApplier = new OngoingEffectApplier(testCardManager);
 
-        // Create an instance of OngoingEffectApplier for testing
-        OngoingEffectApplier effectApplier = new OngoingEffectApplier();
-
+        // Initialize player entity
         playerEntity.InitializeMonster(
             EntityManager.MonsterType.Friendly,
-            100,
-            20,
+            100f, // maxHealth
+            20f,  // attackDamage
             playerHealthBar,
-            null,
+            null, // image
             mockDamageVisualizer,
             damageNumberPrefab,
-            null,
+            null, // outlineSprite
             attackLimiter,
             effectApplier
         );
 
+        // Initialize enemy entity
         enemyEntity.InitializeMonster(
             EntityManager.MonsterType.Enemy,
-            80,
-            15,
+            80f,  // maxHealth
+            15f,  // attackDamage
             enemyHealthBar,
-            null,
+            null, // image
             mockDamageVisualizer,
             damageNumberPrefab,
-            null,
+            null, // outlineSprite
             attackLimiter,
             effectApplier
         );
 
-        // Instantiate AttackHandler with the AttackLimiter
+        // Create AttackHandler
         attackHandler = new AttackHandler(attackLimiter);
     }
 
@@ -86,23 +105,46 @@ public class AttackHandlerPlayModeTests
 
         // Perform attack
         attackHandler.HandleAttack(playerEntity, enemyEntity);
-        yield return null;
+        yield return null; // Wait one frame for damage processing
 
-        // Check if health updated correctly
-        Assert.AreEqual(initialPlayerHealth - enemyEntity.GetAttackDamage(), playerEntity.GetHealth(), "Player's health did not decrease correctly.");
-        Assert.AreEqual(initialEnemyHealth - playerEntity.GetAttackDamage(), enemyEntity.GetHealth(), "Enemy's health did not decrease correctly.");
+        // Verify health changes
+        Assert.AreEqual(
+            initialPlayerHealth - enemyEntity.GetAttackDamage(),
+            playerEntity.GetHealth(),
+            "Player health did not decrease correctly"
+        );
 
-        // Check if health bars updated correctly
-        Assert.AreEqual(playerEntity.GetHealth() / 100, playerHealthBar.value, "Player health bar did not update correctly.");
-        Assert.AreEqual(enemyEntity.GetHealth() / 80, enemyHealthBar.value, "Enemy health bar did not update correctly.");
+        Assert.AreEqual(
+            initialEnemyHealth - playerEntity.GetAttackDamage(),
+            enemyEntity.GetHealth(),
+            "Enemy health did not decrease correctly"
+        );
+
+        // Verify health bar updates
+        Assert.AreEqual(
+            playerEntity.GetHealth() / 100f,
+            playerHealthBar.value,
+            "Player health bar did not update correctly",
+            0.001f // Tolerance for float comparison
+        );
+
+        Assert.AreEqual(
+            enemyEntity.GetHealth() / 80f,
+            enemyHealthBar.value,
+            "Enemy health bar did not update correctly",
+            0.001f
+        );
     }
 
     [TearDown]
     public void TearDown()
     {
-        GameObject.Destroy(playerGameObject);
-        GameObject.Destroy(enemyGameObject);
-        GameObject.Destroy(damageNumberPrefab);
-        GameObject.Destroy(mockCanvas);
+        // Clean up all created objects
+        Object.Destroy(playerGameObject);
+        Object.Destroy(enemyGameObject);
+        Object.Destroy(playerHealthBar.gameObject);
+        Object.Destroy(enemyHealthBar.gameObject);
+        Object.Destroy(damageNumberPrefab);
+        Object.Destroy(mockCanvas);
     }
 }

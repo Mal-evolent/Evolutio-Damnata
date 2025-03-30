@@ -56,7 +56,7 @@ public class CombatStage : MonoBehaviour, ICombatStage
     private void InitializeServices()
     {
         var attackLimiter = new AttackLimiter();
-        var ongoingEffectApplier = new OngoingEffectApplier();
+        var ongoingEffectApplier = new OngoingEffectApplier(_cardManager);
 
         var spawnerFactory = new CardSpawnerFactory(
             _spritePositioning,

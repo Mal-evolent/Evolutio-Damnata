@@ -1982,7 +1982,7 @@ MonoBehaviour:
     Description: A corrupt wizzard lost in the dungeon
     ManaCost: 0
     AttackPower: 1
-    Health: 100
+    Health: 20
     Keywords: 00000000
     EffectTypes: 
     EffectValue: 0
@@ -1998,7 +1998,19 @@ MonoBehaviour:
     Keywords: 
     EffectTypes: 0100000006000000
     EffectValue: 5
-    Duration: 2
+    Duration: 3
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Branding
+    CardImage: {fileID: 21300000, guid: 6bcc5bcd60555644a916f3bf816cc40a, type: 3}
+    Description: 
+    ManaCost: 0
+    AttackPower: 2
+    Health: 0
+    Keywords: 00000000
+    EffectTypes: 06000000
+    EffectValue: 2
+    Duration: 10
     IsSpellCard: 1
     IsMonsterCard: 0
   _defaultCardSprite: {fileID: 21300000, guid: 6bcc5bcd60555644a916f3bf816cc40a, type: 3}
@@ -2467,6 +2479,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7af92319d6028fc40ab8a5d0dc44d051, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _stackView:
+  - remainingTurns: 0
+    needsApplication: 0
+    sourceCardName: 
 --- !u!4 &1316461466
 Transform:
   m_ObjectHideFlags: 0
