@@ -16,6 +16,10 @@ public class StackManager : MonoBehaviour
         public int remainingTurns;
         public bool needsApplication;
 
+        public string EditorSummary =>
+            $"{cardName} → {_targetName} " +
+            $"({_effectType}, {remainingTurns} turn{(remainingTurns != 1 ? "s" : "")})";
+
         public void UpdateDebugData()
         {
             _targetName = effect?.TargetEntity?.name ?? "NULL";
@@ -150,10 +154,10 @@ public class StackManager : MonoBehaviour
         _stackView.Clear();
         foreach (var entry in _executionStack)
         {
-            entry.UpdateDebugData();  // Refresh names before displaying
+            entry.UpdateDebugData();
             _stackView.Add(entry);
         }
-        _stackView.Reverse(); // Show in execution order
+        _stackView.Reverse();
     }
 
     [ContextMenu("Log Stack Contents")]
@@ -168,4 +172,6 @@ public class StackManager : MonoBehaviour
                      $"Target: {effect.effect.TargetEntity.name}");
         }
     }
+
+    public List<TimedEffect> StackView => _stackView;
 }
