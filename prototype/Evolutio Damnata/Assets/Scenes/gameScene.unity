@@ -2479,10 +2479,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7af92319d6028fc40ab8a5d0dc44d051, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _stackView:
-  - remainingTurns: 0
-    needsApplication: 0
-    sourceCardName: 
+  _stackView: []
 --- !u!4 &1316461466
 Transform:
   m_ObjectHideFlags: 0

@@ -77,6 +77,7 @@ public class AttackHandlerPlayModeTests
             attackLimiter,
             effectApplier
         );
+        playerEntity.SetPlaced(true);
 
         // Initialize enemy entity
         enemyEntity.InitializeMonster(
@@ -91,6 +92,7 @@ public class AttackHandlerPlayModeTests
             attackLimiter,
             effectApplier
         );
+        enemyEntity.SetPlaced(true);
 
         // Create AttackHandler
         attackHandler = new AttackHandler(attackLimiter);
@@ -99,6 +101,10 @@ public class AttackHandlerPlayModeTests
     [UnityTest]
     public IEnumerator HandleMonsterAttack_UpdatesHealthCorrectly()
     {
+        // Verify initial placement state
+        Assert.IsTrue(playerEntity.placed, "Player entity should be placed");
+        Assert.IsTrue(enemyEntity.placed, "Enemy entity should be placed");
+
         // Store initial health values
         float initialPlayerHealth = playerEntity.GetHealth();
         float initialEnemyHealth = enemyEntity.GetHealth();
@@ -111,28 +117,28 @@ public class AttackHandlerPlayModeTests
         Assert.AreEqual(
             initialPlayerHealth - enemyEntity.GetAttackDamage(),
             playerEntity.GetHealth(),
-            "Player health did not decrease correctly"
+            $"Player health should decrease by {enemyEntity.GetAttackDamage()}"
         );
 
         Assert.AreEqual(
             initialEnemyHealth - playerEntity.GetAttackDamage(),
             enemyEntity.GetHealth(),
-            "Enemy health did not decrease correctly"
+            $"Enemy health should decrease by {playerEntity.GetAttackDamage()}"
         );
 
-        // Verify health bar updates
+        // Verify health bar updates (with tolerance for floating-point precision)
         Assert.AreEqual(
             playerEntity.GetHealth() / 100f,
             playerHealthBar.value,
-            "Player health bar did not update correctly",
-            0.001f // Tolerance for float comparison
+            0.001f,
+            "Player health bar value mismatch"
         );
 
         Assert.AreEqual(
             enemyEntity.GetHealth() / 80f,
             enemyHealthBar.value,
-            "Enemy health bar did not update correctly",
-            0.001f
+            0.001f,
+            "Enemy health bar value mismatch"
         );
     }
 
