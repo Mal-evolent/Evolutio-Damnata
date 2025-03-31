@@ -29,6 +29,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 
     [Header("Attack Settings")]
     [SerializeField] private int allowedAttacks = 1;
+    private int remainingAttacks;
 
     // Private Variables
     private MonsterType monsterType;
@@ -37,6 +38,32 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     private float turnDuration = 1.0f;
 
     public enum MonsterType { Friendly, Enemy }
+
+    #region Attack Management
+    public int GetRemainingAttacks() => remainingAttacks;
+    
+    public void UseAttack()
+    {
+        if (remainingAttacks > 0)
+        {
+            remainingAttacks--;
+            Debug.Log($"[{name}] Used attack. Remaining attacks: {remainingAttacks}/{allowedAttacks}");
+        }
+    }
+
+    public void ResetAttacks()
+    {
+        remainingAttacks = allowedAttacks;
+        Debug.Log($"[{name}] Reset attacks. Remaining attacks: {remainingAttacks}/{allowedAttacks}");
+    }
+
+    public void SetAllowedAttacks(int newAllowedAttacks)
+    {
+        allowedAttacks = newAllowedAttacks;
+        remainingAttacks = allowedAttacks;
+        Debug.Log($"[{name}] Set allowed attacks to {allowedAttacks}. Remaining attacks: {remainingAttacks}/{allowedAttacks}");
+    }
+    #endregion
 
     #region Initialization
     public void InitializeMonster(MonsterType monsterType, float maxHealth, float atkDamage,
@@ -54,8 +81,10 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         this.outlineSprite = outlineSprite;
         this.attackLimiter = attackLimiter;
         this.ongoingEffectApplier = effectApplier;
+        
+        remainingAttacks = allowedAttacks;
+        Debug.Log($"[{name}] Initialized with {allowedAttacks} allowed attacks");
 
-        attackLimiter.RegisterEntity(this, allowedAttacks);
         InitializeHealthBar(healthBarSlider);
         gameObject.SetActive(false);
     }

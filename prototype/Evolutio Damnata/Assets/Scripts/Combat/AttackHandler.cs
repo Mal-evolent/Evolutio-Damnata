@@ -30,6 +30,7 @@ public class AttackHandler : IAttackHandler
         target.TakeDamage(attackerDamage);
 
         _attackLimiter.RegisterAttack(attacker);
+        _attackLimiter.RegisterAttack(target);
 
         Debug.Log($"{attacker.name} attacked {target.name}. " +
                  $"{attacker.name} took {targetDamage} damage. " +

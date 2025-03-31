@@ -72,11 +72,13 @@ public class PhaseManager : IPhaseManager
         Debug.Log("[PhaseManager] ===== ENTERING CLEAN-UP PHASE =====");
         _combatManager.CurrentPhase = CombatPhase.CleanUp;
 
-        // Process entities first (buffs, heals, etc.)
+        // Process all entities once, handling both attack resets and effects
+        Debug.Log("[PhaseManager] Processing entities for cleanup");
         yield return ProcessEntities(_combatManager.CombatStage.SpritePositioning.PlayerEntities, "Player", false);
         yield return ProcessEntities(_combatManager.CombatStage.SpritePositioning.EnemyEntities, "Enemy", false);
 
-        // Resolve all stack effects (burns, poisons, etc.)
+        // Process stack effects once for all entities
+        Debug.Log("[PhaseManager] Processing stack effects");
         StackManager.Instance.ProcessStack();
 
         // Continue with normal cleanup
@@ -179,10 +181,10 @@ public class PhaseManager : IPhaseManager
             {
                 Debug.Log($"[PhaseManager] Processing {entityType} entity: {entity.name}");
 
-                // Reset attacks regardless
+                // Always reset attacks first
                 _attackLimiter.ResetAttacks(entityManager);
 
-                // Only apply non-stack effects if needed
+                // Only apply effects if explicitly requested
                 if (applyEffects)
                 {
                     entityManager.ApplyOngoingEffect();
