@@ -157,7 +157,6 @@ public class StackManager : MonoBehaviour
             entry.UpdateDebugData();
             _stackView.Add(entry);
         }
-        _stackView.Reverse();
     }
 
     [ContextMenu("Log Stack Contents")]
