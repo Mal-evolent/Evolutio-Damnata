@@ -1777,6 +1777,54 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &655618342
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 655618344}
+  - component: {fileID: 655618343}
+  m_Layer: 0
+  m_Name: Card History Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &655618343
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 655618342}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 37558282bcfdbd041b71f9645aeabda2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  keepHistoryBetweenGames: 0
+  maxHistorySize: 100
+  cardHistory: []
+  totalCardsPlayed: 0
+--- !u!4 &655618344
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 655618342}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1503.785, y: 379.39624, z: -2.1983533}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &671977322
 GameObject:
   m_ObjectHideFlags: 0
@@ -1982,7 +2030,7 @@ MonoBehaviour:
     Description: A corrupt wizzard lost in the dungeon
     ManaCost: 0
     AttackPower: 1
-    Health: 20
+    Health: 1
     Keywords: 00000000
     EffectTypes: 
     EffectValue: 0
@@ -3219,6 +3267,54 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1870554165}
   m_CullTransparentMesh: 1
+--- !u!1 &1937691899
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1937691901}
+  - component: {fileID: 1937691900}
+  m_Layer: 0
+  m_Name: Grave Yard
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1937691900
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1937691899}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b784e10d3da5f04bbf16d9c9e78a5c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  keepHistoryBetweenGames: 1
+  maxHistorySize: 100
+  graveyardHistory: []
+  totalEntitiesBuried: 0
+--- !u!4 &1937691901
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1937691899}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1503.785, y: 379.39624, z: -2.1983533}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1982080117
 GameObject:
   m_ObjectHideFlags: 0
@@ -3620,3 +3716,5 @@ SceneRoots:
   - {fileID: 389717232}
   - {fileID: 2123307027}
   - {fileID: 1316461466}
+  - {fileID: 655618344}
+  - {fileID: 1937691901}

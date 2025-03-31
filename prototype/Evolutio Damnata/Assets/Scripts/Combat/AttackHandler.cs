@@ -26,6 +26,10 @@ public class AttackHandler : IAttackHandler
         float attackerDamage = attacker.GetAttackDamage();
         float targetDamage = target.GetAttackDamage();
 
+        // Set potential killers before taking damage
+        attacker.SetKilledBy(target);
+        target.SetKilledBy(attacker);
+
         attacker.TakeDamage(targetDamage);
         target.TakeDamage(attackerDamage);
 

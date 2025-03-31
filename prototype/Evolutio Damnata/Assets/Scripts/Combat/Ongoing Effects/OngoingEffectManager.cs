@@ -22,10 +22,20 @@ public class OngoingEffectManager : IOngoingEffect
         switch (EffectType)
         {
             case SpellEffect.Burn:
+                float healthBeforeDamage = entity.GetHealth();
                 entity.TakeDamage(EffectValue);
                 // Show damage number directly if TakeDamage() doesn't handle it
                 entity.ShowDamageNumber(EffectValue);
                 Debug.Log($"Applying burn effect: {EffectValue} damage to {entity.name}");
+
+                // Check if the effect killed the entity
+                if (healthBeforeDamage > 0 && entity.GetHealth() <= 0)
+                {
+                    if (GraveYard.Instance != null)
+                    {
+                        GraveYard.Instance.AddSpellKill(entity, "Burn Effect", EffectValue, true);
+                    }
+                }
                 break;
         }
     }

@@ -113,8 +113,20 @@ public class SpellEffectApplier : ISpellEffectApplier
 
     private void ApplyDamageEffect(EntityManager target, int damage)
     {
+        // Store health before damage to check if this kills the entity
+        float healthBeforeDamage = target.GetHealth();
+        
         target.TakeDamage(damage);
         _damageVisualizer?.CreateDamageNumber(target, damage, target.transform.position, _damageNumberPrefab);
+
+        // Check if the spell killed the entity
+        if (healthBeforeDamage > 0 && target.GetHealth() <= 0)
+        {
+            if (GraveYard.Instance != null)
+            {
+                GraveYard.Instance.AddSpellKill(target, "Direct Damage Spell", damage);
+            }
+        }
     }
 
     private void ApplyBuff(EntityManager target, int value, int duration)

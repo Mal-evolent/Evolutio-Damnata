@@ -36,6 +36,8 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     private OngoingEffectApplier ongoingEffectApplier;
     private AttackLimiter attackLimiter;
     private float turnDuration = 1.0f;
+    private EntityManager killedBy;
+    private float lastDamageTaken;
 
     public enum MonsterType { Friendly, Enemy }
 
@@ -141,6 +143,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     {
         if (dead || !placed) return;
 
+        lastDamageTaken = damageAmount;
         health = Mathf.Clamp(health - damageAmount, 0, maxHealth);
         UpdateHealthUI();
 
@@ -159,6 +162,8 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     }
 
     public float GetHealth() => health;
+
+    public float GetMaxHealth() => maxHealth;
 
     public void ModifyAttack(float modifier)
     {
@@ -244,6 +249,13 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         placed = false;
         IsFadingOut = true;
 
+        // Only record death in graveyard if it's from combat (killedBy is set)
+        // Spell deaths are handled by SpellEffectApplier
+        if (GraveYard.Instance != null && killedBy != null)
+        {
+            GraveYard.Instance.AddToGraveyard(this, killedBy, lastDamageTaken);
+        }
+
         RemoveAllOngoingEffects();
         DisableAllButtons();
         StartCoroutine(PlayDeathAnimation());
@@ -273,5 +285,10 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 
     #region Utility Methods
     public MonsterType GetMonsterType() => monsterType;
+
+    public void SetKilledBy(EntityManager killer)
+    {
+        killedBy = killer;
+    }
     #endregion
 }
