@@ -130,7 +130,7 @@ public class GraveYard : MonoBehaviour, IGraveYard
         [SerializeField] private int turnNumber;
         [SerializeField] private float finalDamage;
         [SerializeField] private KillSource killSource;
-        [SerializeField] private string spellName; // For spell kills
+        [SerializeField] private string spellName;
 
         public enum KillSource
         {
