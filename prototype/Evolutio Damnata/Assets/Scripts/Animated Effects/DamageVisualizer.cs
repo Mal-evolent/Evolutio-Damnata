@@ -62,8 +62,10 @@ public class DamageVisualizer : MonoBehaviour, IDamageVisualizer
         Vector3 startPosition = visual.transform.position;
         Vector3 targetPosition = startPosition + new Vector3(0, 20f, 0);
 
-        while (elapsedTime < duration)
+        while (elapsedTime < duration && visual != null)
         {
+            if (visual == null) break;
+            
             float t = elapsedTime / duration;
             visual.transform.position = Vector3.Lerp(startPosition, targetPosition, t);
             text.color = new Color(startColor.r, startColor.g, startColor.b, Mathf.Lerp(1, 0, t));
@@ -71,6 +73,9 @@ public class DamageVisualizer : MonoBehaviour, IDamageVisualizer
             yield return null;
         }
 
-        Destroy(visual);
+        if (visual != null)
+        {
+            Destroy(visual);
+        }
     }
 }
