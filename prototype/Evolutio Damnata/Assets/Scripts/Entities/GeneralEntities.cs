@@ -55,21 +55,63 @@ public class GeneralEntities : ICardSpawner
 
         try
         {
+            bool success = false;
             if (_monsterType == EntityManager.MonsterType.Friendly)
             {
-                return SpawnPlayerCard(cardName, positionIndex);
+                success = SpawnPlayerCard(cardName, positionIndex);
             }
             else if (_monsterType == EntityManager.MonsterType.Enemy)
             {
-                return SpawnEnemyCard(cardName, positionIndex);
+                success = SpawnEnemyCard(cardName, positionIndex);
             }
+
+            // Record the card play in history if successful
+            if (success)
+            {
+                var cardData = GetCardData(cardName);
+                var playerType = _monsterType == EntityManager.MonsterType.Friendly ? "Player" : "Enemy";
+                var manaUsed = cardData?.ManaCost ?? 0;
+                var turnNumber = (_manaProvider as ICombatManager)?.TurnCount ?? 0;
+
+                CardHistory.Instance?.RecordCardPlay(
+                    CreateCardFromData(cardData),
+                    GetEntityManager(positionIndex),
+                    turnNumber,
+                    manaUsed
+                );
+            }
+
+            return success;
         }
         catch (System.Exception ex)
         {
             Debug.LogError($"Failed to spawn card: {ex.Message}");
+            return false;
         }
+    }
 
-        return false;
+    private EntityManager GetEntityManager(int positionIndex)
+    {
+        var entities = _monsterType == EntityManager.MonsterType.Friendly 
+            ? _spritePositioning.PlayerEntities 
+            : _spritePositioning.EnemyEntities;
+
+        if (positionIndex >= 0 && positionIndex < entities.Count)
+        {
+            return entities[positionIndex].GetComponent<EntityManager>();
+        }
+        return null;
+    }
+
+    private Card CreateCardFromData(CardData cardData)
+    {
+        if (cardData == null) return null;
+        return _cardLibrary.CreateCardFromData(cardData);
+    }
+
+    private CardData GetCardData(string cardName)
+    {
+        return _cardLibrary.CardDataList.FirstOrDefault(data => data.CardName == cardName);
     }
 
     private bool SpawnPlayerCard(string cardName, int positionIndex)
@@ -127,12 +169,6 @@ public class GeneralEntities : ICardSpawner
             throw new MissingComponentException("Image component not found on placeholder");
 
         return placeholder;
-    }
-
-    private CardData GetCardData(string cardName)
-    {
-        return _cardLibrary.CardDataList.FirstOrDefault(c => cardName == c.CardName)
-            ?? throw new System.ArgumentException($"Card data not found: {cardName}");
     }
 
     private EntityManager InitializeEntity(GameObject placeholder, CardData cardData)

@@ -42,6 +42,18 @@ public class SpellEffectApplier : ISpellEffectApplier
             InitializeSpellCard(spellCard, spellData);
         }
 
+        // Record the spell card play in history
+        var combatManager = _cardManager as ICombatManager;
+        if (combatManager != null)
+        {
+            CardHistory.Instance?.RecordCardPlay(
+                spellCard,
+                target,
+                combatManager.TurnCount,
+                spellData.ManaCost
+            );
+        }
+
         ApplyEffectsToTarget(target, spellData);
         _cardManager.RemoveCard(selectedCard);
     }
