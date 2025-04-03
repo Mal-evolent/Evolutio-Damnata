@@ -5,7 +5,7 @@ using UnityEngine;
  * This class is used to position the sprites on the map.
  * It generates placeholders for the player and enemy entities.
  */
-public class PlayerRoomPositionsInitializer
+public class PlayerRoomPositionsInitializer : MonoBehaviour
 {
     public Dictionary<string, List<PositionData>> InitializePlayerRoomPositions()
     {
@@ -19,7 +19,12 @@ public class PlayerRoomPositionsInitializer
             new PositionData(new Vector2(-306.8797f, -384), new Vector2(613.7594f, 550.7698f), new Vector3(0.5826045f, 0.5826045f, 0.5826045f), Quaternion.Euler(0, 0, 0))
         };
 
-        // Add more rooms and their positions as needed
+        roomPositions["Bitter Cold"] = new List<PositionData>
+        {
+            new PositionData(new Vector2(-914, -353), new Vector2(613.7594f, 550.7698f), new Vector3(0.5826045f, 0.5826045f, 0.5826045f), Quaternion.Euler(0, 0, 0)),
+            new PositionData(new Vector2(-644, -164.1f), new Vector2(613.7594f, 550.7698f), new Vector3(0.5826045f, 0.5826045f, 0.5826045f), Quaternion.Euler(0, 0, 0)),
+            new PositionData(new Vector2(-470.82f, -353), new Vector2(613.7594f, 550.7698f), new Vector3(0.5826045f, 0.5826045f, 0.5826045f), Quaternion.Euler(0, 0, 0))
+        };
 
         return roomPositions;
     }

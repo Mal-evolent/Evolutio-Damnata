@@ -27,8 +27,12 @@ public class SpritePositioning : MonoBehaviour, ISpritePositioning
 
     private void InitializePositionData()
     {
-        _roomPositions = new PlayerRoomPositionsInitializer().InitializePlayerRoomPositions();
-        _enemyRoomPositions = new EnemyRoomPositionsInitializer().InitializeEnemyRoomPositions();
+        var initializerGameObject = new GameObject("Initializers");
+        var playerRoomPositionsInitializer = initializerGameObject.AddComponent<PlayerRoomPositionsInitializer>();
+        var enemyRoomPositionsInitializer = initializerGameObject.AddComponent<EnemyRoomPositionsInitializer>();
+
+        _roomPositions = playerRoomPositionsInitializer.InitializePlayerRoomPositions();
+        _enemyRoomPositions = enemyRoomPositionsInitializer.InitializeEnemyRoomPositions();
         PlayerEntities = new List<GameObject>();
         EnemyEntities = new List<GameObject>();
     }
