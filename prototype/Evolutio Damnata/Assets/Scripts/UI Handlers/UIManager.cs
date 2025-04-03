@@ -16,9 +16,27 @@ public class UIManager : IUIManager
         if (button != null)
         {
             button.gameObject.SetActive(state);
-            buttonShadow = button.gameObject.GetComponentInParent<Image>();
-            buttonShadow.gameObject.SetActive(state);
-            Debug.LogError($"==UI MANAGER== Button Name {buttonShadow.gameObject.name}");
+            Transform parentTransform = button.transform.parent;
+
+            while (parentTransform != null)
+            {
+                buttonShadow = parentTransform.GetComponent<Image>();
+                if (buttonShadow != null)
+                {
+                    buttonShadow.gameObject.SetActive(state);
+                    break;
+                }
+                parentTransform = parentTransform.parent;
+            }
+
+            if (buttonShadow == null)
+            {
+                Debug.LogError("==UI MANAGER== Button shadow not found.");
+            }
+        }
+        else
+        {
+            Debug.LogError("==UI MANAGER== Button is null.");
         }
     }
 }
