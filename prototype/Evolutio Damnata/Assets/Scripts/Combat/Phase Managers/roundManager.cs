@@ -150,6 +150,7 @@ public class RoundManager : IRoundManager
         if (_combatManager.TurnUI != null)
         {
             _combatManager.TurnUI.text = $"Turn: {_combatManager.TurnCount}";
+            _combatManager.TurnUIShadow.text = $"Turn: {_combatManager.TurnCount}";
         }
         else
         {

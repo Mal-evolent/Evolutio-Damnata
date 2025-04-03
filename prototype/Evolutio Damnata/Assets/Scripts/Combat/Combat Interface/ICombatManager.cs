@@ -24,6 +24,7 @@ public interface ICombatManager
     Button EndTurnButton { get; }
     Image EndTurnButtonShadow { get; }
     TMP_Text TurnUI { get; }
+    TMP_Text TurnUIShadow { get; }
 
     void EndPhase();
     void EndTurn();

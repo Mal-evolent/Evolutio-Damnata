@@ -9,6 +9,7 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     [Header("References")]
     [SerializeField] private CombatStage _combatStage;
     [SerializeField] private TMP_Text _turnUI;
+    [SerializeField] private TMP_Text _turnUIShadow;
     [SerializeField] private Button _endPhaseButton;
     [SerializeField] private Image _endPhaseButtonShadow;
     [SerializeField] private Button _endTurnButton;
@@ -55,6 +56,7 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     public Button EndTurnButton => _endTurnButton;
     public Image EndTurnButtonShadow => _endPhaseButtonShadow;
     public TMP_Text TurnUI => _turnUI;
+    public TMP_Text TurnUIShadow => _turnUIShadow;
 
     public int PlayerMana
     {
