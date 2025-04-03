@@ -20,7 +20,9 @@ public interface ICombatManager
     Deck PlayerDeck { get; }
     Deck EnemyDeck { get; }
     Button EndPhaseButton { get; }
+    Image EndPhaseButtonShadow { get;  }
     Button EndTurnButton { get; }
+    Image EndTurnButtonShadow { get; }
     TMP_Text TurnUI { get; }
 
     void EndPhase();

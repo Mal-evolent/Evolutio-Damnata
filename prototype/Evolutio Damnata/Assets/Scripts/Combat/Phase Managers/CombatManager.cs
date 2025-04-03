@@ -10,7 +10,9 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     [SerializeField] private CombatStage _combatStage;
     [SerializeField] private TMP_Text _turnUI;
     [SerializeField] private Button _endPhaseButton;
+    [SerializeField] private Image _endPhaseButtonShadow;
     [SerializeField] private Button _endTurnButton;
+    [SerializeField] private Image _endTurnButtonShadow;
     [SerializeField] private Deck _playerDeck;
     [SerializeField] private Deck _enemyDeck;
 
@@ -49,7 +51,9 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     public Deck PlayerDeck => _playerDeck;
     public Deck EnemyDeck => _enemyDeck;
     public Button EndPhaseButton => _endPhaseButton;
+    public Image EndPhaseButtonShadow => _endPhaseButtonShadow;
     public Button EndTurnButton => _endTurnButton;
+    public Image EndTurnButtonShadow => _endPhaseButtonShadow;
     public TMP_Text TurnUI => _turnUI;
 
     public int PlayerMana
