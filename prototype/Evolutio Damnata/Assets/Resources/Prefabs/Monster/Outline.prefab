@@ -90,17 +90,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   outlineSprite: {fileID: 0}
-  spriteImage: {fileID: 0}
+  dead: 0
+  placed: 0
   health: 0
   maxHealth: 0
   atkDamage: 0
   atkDamageMulti: 1
+  spriteImage: {fileID: 0}
   healthBar: {fileID: 6675986941918603225, guid: 13811d77f45b76e46a27b229ca045f5e, type: 3}
   damageVisualizer: {fileID: 0}
   damageNumberPrefab: {fileID: 7701005947219011525, guid: a68dba72d8724e94989227a650a79328, type: 3}
   allowedAttacks: 1
-  dead: 0
-  placed: 0
 --- !u!1001 &3684018600601535445
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -195,11 +195,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1747264122265577483, guid: 13811d77f45b76e46a27b229ca045f5e, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -19.3
+      value: 0.000072479
       objectReference: {fileID: 0}
     - target: {fileID: 1747264122265577483, guid: 13811d77f45b76e46a27b229ca045f5e, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 180.8
+      value: 229.4
       objectReference: {fileID: 0}
     - target: {fileID: 1747264122265577483, guid: 13811d77f45b76e46a27b229ca045f5e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
