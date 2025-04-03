@@ -2165,8 +2165,8 @@ MonoBehaviour:
     CardImage: {fileID: 21300000, guid: f7041f0585d722945b472deec6fad756, type: 3}
     Description: '"They...will...suffer..."'
     ManaCost: 0
-    AttackPower: 1
-    Health: 1
+    AttackPower: 25
+    Health: 100
     Keywords: 00000000
     EffectTypes: 
     EffectValue: 0
