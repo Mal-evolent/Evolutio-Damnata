@@ -1855,7 +1855,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   dungeonRooms:
-  - {fileID: 21300000, guid: 63b0c655b78fcf74198ddb5d83bcfd3e, type: 3}
+  - {fileID: 21300000, guid: c612fa3b86974485e8605df19d6f8650, type: 3}
   monsters:
   - {fileID: 21300000, guid: 6bcc5bcd60555644a916f3bf816cc40a, type: 3}
   - {fileID: 21300000, guid: 9173eca91e2004147a90bf7266c9ff22, type: 3}
@@ -2026,7 +2026,7 @@ MonoBehaviour:
   _enemyDeck: {fileID: 825410030}
   _cardDataList:
   - CardName: Wizard
-    CardImage: {fileID: 21300000, guid: 6bcc5bcd60555644a916f3bf816cc40a, type: 3}
+    CardImage: {fileID: 21300000, guid: f7041f0585d722945b472deec6fad756, type: 3}
     Description: A corrupt wizzard lost in the dungeon
     ManaCost: 0
     AttackPower: 1
@@ -3521,7 +3521,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 63b0c655b78fcf74198ddb5d83bcfd3e, type: 3}
+  m_Sprite: {fileID: 21300000, guid: c612fa3b86974485e8605df19d6f8650, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
