@@ -1418,7 +1418,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7825382905349663433, guid: 071d931bace1dd4499f34a21bd75c309, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -200
+      value: -212
       objectReference: {fileID: 0}
     - target: {fileID: 7825382905349663433, guid: 071d931bace1dd4499f34a21bd75c309, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -2025,9 +2025,9 @@ MonoBehaviour:
   _playerDeck: {fileID: 294774779}
   _enemyDeck: {fileID: 825410030}
   _cardDataList:
-  - CardName: Wizard
+  - CardName: Spite Bound Cultist
     CardImage: {fileID: 21300000, guid: f7041f0585d722945b472deec6fad756, type: 3}
-    Description: A corrupt wizzard lost in the dungeon
+    Description: '"They...will...suffer..."'
     ManaCost: 0
     AttackPower: 1
     Health: 1
