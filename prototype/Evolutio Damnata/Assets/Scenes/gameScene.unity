@@ -2174,7 +2174,7 @@ MonoBehaviour:
     IsSpellCard: 0
     IsMonsterCard: 1
   - CardName: Fireball
-    CardImage: {fileID: 21300000, guid: 6bcc5bcd60555644a916f3bf816cc40a, type: 3}
+    CardImage: {fileID: 21300000, guid: 7aeec1cbde0927e43b184ad00a19733b, type: 3}
     Description: Call a fireball from the heavens
     ManaCost: 0
     AttackPower: 0
@@ -2186,7 +2186,7 @@ MonoBehaviour:
     IsSpellCard: 1
     IsMonsterCard: 0
   - CardName: Branding
-    CardImage: {fileID: 21300000, guid: 6bcc5bcd60555644a916f3bf816cc40a, type: 3}
+    CardImage: {fileID: 21300000, guid: 7aeec1cbde0927e43b184ad00a19733b, type: 3}
     Description: 
     ManaCost: 0
     AttackPower: 2
@@ -2204,6 +2204,30 @@ MonoBehaviour:
     AttackPower: 5
     Health: 100
     Keywords: 
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Divine Light
+    CardImage: {fileID: 21300000, guid: 7aeec1cbde0927e43b184ad00a19733b, type: 3}
+    Description: The heavens smile upon us this day!
+    ManaCost: 0
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 02000000
+    EffectValue: 10
+    Duration: 0
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Death Knight
+    CardImage: {fileID: 21300000, guid: 62a6d4a6ce6931d4594d19c7b388709c, type: 3}
+    Description: Undying bulwark
+    ManaCost: 0
+    AttackPower: 3
+    Health: 15
+    Keywords: 00000000
     EffectTypes: 
     EffectValue: 0
     Duration: 0
