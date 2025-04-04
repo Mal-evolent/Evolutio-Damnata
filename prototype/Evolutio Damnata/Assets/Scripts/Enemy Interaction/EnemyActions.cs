@@ -106,13 +106,47 @@ public class EnemyActions : IEnemyActions
             yield break;
         }
 
+        if (_spritePositioning == null)
+        {
+            Debug.LogError("[EnemyActions] SpritePositioning is null");
+            yield break;
+        }
+
+        if (_spritePositioning.EnemyEntities == null)
+        {
+            Debug.LogError("[EnemyActions] EnemyEntities list is null");
+            yield break;
+        }
+
+        // Find an available position
+        EntityManager targetSprite = null;
+        int availableIndex = -1;
+        for (int i = 0; i < _spritePositioning.EnemyEntities.Count; i++)
+        {
+            if (_spritePositioning.EnemyEntities[i] == null) continue;
+            
+            var entity = _spritePositioning.EnemyEntities[i].GetComponent<EntityManager>();
+            if (entity != null && !entity.placed)
+            {
+                targetSprite = entity;
+                availableIndex = i;
+                break;
+            }
+        }
+
+        if (targetSprite == null)
+        {
+            Debug.Log("[===ENEMY ACTIONS===]No available positions to play the card");
+            yield break;
+        }
+
         if (!_combatManager.EnemyDeck.TryRemoveCardAt(index, out Card removedCard))
         {
             Debug.LogError($"Failed to remove card {card.CardName} from hand");
             yield break;
         }
 
-        bool success = _combatStage.EnemyCardSpawner.SpawnCard(card.CardName, index);
+        bool success = _combatStage.EnemyCardSpawner.SpawnCard(card.CardName, availableIndex);
         if (!success)
         {
             Debug.LogError($"Failed to spawn card {card.CardName}");

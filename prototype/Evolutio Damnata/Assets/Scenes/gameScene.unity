@@ -2197,6 +2197,18 @@ MonoBehaviour:
     Duration: 10
     IsSpellCard: 1
     IsMonsterCard: 0
+  - CardName: Undead Arcanist
+    CardImage: {fileID: 21300000, guid: 8d8136910b6edaf48864bfa14e986589, type: 3}
+    Description: '"Death is just another step forwards"'
+    ManaCost: 0
+    AttackPower: 5
+    Health: 100
+    Keywords: 
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
   _defaultCardSprite: {fileID: 21300000, guid: 6bcc5bcd60555644a916f3bf816cc40a, type: 3}
 --- !u!4 &1159794894
 Transform:

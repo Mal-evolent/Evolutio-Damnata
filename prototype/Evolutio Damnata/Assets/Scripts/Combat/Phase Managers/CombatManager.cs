@@ -41,6 +41,8 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     private IEnemyActions _enemyActions;
     private IUIManager _uiManager;
 
+    private bool _isInitialized = false;
+
     // Properties
     public int TurnCount { get => _turnCount; set => _turnCount = value; }
     public int PlayerHealth { get => _playerHealth; set => _playerHealth = value; }
@@ -106,41 +108,8 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
                 throw new NullReferenceException("CombatStage reference is not set in inspector");
             }
 
-            _enemyActions = new EnemyActions(
-                this,
-                _combatStage.SpritePositioning as SpritePositioning,
-                _enemyDeck,
-                _combatStage.CardLibrary,
-                _combatStage
-            );
-
-            var attackLimiter = new AttackLimiter();
-
-            Debug.Log("[CombatManager] Creating RoundManager (PhaseManager will be set later)...");
-            // Create RoundManager first with minimal dependencies
-            var roundManagerImpl = new RoundManager(
-                combatManager: this,
-                enemyActions: _enemyActions,
-                uiManager: _uiManager
-            );
-            _roundManager = roundManagerImpl;
-
-            Debug.Log("[CombatManager] Creating PhaseManager with all dependencies...");
-            //create PhaseManager with all dependencies
-            _phaseManager = new PhaseManager(
-                combatManager: this,
-                attackLimiter: attackLimiter,
-                uiManager: _uiManager,
-                enemyActions: _enemyActions,
-                playerActions: _playerActions,
-                roundManager: _roundManager
-            );
-
-            Debug.Log("[CombatManager] Setting PhaseManager in RoundManager...");
-            // Complete the dependency chain
-            roundManagerImpl.SetPhaseManager(_phaseManager);
-
-            Debug.Log("[CombatManager] All managers initialized successfully");
+            // Start initialization coroutine
+            StartCoroutine(InitializeManagers());
         }
         catch (Exception ex)
         {
@@ -150,8 +119,70 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
         }
     }
 
+    private IEnumerator InitializeManagers()
+    {
+        // Wait for CombatStage to be fully initialized
+        while (_combatStage.SpritePositioning == null)
+        {
+            yield return null;
+        }
+
+        // Wait for SpritePositioning to be ready
+        while (!_combatStage.SpritePositioning.RoomReady)
+        {
+            yield return null;
+        }
+
+        _enemyActions = new EnemyActions(
+            this,
+            _combatStage.SpritePositioning as SpritePositioning,
+            _enemyDeck,
+            _combatStage.CardLibrary,
+            _combatStage
+        );
+
+        var attackLimiter = new AttackLimiter();
+
+        Debug.Log("[CombatManager] Creating RoundManager (PhaseManager will be set later)...");
+        // Create RoundManager first with minimal dependencies
+        var roundManagerImpl = new RoundManager(
+            combatManager: this,
+            enemyActions: _enemyActions,
+            uiManager: _uiManager
+        );
+        _roundManager = roundManagerImpl;
+
+        Debug.Log("[CombatManager] Creating PhaseManager with all dependencies...");
+        //create PhaseManager with all dependencies
+        _phaseManager = new PhaseManager(
+            combatManager: this,
+            attackLimiter: attackLimiter,
+            uiManager: _uiManager,
+            enemyActions: _enemyActions,
+            playerActions: _playerActions,
+            roundManager: _roundManager
+        );
+
+        Debug.Log("[CombatManager] Setting PhaseManager in RoundManager...");
+        // Complete the dependency chain
+        roundManagerImpl.SetPhaseManager(_phaseManager);
+
+        Debug.Log("[CombatManager] All managers initialized successfully");
+        _isInitialized = true;
+    }
+
     private void Start()
     {
+        StartCoroutine(WaitForInitialization());
+    }
+
+    private IEnumerator WaitForInitialization()
+    {
+        while (!_isInitialized)
+        {
+            yield return null;
+        }
+
         InitializeManaUI();
         _roundManager.InitializeGame();
     }
