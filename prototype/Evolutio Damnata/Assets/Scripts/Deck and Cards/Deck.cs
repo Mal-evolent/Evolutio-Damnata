@@ -86,6 +86,11 @@ public class Deck : MonoBehaviour
                 Debug.LogWarning("Deck is empty. Cannot draw more cards.");
                 return;
             }
+            if (Hand.Count >= HandSize)
+            {
+                Debug.Log("Hand is full. Cannot draw more cards.");
+                return;
+            }
 
             Card drawnCard = Cards[0];
             Cards.RemoveAt(0);
