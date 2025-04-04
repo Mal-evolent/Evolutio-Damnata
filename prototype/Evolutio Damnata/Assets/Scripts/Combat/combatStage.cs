@@ -35,8 +35,6 @@ public class CombatStage : MonoBehaviour, ICombatStage
     private ICombatManager _combatManager;
     private ICardOutlineManager _cardOutlineManager;
     private OngoingEffectApplier _ongoingEffectApplier;
-
-    // Expose dependencies through properties
     public CardLibrary CardLibrary => _cardLibrary;
     public ISpritePositioning SpritePositioning => _spritePositioning;
     public ICardSpawner EnemyCardSpawner => _enemyCardSpawner;

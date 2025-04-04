@@ -2222,7 +2222,7 @@ MonoBehaviour:
     IsSpellCard: 1
     IsMonsterCard: 0
   - CardName: Death Knight
-    CardImage: {fileID: 21300000, guid: 62a6d4a6ce6931d4594d19c7b388709c, type: 3}
+    CardImage: {fileID: 21300000, guid: 36d1fd3d74a240f418652272aa32f0d7, type: 3}
     Description: Undying bulwark
     ManaCost: 0
     AttackPower: 3
