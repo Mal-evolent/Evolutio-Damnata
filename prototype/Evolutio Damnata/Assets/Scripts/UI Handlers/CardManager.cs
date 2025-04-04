@@ -211,6 +211,39 @@ public class CardManager : MonoBehaviour, ICardManager
 
         if (cardObject == null) return;
 
+        // If clicking the same card, toggle its selection off
+        if (cardObject == _currentSelectedCard)
+        {
+            _cardOutlineManager.RemoveHighlight();
+            _currentSelectedCard = null;
+            return;
+        }
+
+        // Always deselect current selection first
+        if (_currentSelectedCard != null)
+        {
+            _cardOutlineManager.RemoveHighlight();
+            _currentSelectedCard = null;
+        }
+
+        // Remove any monster highlights before selecting a card
+        var spritePositioning = FindObjectOfType<SpritePositioning>();
+        if (spritePositioning != null && spritePositioning.PlayerEntities != null)
+        {
+            foreach (var entity in spritePositioning.PlayerEntities)
+            {
+                if (entity != null)
+                {
+                    var image = entity.GetComponent<Image>();
+                    if (image != null)
+                    {
+                        image.color = Color.white;
+                    }
+                }
+            }
+        }
+
+        // Now handle the new card selection
         _cardOutlineManager.HighlightCard(cardObject);
         CurrentSelectedCard = _cardOutlineManager.CardIsHighlighted ? cardObject : null;
         Debug.Log(CurrentSelectedCard != null

@@ -179,11 +179,30 @@ public class CombatStage : MonoBehaviour, ICombatStage
     private void UpdateSelectionEffects()
     {
         bool hasSelectedCard = _cardManager.CurrentSelectedCard != null;
+        bool isMonsterSelected = hasSelectedCard && IsPlacedCardSelected();
+
+        // Apply enemy selection effects only if we have a card or monster selected
         _enemySelectionEffectHandler.ApplyEffect(hasSelectedCard);
 
-        if (hasSelectedCard && IsPlacedCardSelected())
+        // Apply player selection effects if we have a monster selected
+        if (isMonsterSelected)
         {
             _playerSelectionEffectHandler.ApplyEffect();
+        }
+        else
+        {
+            // Reset player monster tints if nothing is selected
+            foreach (var entity in _spritePositioning.PlayerEntities)
+            {
+                if (entity != null)
+                {
+                    var image = entity.GetComponent<Image>();
+                    if (image != null)
+                    {
+                        image.color = Color.white;
+                    }
+                }
+            }
         }
     }
 

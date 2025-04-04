@@ -1,4 +1,6 @@
 using UnityEngine;
+using System.Linq;
+using UnityEngine.UI;
 
 public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
 {
@@ -62,27 +64,69 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
         );
     }
 
+    public void ResetAllMonsterTints()
+    {
+        foreach (var entity in _spritePositioning.PlayerEntities)
+        {
+            if (entity != null)
+            {
+                var image = entity.GetComponent<Image>();
+                if (image != null)
+                {
+                    image.color = Color.white;
+                }
+            }
+        }
+        foreach (var entity in _spritePositioning.EnemyEntities)
+        {
+            if (entity != null)
+            {
+                var image = entity.GetComponent<Image>();
+                if (image != null)
+                {
+                    image.color = Color.white;
+                }
+            }
+        }
+    }
+
     public void OnPlayerButtonClick(int index)
     {
         if (!ValidateSelection(index, _spritePositioning.PlayerEntities, out EntityManager entityManager))
             return;
 
-        if (_cardManager.CurrentSelectedCard != null && _combatManager.PlayerTurn)
+        // If we have a card selected and it's our turn, try to play it
+        if (_cardManager.HandCardObjects.Contains(_cardManager.CurrentSelectedCard) && _combatManager.PlayerTurn)
         {
             _playerCardSelectionHandler.HandlePlayerCardSelection(index, entityManager);
+            return;
         }
-        else if (_cardManager.CurrentSelectedCard == null)
+
+        // If it's a placed monster we're selecting
+        if (entityManager != null && entityManager.placed)
         {
-            if (entityManager != null && entityManager.placed)
+            // If clicking the same monster, toggle its selection off
+            if (_cardManager.CurrentSelectedCard == _spritePositioning.PlayerEntities[index])
             {
-                _cardManager.CurrentSelectedCard = _spritePositioning.PlayerEntities[index];
+                _cardManager.CurrentSelectedCard = null;
+                ResetAllMonsterTints();
+                return;
             }
+
+            // If we have any card selected, deselect it first
+            if (_cardManager.CurrentSelectedCard != null)
+            {
+                _cardOutlineManager.RemoveHighlight();
+            }
+
+            // Update monster selection
+            _cardManager.CurrentSelectedCard = _spritePositioning.PlayerEntities[index];
+            return;
         }
-        else
-        {
-            Debug.Log("No card selected or not the players turn!");
-            _cardOutlineManager.RemoveHighlight();
-        }
+
+        Debug.Log("No card selected or not the players turn!");
+        _cardManager.CurrentSelectedCard = null;
+        ResetAllMonsterTints();
     }
 
     public void OnEnemyButtonClick(int index)
@@ -106,6 +150,7 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
                 {
                     Debug.Log("Selected monster is not valid for attacking!");
                     _cardManager.CurrentSelectedCard = null;
+                    ResetAllMonsterTints();
                 }
             }
         }
@@ -113,6 +158,7 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
         {
             Debug.Log("No card selected or not the players turn!");
             _cardOutlineManager.RemoveHighlight();
+            ResetAllMonsterTints();
         }
     }
 
@@ -146,7 +192,10 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
         if (_combatManager.IsPlayerCombatPhase())
         {
             _combatStage.HandleMonsterAttack(playerEntity, enemyEntity);
+            // Deselect everything after attack
             _cardManager.CurrentSelectedCard = null;
+            _cardOutlineManager.RemoveHighlight();
+            ResetAllMonsterTints();
         }
         else
         {

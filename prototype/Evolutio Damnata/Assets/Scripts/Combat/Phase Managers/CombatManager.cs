@@ -218,16 +218,34 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
         _combatStage.UpdateManaUI();
     }
 
-    // Gameplay methods
+    private void DeselectEverything()
+    {
+        if (_combatStage == null) return;
+
+        var cardManager = _combatStage.GetComponent<CardManager>();
+        var cardOutlineManager = _combatStage.GetComponent<CardOutlineManager>();
+        
+        if (cardManager != null)
+        {
+            cardManager.CurrentSelectedCard = null;
+        }
+        if (cardOutlineManager != null)
+        {
+            cardOutlineManager.RemoveHighlight();
+        }
+    }
+
     public void EndPhase()
     {
         _uiManager.SetButtonState(_endPhaseButton, false);
+        DeselectEverything();
         _phaseManager.EndPhase();
     }
 
     public void EndTurn()
     {
         _uiManager.SetButtonState(_endTurnButton, false);
+        DeselectEverything();
         _playerActions.EndTurn();
     }
 
