@@ -2233,7 +2233,19 @@ MonoBehaviour:
     Duration: 0
     IsSpellCard: 0
     IsMonsterCard: 1
-  _defaultCardSprite: {fileID: 21300000, guid: 6bcc5bcd60555644a916f3bf816cc40a, type: 3}
+  - CardName: Corrupt Data
+    CardImage: {fileID: 21300000, guid: 7aeec1cbde0927e43b184ad00a19733b, type: 3}
+    Description: You will be recreated...Broken down...
+    ManaCost: 0
+    AttackPower: 100
+    Health: 1
+    Keywords: 00000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  _defaultCardSprite: {fileID: 21300000, guid: 7aeec1cbde0927e43b184ad00a19733b, type: 3}
 --- !u!4 &1159794894
 Transform:
   m_ObjectHideFlags: 0
