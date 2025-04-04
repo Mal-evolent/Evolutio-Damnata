@@ -24,7 +24,9 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     [Header("Game State")]
     [SerializeField] private int _turnCount = 0;
     [SerializeField] private int _playerHealth = 30;
+    [SerializeField] private Slider _playerHealthSlider;
     [SerializeField] private int _enemyHealth = 30;
+    [SerializeField] private Slider _enemyHealthSlider;
     [SerializeField] private bool _playerGoesFirst = true;
     [SerializeField] private bool _playerTurn;
     [SerializeField] private CombatPhase _currentPhase = CombatPhase.None;
