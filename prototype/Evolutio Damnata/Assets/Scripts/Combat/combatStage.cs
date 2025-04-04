@@ -10,6 +10,7 @@ public class CombatStage : MonoBehaviour, ICombatStage
     [SerializeField] private Sprite _wizardOutlineSprite;
     [SerializeField] private GameObject _manaBar;
     [SerializeField] private GameObject _manaText;
+    [SerializeField] private GameObject _manaTextShadow;
     [SerializeField] private Canvas _battleField;
 
     [Header("Dependencies")]
@@ -117,6 +118,7 @@ public class CombatStage : MonoBehaviour, ICombatStage
         manaSlider.maxValue = _combatManagerComponent.MaxMana;
         manaSlider.value = _combatManagerComponent.PlayerMana;
         _manaText.GetComponent<TMP_Text>().text = _combatManagerComponent.PlayerMana.ToString();
+        _manaTextShadow.GetComponent<TMP_Text>().text = _combatManagerComponent.PlayerMana.ToString();
     }
 
     private void InitializeSelectionEffectHandlers()
