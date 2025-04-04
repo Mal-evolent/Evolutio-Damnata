@@ -98,6 +98,16 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
         // If we have a card selected and it's our turn, try to play it
         if (_cardManager.HandCardObjects.Contains(_cardManager.CurrentSelectedCard) && _combatManager.PlayerTurn)
         {
+            var cardUI = _cardManager.CurrentSelectedCard.GetComponent<CardUI>();
+            var cardData = cardUI?.Card?.CardType;
+
+            // Only check for occupied space if it's a monster card
+            if (cardData != null && cardData.IsMonsterCard && entityManager != null && entityManager.placed)
+            {
+                Debug.Log("Cannot place a monster on an already occupied space!");
+                return;
+            }
+            
             _playerCardSelectionHandler.HandlePlayerCardSelection(index, entityManager);
             return;
         }

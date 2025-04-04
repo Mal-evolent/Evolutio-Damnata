@@ -36,6 +36,13 @@ public class PlayerCardSelectionHandler : IPlayerCardHandler
         var cardUI = _cardManager.CurrentSelectedCard.GetComponent<CardUI>();
         var cardData = cardUI?.Card?.CardType;
 
+        if (cardData != null && cardData.IsMonsterCard && entityManager.placed)
+        {
+            Debug.LogError("Cannot place a monster on an already occupied space!");
+            ResetCardSelection();
+            return;
+        }
+
         if (!_cardValidator.ValidateCardPlay(cardData, _combatManager.CurrentPhase, entityManager.placed))
         {
             Debug.LogError("Invalid card play conditions");
