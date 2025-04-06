@@ -2440,7 +2440,7 @@ MonoBehaviour:
     Duration: 10
     IsSpellCard: 1
     IsMonsterCard: 0
-  - CardName: Undead Arcanist
+  - CardName: Dread Scriptum
     CardImage: {fileID: 21300000, guid: 8d8136910b6edaf48864bfa14e986589, type: 3}
     Description: '"Death is just another step forwards"'
     ManaCost: 0
@@ -2476,7 +2476,7 @@ MonoBehaviour:
     Duration: 0
     IsSpellCard: 0
     IsMonsterCard: 1
-  - CardName: Corrupt Data
+  - CardName: Soulbyte Decay
     CardImage: {fileID: 21300000, guid: 7aeec1cbde0927e43b184ad00a19733b, type: 3}
     Description: You will be recreated...Broken down...
     ManaCost: 0
