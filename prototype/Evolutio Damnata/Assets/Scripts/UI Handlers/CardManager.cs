@@ -255,13 +255,13 @@ public class CardManager : MonoBehaviour, ICardManager
     {
         if (cardObject == null) return;
 
-        if (!_handCardObjects.Contains(cardObject))
+        // Remove from hand objects list if present
+        if (_handCardObjects.Contains(cardObject))
         {
-            Debug.LogWarning($"Card {cardObject.name} not found in hand");
-            return;
+            _handCardObjects.Remove(cardObject);
         }
 
-        _handCardObjects.Remove(cardObject);
+        // Remove from deck hand if present
         if (cardObject.TryGetComponent<CardUI>(out var cardUI) && cardUI.Card != null)
         {
             _playerDeck.Hand.Remove(cardUI.Card);

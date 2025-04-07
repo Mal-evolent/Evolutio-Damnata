@@ -17,13 +17,12 @@ public class CardRemover : ICardRemover
             return;
         }
 
-        _cardManager.RemoveCard(cardObject);
-        GameObject.Destroy(cardObject);
-
         var cardComponent = cardObject.GetComponent<CardUI>()?.Card;
         if (cardComponent != null)
         {
             _cardManager.PlayerDeck.Hand.Remove(cardComponent);
         }
+
+        _cardManager.RemoveCard(cardObject);
     }
 }
