@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections.Generic;
 
 public class PhaseManager : IPhaseManager
@@ -11,13 +12,20 @@ public class PhaseManager : IPhaseManager
     private readonly IPlayerActions _playerActions;
     private readonly IRoundManager _roundManager;
 
+    private readonly Image _prepPhaseImage;
+    private readonly Image _combatPhaseImage;
+    private readonly Image _cleanupPhaseImage;
+
     public PhaseManager(
         ICombatManager combatManager,
         AttackLimiter attackLimiter,
         IUIManager uiManager,
         IEnemyActions enemyActions,
         IPlayerActions playerActions,
-        IRoundManager roundManager)
+        IRoundManager roundManager,
+        Image prepPhaseImage,
+        Image combatPhaseImage,
+        Image cleanupPhaseImage)
     {
         _combatManager = combatManager;
         _attackLimiter = attackLimiter;
@@ -25,12 +33,23 @@ public class PhaseManager : IPhaseManager
         _enemyActions = enemyActions;
         _playerActions = playerActions;
         _roundManager = roundManager;
+        _prepPhaseImage = prepPhaseImage;
+        _combatPhaseImage = combatPhaseImage;
+        _cleanupPhaseImage = cleanupPhaseImage;
+    }
+
+    private void SetPhaseImage(CombatPhase phase)
+    {
+        _prepPhaseImage.enabled = (phase == CombatPhase.PlayerPrep || phase == CombatPhase.EnemyPrep);
+        _combatPhaseImage.enabled = (phase == CombatPhase.PlayerCombat || phase == CombatPhase.EnemyCombat);
+        _cleanupPhaseImage.enabled = (phase == CombatPhase.CleanUp);
     }
 
     public IEnumerator PrepPhase()
     {
         Debug.Log("[PhaseManager] ===== ENTERING PREP PHASE =====");
         _combatManager.ResetPhaseState();
+        SetPhaseImage(CombatPhase.PlayerPrep);
 
         if (_combatManager.PlayerTurn)
         {
@@ -51,6 +70,7 @@ public class PhaseManager : IPhaseManager
     {
         Debug.Log("[PhaseManager] ===== ENTERING COMBAT PHASE =====");
         _combatManager.ResetPhaseState();
+        SetPhaseImage(CombatPhase.PlayerCombat);
 
         if (_combatManager.PlayerTurn)
         {
@@ -71,6 +91,7 @@ public class PhaseManager : IPhaseManager
     {
         Debug.Log("[PhaseManager] ===== ENTERING CLEAN-UP PHASE =====");
         _combatManager.CurrentPhase = CombatPhase.CleanUp;
+        SetPhaseImage(CombatPhase.CleanUp);
 
         // Process all entities once, handling both attack resets and effects
         Debug.Log("[PhaseManager] Processing entities for cleanup");

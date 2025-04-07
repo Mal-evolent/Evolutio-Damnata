@@ -12,6 +12,9 @@ public class CombatStage : MonoBehaviour, ICombatStage
     [SerializeField] private GameObject _manaText;
     [SerializeField] private GameObject _manaTextShadow;
     [SerializeField] private Canvas _battleField;
+    [SerializeField] private Image _prepPhaseImage;
+    [SerializeField] private Image _combatPhaseImage;
+    [SerializeField] private Image _cleanupPhaseImage;
 
     [Header("Dependencies")]
     [SerializeField] private CardManager _cardManagerComponent;
@@ -38,6 +41,10 @@ public class CombatStage : MonoBehaviour, ICombatStage
     public CardLibrary CardLibrary => _cardLibrary;
     public ISpritePositioning SpritePositioning => _spritePositioning;
     public ICardSpawner EnemyCardSpawner => _enemyCardSpawner;
+
+    public Image PrepPhaseImage => _prepPhaseImage;
+    public Image CombatPhaseImage => _combatPhaseImage;
+    public Image CleanupPhaseImage => _cleanupPhaseImage;
 
     private bool _buttonsInitialized = false;
 

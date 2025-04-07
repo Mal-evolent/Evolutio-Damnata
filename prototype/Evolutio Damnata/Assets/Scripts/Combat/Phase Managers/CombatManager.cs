@@ -155,14 +155,17 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
         _roundManager = roundManagerImpl;
 
         Debug.Log("[CombatManager] Creating PhaseManager with all dependencies...");
-        //create PhaseManager with all dependencies
+        // Create PhaseManager with all dependencies
         _phaseManager = new PhaseManager(
             combatManager: this,
             attackLimiter: attackLimiter,
             uiManager: _uiManager,
             enemyActions: _enemyActions,
             playerActions: _playerActions,
-            roundManager: _roundManager
+            roundManager: _roundManager,
+            prepPhaseImage: _combatStage.PrepPhaseImage,
+            combatPhaseImage: _combatStage.CombatPhaseImage,
+            cleanupPhaseImage: _combatStage.CleanupPhaseImage
         );
 
         Debug.Log("[CombatManager] Setting PhaseManager in RoundManager...");

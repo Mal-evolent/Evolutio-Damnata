@@ -5124,6 +5124,9 @@ MonoBehaviour:
   _manaText: {fileID: 1870554165}
   _manaTextShadow: {fileID: 1439738387}
   _battleField: {fileID: 2123307026}
+  _prepPhaseImage: {fileID: 1490304657}
+  _combatPhaseImage: {fileID: 881881659}
+  _cleanupPhaseImage: {fileID: 1432855363}
   _cardManagerComponent: {fileID: 1201594250}
   _cardOutlineManagerComponent: {fileID: 210388635}
   _cardLibrary: {fileID: 1159794893}
