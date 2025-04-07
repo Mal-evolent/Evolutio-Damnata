@@ -2,12 +2,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using Sirenix.OdinInspector;
 
-/* 
- * This class is used to store data for cards in the game.
- * It is used to create a ScriptableObject asset for each card.
- * The asset is then used to create a prefab for the card.
- */
-
 [System.Serializable]
 public class CardData
 {
@@ -38,6 +32,9 @@ public class CardData
     [SerializeField, ShowIf(nameof(IsSpellCard))]
     public int Duration = 0;
 
+    [SerializeField, ShowIf(nameof(IsSpellCard))]
+    public int DamagePerRound = 0;
+
     [SerializeField, OnValueChanged(nameof(OnIsSpellCardChanged))]
     public bool IsSpellCard;
 
@@ -46,7 +43,8 @@ public class CardData
 
     public CardData(
         string name, Sprite image, string description, int manaCost, int attackPower, int health,
-        List<Keywords.MonsterKeyword> keywords = null, List<SpellEffect> effectTypes = null, int effectValue = 0, int duration = 0)
+        List<Keywords.MonsterKeyword> keywords = null, List<SpellEffect> effectTypes = null,
+        int effectValue = 0, int duration = 0, int damagePerRound = 0)
     {
         CardName = name;
         CardImage = image;
@@ -58,6 +56,7 @@ public class CardData
         EffectTypes = effectTypes ?? new List<SpellEffect>();
         EffectValue = effectValue;
         Duration = duration;
+        DamagePerRound = damagePerRound;
 
         IsSpellCard = EffectTypes.Count > 0;
         IsMonsterCard = !IsSpellCard;

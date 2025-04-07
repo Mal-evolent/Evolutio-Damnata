@@ -69,6 +69,9 @@ public class SpellCard : Card
     [ShowIf(nameof(IsSpellCard))]
     public int Duration;
 
+    [ShowIf(nameof(IsSpellCard))]
+    public int DamagePerRound;
+
     [HideInInspector]
     public bool IsSpellCard = true;
 
@@ -88,6 +91,7 @@ public class SpellCard : Card
         List<SpellEffect> effectTypes,
         int effectValue,
         int duration,
+        int damagePerRound,
         CardData cardType)
     {
         this.CardName = cardName;
@@ -97,6 +101,7 @@ public class SpellCard : Card
         this.EffectTypes = effectTypes ?? new List<SpellEffect>();
         this.EffectValue = effectValue;
         this.Duration = duration;
+        this.DamagePerRound = damagePerRound;
         this.CardType = cardType;
         this.IsSpellCard = true;
     }

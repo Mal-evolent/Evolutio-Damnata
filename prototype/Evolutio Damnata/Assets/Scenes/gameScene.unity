@@ -2489,6 +2489,7 @@ MonoBehaviour:
     EffectTypes: 
     EffectValue: 0
     Duration: 0
+    DamagePerRound: 0
     IsSpellCard: 0
     IsMonsterCard: 1
   - CardName: Fireball
@@ -2501,6 +2502,7 @@ MonoBehaviour:
     EffectTypes: 0100000006000000
     EffectValue: 5
     Duration: 3
+    DamagePerRound: 0
     IsSpellCard: 1
     IsMonsterCard: 0
   - CardName: Branding
@@ -2513,6 +2515,7 @@ MonoBehaviour:
     EffectTypes: 06000000
     EffectValue: 2
     Duration: 10
+    DamagePerRound: 5
     IsSpellCard: 1
     IsMonsterCard: 0
   - CardName: Dread Scriptum
@@ -2525,6 +2528,7 @@ MonoBehaviour:
     EffectTypes: 
     EffectValue: 0
     Duration: 0
+    DamagePerRound: 0
     IsSpellCard: 0
     IsMonsterCard: 1
   - CardName: Divine Light
@@ -2537,6 +2541,7 @@ MonoBehaviour:
     EffectTypes: 02000000
     EffectValue: 10
     Duration: 0
+    DamagePerRound: 0
     IsSpellCard: 1
     IsMonsterCard: 0
   - CardName: Abyssal Warden
@@ -2549,6 +2554,7 @@ MonoBehaviour:
     EffectTypes: 
     EffectValue: 0
     Duration: 0
+    DamagePerRound: 0
     IsSpellCard: 0
     IsMonsterCard: 1
   - CardName: Soulbyte Decay
@@ -2561,6 +2567,7 @@ MonoBehaviour:
     EffectTypes: 
     EffectValue: 0
     Duration: 0
+    DamagePerRound: 0
     IsSpellCard: 0
     IsMonsterCard: 1
   _defaultCardSprite: {fileID: 21300000, guid: 7aeec1cbde0927e43b184ad00a19733b, type: 3}

@@ -55,6 +55,7 @@ public class CardLibrary : MonoBehaviour, ICardLibrary
             cardData.ManaCost,
             cardData.EffectTypes,
             cardData.EffectValue,
+            cardData.DamagePerRound,
             cardData.Duration,
             cardData
         );

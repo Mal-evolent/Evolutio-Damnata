@@ -8,12 +8,14 @@ public class CardDataDrawer : OdinValueDrawer<CardData>
 {
     private InspectorProperty isSpellCard;
     private InspectorProperty isMonsterCard;
+    private InspectorProperty duration;
 
     protected override void Initialize()
     {
         base.Initialize();
         isSpellCard = this.Property.Children["IsSpellCard"];
         isMonsterCard = this.Property.Children["IsMonsterCard"];
+        duration = this.Property.Children["Duration"];
     }
 
     protected override void DrawPropertyLayout(GUIContent label)
@@ -45,9 +47,16 @@ public class CardDataDrawer : OdinValueDrawer<CardData>
         // Draw the spell card fields if IsSpellCard is true
         if (isSpellCard != null && isSpellCard.ValueEntry.WeakSmartValue as bool? == true)
         {
+            DrawChildProperty(property, "EffectTypes");
             DrawChildProperty(property, "EffectValue");
             DrawChildProperty(property, "Duration");
-            DrawChildProperty(property, "EffectTypes"); // Updated to draw EffectTypes
+
+            // Only draw DamagePerRound if Duration is greater than 0
+            int durationValue = duration?.ValueEntry.WeakSmartValue as int? ?? 0;
+            if (durationValue > 0)
+            {
+                DrawChildProperty(property, "DamagePerRound");
+            }
         }
 
         // Draw the monster card fields if IsMonsterCard is true

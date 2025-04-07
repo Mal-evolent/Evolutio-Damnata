@@ -65,6 +65,7 @@ public class SpellEffectApplier : ISpellEffectApplier
         spellCard.EffectTypes = spellData.EffectTypes;
         spellCard.EffectValue = spellData.EffectValue;
         spellCard.Duration = spellData.Duration;
+        spellCard.DamagePerRound = spellData.DamagePerRound;
     }
 
     private void ApplyEffectsToTarget(EntityManager target, CardData spellData)
@@ -96,12 +97,7 @@ public class SpellEffectApplier : ISpellEffectApplier
                     break;
 
                 case SpellEffect.Burn:
-                    var burnEffect = new OngoingEffectManager(
-                        SpellEffect.Burn,
-                        spellData.EffectValue,
-                        spellData.Duration,
-                        target);
-                    _effectApplier.AddEffect(burnEffect, spellData.Duration);
+                    ApplyBurnEffect(target, spellData);
                     break;
 
                 default:
@@ -111,11 +107,33 @@ public class SpellEffectApplier : ISpellEffectApplier
         }
     }
 
+    private void ApplyBurnEffect(EntityManager target, CardData spellData)
+    {
+        // Apply initial damage if EffectValue is set
+        if (spellData.EffectValue > 0)
+        {
+            ApplyDamageEffect(target, spellData.EffectValue);
+        }
+
+        // Only apply ongoing effect if duration is greater than 0 and has damage per round
+        if (spellData.Duration > 0 && spellData.DamagePerRound > 0)
+        {
+            var burnEffect = new OngoingEffectManager(
+                SpellEffect.Burn,
+                spellData.DamagePerRound,
+                spellData.Duration,
+                target);
+            _effectApplier.AddEffect(burnEffect, spellData.Duration);
+
+            Debug.Log($"Applied Burn to {target.name} for {spellData.DamagePerRound} damage per round for {spellData.Duration} rounds");
+        }
+    }
+
     private void ApplyDamageEffect(EntityManager target, int damage)
     {
         // Store health before damage to check if this kills the entity
         float healthBeforeDamage = target.GetHealth();
-        
+
         target.TakeDamage(damage);
         _damageVisualizer?.CreateDamageNumber(target, damage, target.transform.position, _damageNumberPrefab);
 
