@@ -49,7 +49,7 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
             cardValidator,
             cardRemover,
             _cardOutlineManager,
-            _playerCardSpawner, 
+            _playerCardSpawner,
             _spellEffectApplier
         );
 
@@ -96,7 +96,7 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
             return;
 
         // If we have a card selected and it's our turn, try to play it
-        if (_cardManager.HandCardObjects.Contains(_cardManager.CurrentSelectedCard) && _combatManager.PlayerTurn)
+        if (_cardManager.HandCardObjects.Contains(_cardManager.CurrentSelectedCard) && _combatManager.IsPlayerPrepPhase())
         {
             var cardUI = _cardManager.CurrentSelectedCard.GetComponent<CardUI>();
             var cardData = cardUI?.Card?.CardType;
@@ -107,7 +107,7 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
                 Debug.Log("Cannot place a monster on an already occupied space!");
                 return;
             }
-            
+
             _playerCardSelectionHandler.HandlePlayerCardSelection(index, entityManager);
             return;
         }

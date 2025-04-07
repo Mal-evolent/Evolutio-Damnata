@@ -13,17 +13,19 @@ public class StackManager : MonoBehaviour
         public string cardName;
         [SerializeField] private string _effectType;
         [SerializeField] private string _targetName;
+        [SerializeField] private int _effectValue;
         public int remainingTurns;
         public bool needsApplication;
 
         public string EditorSummary =>
             $"{cardName} → {_targetName} " +
-            $"({_effectType}, {remainingTurns} turn{(remainingTurns != 1 ? "s" : "")})";
+            $"({_effectType}, {_effectValue} value, {remainingTurns} turn{(remainingTurns != 1 ? "s" : "")})";
 
         public void UpdateDebugData()
         {
             _targetName = effect?.TargetEntity?.name ?? "NULL";
             _effectType = effect?.EffectType.ToString() ?? "NULL";
+            _effectValue = effect?.EffectValue ?? 0;
         }
 
         public TimedEffect(IOngoingEffect effect, int duration, string cardName)
@@ -32,6 +34,7 @@ public class StackManager : MonoBehaviour
             this.remainingTurns = duration;
             this.needsApplication = true;
             this.cardName = cardName;
+            UpdateDebugData();
         }
     }
 
@@ -167,6 +170,7 @@ public class StackManager : MonoBehaviour
         {
             Debug.Log($"- Card: {effect.cardName} | " +
                      $"Effect: {effect.effect.EffectType} | " +
+                     $"Value: {effect.effect.EffectValue} | " +
                      $"Turns Left: {effect.remainingTurns} | " +
                      $"Target: {effect.effect.TargetEntity.name}");
         }
