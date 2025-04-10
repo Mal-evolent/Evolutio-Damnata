@@ -61,6 +61,8 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     public Image EndTurnButtonShadow => _endPhaseButtonShadow;
     public TMP_Text TurnUI => _turnUI;
     public TMP_Text TurnUIShadow => _turnUIShadow;
+    public Slider PlayerHealthSlider => _playerHealthSlider;
+    public Slider EnemyHealthSlider => _enemyHealthSlider;
 
     public int PlayerMana
     {

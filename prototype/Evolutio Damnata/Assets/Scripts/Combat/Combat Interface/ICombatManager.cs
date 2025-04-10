@@ -16,6 +16,9 @@ public interface ICombatManager
     bool PlayerGoesFirst { get; set; }
     CombatPhase CurrentPhase { get; set; }
 
+    Slider PlayerHealthSlider { get; }
+    Slider EnemyHealthSlider { get; }
+
     CombatStage CombatStage { get; }
     Deck PlayerDeck { get; }
     Deck EnemyDeck { get; }
