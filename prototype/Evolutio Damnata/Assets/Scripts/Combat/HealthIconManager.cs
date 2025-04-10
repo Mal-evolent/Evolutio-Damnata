@@ -1,0 +1,176 @@
+using UnityEngine;
+using UnityEngine.UI;
+
+/// <summary>
+/// Manages the health icon representation for both player and enemy entities.
+/// Inherits from EntityManager to leverage health and damage functionality while
+/// providing specialized behavior for health icons.
+/// </summary>
+public class HealthIconManager : EntityManager, IHealthIconManager
+{
+    #region Fields
+    private bool isPlayerIcon;
+    private CombatStage combatStageRef;
+    private CombatManager combatManagerRef;
+    #endregion
+
+    #region Properties
+    /// <summary>
+    /// Gets whether this health icon represents the player.
+    /// </summary>
+    public bool IsPlayerIcon => isPlayerIcon;
+
+    /// <summary>
+    /// Gets the current health value of the icon.
+    /// </summary>
+    public float CurrentHealth => GetHealth();
+
+    /// <summary>
+    /// Gets the maximum health value of the icon.
+    /// </summary>
+    public float MaxHealth => base.GetMaxHealth();
+    #endregion
+
+    #region Unity Lifecycle
+    private void Awake()
+    {
+        InitializeIcon();
+        InitializeReferences();
+        InitializeFromCombatManager();
+    }
+    #endregion
+
+    #region Initialization
+    /// <summary>
+    /// Initializes the basic icon settings and state.
+    /// </summary>
+    private void InitializeIcon()
+    {
+        isPlayerIcon = gameObject.CompareTag("Player");
+        placed = true;
+        dead = false;
+        gameObject.SetActive(true);
+    }
+
+    /// <summary>
+    /// Initializes references to required components.
+    /// </summary>
+    private void InitializeReferences()
+    {
+        combatStageRef = FindObjectOfType<CombatStage>();
+        if (combatStageRef == null)
+        {
+            Debug.LogError($"[{nameof(HealthIconManager)}] Could not find CombatStage in scene!");
+            return;
+        }
+
+        combatManagerRef = FindObjectOfType<CombatManager>();
+        if (combatManagerRef == null)
+        {
+            Debug.LogError($"[{nameof(HealthIconManager)}] Could not find CombatManager in scene!");
+            return;
+        }
+    }
+
+    /// <summary>
+    /// Initializes health values from the combat manager.
+    /// </summary>
+    private void InitializeFromCombatManager()
+    {
+        float maxHealthValue = isPlayerIcon ? combatManagerRef.PlayerHealth : combatManagerRef.EnemyHealth;
+        Slider healthBarRef = isPlayerIcon ? combatManagerRef.PlayerHealthSlider : combatManagerRef.EnemyHealthSlider;
+        InitializeWithValues(maxHealthValue, healthBarRef);
+    }
+
+    /// <summary>
+    /// Initializes the health icon with specific values.
+    /// </summary>
+    /// <param name="maxHealth">Maximum health value</param>
+    /// <param name="healthBar">Reference to the health bar UI element</param>
+    private void InitializeWithValues(float maxHealth, Slider healthBar)
+    {
+        this.maxHealth = maxHealth;
+        this.health = maxHealth;
+
+        InitializeMonster(
+            isPlayerIcon ? MonsterType.Friendly : MonsterType.Enemy,
+            maxHealth,
+            0f,
+            healthBar,
+            GetComponent<Image>(),
+            FindObjectOfType<DamageVisualizer>(),
+            Resources.Load<GameObject>("Prefabs/numberVisual"),
+            null,
+            combatStageRef.GetAttackLimiter(),
+            combatStageRef.GetOngoingEffectApplier()
+        );
+
+        gameObject.SetActive(true);
+        SetAllowedAttacks(0);
+    }
+    #endregion
+
+    #region Health Management
+    /// <summary>
+    /// Sets the health value of the icon and updates related UI elements.
+    /// </summary>
+    /// <param name="newHealth">The new health value to set</param>
+    public void SetHealth(float newHealth)
+    {
+        if (newHealth > MaxHealth)
+            health = MaxHealth;
+        else if (newHealth <= 0)
+            Die();
+        else
+            health = newHealth;
+
+        UpdateCombatManagerHealth();
+    }
+
+    /// <summary>
+    /// Updates the health value in the combat manager.
+    /// </summary>
+    private void UpdateCombatManagerHealth()
+    {
+        if (combatManagerRef == null) return;
+
+        if (isPlayerIcon)
+            combatManagerRef.PlayerHealth = (int)health;
+        else
+            combatManagerRef.EnemyHealth = (int)health;
+    }
+
+    /// <summary>
+    /// Handles the death state of the health icon.
+    /// </summary>
+    protected override void Die()
+    {
+        base.Die();
+        
+        if (isPlayerIcon)
+            Debug.Log("Player Defeated - Game Over!");
+        else
+            Debug.Log("Enemy Defeated - Victory!");
+    }
+
+    /// <summary>
+    /// Applies damage to the health icon and updates related systems.
+    /// </summary>
+    /// <param name="damageAmount">Amount of damage to apply</param>
+    public override void TakeDamage(float damageAmount)
+    {
+        base.TakeDamage(damageAmount);
+        UpdateCombatManagerHealth();
+
+        if (GetHealth() / MaxHealth <= 0.25f)
+            Debug.Log($"{(isPlayerIcon ? "Player" : "Enemy")} health critical!");
+    }
+    #endregion
+
+    #region Attack Management
+    public override void Attack(int damage) => Debug.LogWarning("Health icons cannot attack.");
+    public override float GetAttackDamage() => 0f;
+    public override void AttackBuff(float buffAmount) { }
+    public override void AttackDebuff(float debuffAmount) { }
+    #endregion
+} 

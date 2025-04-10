@@ -16,8 +16,8 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     [SerializeField] private ResourceManager resourceManager;
 
     [Header("Monster Attributes")]
-    [SerializeField] private float health;
-    [SerializeField] private float maxHealth;
+    [SerializeField] protected float health;
+    [SerializeField] protected float maxHealth;
     [SerializeField] private float atkDamage;
     [SerializeField] private float atkDamageMulti = 1.0f;
 
@@ -139,7 +139,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     #endregion
 
     #region IDamageable Implementation
-    public void TakeDamage(float damageAmount)
+    public virtual void TakeDamage(float damageAmount)
     {
         if (dead || !placed) return;
 
@@ -205,18 +205,18 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     #endregion
 
     #region IAttacker Implementation
-    public void AttackBuff(float buffAmount) => ModifyAttack(buffAmount);
-    public void AttackDebuff(float debuffAmount) => ModifyAttack(-debuffAmount);
+    public virtual void AttackBuff(float buffAmount) => ModifyAttack(buffAmount);
+    public virtual void AttackDebuff(float debuffAmount) => ModifyAttack(-debuffAmount);
 
-    public void Attack(int damage)
+    public virtual void Attack(int damage)
     {
         if (dead || !placed) return;
         Debug.Log($"Attacking with {damage} damage.");
     }
 
-    public float GetAttackDamage() => atkDamage * atkDamageMulti;
+    public virtual float GetAttackDamage() => atkDamage * atkDamageMulti;
 
-    public void SetDoubleAttack(int duration = 1)
+    public virtual void SetDoubleAttack(int duration = 1)
     {
         if (dead || !placed) return;
         StartCoroutine(DoubleAttackRoutine(duration));
@@ -243,7 +243,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     #endregion
 
     #region Lifecycle Management
-    private void Die()
+    protected virtual void Die()
     {
         dead = true;
         placed = false;

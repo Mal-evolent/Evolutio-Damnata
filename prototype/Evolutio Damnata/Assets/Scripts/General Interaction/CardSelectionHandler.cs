@@ -141,20 +141,84 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
 
     public void OnEnemyButtonClick(int index)
     {
-        if (!ValidateSelection(index, _spritePositioning.EnemyEntities, out EntityManager entityManager))
+        // Validate if any enemy entities are present on the field
+        bool enemyEntitiesPresent = false;
+        foreach (var entity in _spritePositioning.EnemyEntities)
+        {
+            var entityManager = entity?.GetComponent<EntityManager>();
+            if (entityManager != null && entityManager.placed)
+            {
+                enemyEntitiesPresent = true;
+                break;
+            }
+        }
+
+        // Handle health icon targeting (index -1 represents health icon click)
+        if (index == -1)
+        {
+            // Enforce targeting rules - health icon can only be targeted when no enemy entities are present
+            if (enemyEntitiesPresent)
+            {
+                Debug.Log("Cannot target enemy health while enemy entities are on the field!");
+                return;
+            }
+
+            // Attempt to locate and target the enemy health icon
+            var enemyHealthIcon = GameObject.FindGameObjectWithTag("Enemy")?.GetComponent<HealthIconManager>();
+            
+            if (enemyHealthIcon != null)
+            {
+                // Process spell card targeting if applicable
+                if (_cardManager.CurrentSelectedCard != null)
+                {
+                    var cardUI = _cardManager.CurrentSelectedCard.GetComponent<CardUI>();
+                    if (cardUI?.Card?.CardType?.IsSpellCard == true)
+                    {
+                        // Check if we're in a player phase before allowing spell card play
+                        if (!_combatManager.IsPlayerPrepPhase() && !_combatManager.IsPlayerCombatPhase())
+                        {
+                            Debug.Log("Spell cards can only be played during your turn!");
+                            return;
+                        }
+                        _enemyCardSelectionHandler.HandleEnemyCardSelection(index, enemyHealthIcon);
+                        return;
+                    }
+                }
+                HandleHealthIconAttack(enemyHealthIcon);
+                return;
+            }
+            Debug.Log("Could not find enemy health icon to target");
+            return;
+        }
+
+        // Process entity targeting
+        if (!ValidateSelection(index, _spritePositioning.EnemyEntities, out EntityManager targetEntityManager))
             return;
 
-        if (_cardManager.CurrentSelectedCard != null && _combatManager.PlayerTurn)
+        if (_cardManager.CurrentSelectedCard != null)
         {
-            // Try spell handling first
-            _enemyCardSelectionHandler.HandleEnemyCardSelection(index, entityManager);
+            var cardUI = _cardManager.CurrentSelectedCard.GetComponent<CardUI>();
+            bool isSpellCard = cardUI?.Card?.CardType?.IsSpellCard == true;
 
-            if (_cardManager.CurrentSelectedCard != null)
+            // Process spell targeting - spells can only be played in player phases
+            if (isSpellCard)
+            {
+                if (!_combatManager.IsPlayerPrepPhase() && !_combatManager.IsPlayerCombatPhase())
+                {
+                    Debug.Log("Spell cards can only be played during your turn!");
+                    return;
+                }
+                _enemyCardSelectionHandler.HandleEnemyCardSelection(index, targetEntityManager);
+                return;
+            }
+
+            // Process attack targeting - restricted to combat phase
+            if (_combatManager.IsPlayerCombatPhase())
             {
                 var attacker = _cardManager.CurrentSelectedCard.GetComponent<EntityManager>();
                 if (attacker != null && attacker.placed)
                 {
-                    HandlePossibleAttack(entityManager);
+                    HandlePossibleAttack(targetEntityManager);
                 }
                 else
                 {
@@ -166,12 +230,51 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
         }
         else
         {
-            Debug.Log("No card selected or not the players turn!");
+            Debug.Log("No card selected!");
             _cardOutlineManager.RemoveHighlight();
             ResetAllMonsterTints();
         }
     }
 
+    /// <summary>
+    /// Processes an attack against a health icon if valid combat conditions are met.
+    /// </summary>
+    /// <param name="healthIcon">The health icon to attack</param>
+    private void HandleHealthIconAttack(HealthIconManager healthIcon)
+    {
+        if (_cardManager.CurrentSelectedCard == null)
+        {
+            Debug.Log("No card selected!");
+            return;
+        }
+
+        if (!_combatManager.IsPlayerCombatPhase())
+        {
+            Debug.Log("Attacks are not allowed at this stage!");
+            return;
+        }
+
+        var attacker = _cardManager.CurrentSelectedCard.GetComponent<EntityManager>();
+        if (attacker == null || !attacker.placed)
+        {
+            Debug.Log("Selected monster is not valid for attacking!");
+            return;
+        }
+
+        // Process the attack and reset selection state
+        _combatStage.HandleMonsterAttack(attacker, healthIcon);
+        _cardManager.CurrentSelectedCard = null;
+        _cardOutlineManager.RemoveHighlight();
+        ResetAllMonsterTints();
+    }
+
+    /// <summary>
+    /// Validates entity selection at the specified index.
+    /// </summary>
+    /// <param name="index">Index of the entity to validate</param>
+    /// <param name="entities">List of entities to check against</param>
+    /// <param name="entityManager">Output parameter for the validated EntityManager</param>
+    /// <returns>True if selection is valid, false otherwise</returns>
     private bool ValidateSelection(int index, System.Collections.Generic.List<GameObject> entities, out EntityManager entityManager)
     {
         entityManager = null;
@@ -192,7 +295,7 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
         return true;
     }
 
-    private void HandlePossibleAttack(EntityManager enemyEntity)
+    private void HandlePossibleAttack(EntityManager targetEntity)
     {
         if (_cardManager.CurrentSelectedCard == null) return;
 
@@ -201,7 +304,7 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
 
         if (_combatManager.IsPlayerCombatPhase())
         {
-            _combatStage.HandleMonsterAttack(playerEntity, enemyEntity);
+            _combatStage.HandleMonsterAttack(playerEntity, targetEntity);
             // Deselect everything after attack
             _cardManager.CurrentSelectedCard = null;
             _cardOutlineManager.RemoveHighlight();

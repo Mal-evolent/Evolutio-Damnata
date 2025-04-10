@@ -5,9 +5,6 @@ using UnityEngine.UI;
 
 public class CardManager : MonoBehaviour, ICardManager
 {
-    [Header("Deck Type")]
-    [SerializeField] private bool _isEnemy = false;
-
     [Header("References")]
     [SerializeField] private Deck _playerDeck;
     [SerializeField] private RectTransform _cardUIContainer;
@@ -37,27 +34,8 @@ public class CardManager : MonoBehaviour, ICardManager
 
     private void Awake()
     {
-        // Automatically detect if this is the enemy deck manager
-        if (gameObject.name == "Enemy Deck Manager")
-        {
-            _isEnemy = true;
-            Debug.Log("Automatically detected Enemy Deck Manager - disabling UI");
-        }
-
         EnsurePrefabReference();
         ValidateReferences();
-
-        // Disable UI components if this is an enemy deck
-        if (_isEnemy)
-        {
-            DisableUIComponents();
-        }
-    }
-
-    private void DisableUIComponents()
-    {
-        if (_cardUIContainer != null) _cardUIContainer.gameObject.SetActive(false);
-        if (_deckPanelRect != null) _deckPanelRect.gameObject.SetActive(false);
     }
 
     private void EnsurePrefabReference()
@@ -72,14 +50,11 @@ public class CardManager : MonoBehaviour, ICardManager
 
     private void ValidateReferences()
     {
-        if (!_isEnemy) // Only validate UI references for player deck
-        {
-            if (_cardUIContainer == null)
-                Debug.LogError("Card UI Container not assigned in CardManager!");
+        if (_cardUIContainer == null)
+            Debug.LogError("Card UI Container not assigned in CardManager!");
 
-            if (_deckPanelRect == null)
-                Debug.LogError("Deck Panel Rect not assigned in CardManager!");
-        }
+        if (_deckPanelRect == null)
+            Debug.LogError("Deck Panel Rect not assigned in CardManager!");
 
         if (_cardOutlineManager == null)
             Debug.LogWarning("CardOutlineManager not assigned - card highlighting won't work");
@@ -87,8 +62,6 @@ public class CardManager : MonoBehaviour, ICardManager
 
     public void DisplayDeck()
     {
-        if (_isEnemy) return;
-
         ClearContainer(_deckPanelRect);
         _deckCardObjects.Clear();
 
@@ -111,8 +84,6 @@ public class CardManager : MonoBehaviour, ICardManager
 
     public void DisplayHand()
     {
-        if (_isEnemy) return;
-
         ClearContainer(_cardUIContainer);
         _handCardObjects.Clear();
 
@@ -155,32 +126,18 @@ public class CardManager : MonoBehaviour, ICardManager
             CardUI cardUI = cardObject.GetComponent<CardUI>() ?? cardObject.AddComponent<CardUI>();
             cardUI.Card = card;
 
-            if (!_isEnemy)
-            {
-                Transform cardTransform = cardObject.transform;
-                cardTransform.GetChild(0).GetComponent<Image>().sprite = card.CardImage;
-                cardTransform.GetChild(1).GetComponent<TextMeshProUGUI>().text = card.CardName;
-                cardTransform.GetChild(2).GetComponent<TextMeshProUGUI>().text = card.Description;
+            Transform cardTransform = cardObject.transform;
+            cardTransform.GetChild(0).GetComponent<Image>().sprite = card.CardImage;
+            cardTransform.GetChild(1).GetComponent<TextMeshProUGUI>().text = card.CardName;
+            cardTransform.GetChild(2).GetComponent<TextMeshProUGUI>().text = card.Description;
 
-                string attributes = card switch
-                {
-                    MonsterCard monster => $"Health: {monster.Health}\nAttack: {monster.AttackPower}\nCost: {monster.ManaCost}",
-                    SpellCard spell => $"Effect: {string.Join(", ", spell.EffectTypes)}\nValue: {spell.EffectValue}\nDuration: {spell.Duration}\nCost: {spell.ManaCost}",
-                    _ => string.Empty
-                };
-                cardTransform.GetChild(3).GetComponent<TextMeshProUGUI>().text = attributes;
-            }
-            else
+            string attributes = card switch
             {
-                // Disable all UI components for enemy cards
-                foreach (Transform child in cardObject.transform)
-                {
-                    if (child.TryGetComponent<Graphic>(out var graphic))
-                    {
-                        graphic.enabled = false;
-                    }
-                }
-            }
+                MonsterCard monster => $"Health: {monster.Health}\nAttack: {monster.AttackPower}\nCost: {monster.ManaCost}",
+                SpellCard spell => $"Effect: {string.Join(", ", spell.EffectTypes)}\nValue: {spell.EffectValue}\nDuration: {spell.Duration}\nCost: {spell.ManaCost}",
+                _ => string.Empty
+            };
+            cardTransform.GetChild(3).GetComponent<TextMeshProUGUI>().text = attributes;
         }
         catch (System.Exception e)
         {
@@ -194,7 +151,7 @@ public class CardManager : MonoBehaviour, ICardManager
 
     private void SetupCardInteraction(GameObject cardObject)
     {
-        if (_isEnemy || cardObject == null) return;
+        if (cardObject == null) return;
 
         Button cardButton = cardObject.GetComponent<Button>() ?? cardObject.AddComponent<Button>();
         cardButton.onClick.RemoveAllListeners();
@@ -273,8 +230,6 @@ public class CardManager : MonoBehaviour, ICardManager
 
     public void RefreshUI()
     {
-        if (_isEnemy) return;
-
         ClearContainer(_cardUIContainer);
         ClearContainer(_deckPanelRect);
         _deckCardObjects.Clear();

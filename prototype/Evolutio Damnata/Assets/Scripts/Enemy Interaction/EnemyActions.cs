@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using System.Linq;
 
 public class EnemyActions : IEnemyActions
 {
@@ -39,16 +40,68 @@ public class EnemyActions : IEnemyActions
                 yield break;
             }
 
-            var (card, index) = FindPlayableCard();
-            if (card == null)
+            // Keep playing cards until we can't play anymore
+            while (true)
             {
-                Debug.Log("Enemy has no playable cards");
-                yield return new WaitForSeconds(2);
-                yield break;
+                // Get all playable cards sorted by mana cost (highest first to optimize mana usage)
+                var playableCards = _combatManager.EnemyDeck.Hand
+                    .Select((card, index) => new { Card = card, Index = index })
+                    .Where(item => item.Card != null && IsPlayableCard(item.Card))
+                    .OrderByDescending(item => item.Card.CardType.ManaCost)
+                    .ToList();
+
+                if (playableCards.Count == 0)
+                {
+                    Debug.Log("No more playable cards");
+                    break;
+                }
+
+                // Find first available position
+                int availablePosition = -1;
+                for (int i = 0; i < _spritePositioning.EnemyEntities.Count; i++)
+                {
+                    if (_spritePositioning.EnemyEntities[i] == null) continue;
+                    
+                    var entity = _spritePositioning.EnemyEntities[i].GetComponent<EntityManager>();
+                    if (entity != null && !entity.placed)
+                    {
+                        availablePosition = i;
+                        break;
+                    }
+                }
+
+                if (availablePosition == -1)
+                {
+                    Debug.Log("No more available positions on the board");
+                    break;
+                }
+
+                // Play the card
+                var cardToPlay = playableCards[0];
+                if (!_combatManager.EnemyDeck.TryRemoveCardAt(cardToPlay.Index, out Card removedCard))
+                {
+                    Debug.LogError($"Failed to remove card {cardToPlay.Card.CardName} from hand");
+                    break;
+                }
+
+                bool success = _combatStage.EnemyCardSpawner.SpawnCard(cardToPlay.Card.CardName, availablePosition);
+                if (!success)
+                {
+                    Debug.LogError($"Failed to spawn card {cardToPlay.Card.CardName}");
+                    _combatManager.EnemyDeck.Hand.Insert(cardToPlay.Index, removedCard);
+                    break;
+                }
+                else
+                {
+                    Debug.Log($"Enemy successfully played: {cardToPlay.Card.CardName} (Mana Cost: {cardToPlay.Card.CardType.ManaCost}, Remaining Mana: {_combatManager.EnemyMana})");
+                    LogCardsInHand();
+                }
+
+                // Wait between card plays
+                yield return new WaitForSeconds(1f);
             }
 
-            yield return ExecuteCardPlay(card, index);
-            yield return new WaitForSeconds(2);
+            yield return new WaitForSeconds(1f);
         }
         finally
         {
@@ -66,25 +119,63 @@ public class EnemyActions : IEnemyActions
             yield break;
         }
 
-        // Simple attack delay
-        yield return new WaitForSeconds(2);
-    }
+        // Get all placed enemy monsters that still have attacks remaining
+        var enemyMonsters = _spritePositioning.EnemyEntities
+            .Where(entity => entity != null && entity.GetComponent<EntityManager>()?.placed == true)
+            .Select(entity => entity.GetComponent<EntityManager>())
+            .Where(entity => entity != null && entity.GetRemainingAttacks() > 0)
+            .ToList();
 
-    private (Card card, int index) FindPlayableCard()
-    {
-        LogCardsInHand();
-
-        for (int i = 0; i < _combatManager.EnemyDeck.Hand.Count; i++)
+        if (enemyMonsters.Count == 0)
         {
-            Card card = _combatManager.EnemyDeck.Hand[i];
-            if (card == null) continue;
+            Debug.Log("No enemy monsters available to attack or all monsters have used their attacks");
+            yield break;
+        }
 
-            if (IsPlayableCard(card))
+        foreach (var attacker in enemyMonsters)
+        {
+            // Add a small delay between each monster's attack
+            yield return new WaitForSeconds(0.5f);
+
+            // Double check the monster still has attacks left
+            if (attacker.GetRemainingAttacks() <= 0)
             {
-                return (card, i);
+                Debug.Log($"Monster {attacker.name} has no attacks left this turn, skipping");
+                continue;
+            }
+
+            // Get current alive player monsters (recheck each time as previous attacks might have killed some)
+            var playerMonsters = _spritePositioning.PlayerEntities
+                .Where(entity => entity != null && entity.GetComponent<EntityManager>()?.placed == true)
+                .Select(entity => entity.GetComponent<EntityManager>())
+                .Where(entity => entity != null && !entity.dead) // Only target alive monsters
+                .ToList();
+
+            if (playerMonsters.Count == 0)
+            {
+                // If no player monsters or all are dead, attack the player health icon
+                var playerHealthIcon = GameObject.FindGameObjectWithTag("Player")?.GetComponent<HealthIconManager>();
+                if (playerHealthIcon != null)
+                {
+                    Debug.Log($"Enemy monster {attacker.name} attacking player health icon (Attacks remaining: {attacker.GetRemainingAttacks()})");
+                    _combatStage.HandleMonsterAttack(attacker, playerHealthIcon);
+                }
+                else
+                {
+                    Debug.LogError("Could not find player health icon!");
+                }
+            }
+            else
+            {
+                // Attack a random player monster that's still alive
+                int randomIndex = Random.Range(0, playerMonsters.Count);
+                var target = playerMonsters[randomIndex];
+                Debug.Log($"Enemy monster {attacker.name} attacking player monster {target.name} (Attacks remaining: {attacker.GetRemainingAttacks()})");
+                _combatStage.HandleMonsterAttack(attacker, target);
             }
         }
-        return (null, -1);
+
+        yield return new WaitForSeconds(1f);
     }
 
     private void LogCardsInHand()
@@ -95,70 +186,6 @@ public class EnemyActions : IEnemyActions
             Card card = _combatManager.EnemyDeck.Hand[i];
             Debug.Log($"Card {i}: {card.CardName}, Mana Cost: {card.CardType.ManaCost}, IsMonsterCard: {card.CardType.IsMonsterCard}");
         }
-    }
-
-    private IEnumerator ExecuteCardPlay(Card card, int index)
-    {
-        if (card == null || _combatManager.EnemyDeck.Hand.Count <= index ||
-            _combatManager.EnemyDeck.Hand[index] != card)
-        {
-            Debug.LogWarning($"Card {card?.CardName} not found at index {index}");
-            yield break;
-        }
-
-        if (_spritePositioning == null)
-        {
-            Debug.LogError("[EnemyActions] SpritePositioning is null");
-            yield break;
-        }
-
-        if (_spritePositioning.EnemyEntities == null)
-        {
-            Debug.LogError("[EnemyActions] EnemyEntities list is null");
-            yield break;
-        }
-
-        // Find an available position
-        EntityManager targetSprite = null;
-        int availableIndex = -1;
-        for (int i = 0; i < _spritePositioning.EnemyEntities.Count; i++)
-        {
-            if (_spritePositioning.EnemyEntities[i] == null) continue;
-            
-            var entity = _spritePositioning.EnemyEntities[i].GetComponent<EntityManager>();
-            if (entity != null && !entity.placed)
-            {
-                targetSprite = entity;
-                availableIndex = i;
-                break;
-            }
-        }
-
-        if (targetSprite == null)
-        {
-            Debug.Log("[===ENEMY ACTIONS===]No available positions to play the card");
-            yield break;
-        }
-
-        if (!_combatManager.EnemyDeck.TryRemoveCardAt(index, out Card removedCard))
-        {
-            Debug.LogError($"Failed to remove card {card.CardName} from hand");
-            yield break;
-        }
-
-        bool success = _combatStage.EnemyCardSpawner.SpawnCard(card.CardName, availableIndex);
-        if (!success)
-        {
-            Debug.LogError($"Failed to spawn card {card.CardName}");
-            _combatManager.EnemyDeck.Hand.Insert(index, removedCard);
-        }
-        else
-        {
-            Debug.Log($"Enemy successfully played and removed: {card.CardName}");
-            LogCardsInHand();
-        }
-
-        yield return null;
     }
 
     private bool ValidateCombatState()
@@ -191,6 +218,18 @@ public class EnemyActions : IEnemyActions
         if (_combatManager.EnemyMana < card.CardType.ManaCost)
         {
             Debug.Log($"Not enough mana to play card {card.CardName}. Required: {card.CardType.ManaCost}, Available: {_combatManager.EnemyMana}");
+            return false;
+        }
+
+        // Check if there's an available position on the board
+        bool hasAvailablePosition = _spritePositioning.EnemyEntities
+            .Any(entity => entity != null && 
+                 entity.GetComponent<EntityManager>() != null && 
+                 !entity.GetComponent<EntityManager>().placed);
+
+        if (!hasAvailablePosition)
+        {
+            Debug.Log("No available positions on the board");
             return false;
         }
 

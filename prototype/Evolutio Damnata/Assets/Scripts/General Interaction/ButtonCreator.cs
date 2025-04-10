@@ -1,142 +1,182 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Linq;
 
-public class ButtonCreator : MonoBehaviour, IButtonCreator
+namespace GeneralInteraction
 {
-    [Header("Dependencies")]
-    [SerializeField] private Canvas _battleField;
-    [SerializeField] private SpritePositioning _spritePositioningComponent;
-    [SerializeField] private CardSelectionHandler _cardSelectionHandlerComponent;
-
-    private ISpritePositioning _spritePositioning;
-    private ICardSelectionHandler _cardSelectionHandler;
-
-    [Header("Button Settings")]
-    private readonly Vector2 _buttonSize = new Vector2(217.9854f, 322.7287f);
-    private readonly Vector2 _enemyButtonSize = new Vector2(114.2145f, 188.1686f);
-
-    private void Awake()
+    public class ButtonCreator : MonoBehaviour, IButtonCreator
     {
-        // Initialize interface references
-        _spritePositioning = _spritePositioningComponent;
-        _cardSelectionHandler = _cardSelectionHandlerComponent;
+        [Header("Dependencies")]
+        [SerializeField] private Canvas _battleField;
+        [SerializeField] private SpritePositioning _spritePositioningComponent;
+        [SerializeField] private CardSelectionHandler _cardSelectionHandlerComponent;
 
-        // Fallback if not set in inspector
-        if (_battleField == null) _battleField = FindObjectOfType<Canvas>();
-        if (_cardSelectionHandler == null) _cardSelectionHandler = FindObjectOfType<CardSelectionHandler>();
-        if (_spritePositioning == null && _spritePositioningComponent == null)
-            _spritePositioning = FindObjectOfType<SpritePositioning>();
-    }
+        private ISpritePositioning _spritePositioning;
+        private ICardSelectionHandler _cardSelectionHandler;
 
-    public void Initialize(Canvas battleField, ISpritePositioning spritePositioning, ICardSelectionHandler cardSelectionHandler)
-    {
-        _battleField = battleField;
-        _spritePositioning = spritePositioning;
-        _cardSelectionHandler = cardSelectionHandler;
-    }
+        [Header("Button Settings")]
+        private readonly Vector2 _buttonSize = new Vector2(217.9854f, 322.7287f);
+        private readonly Vector2 _enemyButtonSize = new Vector2(114.2145f, 188.1686f);
 
-    public void AddButtonsToPlayerEntities()
-    {
-        if (_spritePositioning?.PlayerEntities == null)
+        private void Awake()
         {
-            Debug.LogError("Player entities not initialized!");
-            return;
+            // Initialize interface references
+            _spritePositioning = _spritePositioningComponent;
+            _cardSelectionHandler = _cardSelectionHandlerComponent;
+
+            // Fallback if not set in inspector
+            if (_battleField == null) _battleField = FindObjectOfType<Canvas>();
+            if (_cardSelectionHandler == null) _cardSelectionHandler = FindObjectOfType<CardSelectionHandler>();
+            if (_spritePositioning == null && _spritePositioningComponent == null)
+                _spritePositioning = FindObjectOfType<SpritePositioning>();
         }
 
-        for (int i = 0; i < _spritePositioning.PlayerEntities.Count; i++)
+        public void Initialize(Canvas battleField, ISpritePositioning spritePositioning, ICardSelectionHandler cardSelectionHandler)
         {
-            if (_spritePositioning.PlayerEntities[i] == null)
+            _battleField = battleField;
+            _spritePositioning = spritePositioning;
+            _cardSelectionHandler = cardSelectionHandler;
+        }
+
+        public void AddButtonsToPlayerEntities()
+        {
+            if (_spritePositioning?.PlayerEntities == null)
             {
-                Debug.LogError($"Player placeholder at index {i} is null!");
-                continue;
+                Debug.LogError("Player entities not initialized!");
+                return;
             }
-            CreatePlayerButton(i);
-        }
-    }
 
-    public void AddButtonsToEnemyEntities()
-    {
-        if (_spritePositioning?.EnemyEntities == null)
-        {
-            Debug.LogError("Enemy entities not initialized!");
-            return;
-        }
-
-        for (int i = 0; i < _spritePositioning.EnemyEntities.Count; i++)
-        {
-            if (_spritePositioning.EnemyEntities[i] == null)
+            for (int i = 0; i < _spritePositioning.PlayerEntities.Count; i++)
             {
-                Debug.LogError($"Enemy placeholder at index {i} is null!");
-                continue;
+                if (_spritePositioning.PlayerEntities[i] == null)
+                {
+                    Debug.LogError($"Player placeholder at index {i} is null!");
+                    continue;
+                }
+                CreatePlayerButton(i);
             }
-            CreateEnemyButton(i);
-        }
-    }
-
-    private void CreatePlayerButton(int index)
-    {
-        GameObject playerEntity = _spritePositioning.PlayerEntities[index];
-
-        // Disable raycast on placeholder image
-        if (playerEntity.TryGetComponent(out Image placeholderImage))
-        {
-            placeholderImage.raycastTarget = false;
         }
 
-        // Create button child object
-        GameObject buttonObject = new GameObject($"Button_Outline_{index}")
+        public void AddButtonsToEnemyEntities()
         {
-            transform =
+            if (_spritePositioning?.EnemyEntities == null)
             {
-                parent = playerEntity.transform,
-                localPosition = Vector3.zero
+                Debug.LogError("Enemy entities not initialized!");
+                return;
             }
-        };
 
-        // Set up button components
-        var rectTransform = buttonObject.AddComponent<RectTransform>();
-        rectTransform.sizeDelta = _buttonSize;
+            for (int i = 0; i < _spritePositioning.EnemyEntities.Count; i++)
+            {
+                if (_spritePositioning.EnemyEntities[i] == null)
+                {
+                    Debug.LogError($"Enemy placeholder at index {i} is null!");
+                    continue;
+                }
+                CreateEnemyButton(i);
+            }
+        }
 
-        var button = buttonObject.AddComponent<Button>();
-        button.onClick.AddListener(() => _cardSelectionHandler.OnPlayerButtonClick(index));
-
-        // Add transparent image (required for button functionality)
-        var buttonImage = buttonObject.AddComponent<Image>();
-        buttonImage.color = new Color(1, 1, 1, 0);
-    }
-
-    private void CreateEnemyButton(int index)
-    {
-        GameObject enemyEntity = _spritePositioning.EnemyEntities[index];
-        Vector3 originalWorldPos = enemyEntity.transform.position;
-        Vector3 originalScale = enemyEntity.transform.localScale;
-        Quaternion originalRotation = enemyEntity.transform.rotation;
-
-        // Create button as canvas child
-        GameObject buttonObject = new GameObject($"Enemy_Button_Outline_{index}")
+        public void AddButtonsToHealthIcons()
         {
-            transform =
+            // Only create buttons for enemy health icons
+            var enemyHealthIcons = GameObject.FindGameObjectsWithTag("Enemy");
+            
+            foreach (var icon in enemyHealthIcons)
             {
-                parent = _battleField.transform,
-                position = originalWorldPos
+                if (icon == null) continue;
+                CreateHealthIconButton(icon, "Enemy_Health_Button", icon.transform.position);
             }
-        };
+        }
 
-        // Set up button components
-        var rectTransform = buttonObject.AddComponent<RectTransform>();
-        rectTransform.sizeDelta = _enemyButtonSize;
+        private void CreateHealthIconButton(GameObject icon, string buttonName, Vector3 position)
+        {
+            // Create button as canvas child
+            GameObject buttonObject = new GameObject(buttonName)
+            {
+                transform =
+                {
+                    parent = _battleField.transform,
+                    position = position
+                }
+            };
 
-        var button = buttonObject.AddComponent<Button>();
-        button.onClick.AddListener(() => _cardSelectionHandler.OnEnemyButtonClick(index));
+            // Set up button components
+            var rectTransform = buttonObject.AddComponent<RectTransform>();
+            rectTransform.sizeDelta = new Vector2(200f, 200f); // Adjust size as needed
 
-        var buttonImage = buttonObject.AddComponent<Image>();
-        buttonImage.color = new Color(1, 1, 1, 0);
-        buttonImage.raycastTarget = true;
+            var button = buttonObject.AddComponent<Button>();
+            button.onClick.AddListener(() => _cardSelectionHandler.OnEnemyButtonClick(-1)); // Use -1 to indicate health icon click
 
-        // Reparent enemy entity to button
-        enemyEntity.transform.SetParent(buttonObject.transform, false);
-        enemyEntity.transform.localPosition = buttonObject.transform.InverseTransformPoint(originalWorldPos);
-        enemyEntity.transform.localScale = originalScale;
-        enemyEntity.transform.rotation = originalRotation;
+            var buttonImage = buttonObject.AddComponent<Image>();
+            buttonImage.color = new Color(1, 1, 1, 0);
+            buttonImage.raycastTarget = true;
+        }
+
+        private void CreatePlayerButton(int index)
+        {
+            GameObject playerEntity = _spritePositioning.PlayerEntities[index];
+
+            // Disable raycast on placeholder image
+            if (playerEntity.TryGetComponent(out Image placeholderImage))
+            {
+                placeholderImage.raycastTarget = false;
+            }
+
+            // Create button child object
+            GameObject buttonObject = new GameObject($"Button_Outline_{index}")
+            {
+                transform =
+                {
+                    parent = playerEntity.transform,
+                    localPosition = Vector3.zero
+                }
+            };
+
+            // Set up button components
+            var rectTransform = buttonObject.AddComponent<RectTransform>();
+            rectTransform.sizeDelta = _buttonSize;
+
+            var button = buttonObject.AddComponent<Button>();
+            button.onClick.AddListener(() => _cardSelectionHandler.OnPlayerButtonClick(index));
+
+            // Add transparent image (required for button functionality)
+            var buttonImage = buttonObject.AddComponent<Image>();
+            buttonImage.color = new Color(1, 1, 1, 0);
+        }
+
+        private void CreateEnemyButton(int index)
+        {
+            GameObject enemyEntity = _spritePositioning.EnemyEntities[index];
+            Vector3 originalWorldPos = enemyEntity.transform.position;
+            Vector3 originalScale = enemyEntity.transform.localScale;
+            Quaternion originalRotation = enemyEntity.transform.rotation;
+
+            // Create button as canvas child
+            GameObject buttonObject = new GameObject($"Enemy_Button_Outline_{index}")
+            {
+                transform =
+                {
+                    parent = _battleField.transform,
+                    position = originalWorldPos
+                }
+            };
+
+            // Set up button components
+            var rectTransform = buttonObject.AddComponent<RectTransform>();
+            rectTransform.sizeDelta = _enemyButtonSize;
+
+            var button = buttonObject.AddComponent<Button>();
+            button.onClick.AddListener(() => _cardSelectionHandler.OnEnemyButtonClick(index));
+
+            var buttonImage = buttonObject.AddComponent<Image>();
+            buttonImage.color = new Color(1, 1, 1, 0);
+            buttonImage.raycastTarget = true;
+
+            // Reparent enemy entity to button
+            enemyEntity.transform.SetParent(buttonObject.transform, false);
+            enemyEntity.transform.localPosition = buttonObject.transform.InverseTransformPoint(originalWorldPos);
+            enemyEntity.transform.localScale = originalScale;
+            enemyEntity.transform.rotation = originalRotation;
+        }
     }
 }

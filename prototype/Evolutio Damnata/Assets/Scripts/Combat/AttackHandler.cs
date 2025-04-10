@@ -23,7 +23,12 @@ public class AttackHandler : IAttackHandler
             return;
         }
 
-        float attackerDamage = attacker.GetAttackDamage();
+         if(target.gameObject.CompareTag("Player"))
+        {
+
+        }
+
+            float attackerDamage = attacker.GetAttackDamage();
         float targetDamage = target.GetAttackDamage();
 
         // Set potential killers before taking damage

@@ -3,6 +3,7 @@ using TMPro;
 using System.Collections;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using GeneralInteraction;
 
 public class CombatStage : MonoBehaviour, ICombatStage
 {
@@ -48,14 +49,22 @@ public class CombatStage : MonoBehaviour, ICombatStage
 
     private bool _buttonsInitialized = false;
 
+    [Header("Combat Systems")]
+    private AttackLimiter attackLimiter;
+    private OngoingEffectApplier ongoingEffectApplier;
+
     private void Awake()
     {
-        // Initialize interface references
+        // Initialize interface references first
         _spritePositioning = _spritePositioningComponent;
         _cardManager = _cardManagerComponent;
         _combatManager = _combatManagerComponent;
         _cardOutlineManager = _cardOutlineManagerComponent;
 
+        // Initialize combat systems
+        attackLimiter = new AttackLimiter();
+        ongoingEffectApplier = new OngoingEffectApplier(_cardManager);
+        
         InitializeServices();
     }
 
@@ -105,12 +114,13 @@ public class CombatStage : MonoBehaviour, ICombatStage
             spellEffectApplier
         );
 
-        _buttonCreator = gameObject.AddComponent<ButtonCreator>();
-        (_buttonCreator as ButtonCreator).Initialize(
+        var buttonCreatorComponent = gameObject.AddComponent<ButtonCreator>();
+        buttonCreatorComponent.Initialize(
             _battleField,
             _spritePositioning,
             _cardSelectionHandler
         );
+        _buttonCreator = buttonCreatorComponent;
 
         InitializeSelectionEffectHandlers();
     }
@@ -164,12 +174,32 @@ public class CombatStage : MonoBehaviour, ICombatStage
 
         _buttonCreator.AddButtonsToPlayerEntities();
         _buttonCreator.AddButtonsToEnemyEntities();
+        _buttonCreator.AddButtonsToHealthIcons();
         _buttonsInitialized = true;
     }
 
     public void HandleMonsterAttack(EntityManager attacker, EntityManager target)
     {
+        if (_attackHandler == null)
+        {
+            Debug.LogError("AttackHandler is not initialized!");
+            return;
+        }
+
         _attackHandler.HandleAttack(attacker, target);
+    }
+
+    // Overload for attacking health icons
+    public void HandleMonsterAttack(EntityManager attacker, HealthIconManager healthIcon)
+    {
+        if (_attackHandler == null)
+        {
+            Debug.LogError("AttackHandler is not initialized!");
+            return;
+        }
+
+        // Health icons are EntityManagers, so we can pass them directly
+        _attackHandler.HandleAttack(attacker, healthIcon);
     }
 
     public void SpawnEnemyCard(string cardName, int position)
@@ -235,5 +265,15 @@ public class CombatStage : MonoBehaviour, ICombatStage
     private bool IsPlacedCardSelected()
     {
         return _cardManager.CurrentSelectedCard?.GetComponent<EntityManager>()?.placed ?? false;
+    }
+
+    public AttackLimiter GetAttackLimiter()
+    {
+        return attackLimiter;
+    }
+
+    public OngoingEffectApplier GetOngoingEffectApplier()
+    {
+        return ongoingEffectApplier;
     }
 }
