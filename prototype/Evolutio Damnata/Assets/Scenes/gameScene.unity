@@ -2444,7 +2444,7 @@ MonoBehaviour:
     Description: '"They...will...suffer..."'
     ManaCost: 0
     AttackPower: 25
-    Health: 100
+    Health: 1000
     Keywords: 00000000
     EffectTypes: 
     EffectValue: 0

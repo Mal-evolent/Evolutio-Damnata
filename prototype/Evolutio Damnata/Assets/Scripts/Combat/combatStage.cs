@@ -248,6 +248,17 @@ public class CombatStage : MonoBehaviour, ICombatStage
         bool shouldShowPlaceholders = _cardManager.CurrentSelectedCard != null &&
                                     !IsPlacedCardSelected();
 
+        // Check if the selected card is a spell card
+        bool isSpellCard = false;
+        if (_cardManager.CurrentSelectedCard != null)
+        {
+            var cardUI = _cardManager.CurrentSelectedCard.GetComponent<CardUI>();
+            if (cardUI != null && cardUI.Card != null && cardUI.Card.CardType != null)
+            {
+                isSpellCard = cardUI.Card.CardType.IsSpellCard;
+            }
+        }
+
         foreach (var placeholder in _spritePositioning.PlayerEntities)
         {
             var entityManager = placeholder.GetComponent<EntityManager>();
@@ -256,8 +267,16 @@ public class CombatStage : MonoBehaviour, ICombatStage
                 // Skip if entity is fading out
                 if (entityManager.IsFadingOut) continue;
 
-                // Original logic
-                placeholder.SetActive(entityManager.placed || shouldShowPlaceholders);
+                if (isSpellCard)
+                {
+                    // If a spell card is selected, only show entities that are placed
+                    placeholder.SetActive(entityManager.placed);
+                }
+                else
+                {
+                    // If not a spell card or no card selected, follow original logic
+                    placeholder.SetActive(entityManager.placed || shouldShowPlaceholders);
+                }
             }
         }
     }
