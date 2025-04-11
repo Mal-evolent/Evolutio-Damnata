@@ -21,6 +21,12 @@ public class PlayerSelectionEffectHandler : ISelectionEffectHandler
     {
         if (_cardManager.CurrentSelectedCard == null || _spritePositioning.PlayerEntities == null) return;
 
+        var cardUI = _cardManager.CurrentSelectedCard.GetComponent<CardUI>();
+        if (cardUI == null || cardUI.Card == null || cardUI.Card.CardType == null) return;
+
+        // Only apply effect if it's a spell card
+        if (!cardUI.Card.CardType.IsSpellCard) return;
+
         foreach (var entity in _spritePositioning.PlayerEntities)
         {
             if (entity == null) continue;
@@ -28,9 +34,7 @@ public class PlayerSelectionEffectHandler : ISelectionEffectHandler
             var image = entity.GetComponent<Image>();
             if (image != null)
             {
-                image.color = (entity == _cardManager.CurrentSelectedCard && isSelected)
-                    ? _selectionColor
-                    : Color.white;
+                image.color = isSelected ? _selectionColor : Color.white;
             }
         }
     }

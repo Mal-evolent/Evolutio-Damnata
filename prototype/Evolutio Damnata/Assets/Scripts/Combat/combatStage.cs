@@ -218,11 +218,22 @@ public class CombatStage : MonoBehaviour, ICombatStage
         bool hasSelectedCard = _cardManager.CurrentSelectedCard != null;
         bool isMonsterSelected = hasSelectedCard && IsPlacedCardSelected();
 
-        // Apply enemy selection effects only if we have a card or monster selected
-        _enemySelectionEffectHandler.ApplyEffect(hasSelectedCard);
+        // Check if the selected card is a spell card
+        bool isSpellCardSelected = false;
+        if (hasSelectedCard && !isMonsterSelected)
+        {
+            var cardUI = _cardManager.CurrentSelectedCard.GetComponent<CardUI>();
+            if (cardUI != null && cardUI.Card != null && cardUI.Card.CardType != null)
+            {
+                isSpellCardSelected = cardUI.Card.CardType.IsSpellCard;
+            }
+        }
 
-        // Apply player selection effects if we have a monster selected
-        if (isMonsterSelected)
+        // Apply enemy selection effects only if a spell card is selected
+        _enemySelectionEffectHandler.ApplyEffect(isSpellCardSelected);
+
+        // Apply player selection effects if we have a spell card selected
+        if (isSpellCardSelected)
         {
             _playerSelectionEffectHandler.ApplyEffect();
         }
