@@ -23,12 +23,12 @@ public class AttackHandler : IAttackHandler
             return;
         }
 
-         if(target.gameObject.CompareTag("Player"))
+        if(target.gameObject.CompareTag("Player"))
         {
-
+            // Handle player-specific attack logic if needed
         }
 
-            float attackerDamage = attacker.GetAttackDamage();
+        float attackerDamage = attacker.GetAttackDamage();
         float targetDamage = target.GetAttackDamage();
 
         // Set potential killers before taking damage
@@ -39,7 +39,6 @@ public class AttackHandler : IAttackHandler
         target.TakeDamage(attackerDamage);
 
         _attackLimiter.RegisterAttack(attacker);
-        _attackLimiter.RegisterAttack(target);
 
         Debug.Log($"{attacker.name} attacked {target.name}. " +
                  $"{attacker.name} took {targetDamage} damage. " +
