@@ -20,6 +20,11 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     [SerializeField] protected float maxHealth;
     [SerializeField] private float atkDamage;
     [SerializeField] private float atkDamageMulti = 1.0f;
+    [SerializeField, ReadOnly] private string _keywordsDisplay;
+
+    [Header("Card Data")]
+    [SerializeField] private CardData _cardData;
+
 
     [Header("UI Elements")]
     [SerializeField] private Image spriteImage;
@@ -38,6 +43,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     private float turnDuration = 1.0f;
     private EntityManager killedBy;
     private float lastDamageTaken;
+    
 
     public enum MonsterType { Friendly, Enemy }
 
@@ -289,6 +295,34 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     public void SetKilledBy(EntityManager killer)
     {
         killedBy = killer;
+    }
+
+    public void SetCardData(CardData cardData)
+    {
+        _cardData = cardData;
+        UpdateKeywordsDisplay();
+    }
+
+    private void UpdateKeywordsDisplay()
+    {
+        if (_cardData != null && _cardData.Keywords != null)
+        {
+            _keywordsDisplay = string.Join(", ", _cardData.Keywords);
+        }
+        else
+        {
+            _keywordsDisplay = "None";
+        }
+    }
+
+    public CardData GetCardData()
+    {
+        return _cardData;
+    }
+
+    public bool HasKeyword(Keywords.MonsterKeyword keyword)
+    {
+        return _cardData != null && _cardData.Keywords != null && _cardData.Keywords.Contains(keyword);
     }
     #endregion
 }

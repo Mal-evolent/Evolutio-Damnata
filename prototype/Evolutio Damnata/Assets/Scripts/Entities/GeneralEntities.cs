@@ -192,6 +192,9 @@ public class GeneralEntities : ICardSpawner
             _ongoingEffectApplier
         );
 
+        // Set the CardData to ensure keywords are properly set
+        entityManager.SetCardData(cardData);
+
         return entityManager;
     }
 

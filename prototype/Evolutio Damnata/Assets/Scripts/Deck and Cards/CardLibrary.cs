@@ -79,7 +79,7 @@ public class CardLibrary : MonoBehaviour, ICardLibrary
             cardData.ManaCost,
             cardData.AttackPower,
             cardData.Health,
-            cardData.Keywords?.Select(k => k.ToString()).ToList() ?? new List<string>(),
+            cardData.Keywords ?? new List<Keywords.MonsterKeyword>(),
             cardData
         );
 

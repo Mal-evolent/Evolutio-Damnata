@@ -72,6 +72,7 @@ public class CombatStage : MonoBehaviour, ICombatStage
     {
         var attackLimiter = new AttackLimiter();
         var ongoingEffectApplier = new OngoingEffectApplier(_cardManager);
+        var combatRulesEngine = new CombatRulesEngine(); // Create the rules engine
 
         var spawnerFactory = new CardSpawnerFactory(
             _spritePositioning,
@@ -87,7 +88,7 @@ public class CombatStage : MonoBehaviour, ICombatStage
 
         _playerCardSpawner = spawnerFactory.CreatePlayerSpawner();
         _enemyCardSpawner = spawnerFactory.CreateEnemySpawner();
-        _attackHandler = new AttackHandler(attackLimiter);
+        _attackHandler = new AttackHandler(attackLimiter, combatRulesEngine);
 
         var spellEffectApplier = new SpellEffectApplier(
             _cardManager,

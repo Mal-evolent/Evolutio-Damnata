@@ -64,6 +64,9 @@ public class AttackHandlerPlayModeTests
         var testCardManager = new TestCardManager();
         var effectApplier = new OngoingEffectApplier(testCardManager);
 
+        // Create a rules engine instance
+        ICombatRulesEngine rulesEngine = new CombatRulesEngine();
+
         // Initialize player entity
         playerEntity.InitializeMonster(
             EntityManager.MonsterType.Friendly,
@@ -94,8 +97,8 @@ public class AttackHandlerPlayModeTests
         );
         enemyEntity.SetPlaced(true);
 
-        // Create AttackHandler
-        attackHandler = new AttackHandler(attackLimiter);
+        // Create AttackHandler with both required parameters
+        attackHandler = new AttackHandler(attackLimiter, rulesEngine);
     }
 
     [UnityTest]

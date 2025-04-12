@@ -12,8 +12,5 @@ public class Keywords : MonoBehaviour
         None,
         Taunt,
         Ranged,
-        Spellcaster,
-        Fire,
-        // Add other keywords as needed
     }
 }

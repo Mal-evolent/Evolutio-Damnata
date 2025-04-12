@@ -27,7 +27,7 @@ public class Card : MonoBehaviour
 // Monster Card (Derived Class from Card)
 public class MonsterCard : Card
 {
-    public List<string> Keywords { get; set; }
+    public List<Keywords.MonsterKeyword> Keywords { get; set; }
 
     public override void Play()
     {
@@ -42,7 +42,7 @@ public class MonsterCard : Card
         int manaCost,
         int attackPower,
         int health,
-        List<string> keywords,
+        List<Keywords.MonsterKeyword> keywords,
         CardData cardType)
     {
         this.CardName = cardName;
@@ -51,7 +51,7 @@ public class MonsterCard : Card
         this.ManaCost = manaCost;
         this.AttackPower = attackPower;
         this.Health = health;
-        this.Keywords = keywords ?? new List<string>();
+        this.Keywords = keywords;
         this.CardType = cardType;
     }
 }

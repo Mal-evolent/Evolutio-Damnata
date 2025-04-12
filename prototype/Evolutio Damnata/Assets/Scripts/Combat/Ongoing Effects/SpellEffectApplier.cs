@@ -83,19 +83,6 @@ public class SpellEffectApplier : ISpellEffectApplier
                     target.Heal(spellData.EffectValue);
                     Debug.Log($"Healed {target.name} for {spellData.EffectValue}");
                     break;
-
-                case SpellEffect.Buff:
-                    ApplyBuff(target, spellData.EffectValue, spellData.Duration);
-                    break;
-
-                case SpellEffect.Debuff:
-                    ApplyDebuff(target, spellData.EffectValue, spellData.Duration);
-                    break;
-
-                case SpellEffect.DoubleAttack:
-                    ApplyDoubleAttack(target, spellData.Duration);
-                    break;
-
                 case SpellEffect.Burn:
                     ApplyBurnEffect(target, spellData);
                     break;

@@ -1972,6 +1972,20 @@ MonoBehaviour:
   maxHealth: 0
   atkDamage: 0
   atkDamageMulti: 0
+  _cardData:
+    CardName: 
+    CardImage: {fileID: 0}
+    Description: 
+    ManaCost: 0
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    DamagePerRound: 0
+    IsSpellCard: 0
+    IsMonsterCard: 0
   spriteImage: {fileID: 0}
   healthBar: {fileID: 0}
   damageVisualizer: {fileID: 389717233}
@@ -2198,6 +2212,20 @@ MonoBehaviour:
   maxHealth: 0
   atkDamage: 0
   atkDamageMulti: 0
+  _cardData:
+    CardName: 
+    CardImage: {fileID: 0}
+    Description: 
+    ManaCost: 0
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    DamagePerRound: 0
+    IsSpellCard: 0
+    IsMonsterCard: 0
   spriteImage: {fileID: 0}
   healthBar: {fileID: 0}
   damageVisualizer: {fileID: 389717233}
@@ -2443,7 +2471,7 @@ MonoBehaviour:
     ManaCost: 0
     AttackPower: 25
     Health: 100
-    Keywords: 00000000
+    Keywords: 02000000
     EffectTypes: 
     EffectValue: 0
     Duration: 0
@@ -2469,39 +2497,13 @@ MonoBehaviour:
     ManaCost: 0
     AttackPower: 3
     Health: 15
-    Keywords: 00000000
+    Keywords: 01000000
     EffectTypes: 
     EffectValue: 0
     Duration: 0
     DamagePerRound: 0
     IsSpellCard: 0
     IsMonsterCard: 1
-  - CardName: Soulbyte Decay
-    CardImage: {fileID: 21300000, guid: 7aeec1cbde0927e43b184ad00a19733b, type: 3}
-    Description: You will be recreated...Broken down...
-    ManaCost: 0
-    AttackPower: 10
-    Health: 1
-    Keywords: 00000000
-    EffectTypes: 
-    EffectValue: 0
-    Duration: 0
-    DamagePerRound: 0
-    IsSpellCard: 0
-    IsMonsterCard: 1
-  - CardName: spell
-    CardImage: {fileID: 21300000, guid: 7aeec1cbde0927e43b184ad00a19733b, type: 3}
-    Description: 
-    ManaCost: 0
-    AttackPower: 0
-    Health: 0
-    Keywords: 
-    EffectTypes: 00000000
-    EffectValue: 10
-    Duration: 10
-    DamagePerRound: 0
-    IsSpellCard: 1
-    IsMonsterCard: 0
   _defaultCardSprite: {fileID: 21300000, guid: 7aeec1cbde0927e43b184ad00a19733b, type: 3}
 --- !u!4 &1159794894
 Transform:
@@ -2605,6 +2607,20 @@ MonoBehaviour:
   maxHealth: 0
   atkDamage: 0
   atkDamageMulti: 1
+  _cardData:
+    CardName: 
+    CardImage: {fileID: 0}
+    Description: 
+    ManaCost: 0
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    DamagePerRound: 0
+    IsSpellCard: 0
+    IsMonsterCard: 0
   spriteImage: {fileID: 0}
   healthBar: {fileID: 6675986941918603225, guid: 13811d77f45b76e46a27b229ca045f5e, type: 3}
   damageVisualizer: {fileID: 389717233}
