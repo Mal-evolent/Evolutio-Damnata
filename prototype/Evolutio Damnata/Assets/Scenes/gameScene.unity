@@ -1859,9 +1859,7 @@ MonoBehaviour:
   dungeonRooms:
   - {fileID: 21300000, guid: 1aea5d2e17239ca44998ebd240f812c9, type: 3}
   - {fileID: 21300000, guid: c612fa3b86974485e8605df19d6f8650, type: 3}
-  monsters:
-  - {fileID: 21300000, guid: 6bcc5bcd60555644a916f3bf816cc40a, type: 3}
-  - {fileID: 21300000, guid: 9173eca91e2004147a90bf7266c9ff22, type: 3}
+  monsters: []
   wizards: []
 --- !u!4 &671977324
 Transform:
@@ -2444,7 +2442,7 @@ MonoBehaviour:
     Description: '"They...will...suffer..."'
     ManaCost: 0
     AttackPower: 25
-    Health: 1000
+    Health: 100
     Keywords: 00000000
     EffectTypes: 
     EffectValue: 0
@@ -2452,32 +2450,6 @@ MonoBehaviour:
     DamagePerRound: 0
     IsSpellCard: 0
     IsMonsterCard: 1
-  - CardName: Fireball
-    CardImage: {fileID: 21300000, guid: 7aeec1cbde0927e43b184ad00a19733b, type: 3}
-    Description: Call a fireball from the heavens
-    ManaCost: 0
-    AttackPower: 0
-    Health: 0
-    Keywords: 
-    EffectTypes: 0100000006000000
-    EffectValue: 5
-    Duration: 3
-    DamagePerRound: 10
-    IsSpellCard: 1
-    IsMonsterCard: 0
-  - CardName: Branding
-    CardImage: {fileID: 21300000, guid: 7aeec1cbde0927e43b184ad00a19733b, type: 3}
-    Description: 
-    ManaCost: 0
-    AttackPower: 2
-    Health: 0
-    Keywords: 00000000
-    EffectTypes: 06000000
-    EffectValue: 2
-    Duration: 10
-    DamagePerRound: 5
-    IsSpellCard: 1
-    IsMonsterCard: 0
   - CardName: Dread Scriptum
     CardImage: {fileID: 21300000, guid: 8d8136910b6edaf48864bfa14e986589, type: 3}
     Description: '"Death is just another step forwards"'
@@ -2491,19 +2463,6 @@ MonoBehaviour:
     DamagePerRound: 0
     IsSpellCard: 0
     IsMonsterCard: 1
-  - CardName: Divine Light
-    CardImage: {fileID: 21300000, guid: 7aeec1cbde0927e43b184ad00a19733b, type: 3}
-    Description: The heavens smile upon us this day!
-    ManaCost: 0
-    AttackPower: 0
-    Health: 0
-    Keywords: 
-    EffectTypes: 02000000
-    EffectValue: 10
-    Duration: 0
-    DamagePerRound: 0
-    IsSpellCard: 1
-    IsMonsterCard: 0
   - CardName: Abyssal Warden
     CardImage: {fileID: 21300000, guid: 36d1fd3d74a240f418652272aa32f0d7, type: 3}
     Description: Undying bulwark
@@ -2521,7 +2480,7 @@ MonoBehaviour:
     CardImage: {fileID: 21300000, guid: 7aeec1cbde0927e43b184ad00a19733b, type: 3}
     Description: You will be recreated...Broken down...
     ManaCost: 0
-    AttackPower: 100
+    AttackPower: 10
     Health: 1
     Keywords: 00000000
     EffectTypes: 
@@ -2530,6 +2489,19 @@ MonoBehaviour:
     DamagePerRound: 0
     IsSpellCard: 0
     IsMonsterCard: 1
+  - CardName: spell
+    CardImage: {fileID: 21300000, guid: 7aeec1cbde0927e43b184ad00a19733b, type: 3}
+    Description: 
+    ManaCost: 0
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 00000000
+    EffectValue: 10
+    Duration: 10
+    DamagePerRound: 0
+    IsSpellCard: 1
+    IsMonsterCard: 0
   _defaultCardSprite: {fileID: 21300000, guid: 7aeec1cbde0927e43b184ad00a19733b, type: 3}
 --- !u!4 &1159794894
 Transform:

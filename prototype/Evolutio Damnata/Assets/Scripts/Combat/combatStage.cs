@@ -229,8 +229,8 @@ public class CombatStage : MonoBehaviour, ICombatStage
             }
         }
 
-        // Apply enemy selection effects only if a spell card is selected
-        _enemySelectionEffectHandler.ApplyEffect(isSpellCardSelected);
+        // Apply enemy selection effects if a spell card is selected OR if a player's monster is selected
+        _enemySelectionEffectHandler.ApplyEffect(isSpellCardSelected || isMonsterSelected);
 
         // Apply player selection effects if we have a spell card selected
         if (isSpellCardSelected)
