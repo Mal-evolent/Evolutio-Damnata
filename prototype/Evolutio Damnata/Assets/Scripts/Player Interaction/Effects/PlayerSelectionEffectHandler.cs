@@ -21,11 +21,16 @@ public class PlayerSelectionEffectHandler : ISelectionEffectHandler
     {
         if (_cardManager.CurrentSelectedCard == null || _spritePositioning.PlayerEntities == null) return;
 
-        var cardUI = _cardManager.CurrentSelectedCard.GetComponent<CardUI>();
-        if (cardUI == null || cardUI.Card == null || cardUI.Card.CardType == null) return;
+        // Get the selected entity if it's a monster
+        var selectedEntity = _cardManager.CurrentSelectedCard.GetComponent<EntityManager>();
+        bool isMonsterSelected = selectedEntity != null && selectedEntity.placed;
 
-        // Only apply effect if it's a spell card
-        if (!cardUI.Card.CardType.IsSpellCard) return;
+        // Get card data if it's a card from hand
+        var cardUI = _cardManager.CurrentSelectedCard.GetComponent<CardUI>();
+        bool isSpellCard = cardUI != null && cardUI.Card != null && cardUI.Card.CardType != null && cardUI.Card.CardType.IsSpellCard;
+
+        // Only apply effect if we have a valid selection
+        if (!isMonsterSelected && !isSpellCard) return;
 
         foreach (var entity in _spritePositioning.PlayerEntities)
         {
@@ -34,7 +39,16 @@ public class PlayerSelectionEffectHandler : ISelectionEffectHandler
             var image = entity.GetComponent<Image>();
             if (image != null)
             {
-                image.color = isSelected ? _selectionColor : Color.white;
+                // If it's a monster selection, only highlight the selected monster
+                if (isMonsterSelected)
+                {
+                    image.color = (entity == _cardManager.CurrentSelectedCard) ? _selectionColor : Color.white;
+                }
+                // If it's a spell card, highlight all monsters
+                else if (isSpellCard)
+                {
+                    image.color = isSelected ? _selectionColor : Color.white;
+                }
             }
         }
     }

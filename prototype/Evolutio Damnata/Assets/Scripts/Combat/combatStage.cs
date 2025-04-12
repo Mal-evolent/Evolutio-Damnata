@@ -231,10 +231,28 @@ public class CombatStage : MonoBehaviour, ICombatStage
         }
 
         // Apply enemy selection effects if a spell card is selected OR if a player's monster is selected
-        _enemySelectionEffectHandler.ApplyEffect(isSpellCardSelected || isMonsterSelected);
+        if (isSpellCardSelected || isMonsterSelected)
+        {
+            _enemySelectionEffectHandler.ApplyEffect(true);
+        }
+        else
+        {
+            // Reset enemy tints if nothing is selected
+            foreach (var entity in _spritePositioning.EnemyEntities)
+            {
+                if (entity != null)
+                {
+                    var image = entity.GetComponent<Image>();
+                    if (image != null)
+                    {
+                        image.color = Color.white;
+                    }
+                }
+            }
+        }
 
-        // Apply player selection effects if we have a spell card selected
-        if (isSpellCardSelected)
+        // Apply player selection effects if we have a spell card selected OR if a player monster is selected
+        if (isSpellCardSelected || isMonsterSelected)
         {
             _playerSelectionEffectHandler.ApplyEffect();
         }

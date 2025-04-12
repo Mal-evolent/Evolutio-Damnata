@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 /// <summary>
 /// Interface for combat rules engines
@@ -45,6 +46,29 @@ public class CombatRulesEngine : ICombatRulesEngine
             result.RuleDescription = "Ranged";
             Debug.Log($"[CombatRulesEngine] {attacker.name} attacks from range and avoids counter-damage!");
         }
+    }
+
+    /// <summary>
+    /// Checks if there are any taunt units on the field that should be targeted first
+    /// </summary>
+    public static bool HasTauntUnits(System.Collections.Generic.List<GameObject> entities)
+    {
+        return entities.Any(entity => 
+            entity != null && 
+            entity.GetComponent<EntityManager>()?.HasKeyword(Keywords.MonsterKeyword.Taunt) == true &&
+            !entity.GetComponent<EntityManager>().dead);
+    }
+
+    /// <summary>
+    /// Gets all taunt units from a list of entities
+    /// </summary>
+    public static System.Collections.Generic.List<EntityManager> GetAllTauntUnits(System.Collections.Generic.List<GameObject> entities)
+    {
+        return entities
+            .Where(entity => entity != null)
+            .Select(entity => entity.GetComponent<EntityManager>())
+            .Where(entity => entity != null && entity.HasKeyword(Keywords.MonsterKeyword.Taunt) && !entity.dead)
+            .ToList();
     }
 }
 

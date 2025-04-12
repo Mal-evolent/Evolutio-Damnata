@@ -167,7 +167,22 @@ public class EnemyActions : IEnemyActions
             }
             else
             {
-                // Attack a random player monster that's still alive
+                // Check for taunt units first
+                if (CombatRulesEngine.HasTauntUnits(_spritePositioning.PlayerEntities))
+                {
+                    var tauntUnits = CombatRulesEngine.GetAllTauntUnits(_spritePositioning.PlayerEntities);
+                    if (tauntUnits.Count > 0)
+                    {
+                        // Attack a random taunt unit
+                        int tauntIndex = Random.Range(0, tauntUnits.Count);
+                        var tauntUnit = tauntUnits[tauntIndex];
+                        Debug.Log($"Enemy monster {attacker.name} attacking taunt unit {tauntUnit.name} (Attacks remaining: {attacker.GetRemainingAttacks()})");
+                        _combatStage.HandleMonsterAttack(attacker, tauntUnit);
+                        continue;
+                    }
+                }
+
+                // If no taunt units or they're dead, attack a random player monster that's still alive
                 int randomIndex = Random.Range(0, playerMonsters.Count);
                 var target = playerMonsters[randomIndex];
                 Debug.Log($"Enemy monster {attacker.name} attacking player monster {target.name} (Attacks remaining: {attacker.GetRemainingAttacks()})");

@@ -16,6 +16,10 @@ public class EnemySelectionEffectHandler : ISelectionEffectHandler
     {
         if (_spritePositioning.EnemyEntities == null) return;
 
+        // Check if there are any taunt units
+        bool hasTauntUnits = CombatRulesEngine.HasTauntUnits(_spritePositioning.EnemyEntities);
+        var tauntUnits = hasTauntUnits ? CombatRulesEngine.GetAllTauntUnits(_spritePositioning.EnemyEntities) : null;
+
         foreach (var entity in _spritePositioning.EnemyEntities)
         {
             if (entity == null) continue;
@@ -23,7 +27,13 @@ public class EnemySelectionEffectHandler : ISelectionEffectHandler
             var image = entity.GetComponent<Image>();
             if (image != null)
             {
-                image.color = isSelected ? _selectionColor : Color.white;
+                // Only highlight if:
+                // 1. There are no taunt units, or
+                // 2. This entity is a taunt unit
+                bool shouldHighlight = !hasTauntUnits || 
+                    (tauntUnits != null && tauntUnits.Contains(entity.GetComponent<EntityManager>()));
+                
+                image.color = isSelected && shouldHighlight ? _selectionColor : Color.white;
             }
         }
     }

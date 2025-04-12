@@ -304,6 +304,17 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
 
         if (_combatManager.IsPlayerCombatPhase())
         {
+            // Check if there are any taunt units on the enemy side
+            if (CombatRulesEngine.HasTauntUnits(_spritePositioning.EnemyEntities))
+            {
+                var tauntUnits = CombatRulesEngine.GetAllTauntUnits(_spritePositioning.EnemyEntities);
+                if (tauntUnits.Count > 0 && !tauntUnits.Contains(targetEntity))
+                {
+                    Debug.Log($"Cannot attack {targetEntity.name} while there are taunt units on the field!");
+                    return;
+                }
+            }
+
             _combatStage.HandleMonsterAttack(playerEntity, targetEntity);
             // Deselect everything after attack
             _cardManager.CurrentSelectedCard = null;
