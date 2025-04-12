@@ -1975,7 +1975,7 @@ MonoBehaviour:
   _keywordsDisplay: 
   _cardData:
     CardName: 
-    CardImage: {fileID: 0}
+    _cardImage: {fileID: 0}
     Description: 
     ManaCost: 0
     AttackPower: 0
@@ -1984,7 +1984,7 @@ MonoBehaviour:
     EffectTypes: 
     EffectValue: 0
     Duration: 0
-    DamagePerRound: 0
+    EffectValuePerRound: 0
     IsSpellCard: 0
     IsMonsterCard: 0
   spriteImage: {fileID: 0}
@@ -2216,7 +2216,7 @@ MonoBehaviour:
   _keywordsDisplay: 
   _cardData:
     CardName: 
-    CardImage: {fileID: 0}
+    _cardImage: {fileID: 0}
     Description: 
     ManaCost: 0
     AttackPower: 0
@@ -2225,7 +2225,7 @@ MonoBehaviour:
     EffectTypes: 
     EffectValue: 0
     Duration: 0
-    DamagePerRound: 0
+    EffectValuePerRound: 0
     IsSpellCard: 0
     IsMonsterCard: 0
   spriteImage: {fileID: 0}
@@ -2467,56 +2467,394 @@ MonoBehaviour:
   _playerDeck: {fileID: 294774779}
   _enemyDeck: {fileID: 825410030}
   _cardDataList:
-  - CardName: Spite Bound Cultist
-    CardImage: {fileID: 21300000, guid: f7041f0585d722945b472deec6fad756, type: 3}
-    Description: '"They...will...suffer..."'
-    ManaCost: 0
-    AttackPower: 25
-    Health: 100
-    Keywords: 02000000
-    EffectTypes: 
-    EffectValue: 0
-    Duration: 0
-    DamagePerRound: 0
-    IsSpellCard: 0
-    IsMonsterCard: 1
-  - CardName: Dread Scriptum
-    CardImage: {fileID: 21300000, guid: 8d8136910b6edaf48864bfa14e986589, type: 3}
-    Description: '"Death is just another step forwards"'
-    ManaCost: 0
-    AttackPower: 5
-    Health: 100
-    Keywords: 02000000
-    EffectTypes: 
-    EffectValue: 0
-    Duration: 0
-    DamagePerRound: 0
-    IsSpellCard: 0
-    IsMonsterCard: 1
-  - CardName: Abyssal Warden
-    CardImage: {fileID: 21300000, guid: 36d1fd3d74a240f418652272aa32f0d7, type: 3}
-    Description: Undying bulwark
-    ManaCost: 0
-    AttackPower: 3
-    Health: 15
+  - CardName: Hollow Sentry
+    _cardImage: {fileID: 21300000, guid: 36d1fd3d74a240f418652272aa32f0d7, type: 3}
+    Description: 
+    ManaCost: 1
+    AttackPower: 1
+    Health: 2
     Keywords: 01000000
     EffectTypes: 
     EffectValue: 0
     Duration: 0
-    DamagePerRound: 0
+    EffectValuePerRound: 0
     IsSpellCard: 0
     IsMonsterCard: 1
-  - CardName: Hell Fire
-    CardImage: {fileID: 21300000, guid: 7aeec1cbde0927e43b184ad00a19733b, type: 3}
+  - CardName: Bonepicker Imp
+    _cardImage: {fileID: 0}
     Description: 
-    ManaCost: 0
+    ManaCost: 1
+    AttackPower: 1
+    Health: 2
+    Keywords: 02000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Forsaken Guard
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 2
+    AttackPower: 2
+    Health: 3
+    Keywords: 01000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Blight Archer
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 2
+    AttackPower: 3
+    Health: 1
+    Keywords: 02000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Cult Warhound
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 3
+    AttackPower: 3
+    Health: 4
+    Keywords: 
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Ghoul Of Grief
+    _cardImage: {fileID: 21300000, guid: f7041f0585d722945b472deec6fad756, type: 3}
+    Description: 
+    ManaCost: 3
+    AttackPower: 4
+    Health: 2
+    Keywords: 02000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Corrupted Wall
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 4
+    AttackPower: 2
+    Health: 6
+    Keywords: 01000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Scarred Outrider
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 4
+    AttackPower: 5
+    Health: 2
+    Keywords: 02000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Doomcaller Shade
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 5
+    AttackPower: 4
+    Health: 5
+    Keywords: 
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Umbra Sniper
+    _cardImage: {fileID: 21300000, guid: 8d8136910b6edaf48864bfa14e986589, type: 3}
+    Description: 
+    ManaCost: 5
+    AttackPower: 3
+    Health: 4
+    Keywords: 02000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Juggernaut of Dust
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 6
+    AttackPower: 6
+    Health: 6
+    Keywords: 01000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Revenant Berserker
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 6
+    AttackPower: 7
+    Health: 4
+    Keywords: 
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Watcher Of Silence
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 7
+    AttackPower: 4
+    Health: 8
+    Keywords: 01000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Wraith Lance
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 8
+    AttackPower: 6
+    Health: 5
+    Keywords: 0200000001000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Abyssal Behemouth
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 9
+    AttackPower: 9
+    Health: 9
+    Keywords: 
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Ember Touch
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 1
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 01000000
+    EffectValue: 2
+    Duration: 0
+    EffectValuePerRound: 0
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Soul Burn
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 2
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 0100000003000000
+    EffectValue: 1
+    Duration: 3
+    EffectValuePerRound: 2
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Mend Wound
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 2
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 02000000
+    EffectValue: 3
+    Duration: 0
+    EffectValuePerRound: 0
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Chain Reaction
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 3
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 0100000003000000
+    EffectValue: 2
+    Duration: 2
+    EffectValuePerRound: 2
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Purge
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 3
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 0100000003000000
+    EffectValue: 5
+    Duration: 0
+    EffectValuePerRound: 0
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Blessing Of Decay
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 4
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 02000000
+    EffectValue: 3
+    Duration: 0
+    EffectValuePerRound: 0
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Surge Of Agony
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 5
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 01000000
+    EffectValue: 7
+    Duration: 0
+    EffectValuePerRound: 0
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Blazing Wounds
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 5
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 4
+    EffectValuePerRound: 3
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Radiant Renewel
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 6
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 02000000
+    EffectValue: 4
+    Duration: 0
+    EffectValuePerRound: 0
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Infernal Meteor
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 6
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 01000000
+    EffectValue: 8
+    Duration: 0
+    EffectValuePerRound: 0
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Spirit Drain
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 7
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 03000000
+    EffectValue: 0
+    Duration: 3
+    EffectValuePerRound: 5
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Hellfire Barrage
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 7
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 0100000003000000
+    EffectValue: 5
+    Duration: 2
+    EffectValuePerRound: 4
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Undying Grace
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 8
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 02000000
+    EffectValue: 6
+    Duration: 0
+    EffectValuePerRound: 0
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Oblivion Surge
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 9
     AttackPower: 0
     Health: 0
     Keywords: 
     EffectTypes: 01000000
     EffectValue: 10
     Duration: 0
-    DamagePerRound: 0
+    EffectValuePerRound: 0
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Creeping Rot
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 4
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 0300000001000000
+    EffectValue: 1
+    Duration: 3
+    EffectValuePerRound: 3
     IsSpellCard: 1
     IsMonsterCard: 0
   _defaultCardSprite: {fileID: 21300000, guid: 7aeec1cbde0927e43b184ad00a19733b, type: 3}
@@ -2625,7 +2963,7 @@ MonoBehaviour:
   _keywordsDisplay: 
   _cardData:
     CardName: 
-    CardImage: {fileID: 0}
+    _cardImage: {fileID: 0}
     Description: 
     ManaCost: 0
     AttackPower: 0
@@ -2634,7 +2972,7 @@ MonoBehaviour:
     EffectTypes: 
     EffectValue: 0
     Duration: 0
-    DamagePerRound: 0
+    EffectValuePerRound: 0
     IsSpellCard: 0
     IsMonsterCard: 0
   spriteImage: {fileID: 0}
