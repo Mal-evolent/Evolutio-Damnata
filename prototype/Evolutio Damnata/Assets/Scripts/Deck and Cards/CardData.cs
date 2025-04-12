@@ -8,7 +8,13 @@ public class CardData
     [SerializeField]
     public string CardName;
     [SerializeField]
-    public Sprite CardImage;
+    private Sprite _cardImage;
+    [ShowInInspector]
+    public Sprite CardImage
+    {
+        get => _cardImage;
+        set => _cardImage = value ?? CardLibrary.DefaultSprite;
+    }
     [SerializeField]
     public string Description;
     [SerializeField]
@@ -33,7 +39,7 @@ public class CardData
     public int Duration = 0;
 
     [SerializeField, ShowIf(nameof(IsSpellCard))]
-    public int DamagePerRound = 0;
+    public int EffectValuePerRound = 0;
 
     [SerializeField, OnValueChanged(nameof(OnIsSpellCardChanged))]
     public bool IsSpellCard;
@@ -56,7 +62,7 @@ public class CardData
         EffectTypes = effectTypes ?? new List<SpellEffect>();
         EffectValue = effectValue;
         Duration = duration;
-        DamagePerRound = damagePerRound;
+        EffectValuePerRound = damagePerRound;
 
         IsSpellCard = EffectTypes.Count > 0;
         IsMonsterCard = !IsSpellCard;

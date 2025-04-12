@@ -860,7 +860,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Cards: []
   Hand: []
-  MaxDeckSize: 10
+  MaxDeckSize: 30
   HandSize: 5
   _cardLibrary: {fileID: 1159794893}
   cardManager: {fileID: 1201594250}
@@ -1972,6 +1972,7 @@ MonoBehaviour:
   maxHealth: 0
   atkDamage: 0
   atkDamageMulti: 0
+  _keywordsDisplay: 
   _cardData:
     CardName: 
     CardImage: {fileID: 0}
@@ -2212,6 +2213,7 @@ MonoBehaviour:
   maxHealth: 0
   atkDamage: 0
   atkDamageMulti: 0
+  _keywordsDisplay: 
   _cardData:
     CardName: 
     CardImage: {fileID: 0}
@@ -2484,7 +2486,7 @@ MonoBehaviour:
     ManaCost: 0
     AttackPower: 5
     Health: 100
-    Keywords: 
+    Keywords: 02000000
     EffectTypes: 
     EffectValue: 0
     Duration: 0
@@ -2504,6 +2506,19 @@ MonoBehaviour:
     DamagePerRound: 0
     IsSpellCard: 0
     IsMonsterCard: 1
+  - CardName: Hell Fire
+    CardImage: {fileID: 21300000, guid: 7aeec1cbde0927e43b184ad00a19733b, type: 3}
+    Description: 
+    ManaCost: 0
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 01000000
+    EffectValue: 10
+    Duration: 0
+    DamagePerRound: 0
+    IsSpellCard: 1
+    IsMonsterCard: 0
   _defaultCardSprite: {fileID: 21300000, guid: 7aeec1cbde0927e43b184ad00a19733b, type: 3}
 --- !u!4 &1159794894
 Transform:
@@ -2607,6 +2622,7 @@ MonoBehaviour:
   maxHealth: 0
   atkDamage: 0
   atkDamageMulti: 1
+  _keywordsDisplay: 
   _cardData:
     CardName: 
     CardImage: {fileID: 0}

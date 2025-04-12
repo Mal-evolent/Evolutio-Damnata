@@ -65,7 +65,7 @@ public class SpellEffectApplier : ISpellEffectApplier
         spellCard.EffectTypes = spellData.EffectTypes;
         spellCard.EffectValue = spellData.EffectValue;
         spellCard.Duration = spellData.Duration;
-        spellCard.DamagePerRound = spellData.DamagePerRound;
+        spellCard.DamagePerRound = spellData.EffectValuePerRound;
     }
 
     private void ApplyEffectsToTarget(EntityManager target, CardData spellData)
@@ -103,16 +103,16 @@ public class SpellEffectApplier : ISpellEffectApplier
         }
 
         // Only apply ongoing effect if duration is greater than 0 and has damage per round
-        if (spellData.Duration > 0 && spellData.DamagePerRound > 0)
+        if (spellData.Duration > 0 && spellData.EffectValuePerRound > 0)
         {
             var burnEffect = new OngoingEffectManager(
                 SpellEffect.Burn,
-                spellData.DamagePerRound,
+                spellData.EffectValuePerRound,
                 spellData.Duration,
                 target);
             _effectApplier.AddEffect(burnEffect, spellData.Duration);
 
-            Debug.Log($"Applied Burn to {target.name} for {spellData.DamagePerRound} damage per round for {spellData.Duration} rounds");
+            Debug.Log($"Applied Burn to {target.name} for {spellData.EffectValuePerRound} damage per round for {spellData.Duration} rounds");
         }
     }
 

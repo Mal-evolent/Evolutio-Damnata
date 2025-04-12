@@ -118,6 +118,7 @@ public class CardManager : MonoBehaviour, ICardManager
             return null;
         }
 
+        Debug.Log($"Creating UI for card: {card.CardName}");
         GameObject cardObject = Instantiate(_cardPrefab, parent);
         cardObject.name = card.CardName;
 
@@ -127,7 +128,15 @@ public class CardManager : MonoBehaviour, ICardManager
             cardUI.Card = card;
 
             Transform cardTransform = cardObject.transform;
-            cardTransform.GetChild(0).GetComponent<Image>().sprite = card.CardImage;
+            Image cardImage = cardTransform.GetChild(0).GetComponent<Image>();
+            Debug.Log($"Card {card.CardName} - Original Sprite: {(card.CardImage != null ? "Valid" : "NULL")}");
+            cardImage.sprite = card.CardImage ?? CardLibrary.DefaultSprite;
+            Debug.Log($"Card {card.CardName} - Final Sprite: {(cardImage.sprite != null ? "Valid" : "NULL")}");
+            
+            if (cardImage.sprite == null)
+            {
+                Debug.LogWarning($"No sprite found for card {card.CardName} and no default sprite available");
+            }
             cardTransform.GetChild(1).GetComponent<TextMeshProUGUI>().text = card.CardName;
             cardTransform.GetChild(2).GetComponent<TextMeshProUGUI>().text = card.Description;
 

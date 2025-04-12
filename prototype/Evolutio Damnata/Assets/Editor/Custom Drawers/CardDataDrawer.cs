@@ -36,7 +36,11 @@ public class CardDataDrawer : OdinValueDrawer<CardData>
 
         // Draw the fields
         DrawChildProperty(property, "CardName");
-        DrawChildProperty(property, "CardImage");
+        var cardImageProperty = property.Children["CardImage"];
+        if (cardImageProperty != null)
+        {
+            cardImageProperty.Draw();
+        }
         DrawChildProperty(property, "Description");
         DrawChildProperty(property, "ManaCost");
 
@@ -51,11 +55,11 @@ public class CardDataDrawer : OdinValueDrawer<CardData>
             DrawChildProperty(property, "EffectValue");
             DrawChildProperty(property, "Duration");
 
-            // Only draw DamagePerRound if Duration is greater than 0
+            // Only draw EffectValuePerRound if Duration is greater than 0
             int durationValue = duration?.ValueEntry.WeakSmartValue as int? ?? 0;
             if (durationValue > 0)
             {
-                DrawChildProperty(property, "DamagePerRound");
+                DrawChildProperty(property, "EffectValuePerRound");
             }
         }
 

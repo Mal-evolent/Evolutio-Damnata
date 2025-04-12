@@ -5,7 +5,24 @@ using Sirenix.OdinInspector;
 public class Card : MonoBehaviour
 {
     public string CardName;
-    public Sprite CardImage;
+    [SerializeField] private Sprite _cardImage;
+    private CardLibrary _cardLibrary;
+    
+    public Sprite CardImage
+    {
+        get => _cardImage;
+        set
+        {
+            Debug.Log($"Setting sprite for card {CardName} - New Value: {(value != null ? "Valid" : "NULL")}");
+            if (_cardLibrary == null)
+            {
+                _cardLibrary = CardLibrary.Instance;
+                Debug.Log($"Card {CardName} - Getting CardLibrary instance: {(_cardLibrary != null ? "Found" : "NULL")}");
+            }
+            _cardImage = value ?? (_cardLibrary != null ? _cardLibrary.DefaultCardSprite : null);
+            Debug.Log($"Final sprite for card {CardName}: {(_cardImage != null ? "Valid" : "NULL")}");
+        }
+    }
     public string Description;
     public int AttackPower;
     public int Health;
