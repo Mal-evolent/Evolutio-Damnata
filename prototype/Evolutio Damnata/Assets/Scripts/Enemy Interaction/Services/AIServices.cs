@@ -2,16 +2,15 @@ using UnityEngine;
 using EnemyInteraction.Evaluation;
 using EnemyInteraction.Managers;
 using EnemyInteraction.Interfaces;
+using System.Collections;
 
 namespace EnemyInteraction.Services
 {
-    [CreateAssetMenu(fileName = "AIServices", menuName = "AI/Services")]
-    public class AIServices : ScriptableObject
+    public class AIServices : MonoBehaviour
     {
         private static AIServices _instance;
-        private static bool _isInitialized;
-        private static bool _isInitializing;
-        private static GameObject _aiServicesRoot;
+        private static readonly object _lock = new object();
+        private static bool _isInitialized = false;
 
         [SerializeField] private KeywordEvaluator _keywordEvaluator;
         [SerializeField] private EffectEvaluator _effectEvaluator;
@@ -19,210 +18,284 @@ namespace EnemyInteraction.Services
         [SerializeField] private CardPlayManager _cardPlayManager;
         [SerializeField] private AttackManager _attackManager;
 
+        // Public properties with guaranteed initialization
+        public IKeywordEvaluator KeywordEvaluator 
+        {
+            get
+            {
+                try
+                {
+                    return GetOrCreateService(ref _keywordEvaluator);
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError($"[AIServices] Error getting KeywordEvaluator: {e.Message}");
+                    return null;
+                }
+            }
+        }
+        
+        public IEffectEvaluator EffectEvaluator 
+        {
+            get
+            {
+                try
+                {
+                    return GetOrCreateService(ref _effectEvaluator);
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError($"[AIServices] Error getting EffectEvaluator: {e.Message}");
+                    return null;
+                }
+            }
+        }
+        
+        public IBoardStateManager BoardStateManager 
+        {
+            get
+            {
+                try
+                {
+                    return GetOrCreateService(ref _boardStateManager);
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError($"[AIServices] Error getting BoardStateManager: {e.Message}");
+                    return null;
+                }
+            }
+        }
+        
+        public CardPlayManager CardPlayManager 
+        {
+            get
+            {
+                try
+                {
+                    return GetOrCreateService(ref _cardPlayManager);
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError($"[AIServices] Error getting CardPlayManager: {e.Message}");
+                    return null;
+                }
+            }
+        }
+        
+        public AttackManager AttackManager 
+        {
+            get
+            {
+                try
+                {
+                    return GetOrCreateService(ref _attackManager);
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError($"[AIServices] Error getting AttackManager: {e.Message}");
+                    return null;
+                }
+            }
+        }
+
+        // Public property to check if services are ready
+        public static bool IsInitialized => _isInitialized;
+
         public static AIServices Instance
         {
             get
             {
-                if (!_isInitialized && !_isInitializing)
+                if (_instance == null)
                 {
-                    InitializeInstance();
+                    lock (_lock)
+                    {
+                        if (_instance == null)
+                        {
+                            // First try to find an existing instance
+                            _instance = FindObjectOfType<AIServices>();
+
+                            // If still null, create a new GameObject with AIServices
+                            if (_instance == null)
+                            {
+                                GameObject aiServicesObj = new GameObject("AIServices");
+                                DontDestroyOnLoad(aiServicesObj);
+                                _instance = aiServicesObj.AddComponent<AIServices>();
+                                Debug.Log("[AIServices] Created new AIServices instance");
+                            }
+                        }
+                    }
                 }
                 return _instance;
             }
         }
 
-        private static void InitializeInstance()
-        {
-            if (_instance != null)
-            {
-                _isInitialized = true;
-                return;
-            }
-
-            _isInitializing = true;
-            Debug.Log("[AIServices] Starting initialization...");
-
-            // Load from Resources
-            _instance = Resources.Load<AIServices>("AIServices");
-            
-            if (_instance == null)
-            {
-                Debug.LogError("[AIServices] Failed to load AIServices from Resources! Ensure AIServices.asset exists in a Resources folder.");
-                // Create instance if loading failed
-                _instance = ScriptableObject.CreateInstance<AIServices>();
-                Debug.Log("[AIServices] Created new instance of AIServices");
-            }
-
-            // Create a parent GameObject to hold all managers if it doesn't exist
-            if (_aiServicesRoot == null)
-            {
-                _aiServicesRoot = new GameObject("AIServicesRoot");
-                GameObject.DontDestroyOnLoad(_aiServicesRoot);
-                Debug.Log("[AIServices] Created AIServicesRoot GameObject");
-            }
-
-            // Create components safely
-            CreateKeywordEvaluator();
-            CreateEffectEvaluator();
-            CreateBoardStateManager();
-            CreateCardPlayManager();
-            CreateAttackManager();
-
-            // Validate services - but don't fail completely if some are missing
-            ValidateServices();
-
-            _isInitialized = true;
-            _isInitializing = false;
-            Debug.Log("[AIServices] Successfully initialized all services");
-        }
-
-        private static void CreateKeywordEvaluator()
-        {
-            try
-            {
-                if (_instance._keywordEvaluator == null)
-                {
-                    var keywordEvaluatorObj = new GameObject("KeywordEvaluator");
-                    keywordEvaluatorObj.transform.SetParent(_aiServicesRoot.transform);
-                    _instance._keywordEvaluator = keywordEvaluatorObj.AddComponent<KeywordEvaluator>();
-                    Debug.Log("[AIServices] Created KeywordEvaluator");
-                }
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"[AIServices] Error creating KeywordEvaluator: {e.Message}");
-            }
-        }
-
-        private static void CreateEffectEvaluator()
-        {
-            try
-            {
-                if (_instance._effectEvaluator == null)
-                {
-                    var effectEvaluatorObj = new GameObject("EffectEvaluator");
-                    effectEvaluatorObj.transform.SetParent(_aiServicesRoot.transform);
-                    _instance._effectEvaluator = effectEvaluatorObj.AddComponent<EffectEvaluator>();
-                    Debug.Log("[AIServices] Created EffectEvaluator");
-                }
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"[AIServices] Error creating EffectEvaluator: {e.Message}");
-            }
-        }
-
-        private static void CreateBoardStateManager()
-        {
-            try
-            {
-                if (_instance._boardStateManager == null)
-                {
-                    var boardStateManagerObj = new GameObject("BoardStateManager");
-                    boardStateManagerObj.transform.SetParent(_aiServicesRoot.transform);
-                    _instance._boardStateManager = boardStateManagerObj.AddComponent<BoardStateManager>();
-                    Debug.Log("[AIServices] Created BoardStateManager");
-                }
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"[AIServices] Error creating BoardStateManager: {e.Message}");
-            }
-        }
-
-        private static void CreateCardPlayManager()
-        {
-            try
-            {
-                if (_instance._cardPlayManager == null)
-                {
-                    var cardPlayManagerObj = new GameObject("CardPlayManager");
-                    cardPlayManagerObj.transform.SetParent(_aiServicesRoot.transform);
-                    _instance._cardPlayManager = cardPlayManagerObj.AddComponent<CardPlayManager>();
-                    Debug.Log("[AIServices] Created CardPlayManager");
-                }
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"[AIServices] Error creating CardPlayManager: {e.Message}");
-            }
-        }
-
-        private static void CreateAttackManager()
-        {
-            try
-            {
-                if (_instance._attackManager == null)
-                {
-                    var attackManagerObj = new GameObject("AttackManager");
-                    attackManagerObj.transform.SetParent(_aiServicesRoot.transform);
-                    _instance._attackManager = attackManagerObj.AddComponent<AttackManager>();
-                    Debug.Log("[AIServices] Created AttackManager");
-                }
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"[AIServices] Error creating AttackManager: {e.Message}");
-            }
-        }
-
-        private static bool ValidateServices()
-        {
-            bool allValid = true;
-
-            if (_instance._keywordEvaluator == null)
-            {
-                Debug.LogWarning("[AIServices] KeywordEvaluator is null!");
-                allValid = false;
-            }
-
-            if (_instance._effectEvaluator == null)
-            {
-                Debug.LogWarning("[AIServices] EffectEvaluator is null!");
-                allValid = false;
-            }
-
-            if (_instance._boardStateManager == null)
-            {
-                Debug.LogWarning("[AIServices] BoardStateManager is null!");
-                allValid = false;
-            }
-
-            if (_instance._cardPlayManager == null)
-            {
-                Debug.LogWarning("[AIServices] CardPlayManager is null!");
-                allValid = false;
-            }
-
-            if (_instance._attackManager == null)
-            {
-                Debug.LogWarning("[AIServices] AttackManager is null!");
-                allValid = false;
-            }
-
-            if (!allValid)
-            {
-                Debug.LogWarning("[AIServices] Some services are missing, but initialization will continue.");
-            }
-
-            return allValid;
-        }
-
-        public IKeywordEvaluator KeywordEvaluator => _keywordEvaluator;
-        public IEffectEvaluator EffectEvaluator => _effectEvaluator;
-        public IBoardStateManager BoardStateManager => _boardStateManager;
-        public CardPlayManager CardPlayManager => _cardPlayManager;
-        public AttackManager AttackManager => _attackManager;
-
-        private void OnEnable()
+        private void Awake()
         {
             if (_instance == null)
             {
                 _instance = this;
+                DontDestroyOnLoad(gameObject);
+                StartCoroutine(Initialize());
+            }
+            else if (_instance != this)
+            {
+                Debug.LogWarning("[AIServices] Multiple instances of AIServices detected. Destroying duplicate.");
+                Destroy(gameObject);
             }
         }
 
-        private void OnDisable()
+        private IEnumerator Initialize()
+        {
+            Debug.Log("[AIServices] Starting initialization...");
+            
+            if (this == null)
+            {
+                Debug.LogError("[AIServices] Initialize called but AIServices instance is null!");
+                yield break;
+            }
+
+            // Create required components if they don't exist
+            try
+            {
+                if (_keywordEvaluator == null) GetOrCreateService(ref _keywordEvaluator);
+                if (_effectEvaluator == null) GetOrCreateService(ref _effectEvaluator);
+                if (_boardStateManager == null) GetOrCreateService(ref _boardStateManager);
+                if (_cardPlayManager == null) GetOrCreateService(ref _cardPlayManager);
+                if (_attackManager == null) GetOrCreateService(ref _attackManager);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[AIServices] Error creating services: {e.Message}\n{e.StackTrace}");
+                yield break;
+            }
+
+            // Wait for critical scene dependencies
+            ICombatManager combatManager = null;
+            CombatStage combatStage = null;
+            SpritePositioning spritePositioning = null;
+            int attempts = 0;
+            int maxAttempts = 50;
+
+            while ((combatManager == null || combatStage == null || spritePositioning == null) && attempts < maxAttempts)
+            {
+                combatManager = combatManager ?? FindObjectOfType<CombatManager>();
+                combatStage = combatStage ?? FindObjectOfType<CombatStage>();
+                if (combatStage != null)
+                {
+                    spritePositioning = combatStage.SpritePositioning as SpritePositioning;
+                }
+
+                if (combatManager == null || combatStage == null || spritePositioning == null)
+                {
+                    yield return new WaitForSeconds(0.1f);
+                    attempts++;
+                }
+            }
+
+            // Inject dependencies into our services
+            try
+            {
+                if (combatManager != null && combatStage != null && spritePositioning != null)
+                {
+                    Debug.Log("[AIServices] Found scene dependencies, injecting into services");
+                    
+                    // Inject into BoardStateManager
+                    if (_boardStateManager != null)
+                    {
+                        SetPrivateField(_boardStateManager, "_combatManager", combatManager);
+                        SetPrivateField(_boardStateManager, "_spritePositioning", spritePositioning);
+                    }
+                    
+                    // Inject into CardPlayManager
+                    if (_cardPlayManager != null)
+                    {
+                        SetPrivateField(_cardPlayManager, "_combatManager", combatManager);
+                        SetPrivateField(_cardPlayManager, "_combatStage", combatStage);
+                        SetPrivateField(_cardPlayManager, "_spritePositioning", spritePositioning);
+                    }
+                    
+                    // Inject into AttackManager
+                    if (_attackManager != null)
+                    {
+                        SetPrivateField(_attackManager, "_combatManager", combatManager);
+                        SetPrivateField(_attackManager, "_combatStage", combatStage);
+                        SetPrivateField(_attackManager, "_spritePositioning", spritePositioning);
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("[AIServices] Could not find all required scene dependencies");
+                }
+                
+                AIServices._isInitialized = true;
+                Debug.Log("[AIServices] Initialization complete");
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[AIServices] Error during dependency injection: {e.Message}\n{e.StackTrace}");
+            }
+        }
+
+        // Helper method to set a private field using reflection
+        private void SetPrivateField(object target, string fieldName, object value)
+        {
+            if (target == null) return;
+
+            var field = target.GetType().GetField(fieldName, 
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                
+            if (field != null)
+                field.SetValue(target, value);
+        }
+
+        // Generic helper method to get or create a service component
+        private T GetOrCreateService<T>(ref T serviceField) where T : Component
+        {
+            if (serviceField != null)
+                return serviceField;
+            
+            try
+            {    
+                // Create a child GameObject for the service
+                string serviceName = typeof(T).Name;
+                GameObject serviceObj = new GameObject(serviceName);
+                
+                // Ensure we have a valid transform before setting parent
+                if (this != null && this.transform != null)
+                {
+                    serviceObj.transform.SetParent(transform);
+                }
+                else
+                {
+                    Debug.LogWarning($"[AIServices] Cannot set parent for {serviceName} - AIServices transform is null");
+                    // Don't destroy on load to keep it alive
+                    DontDestroyOnLoad(serviceObj);
+                }
+                
+                // Add the component
+                serviceField = serviceObj.AddComponent<T>();
+                
+                if (serviceField != null)
+                {
+                    Debug.Log($"[AIServices] Created {serviceName}");
+                }
+                else
+                {
+                    Debug.LogError($"[AIServices] Failed to create {serviceName}");
+                }
+                
+                return serviceField;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[AIServices] Error creating service: {e.Message}\n{e.StackTrace}");
+                return null;
+            }
+        }
+
+        // When this is destroyed, reset the static instance
+        private void OnDestroy()
         {
             if (_instance == this)
             {

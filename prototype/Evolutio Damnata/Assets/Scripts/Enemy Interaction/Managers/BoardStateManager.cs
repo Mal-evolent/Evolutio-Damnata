@@ -110,6 +110,11 @@ namespace EnemyInteraction.Managers
             // Calculate board control
             state.EnemyBoardControl = CalculateBoardControl(state.EnemyMonsters);
             state.PlayerBoardControl = CalculateBoardControl(state.PlayerMonsters);
+            
+            // Add health icon considerations to board control
+            state.EnemyBoardControl += state.EnemyHealth * 0.2f; // Health is worth 20% of its value in board control
+            state.PlayerBoardControl += state.PlayerHealth * 0.2f;
+            
             state.BoardControlDifference = state.EnemyBoardControl - state.PlayerBoardControl;
 
             // Calculate health metrics

@@ -55,7 +55,7 @@ namespace EnemyInteraction.Evaluation
 
             if (isOwnCard)
             {
-                if (boardState.HealthAdvantage < 0)
+                if (boardState != null && boardState.HealthAdvantage < 0)
                 {
                     if (evaluation.IsDefensive) score *= 1.5f;
                     if (evaluation.IsOffensive) score *= 0.8f;
@@ -94,6 +94,33 @@ namespace EnemyInteraction.Evaluation
                 if (target.HasKeyword(keyword))
                 {
                     score -= EvaluateKeyword(keyword, false, null);
+                }
+            }
+
+            return score;
+        }
+
+        public float EvaluateKeywords(EntityManager attacker, EntityManager target, BoardState boardState)
+        {
+            if (attacker == null || target == null) return 0f;
+
+            float score = 0f;
+
+            // Evaluate attacker's keywords
+            foreach (Keywords.MonsterKeyword keyword in System.Enum.GetValues(typeof(Keywords.MonsterKeyword)))
+            {
+                if (attacker.HasKeyword(keyword))
+                {
+                    score += EvaluateKeyword(keyword, true, boardState);
+                }
+            }
+
+            // Evaluate target's keywords
+            foreach (Keywords.MonsterKeyword keyword in System.Enum.GetValues(typeof(Keywords.MonsterKeyword)))
+            {
+                if (target.HasKeyword(keyword))
+                {
+                    score -= EvaluateKeyword(keyword, false, boardState);
                 }
             }
 

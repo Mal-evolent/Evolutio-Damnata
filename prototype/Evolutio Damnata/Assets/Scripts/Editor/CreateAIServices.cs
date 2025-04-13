@@ -4,11 +4,12 @@ using EnemyInteraction.Services;
 
 public class CreateAIServices : EditorWindow
 {
-    [MenuItem("Tools/Create AIServices Asset")]
-    public static void CreateAsset()
+    [MenuItem("Tools/Create AIServices Prefab")]
+    public static void CreatePrefab()
     {
-        // Create the asset
-        var asset = ScriptableObject.CreateInstance<AIServices>();
+        // Create a new GameObject with the AIServices component
+        GameObject aiServicesObj = new GameObject("AIServices");
+        AIServices aiServices = aiServicesObj.AddComponent<AIServices>();
         
         // Make sure the Resources folder exists
         if (!AssetDatabase.IsValidFolder("Assets/Resources"))
@@ -16,11 +17,30 @@ public class CreateAIServices : EditorWindow
             AssetDatabase.CreateFolder("Assets", "Resources");
         }
         
-        // Create the asset in the Resources folder
-        AssetDatabase.CreateAsset(asset, "Assets/Resources/AIServices.asset");
-        AssetDatabase.SaveAssets();
+        // Create the prefab in the Resources folder
+        string prefabPath = "Assets/Resources/AIServicesPrefab.prefab";
+        bool success = false;
         
-        EditorUtility.FocusProjectWindow();
-        Selection.activeObject = asset;
+        #if UNITY_2018_3_OR_NEWER
+        PrefabUtility.SaveAsPrefabAsset(aiServicesObj, prefabPath, out success);
+        #else
+        UnityEngine.Object prefab = PrefabUtility.CreatePrefab(prefabPath, aiServicesObj);
+        success = prefab != null;
+        #endif
+        
+        // Destroy the temporary GameObject
+        DestroyImmediate(aiServicesObj);
+        
+        if (success)
+        {
+            Debug.Log("AIServices prefab created successfully in Resources folder.");
+            AssetDatabase.SaveAssets();
+            EditorUtility.FocusProjectWindow();
+            Selection.activeObject = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+        }
+        else
+        {
+            Debug.LogError("Failed to create AIServices prefab!");
+        }
     }
 } 

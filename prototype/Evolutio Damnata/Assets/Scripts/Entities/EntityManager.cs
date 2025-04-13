@@ -10,6 +10,9 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     public bool dead = false;
     public bool placed = false;
     public bool IsFadingOut { get; private set; } = false;
+    // HasAttacked property is a secondary tracking mechanism - prefer using AttackLimiter
+    // through the GetRemainingAttacks(), UseAttack(), and ResetAttacks() methods for attack management
+    public bool HasAttacked { get; set; } = false;
 
     // Serialized Fields
     [Header("Resource Management")]
@@ -55,6 +58,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         if (remainingAttacks > 0)
         {
             remainingAttacks--;
+            HasAttacked = true;
             Debug.Log($"[{name}] Used attack. Remaining attacks: {remainingAttacks}/{allowedAttacks}");
         }
     }
@@ -62,6 +66,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     public void ResetAttacks()
     {
         remainingAttacks = allowedAttacks;
+        HasAttacked = false;
         Debug.Log($"[{name}] Reset attacks. Remaining attacks: {remainingAttacks}/{allowedAttacks}");
     }
 

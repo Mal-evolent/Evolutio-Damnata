@@ -165,10 +165,11 @@ namespace EnemyInteraction.Managers
             Deck enemyDeck = null;
             bool hasCards = false;
             bool errorOccurred = false;
+            List<Card> playableCards = new List<Card>();
             
             try
             {
-                // Basic implementation that just logs what would happen
+                // Check if we have cards to play
                 enemyDeck = _combatManager.EnemyDeck;
                 hasCards = enemyDeck != null && enemyDeck.Hand != null && enemyDeck.Hand.Count > 0;
                 
@@ -179,6 +180,24 @@ namespace EnemyInteraction.Managers
                 else
                 {
                     Debug.Log($"[CardPlayManager] Enemy has {enemyDeck.Hand.Count} cards in hand");
+                    
+                    // Find playable cards (those we can afford with our mana)
+                    foreach (var card in enemyDeck.Hand)
+                    {
+                        if (IsPlayableCard(card))
+                        {
+                            playableCards.Add(card);
+                        }
+                    }
+                    
+                    if (playableCards.Count == 0)
+                    {
+                        Debug.Log("[CardPlayManager] No playable cards found (not enough mana or no valid targets)");
+                    }
+                    else
+                    {
+                        Debug.Log($"[CardPlayManager] Found {playableCards.Count} playable cards");
+                    }
                 }
             }
             catch (System.Exception e)
@@ -188,20 +207,148 @@ namespace EnemyInteraction.Managers
             }
             
             // If we encountered an error or have no cards, just exit early with a small delay
-            if (errorOccurred || !hasCards)
+            if (errorOccurred || playableCards.Count == 0)
             {
                 yield return new WaitForSeconds(0.5f);
-                Debug.Log("[CardPlayManager] PlayCards completed");
+                Debug.Log("[CardPlayManager] PlayCards completed - no action taken");
                 yield break;
             }
             
-            // Simulate playing cards with a delay
-            yield return new WaitForSeconds(0.5f);
-            Debug.Log("[CardPlayManager] Enemy would play cards here");
+            // Get current board state for evaluation
+            BoardState boardState = null;
+            if (_boardStateManager != null)
+            {
+                boardState = _boardStateManager.EvaluateBoardState();
+            }
+            else
+            {
+                // Create a simple board state if no manager available
+                boardState = new BoardState
+                {
+                    EnemyMana = _combatManager.EnemyMana,
+                    TurnCount = _combatManager.TurnCount
+                };
+            }
+            
+            // Evaluate all playable cards to find the best ones
+            Dictionary<Card, float> cardScores = new Dictionary<Card, float>();
+            foreach (var card in playableCards)
+            {
+                float score = EvaluateCardPlay(card, boardState);
+                cardScores[card] = score;
+                Debug.Log($"[CardPlayManager] Card '{card.CardName}' scored {score}");
+            }
+            
+            // Sort cards by score (highest first)
+            var sortedCards = cardScores.OrderByDescending(kvp => kvp.Value)
+                                        .Select(kvp => kvp.Key)
+                                        .ToList();
+            
+            // Play cards until we run out of mana or valid positions
+            foreach (var card in sortedCards)
+            {
+                // Skip if we can't afford this card anymore
+                if (card.CardType.ManaCost > _combatManager.EnemyMana)
+                {
+                    Debug.Log($"[CardPlayManager] Can't afford {card.CardName} anymore, skipping");
+                    continue;
+                }
+                
+                // Try to play this card
+                yield return new WaitForSeconds(0.5f); // Add delay for visual effect
+                
+                bool cardSuccessfullyPlayed = false;
+                
+                if (card.CardType.IsMonsterCard)
+                {
+                    int position = FindBestMonsterPosition(card, boardState);
+                    if (position >= 0)
+                    {
+                        bool success = _combatStage.EnemyCardSpawner.SpawnCard(card.CardName, position);
+                        
+                        if (success)
+                        {
+                            Debug.Log($"[CardPlayManager] Successfully played monster card {card.CardName} at position {position}");
+                            // Update mana through the property setter
+                            _combatManager.EnemyMana -= card.CardType.ManaCost;
+                            cardSuccessfullyPlayed = true;
+                            
+                            // Re-evaluate board state after playing a card
+                            if (_boardStateManager != null)
+                            {
+                                boardState = _boardStateManager.EvaluateBoardState();
+                            }
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"[CardPlayManager] Failed to play monster card {card.CardName}");
+                        }
+                    }
+                    else
+                    {
+                        Debug.Log($"[CardPlayManager] No valid position found for monster card {card.CardName}");
+                    }
+                }
+                else if (card.CardType.IsSpellCard && _spellEffectApplier != null)
+                {
+                    // For spell cards, find a target
+                    EntityManager target = GetBestSpellTarget(card.CardType);
+                    
+                    if (target != null)
+                    {
+                        // Apply spell effects
+                        bool success = false;
+                        
+                        try
+                        {
+                            // Use correct method for SpellEffectApplier
+                            _spellEffectApplier.ApplySpellEffectsAI(target, card.CardType, 0);
+                            success = true;
+                        }
+                        catch (System.Exception e)
+                        {
+                            Debug.LogError($"[CardPlayManager] Error applying spell effects: {e.Message}");
+                            success = false;
+                        }
+                        
+                        if (success)
+                        {
+                            Debug.Log($"[CardPlayManager] Successfully played spell card {card.CardName} targeting {target.name}");
+                            // Update mana through the property setter
+                            _combatManager.EnemyMana -= card.CardType.ManaCost;
+                            cardSuccessfullyPlayed = true;
+                            
+                            // Re-evaluate board state after playing a card
+                            if (_boardStateManager != null)
+                            {
+                                boardState = _boardStateManager.EvaluateBoardState();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Debug.Log($"[CardPlayManager] No valid target found for spell card {card.CardName}");
+                    }
+                }
+                
+                // Remove card from hand after successful play
+                if (cardSuccessfullyPlayed)
+                {
+                    enemyDeck.RemoveCard(card);
+                    Debug.Log($"[CardPlayManager] Removed card {card.CardName} from enemy hand");
+                }
+                
+                // Limit the number of cards played per turn for balance
+                if (_combatManager.EnemyMana < 1) // Break if out of mana
+                {
+                    Debug.Log("[CardPlayManager] Out of mana, stopping card play");
+                    break;
+                }
+            }
             
             // Additional delay at the end
             yield return new WaitForSeconds(0.5f);
-            Debug.Log("[CardPlayManager] PlayCards completed");
+            Debug.Log("[CardPlayManager] PlayCards completed successfully");
         }
 
         private float EvaluateCardPlay(Card card, BoardState boardState)
@@ -245,14 +392,55 @@ namespace EnemyInteraction.Managers
             score += card.CardType.AttackPower * 0.8f;
             score += card.CardType.Health * 0.6f;
 
+            // Consider attack/health ratio and counter-attack vulnerability
+            float attackHealthRatio = card.CardType.AttackPower / (float)card.CardType.Health;
+            
+            // Higher attack/health ratio is generally better
+            if (attackHealthRatio > 1.0f)
+            {
+                score += 10f; // Bonus for high-attack, lower-health units
+            }
+            
+            // Check for keywords that affect counter-attacks
+            bool hasRanged = card.CardType.HasKeyword(Keywords.MonsterKeyword.Ranged);
+            
+            if (hasRanged)
+            {
+                // Ranged units don't take counter-attack damage - big bonus
+                score += 25f;
+                
+                // Especially valuable if they have high attack but low health
+                if (attackHealthRatio > 1.5f)
+                {
+                    score += 15f;
+                }
+            }
+            else
+            {
+                // For non-ranged units, consider durability against counter-attacks
+                // Units with higher health are better for trading
+                if (card.CardType.Health >= 5)
+                {
+                    score += 20f; // Bonus for tanky non-ranged units
+                }
+                
+                // Small penalty for fragile non-ranged units
+                if (card.CardType.Health <= 2 && card.CardType.AttackPower > 3)
+                {
+                    score -= 15f; // Penalty for glass cannons that will die to counter-attacks
+                }
+            }
+
+            // Evaluate all other keywords
             foreach (Keywords.MonsterKeyword keyword in System.Enum.GetValues(typeof(Keywords.MonsterKeyword)))
             {
-                if (card.CardType.HasKeyword(keyword))
+                if (keyword != Keywords.MonsterKeyword.Ranged && card.CardType.HasKeyword(keyword))
                 {
                     score += _keywordEvaluator.EvaluateKeyword(keyword, true, boardState);
                 }
             }
 
+            // Consider board state context
             if (boardState.BoardControlDifference < 0)
                 score += 25f;
 
@@ -280,6 +468,9 @@ namespace EnemyInteraction.Managers
 
         private int FindBestMonsterPosition(Card card, BoardState boardState)
         {
+            List<int> availablePositions = new List<int>();
+            
+            // Find all available positions
             for (int i = 0; i < _spritePositioning.EnemyEntities.Count; i++)
             {
                 if (_spritePositioning.EnemyEntities[i] == null) continue;
@@ -287,10 +478,81 @@ namespace EnemyInteraction.Managers
                 var entity = _spritePositioning.EnemyEntities[i].GetComponent<EntityManager>();
                 if (entity != null && !entity.placed)
                 {
-                    return i;
+                    availablePositions.Add(i);
                 }
             }
-            return -1;
+            
+            // If no positions available, return -1
+            if (availablePositions.Count == 0)
+                return -1;
+                
+            // If only one position available, return it
+            if (availablePositions.Count == 1)
+                return availablePositions[0];
+                
+            // For multiple available positions, choose strategically
+            
+            // Get player entities and their positions for consideration
+            var playerEntities = boardState.PlayerMonsters;
+            
+            // Default to first available position
+            int bestPosition = availablePositions[0];
+            float bestScore = float.MinValue;
+            
+            // Check if card has ranged keyword
+            bool hasRanged = card.CardType.HasKeyword(Keywords.MonsterKeyword.Ranged);
+            bool hasTaunt = card.CardType.HasKeyword(Keywords.MonsterKeyword.Taunt);
+            
+            foreach (int position in availablePositions)
+            {
+                float positionScore = 0;
+                
+                // Basic positioning: prefer middle spots for better flexibility
+                int middlePosition = _spritePositioning.EnemyEntities.Count / 2;
+                float distanceFromMiddle = Mathf.Abs(position - middlePosition);
+                positionScore += (1 - distanceFromMiddle / middlePosition) * 10f;
+                
+                // Strategic positioning based on card type and board state
+                if (hasRanged)
+                {
+                    // For ranged units, prefer backline positions (further from player units)
+                    positionScore += position * 5f;
+                }
+                else if (hasTaunt)
+                {
+                    // For taunt units, prefer frontline positions
+                    positionScore += (_spritePositioning.EnemyEntities.Count - position) * 5f;
+                }
+                else
+                {
+                    // For normal units, consider matchups with opponent units
+                    // Check for positions that would create favorable matchups
+                    // This is a simplified approach - a more complex one would consider
+                    // the exact positions of player entities
+                    
+                    // If we have high health, prefer positions that can tank enemy damage
+                    if (card.CardType.Health >= 5)
+                    {
+                        // Prefer frontline positions for tanky units
+                        positionScore += (_spritePositioning.EnemyEntities.Count - position) * 3f;
+                    }
+                    else if (card.CardType.AttackPower >= 5)
+                    {
+                        // For high attack units, position where they can attack vulnerable targets
+                        // Mid-positions provide flexibility
+                        float midPositionValue = 1 - Mathf.Abs(position - (_spritePositioning.EnemyEntities.Count / 2f)) / (_spritePositioning.EnemyEntities.Count / 2f);
+                        positionScore += midPositionValue * 15f;
+                    }
+                }
+                
+                if (positionScore > bestScore)
+                {
+                    bestScore = positionScore;
+                    bestPosition = position;
+                }
+            }
+            
+            return bestPosition;
         }
 
         private EntityManager GetBestSpellTarget(CardData cardType)

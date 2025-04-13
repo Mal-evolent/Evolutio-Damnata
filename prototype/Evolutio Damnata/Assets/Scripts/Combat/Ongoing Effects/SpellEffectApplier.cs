@@ -58,6 +58,35 @@ public class SpellEffectApplier : ISpellEffectApplier
         _cardManager.RemoveCard(selectedCard);
     }
 
+    // New overload for AI use that doesn't require a selected card
+    public void ApplySpellEffectsAI(EntityManager target, CardData spellData, int positionIndex)
+    {
+        if (target == null || spellData == null)
+        {
+            Debug.LogError("Invalid spell effect parameters");
+            return;
+        }
+
+        // Create a temporary SpellCard for history tracking
+        var tempSpellCard = new SpellCard();
+        InitializeSpellCard(tempSpellCard, spellData);
+
+        // Record the spell card play in history
+        var combatManager = _cardManager as ICombatManager;
+        if (combatManager != null)
+        {
+            CardHistory.Instance?.RecordCardPlay(
+                tempSpellCard,
+                target,
+                combatManager.TurnCount,
+                spellData.ManaCost
+            );
+        }
+
+        ApplyEffectsToTarget(target, spellData);
+        // Note: We don't remove any card here since AI handles that separately
+    }
+
     private void InitializeSpellCard(SpellCard spellCard, CardData spellData)
     {
         spellCard.CardType = spellData;
