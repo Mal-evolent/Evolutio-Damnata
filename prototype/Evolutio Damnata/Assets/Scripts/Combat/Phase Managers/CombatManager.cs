@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine.UI;
 using System.Collections;
 using System;
+using EnemyInteraction;
 
 public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
 {
@@ -30,6 +31,7 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     [SerializeField] private bool _playerGoesFirst = true;
     [SerializeField] private bool _playerTurn;
     [SerializeField] private CombatPhase _currentPhase = CombatPhase.None;
+    [SerializeField] private int _maxHealth = 30;
 
     // Mana fields - now the single source of truth
     [Header("Mana Settings")]
@@ -63,6 +65,7 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     public TMP_Text TurnUIShadow => _turnUIShadow;
     public Slider PlayerHealthSlider => _playerHealthSlider;
     public Slider EnemyHealthSlider => _enemyHealthSlider;
+    public int MaxHealth => _maxHealth;
 
     public int PlayerMana
     {
@@ -125,29 +128,41 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
 
     private IEnumerator InitializeManagers()
     {
+        Debug.Log("[CombatManager] Starting manager initialization...");
+        
         // Wait for CombatStage to be fully initialized
-        while (_combatStage.SpritePositioning == null)
+        while (_combatStage == null || _combatStage.SpritePositioning == null || _combatStage.SpellEffectApplier == null)
         {
+            Debug.Log("[CombatManager] Waiting for CombatStage to be fully initialized...");
             yield return null;
         }
 
-        // Wait for SpritePositioning to be ready
-        while (!_combatStage.SpritePositioning.RoomReady)
+        // Create EnemyActions only after CombatStage is ready
+        var enemyActionsObj = GameObject.Find("EnemyActions");
+        if (enemyActionsObj == null)
         {
-            yield return null;
+            enemyActionsObj = new GameObject("EnemyActions");
+            _enemyActions = enemyActionsObj.AddComponent<EnemyActions>();
+        }
+        else
+        {
+            _enemyActions = enemyActionsObj.GetComponent<EnemyActions>();
+            if (_enemyActions == null)
+            {
+                _enemyActions = enemyActionsObj.AddComponent<EnemyActions>();
+            }
         }
 
-        _enemyActions = new EnemyActions(
-            this,
-            _combatStage.SpritePositioning as SpritePositioning,
-            _enemyDeck,
-            _combatStage.CardLibrary,
-            _combatStage
-        );
+        // Wait for EnemyActions to be fully initialized
+        while (_enemyActions == null || !((_enemyActions as MonoBehaviour)?.enabled ?? false))
+        {
+            Debug.Log("[CombatManager] Waiting for EnemyActions to be fully initialized...");
+            yield return null;
+        }
 
         var attackLimiter = new AttackLimiter();
 
-        Debug.Log("[CombatManager] Creating RoundManager (PhaseManager will be set later)...");
+        Debug.Log("[CombatManager] Creating RoundManager...");
         // Create RoundManager first with minimal dependencies
         var roundManagerImpl = new RoundManager(
             combatManager: this,
@@ -156,7 +171,7 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
         );
         _roundManager = roundManagerImpl;
 
-        Debug.Log("[CombatManager] Creating PhaseManager with all dependencies...");
+        Debug.Log("[CombatManager] Creating PhaseManager...");
         // Create PhaseManager with all dependencies
         _phaseManager = new PhaseManager(
             combatManager: this,

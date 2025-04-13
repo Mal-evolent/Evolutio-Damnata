@@ -39,9 +39,12 @@ public class CombatStage : MonoBehaviour, ICombatStage
     private ICombatManager _combatManager;
     private ICardOutlineManager _cardOutlineManager;
     private OngoingEffectApplier _ongoingEffectApplier;
+    private ISpellEffectApplier _spellEffectApplier;
+
     public CardLibrary CardLibrary => _cardLibrary;
     public ISpritePositioning SpritePositioning => _spritePositioning;
     public ICardSpawner EnemyCardSpawner => _enemyCardSpawner;
+    public ISpellEffectApplier SpellEffectApplier => _spellEffectApplier;
 
     public Image PrepPhaseImage => _prepPhaseImage;
     public Image CombatPhaseImage => _combatPhaseImage;
@@ -51,7 +54,6 @@ public class CombatStage : MonoBehaviour, ICombatStage
 
     [Header("Combat Systems")]
     private AttackLimiter attackLimiter;
-    private OngoingEffectApplier ongoingEffectApplier;
 
     private void Awake()
     {
@@ -63,16 +65,22 @@ public class CombatStage : MonoBehaviour, ICombatStage
 
         // Initialize combat systems
         attackLimiter = new AttackLimiter();
-        ongoingEffectApplier = new OngoingEffectApplier(_cardManager);
+        _ongoingEffectApplier = new OngoingEffectApplier(_cardManager);
+        
+        // Initialize SpellEffectApplier first since other components depend on it
+        _spellEffectApplier = new SpellEffectApplier(
+            _cardManager,
+            _ongoingEffectApplier,
+            _damageVisualizer,
+            _damageNumberPrefab
+        );
         
         InitializeServices();
     }
 
     private void InitializeServices()
     {
-        var attackLimiter = new AttackLimiter();
-        var ongoingEffectApplier = new OngoingEffectApplier(_cardManager);
-        var combatRulesEngine = new CombatRulesEngine(); // Create the rules engine
+        var combatRulesEngine = new CombatRulesEngine();
 
         var spawnerFactory = new CardSpawnerFactory(
             _spritePositioning,
@@ -83,19 +91,12 @@ public class CombatStage : MonoBehaviour, ICombatStage
             _wizardOutlineSprite,
             this,
             attackLimiter,
-            ongoingEffectApplier
+            _ongoingEffectApplier
         );
 
         _playerCardSpawner = spawnerFactory.CreatePlayerSpawner();
         _enemyCardSpawner = spawnerFactory.CreateEnemySpawner();
         _attackHandler = new AttackHandler(attackLimiter, combatRulesEngine);
-
-        var spellEffectApplier = new SpellEffectApplier(
-            _cardManager,
-            ongoingEffectApplier,
-            _damageVisualizer,
-            _damageNumberPrefab
-        );
 
         var manaChecker = new ManaChecker(
             _combatManagerComponent,
@@ -112,7 +113,7 @@ public class CombatStage : MonoBehaviour, ICombatStage
             this,
             _playerCardSpawner,
             manaChecker,
-            spellEffectApplier
+            _spellEffectApplier
         );
 
         var buttonCreatorComponent = gameObject.AddComponent<ButtonCreator>();
@@ -323,6 +324,6 @@ public class CombatStage : MonoBehaviour, ICombatStage
 
     public OngoingEffectApplier GetOngoingEffectApplier()
     {
-        return ongoingEffectApplier;
+        return _ongoingEffectApplier;
     }
 }

@@ -2,13 +2,14 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using EnemyInteraction;
 
 public class PhaseManager : IPhaseManager
 {
     private readonly ICombatManager _combatManager;
     private readonly AttackLimiter _attackLimiter;
     private readonly IUIManager _uiManager;
-    private readonly IEnemyActions _enemyActions;
+    private IEnemyActions _enemyActions;
     private readonly IPlayerActions _playerActions;
     private readonly IRoundManager _roundManager;
 
@@ -125,10 +126,91 @@ public class PhaseManager : IPhaseManager
 
     private IEnumerator EnemyPrepPhase()
     {
+        if (_enemyActions == null)
+        {
+            Debug.LogError("[PhaseManager] EnemyActions is null in EnemyPrepPhase!");
+            
+            // Try to find it in the scene
+            var enemyActionsObj = GameObject.FindObjectOfType<EnemyInteraction.EnemyActions>();
+            if (enemyActionsObj != null)
+            {
+                _enemyActions = enemyActionsObj;
+                Debug.Log("[PhaseManager] Found EnemyActions in scene");
+            }
+            else
+            {
+                // No other option but to skip
+                Debug.LogError("[PhaseManager] Cannot find EnemyActions in scene, skipping EnemyPrepPhase");
+                yield break;
+            }
+        }
+
+        // Wait for EnemyActions to be fully initialized
+        float timeout = 5f; // 5 seconds timeout
+        float timer = 0f;
+        
+        // First check if the component is enabled
+        while (!(_enemyActions as MonoBehaviour)?.enabled ?? false)
+        {
+            Debug.Log("[PhaseManager] Waiting for EnemyActions to be enabled...");
+            yield return null;
+            
+            timer += Time.deltaTime;
+            if (timer > timeout)
+            {
+                Debug.LogError("[PhaseManager] Timeout waiting for EnemyActions to be enabled!");
+                yield break;
+            }
+        }
+        
+        // Then check for initialization if possible
+        if (_enemyActions is EnemyInteraction.EnemyActions enemyActionsImpl)
+        {
+            // Check if we can access IsInitialized property
+            var isInitializedProperty = enemyActionsImpl.GetType().GetProperty("IsInitialized");
+            if (isInitializedProperty != null)
+            {
+                timer = 0f;
+                while (!(bool)isInitializedProperty.GetValue(enemyActionsImpl) && timer < timeout)
+                {
+                    Debug.Log("[PhaseManager] Waiting for EnemyActions to be fully initialized...");
+                    yield return null;
+                    timer += Time.deltaTime;
+                }
+                
+                if (timer >= timeout)
+                {
+                    Debug.LogWarning("[PhaseManager] Timeout waiting for EnemyActions to be fully initialized, proceeding anyway...");
+                }
+            }
+        }
+
         _combatManager.PlayerTurn = false;
         _combatManager.CurrentPhase = CombatPhase.EnemyPrep;
         Debug.Log("[PhaseManager] Enemy's Prep Phase");
-        yield return _enemyActions.PlayCards();
+        
+        // Extra safety for PlayCards
+        IEnumerator playCardsCoroutine = null;
+        bool errorOccurred = false;
+        
+        try 
+        {
+            playCardsCoroutine = _enemyActions.PlayCards();
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[PhaseManager] Error getting PlayCards coroutine: {e.Message}\n{e.StackTrace}");
+            errorOccurred = true;
+        }
+        
+        if (playCardsCoroutine == null || errorOccurred)
+        {
+            Debug.LogError("[PhaseManager] _enemyActions.PlayCards() returned null or error occurred!");
+            yield return new WaitForSeconds(0.5f); // Short delay to prevent freeze
+            yield break;
+        }
+        
+        yield return RunSafely(playCardsCoroutine, "Enemy PlayCards");
     }
 
     private IEnumerator PlayerCombatPhase()
@@ -143,10 +225,91 @@ public class PhaseManager : IPhaseManager
 
     private IEnumerator EnemyCombatPhase()
     {
+        if (_enemyActions == null)
+        {
+            Debug.LogError("[PhaseManager] EnemyActions is null in EnemyCombatPhase!");
+            
+            // Try to find it in the scene
+            var enemyActionsObj = GameObject.FindObjectOfType<EnemyInteraction.EnemyActions>();
+            if (enemyActionsObj != null)
+            {
+                _enemyActions = enemyActionsObj;
+                Debug.Log("[PhaseManager] Found EnemyActions in scene");
+            }
+            else
+            {
+                // No other option but to skip
+                Debug.LogError("[PhaseManager] Cannot find EnemyActions in scene, skipping EnemyCombatPhase");
+                yield break;
+            }
+        }
+
+        // Wait for EnemyActions to be fully initialized - similar to EnemyPrepPhase
+        float timeout = 5f; // 5 seconds timeout
+        float timer = 0f;
+        
+        // First check if the component is enabled
+        while (!(_enemyActions as MonoBehaviour)?.enabled ?? false)
+        {
+            Debug.Log("[PhaseManager] Waiting for EnemyActions to be enabled...");
+            yield return null;
+            
+            timer += Time.deltaTime;
+            if (timer > timeout)
+            {
+                Debug.LogError("[PhaseManager] Timeout waiting for EnemyActions to be enabled!");
+                yield break;
+            }
+        }
+        
+        // Then check for initialization if possible
+        if (_enemyActions is EnemyInteraction.EnemyActions enemyActionsImpl)
+        {
+            // Check if we can access IsInitialized property
+            var isInitializedProperty = enemyActionsImpl.GetType().GetProperty("IsInitialized");
+            if (isInitializedProperty != null)
+            {
+                timer = 0f;
+                while (!(bool)isInitializedProperty.GetValue(enemyActionsImpl) && timer < timeout)
+                {
+                    Debug.Log("[PhaseManager] Waiting for EnemyActions to be fully initialized...");
+                    yield return null;
+                    timer += Time.deltaTime;
+                }
+                
+                if (timer >= timeout)
+                {
+                    Debug.LogWarning("[PhaseManager] Timeout waiting for EnemyActions to be fully initialized, proceeding anyway...");
+                }
+            }
+        }
+
         _combatManager.PlayerTurn = false;
         _combatManager.CurrentPhase = CombatPhase.EnemyCombat;
         Debug.Log("[PhaseManager] Enemy's Combat Phase");
-        yield return _enemyActions.Attack();
+        
+        // Extra safety for Attack
+        IEnumerator attackCoroutine = null;
+        bool errorOccurred = false;
+        
+        try 
+        {
+            attackCoroutine = _enemyActions.Attack();
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[PhaseManager] Error getting Attack coroutine: {e.Message}\n{e.StackTrace}");
+            errorOccurred = true;
+        }
+        
+        if (attackCoroutine == null || errorOccurred)
+        {
+            Debug.LogError("[PhaseManager] _enemyActions.Attack() returned null or error occurred!");
+            yield return new WaitForSeconds(0.5f); // Short delay to prevent freeze
+            yield break;
+        }
+        
+        yield return RunSafely(attackCoroutine, "Enemy Attack");
     }
     #endregion
 
@@ -224,7 +387,11 @@ public class PhaseManager : IPhaseManager
     #region Helper Methods
     private IEnumerator RunSafely(IEnumerator coroutine, string context)
     {
-        if (coroutine == null) yield break;
+        if (coroutine == null)
+        {
+            Debug.LogError($"[PhaseManager] Null coroutine passed to RunSafely for context: {context}");
+            yield break;
+        }
 
         while (true)
         {
@@ -235,7 +402,7 @@ public class PhaseManager : IPhaseManager
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"[PhaseManager] Error in {context}: {e.Message}");
+                Debug.LogError($"[PhaseManager] Error in {context}: {e.Message}\n{e.StackTrace}");
                 yield break;
             }
 

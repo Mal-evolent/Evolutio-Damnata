@@ -171,6 +171,8 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 
     public float GetMaxHealth() => maxHealth;
 
+    public float GetAttack() => atkDamage * atkDamageMulti;
+
     public void ModifyAttack(float modifier)
     {
         if (dead || !placed) return;
