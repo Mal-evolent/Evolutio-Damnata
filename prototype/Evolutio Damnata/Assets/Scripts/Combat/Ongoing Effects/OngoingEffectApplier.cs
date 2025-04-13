@@ -48,7 +48,8 @@ public class OngoingEffectApplier : IEffectApplier
 
     public void RemoveEffectsForEntity(EntityManager entity)
     {
-        if (entity == null || entity.dead) return;
+        if (entity == null) return; // Only check for null, not for dead
+        
         StackManager.Instance?.RemoveEffectsForEntity(entity);
         Debug.Log($"Removed all ongoing effects from {entity.name}");
     }

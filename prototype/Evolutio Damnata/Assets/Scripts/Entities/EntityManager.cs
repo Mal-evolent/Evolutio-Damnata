@@ -269,7 +269,17 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
             GraveYard.Instance.AddToGraveyard(this, killedBy, lastDamageTaken);
         }
 
+        // First remove effects via our local effect applier
         RemoveAllOngoingEffects();
+        
+        // As a fallback, also ask StackManager to remove effects directly
+        // This handles cases where the effect applier is not working correctly
+        if (StackManager.Instance != null)
+        {
+            StackManager.Instance.RemoveEffectsForEntity(this);
+            Debug.Log($"[{name}] Directly removed effects from StackManager on death");
+        }
+        
         DisableAllButtons();
         StartCoroutine(PlayDeathAnimation());
     }

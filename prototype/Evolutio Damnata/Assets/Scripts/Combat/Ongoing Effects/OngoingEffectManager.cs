@@ -17,7 +17,18 @@ public class OngoingEffectManager : IOngoingEffect
 
     public void ApplyEffect(EntityManager entity)
     {
-        if (entity != TargetEntity || entity.dead) return;
+        // Skip effect application if:
+        // 1. Entity is null
+        // 2. Entity is dead
+        // 3. Entity is fading out (in the process of dying)
+        // 4. The entity passed doesn't match our target entity
+        if (entity == null || 
+            entity.dead || 
+            entity.IsFadingOut || 
+            entity != TargetEntity) 
+        {
+            return;
+        }
 
         switch (EffectType)
         {

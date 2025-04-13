@@ -93,18 +93,35 @@ public class StackManager : MonoBehaviour
 
     public void ProcessStackForEntity(EntityManager entity)
     {
+        if (entity == null)
+        {
+            Debug.LogWarning("[StackManager] Attempted to process effects for null entity");
+            return;
+        }
+        
+        // If entity is dead or fading out, remove effects instead of processing them
+        if (entity.dead || entity.IsFadingOut)
+        {
+            Debug.Log($"[StackManager] Entity {entity.name} is dead or fading out, removing effects instead of processing");
+            RemoveEffectsForEntity(entity);
+            return;
+        }
+
+        int effectsProcessed = 0;
         var tempStack = new Stack<TimedEffect>();
 
         while (_executionStack.Count > 0)
         {
             var timedEffect = _executionStack.Pop();
 
-            if (timedEffect.effect.TargetEntity == entity)
+            if (timedEffect.effect?.TargetEntity == entity)
             {
-                if (timedEffect.needsApplication || timedEffect.remainingTurns > 0)
+                if ((timedEffect.needsApplication || timedEffect.remainingTurns > 0) &&
+                    !entity.dead && !entity.IsFadingOut)
                 {
                     timedEffect.effect.ApplyEffect(entity);
                     timedEffect.needsApplication = false;
+                    effectsProcessed++;
                 }
 
                 if (!timedEffect.needsApplication)
@@ -115,6 +132,10 @@ public class StackManager : MonoBehaviour
                 if (timedEffect.remainingTurns > 0 || timedEffect.needsApplication)
                 {
                     tempStack.Push(timedEffect);
+                }
+                else
+                {
+                    Debug.Log($"[StackManager] {timedEffect.effect.EffectType} effect expired for {entity.name}");
                 }
             }
             else
@@ -128,27 +149,48 @@ public class StackManager : MonoBehaviour
             _executionStack.Push(tempStack.Pop());
         }
 
+        Debug.Log($"[StackManager] Processed {effectsProcessed} effects for {entity.name}");
         UpdateDebugView();
     }
 
     public void RemoveEffectsForEntity(EntityManager entity)
     {
+        if (entity == null) 
+        {
+            Debug.LogWarning("[StackManager] Attempted to remove effects for null entity");
+            return;
+        }
+
+        int effectsRemoved = 0;
         var tempStack = new Stack<TimedEffect>();
+
+        // Log the effects we're about to process
+        Debug.Log($"[StackManager] Checking for effects linked to {entity.name} | Stack size: {_executionStack.Count}");
 
         while (_executionStack.Count > 0)
         {
             var timedEffect = _executionStack.Pop();
-            if (timedEffect.effect.TargetEntity != entity)
+            
+            // Keep effects that don't belong to this entity
+            if (timedEffect.effect?.TargetEntity != entity)
             {
                 tempStack.Push(timedEffect);
             }
+            else
+            {
+                // Effect belongs to this entity, remove it
+                effectsRemoved++;
+                Debug.Log($"[StackManager] Removed {timedEffect.effect.EffectType} effect from {entity.name}");
+            }
         }
 
+        // Now push all remaining effects back
         while (tempStack.Count > 0)
         {
             _executionStack.Push(tempStack.Pop());
         }
 
+        Debug.Log($"[StackManager] Removed {effectsRemoved} effects for {entity.name}");
         UpdateDebugView();
     }
 
@@ -174,6 +216,93 @@ public class StackManager : MonoBehaviour
                      $"Turns Left: {effect.remainingTurns} | " +
                      $"Target: {effect.effect.TargetEntity.name}");
         }
+    }
+
+    [ContextMenu("Validate Stack")]
+    public void ValidateStack()
+    {
+        Debug.Log("[StackManager] Starting stack validation...");
+        int invalidCount = 0;
+        var tempStack = new Stack<TimedEffect>();
+
+        while (_executionStack.Count > 0)
+        {
+            var timedEffect = _executionStack.Pop();
+            
+            // Check for null effect
+            if (timedEffect.effect == null)
+            {
+                invalidCount++;
+                Debug.LogWarning("[StackManager] Found null effect in stack");
+                continue;
+            }
+            
+            // Check for null entity
+            if (timedEffect.effect.TargetEntity == null)
+            {
+                invalidCount++;
+                Debug.LogWarning($"[StackManager] Found effect with null target entity: {timedEffect.effect.EffectType}");
+                continue;
+            }
+            
+            // Check for dead or fading entity
+            if (timedEffect.effect.TargetEntity.dead || timedEffect.effect.TargetEntity.IsFadingOut)
+            {
+                invalidCount++;
+                Debug.LogWarning($"[StackManager] Found effect for dead/fading entity {timedEffect.effect.TargetEntity.name}");
+                continue;
+            }
+            
+            // Valid effect, keep it
+            tempStack.Push(timedEffect);
+        }
+
+        // Restore valid effects
+        while (tempStack.Count > 0)
+        {
+            _executionStack.Push(tempStack.Pop());
+        }
+
+        Debug.Log($"[StackManager] Stack validation complete. Removed {invalidCount} invalid effects. Stack size: {_executionStack.Count}");
+        UpdateDebugView();
+    }
+    
+    // Call this at the end of each turn to ensure no stale effects remain
+    public void CleanupStack()
+    {
+        Debug.Log("[StackManager] Cleaning up stack...");
+        
+        var tempStack = new Stack<TimedEffect>();
+        int removedCount = 0;
+
+        while (_executionStack.Count > 0)
+        {
+            var timedEffect = _executionStack.Pop();
+            
+            bool isValid = timedEffect.effect != null && 
+                          timedEffect.effect.TargetEntity != null && 
+                          !timedEffect.effect.TargetEntity.dead && 
+                          !timedEffect.effect.TargetEntity.IsFadingOut &&
+                          timedEffect.remainingTurns > 0;
+                          
+            if (isValid)
+            {
+                tempStack.Push(timedEffect);
+            }
+            else
+            {
+                removedCount++;
+            }
+        }
+
+        // Restore valid effects
+        while (tempStack.Count > 0)
+        {
+            _executionStack.Push(tempStack.Pop());
+        }
+
+        Debug.Log($"[StackManager] Stack cleanup complete. Removed {removedCount} expired/invalid effects.");
+        UpdateDebugView();
     }
 
     public List<TimedEffect> StackView => _stackView;
