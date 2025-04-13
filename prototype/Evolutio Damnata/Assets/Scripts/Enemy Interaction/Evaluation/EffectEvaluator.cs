@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using EnemyInteraction.Models;
 using EnemyInteraction.Extensions;
+using EnemyInteraction.Utilities;
+
 
 namespace EnemyInteraction.Evaluation
 {
@@ -134,67 +136,69 @@ namespace EnemyInteraction.Evaluation
             }
 
             var evaluation = _effectEvaluations[effect];
-            
+            bool isDamagingEffect = evaluation.IsDamaging;
+
             EntityManager selectedTarget = null;
-            
+            List<EntityManager> potentialTargets;
+
             if (evaluation.IsPositive)
             {
-                // For positive effects (like healing), target enemy monsters or enemy health icon
-                if (boardState.EnemyMonsters != null && boardState.EnemyMonsters.Count > 0)
-                {
-                    selectedTarget = boardState.EnemyMonsters
-                        .Where(m => m != null && !m.dead && m.placed)
-                        .OrderBy(m => m.GetHealth() / m.GetMaxHealth())
-                        .FirstOrDefault();
-                }
-                
-                // If no valid enemy monsters, try to target enemy health icon for healing
-                if (selectedTarget == null && evaluation.IsDamaging == false)
+                // For positive effects (like healing), target enemy monsters
+                potentialTargets = boardState.EnemyMonsters?
+                    .Where(m => m != null && !m.dead && m.placed)
+                    .ToList() ?? new List<EntityManager>();
+
+                // If no valid enemy monsters and we can target health icon, add enemy health icon
+                if (potentialTargets.Count == 0 && !isDamagingEffect)
                 {
                     var enemyHealthIcon = GameObject.FindGameObjectWithTag("Enemy")?.GetComponent<HealthIconManager>();
-                    if (enemyHealthIcon != null)
+                    if (enemyHealthIcon != null && !enemyHealthIcon.IsPlayerIcon)
                     {
-                        Debug.Log("[EffectEvaluator] No enemy monsters available, targeting enemy health icon with positive effect");
-                        selectedTarget = enemyHealthIcon;
+                        potentialTargets.Add(enemyHealthIcon);
                     }
                 }
             }
             else
             {
-                // For negative effects (like damage), target player monsters or player health icon
-                bool playerMonstersExist = boardState.PlayerMonsters != null && 
-                                         boardState.PlayerMonsters.Count > 0 &&
-                                         boardState.PlayerMonsters.Any(m => m != null && !m.dead && m.placed);
-                
-                if (playerMonstersExist)
+                // For negative effects (like damage), target player monsters
+                potentialTargets = boardState.PlayerMonsters?
+                    .Where(m => m != null && !m.dead && m.placed)
+                    .ToList() ?? new List<EntityManager>();
+
+                // If no valid player monsters and this is a damaging effect, try to target player health icon
+                if (potentialTargets.Count == 0 && isDamagingEffect)
                 {
-                    selectedTarget = boardState.PlayerMonsters
-                        .Where(m => m != null && !m.dead && m.placed)
-                        .OrderByDescending(m => EvaluateTargetThreat(m, boardState))
-                        .FirstOrDefault();
-                    
-                    // Never target player health icon when monsters are on the field
-                    // selectedTarget will be a monster entity at this point
-                }
-                else
-                {
-                    // Only if no valid player monsters exist, try to target player health icon with damaging spells
-                    if (evaluation.IsDamaging)
+                    var playerHealthIcon = GameObject.FindGameObjectWithTag("Player")?.GetComponent<HealthIconManager>();
+                    if (playerHealthIcon != null && playerHealthIcon.IsPlayerIcon)
                     {
-                        var playerHealthIcon = GameObject.FindGameObjectWithTag("Player")?.GetComponent<HealthIconManager>();
-                        if (playerHealthIcon != null)
-                        {
-                            Debug.Log("[EffectEvaluator] No player monsters available, targeting player health icon with damaging effect");
-                            selectedTarget = playerHealthIcon;
-                        }
+                        potentialTargets.Add(playerHealthIcon);
                     }
                 }
             }
-            
+
+            // Filter targets using AIUtilities
+            var validTargets = potentialTargets
+                .Where(target => AIUtilities.IsValidTargetForEffect(target, effect, isDamagingEffect))
+                .ToList();
+
+            if (validTargets.Count > 0)
+            {
+                if (isDamagingEffect)
+                {
+                    // For damaging effects, target highest threat
+                    selectedTarget = validTargets.OrderByDescending(m => EvaluateTargetThreat(m, boardState)).FirstOrDefault();
+                }
+                else
+                {
+                    // For healing effects, target lowest health %
+                    selectedTarget = validTargets.OrderBy(m => m.GetHealth() / m.GetMaxHealth()).FirstOrDefault();
+                }
+            }
+
             if (selectedTarget != null)
             {
                 Debug.Log($"[EffectEvaluator] Selected target for {effect}: {selectedTarget.name} (placed: {selectedTarget.placed})");
-                
+
                 // If targeting a health icon, add additional logging
                 if (selectedTarget is HealthIconManager healthIcon)
                 {
@@ -205,7 +209,7 @@ namespace EnemyInteraction.Evaluation
             {
                 Debug.LogWarning($"[EffectEvaluator] Could not find valid target for {effect}");
             }
-            
+
             return selectedTarget;
         }
 

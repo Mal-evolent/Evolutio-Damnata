@@ -1,6 +1,8 @@
 using UnityEngine;
 using System.Linq;
 using UnityEngine.UI;
+using System.Collections.Generic;
+using System.Collections;
 
 public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
 {
@@ -12,6 +14,9 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
     private ICardSpawner _playerCardSpawner;
     private IManaChecker _manaChecker;
     private ISpellEffectApplier _spellEffectApplier;
+
+    // Add the entity manager cache
+    private Dictionary<GameObject, EntityManager> _entityManagerCache;
 
     private PlayerCardSelectionHandler _playerCardSelectionHandler;
     private EnemyCardSelectionHandler _enemyCardSelectionHandler;
@@ -35,8 +40,82 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
         _manaChecker = manaChecker ?? throw new System.ArgumentNullException(nameof(manaChecker));
         _spellEffectApplier = spellEffectApplier ?? throw new System.ArgumentNullException(nameof(spellEffectApplier));
 
+        // Initialize the entity manager cache
+        _entityManagerCache = new Dictionary<GameObject, EntityManager>();
+        BuildEntityCache();
+
         InitializeHandlers();
     }
+
+    private void BuildEntityCache()
+    {
+        _entityManagerCache.Clear();
+
+        // Check if _spritePositioning or its properties are null
+        if (_spritePositioning == null || _spritePositioning.PlayerEntities == null || _spritePositioning.EnemyEntities == null)
+        {
+            Debug.LogWarning("SpritePositioning or its entities are null during BuildEntityCache - will retry later");
+            StartCoroutine(RetryBuildEntityCache());
+            return;
+        }
+
+        // Cache all player entities
+        foreach (var entity in _spritePositioning.PlayerEntities)
+        {
+            if (entity != null && !_entityManagerCache.ContainsKey(entity))
+            {
+                var entityManager = entity.GetComponent<EntityManager>();
+                if (entityManager != null)
+                {
+                    _entityManagerCache[entity] = entityManager;
+                }
+            }
+        }
+
+        // Cache all enemy entities
+        foreach (var entity in _spritePositioning.EnemyEntities)
+        {
+            if (entity != null && !_entityManagerCache.ContainsKey(entity))
+            {
+                var entityManager = entity.GetComponent<EntityManager>();
+                if (entityManager != null)
+                {
+                    _entityManagerCache[entity] = entityManager;
+                }
+            }
+        }
+
+        Debug.Log("Entity cache successfully built with " + _entityManagerCache.Count + " entities");
+    }
+
+    private IEnumerator RetryBuildEntityCache()
+    {
+        int attempts = 0;
+        const int maxAttempts = 10;
+        const float retryDelay = 0.2f;
+
+        while (attempts < maxAttempts &&
+               (_spritePositioning == null ||
+                _spritePositioning.PlayerEntities == null ||
+                _spritePositioning.EnemyEntities == null))
+        {
+            yield return new WaitForSeconds(retryDelay);
+            attempts++;
+            Debug.Log($"Retry {attempts}/{maxAttempts} building entity cache...");
+        }
+
+        if (_spritePositioning != null &&
+            _spritePositioning.PlayerEntities != null &&
+            _spritePositioning.EnemyEntities != null)
+        {
+            BuildEntityCache();
+        }
+        else
+        {
+            Debug.LogError("Failed to build entity cache after multiple attempts - entities may be missing");
+        }
+    }
+
 
     private void InitializeHandlers()
     {
@@ -60,7 +139,8 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
             _spritePositioning,
             _combatStage,
             _manaChecker,
-            _spellEffectApplier
+            _spellEffectApplier,
+            _entityManagerCache // Pass the entity manager cache
         );
     }
 
@@ -150,8 +230,8 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
         
         foreach (var entity in entities)
         {
-            var entityManager = entity?.GetComponent<EntityManager>();
-            if (entityManager != null && entityManager.placed && !entityManager.dead && !entityManager.IsFadingOut)
+            if (entity != null && _entityManagerCache.TryGetValue(entity, out var entityManager) &&
+                entityManager.placed && !entityManager.dead && !entityManager.IsFadingOut)
             {
                 return true;
             }
@@ -347,7 +427,26 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
             return false;
         }
 
-        entityManager = entities[index]?.GetComponent<EntityManager>();
+        var entity = entities[index];
+        if (entity == null)
+        {
+            Debug.LogError($"Entity at index {index} is null");
+            return false;
+        }
+
+        // Try to get from cache first
+        if (!_entityManagerCache.TryGetValue(entity, out entityManager))
+        {
+            // Fall back to GetComponent if not in cache
+            entityManager = entity.GetComponent<EntityManager>();
+            
+            // Update cache if found
+            if (entityManager != null)
+            {
+                _entityManagerCache[entity] = entityManager;
+            }
+        }
+
         if (entityManager == null)
         {
             Debug.LogError($"No EntityManager found at index {index}");

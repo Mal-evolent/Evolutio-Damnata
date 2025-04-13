@@ -7,6 +7,7 @@ using EnemyInteraction.Models;
 using EnemyInteraction.Extensions;
 using EnemyInteraction.Interfaces;
 using EnemyInteraction.Services;
+using EnemyInteraction.Utilities;
 
 namespace EnemyInteraction.Managers
 {
@@ -19,728 +20,629 @@ namespace EnemyInteraction.Managers
         private IBoardStateManager _boardStateManager;
         private AttackLimiter _attackLimiter;
 
+        // Caching systems
+        private Dictionary<GameObject, EntityManager> _entityManagerCache;
+        private List<EntityManager> _cachedPlayerEntities;
+        private List<EntityManager> _cachedEnemyEntities;
+
+        // In AttackManager.cs
+        [SerializeField, Range(0f, 1f), Tooltip("Chance to make suboptimal decisions")]
+        private float _decisionVariance = 0.10f;
+
+        [SerializeField, Range(0f, 0.5f), Tooltip("Variance in target evaluation scores")]
+        private float _evaluationVariance = 0.15f;
+
+        [SerializeField, Range(0f, 0.2f), Tooltip("Chance to randomize attack order")]
+        private float _attackOrderRandomizationChance = 0.10f;
+
+        [SerializeField, Tooltip("Health difference to switch strategies")]
+        private float _healthThresholdForAggro = 8f;
+
+        [SerializeField, Tooltip("Turn count to become more aggressive")]
+        private int _aggressiveTurnThreshold = 4;
+
+        // New delay control parameters
+        [SerializeField, Range(0.2f, 2f), Tooltip("Base delay between attack actions in seconds")]
+        private float _baseAttackDelay = 0.6f;
+
+        [SerializeField, Range(0f, 1f), Tooltip("Random variance in delay timing (percentage)")]
+        private float _delayVariance = 0.3f;
+
+        [SerializeField, Range(0.1f, 1.5f), Tooltip("Initial delay before starting attack sequence")]
+        private float _initialAttackDelay = 0.8f;
+
+        [SerializeField, Range(0.1f, 1f), Tooltip("Delay after attack evaluations")]
+        private float _evaluationDelay = 0.4f;
+        
         private void Awake()
         {
+            _entityManagerCache = new Dictionary<GameObject, EntityManager>();
             StartCoroutine(Initialize());
         }
 
         private IEnumerator Initialize()
         {
             Debug.Log("[AttackManager] Starting initialization...");
-            
-            // First, wait for scene essentials
+
             int maxAttempts = 30;
             int attempts = 0;
-            
-            // Find critical scene components first
+
             while (attempts < maxAttempts)
             {
                 _combatManager = _combatManager ?? FindObjectOfType<CombatManager>();
                 _combatStage = _combatStage ?? FindObjectOfType<CombatStage>();
-                
+
                 if (_combatManager != null && _combatStage != null)
                     break;
-                    
-                Debug.Log("[AttackManager] Searching for scene components...");
+
                 yield return new WaitForSeconds(0.1f);
                 attempts++;
             }
-            
-            if (_combatManager == null)
-            {
-                Debug.LogError("[AttackManager] Failed to find CombatManager in scene!");
-            }
-            
-            if (_combatStage == null)
-            {
-                Debug.LogError("[AttackManager] Failed to find CombatStage in scene!");
-            }
-            
-            // If we've found CombatStage, wait for its initialization
+
             if (_combatStage != null)
             {
                 attempts = 0;
                 while (_combatStage.SpritePositioning == null && attempts < maxAttempts)
                 {
-                    Debug.Log("[AttackManager] Waiting for CombatStage.SpritePositioning...");
                     yield return new WaitForSeconds(0.1f);
                     attempts++;
                 }
-                
-                // Try to get SpritePositioning from CombatStage if not set in inspector
+
                 if (_spritePositioning == null && _combatStage.SpritePositioning != null)
                 {
                     _spritePositioning = _combatStage.SpritePositioning as SpritePositioning;
-                    Debug.Log("[AttackManager] Got SpritePositioning from CombatStage");
                 }
-                
-                // Get AttackLimiter from CombatStage
-                if (_attackLimiter == null && _combatStage != null)
+
+                if (_attackLimiter == null)
                 {
                     _attackLimiter = _combatStage.GetAttackLimiter();
-                    if (_attackLimiter != null)
-                    {
-                        Debug.Log("[AttackManager] Got AttackLimiter from CombatStage");
-                    }
                 }
             }
-            
-            // Wait for AIServices to be ready (optional)
-            attempts = 0;
-            while (AIServices.Instance == null && attempts < maxAttempts)
-            {
-                Debug.Log("[AttackManager] Waiting for AIServices to be initialized...");
-                yield return new WaitForSeconds(0.1f);
-                attempts++;
-            }
-            
-            // Get dependencies from AIServices if possible
+
             if (AIServices.Instance != null)
             {
                 var services = AIServices.Instance;
-                
-                if (_keywordEvaluator == null)
-                    _keywordEvaluator = services.KeywordEvaluator;
-                    
-                if (_boardStateManager == null)
-                    _boardStateManager = services.BoardStateManager;
-                    
-                Debug.Log("[AttackManager] Tried to get services from AIServices");
+                _keywordEvaluator = _keywordEvaluator ?? services.KeywordEvaluator;
+                _boardStateManager = _boardStateManager ?? services.BoardStateManager;
             }
-            
-            // Create any missing services locally if needed
+
             if (_keywordEvaluator == null)
             {
                 var keywordEvaluatorObj = new GameObject("KeywordEvaluator_Local");
                 keywordEvaluatorObj.transform.SetParent(transform);
                 _keywordEvaluator = keywordEvaluatorObj.AddComponent<KeywordEvaluator>();
-                Debug.Log("[AttackManager] Created local KeywordEvaluator");
             }
-            
+
             if (_boardStateManager == null)
             {
                 var boardStateManagerObj = new GameObject("BoardStateManager_Local");
                 boardStateManagerObj.transform.SetParent(transform);
                 _boardStateManager = boardStateManagerObj.AddComponent<BoardStateManager>();
-                Debug.Log("[AttackManager] Created local BoardStateManager");
-            }
-            
-            // If we still don't have SpritePositioning, try to create a minimal one
-            if (_spritePositioning == null)
-            {
-                Debug.LogWarning("[AttackManager] Unable to get SpritePositioning from scene, functionality will be limited");
             }
 
-            Debug.Log("[AttackManager] Initialization completed - some dependencies may be missing but we'll handle it gracefully");
+            // Initialize caches
+            BuildEntityManagerCache();
+            RefreshEntityCaches();
+
+            Debug.Log("[AttackManager] Initialization completed");
         }
 
-        private bool ValidateReferences()
+        private void BuildEntityManagerCache()
         {
-            bool valid = true;
-            
-            if (_keywordEvaluator == null)
+            _entityManagerCache.Clear();
+            if (_spritePositioning == null) return;
+
+            foreach (var entity in _spritePositioning.EnemyEntities.Concat(_spritePositioning.PlayerEntities))
             {
-                Debug.LogError("[AttackManager] KeywordEvaluator is null!");
-                valid = false;
+                if (entity != null && !_entityManagerCache.ContainsKey(entity))
+                {
+                    _entityManagerCache[entity] = entity.GetComponent<EntityManager>();
+                }
             }
-            
-            if (_boardStateManager == null)
+        }
+
+        private void RefreshEntityCaches()
+        {
+            // Take a local snapshot of the entity lists to prevent race conditions
+            var enemyEntitiesList = _spritePositioning?.EnemyEntities;
+            var playerEntitiesList = _spritePositioning?.PlayerEntities;
+
+            if (enemyEntitiesList != null && playerEntitiesList != null)
             {
-                Debug.LogError("[AttackManager] BoardStateManager is null!");
-                valid = false;
+                _cachedEnemyEntities = GetValidEntities(enemyEntitiesList, true);
+                _cachedPlayerEntities = GetValidEntities(playerEntitiesList, false);
+
+                // Log entities found
+                Debug.Log($"[AttackManager] Refreshed entity caches - Found {_cachedEnemyEntities.Count} enemy entities and {_cachedPlayerEntities.Count} player entities");
             }
-            
-            if (_combatManager == null)
+            else
             {
-                Debug.LogError("[AttackManager] CombatManager is null!");
-                valid = false;
+                Debug.LogWarning("[AttackManager] Could not refresh entity caches - sprite positioning references are null");
             }
-            
-            if (_combatStage == null)
-            {
-                Debug.LogError("[AttackManager] CombatStage is null!");
-                valid = false;
-            }
-            
-            if (_spritePositioning == null)
-            {
-                Debug.LogError("[AttackManager] SpritePositioning is null!");
-                valid = false;
-            }
-            
-            return valid;
+        }
+
+        private List<EntityManager> GetValidEntities(IEnumerable<GameObject> source, bool checkAttackLimiter)
+        {
+            if (source == null) return new List<EntityManager>();
+
+            return source
+                .Where(e => e != null && _entityManagerCache.ContainsKey(e))
+                .Select(e => _entityManagerCache[e])
+                .Where(em => em != null && em.placed && !em.dead && !em.IsFadingOut &&
+                      (!checkAttackLimiter || (_attackLimiter?.CanAttack(em) ?? !em.HasAttacked)))
+                .ToList();
         }
 
         public IEnumerator Attack()
         {
             Debug.Log("[AttackManager] Starting Attack");
-            
-            // Validate that the required dependencies are available
+
+            // Initial delay before starting attack sequence - gives player time to prepare
+            yield return new WaitForSeconds(_initialAttackDelay);
+
             if (_combatManager == null || _spritePositioning == null)
             {
-                Debug.LogWarning("[AttackManager] Required components are null in Attack! Using a placeholder implementation.");
-                
-                // Simple placeholder implementation that doesn't depend on any components
-                yield return new WaitForSeconds(0.5f);
-                Debug.Log("[AttackManager] Simulating enemy attacks (placeholder)");
-                yield return new WaitForSeconds(0.5f);
-                
-                Debug.Log("[AttackManager] Attack completed (placeholder)");
+                yield return SimulatePlaceholderAttack();
                 yield break;
             }
-            
-            // Make sure we have an AttackLimiter
-            if (_attackLimiter == null && _combatStage != null)
-            {
-                _attackLimiter = _combatStage.GetAttackLimiter();
-                if (_attackLimiter == null)
-                {
-                    Debug.LogError("[AttackManager] Cannot find AttackLimiter, creating a new one");
-                    _attackLimiter = new AttackLimiter();
-                }
-            }
-            
-            // Validate that we're in the correct phase
+
             if (!ValidateCombatState())
             {
-                Debug.LogWarning("[AttackManager] Not in enemy combat phase, skipping attacks");
-                yield return new WaitForSeconds(0.5f);
-                Debug.Log("[AttackManager] Attack skipped - not in combat phase");
+                yield return new WaitForSeconds(GetRandomizedDelay(_baseAttackDelay * 0.5f));
                 yield break;
             }
-            
-            // Declare variables we'll use inside and outside the try block
-            List<EntityManager> enemyEntities = null;
-            List<EntityManager> playerEntities = null;
-            HealthIconManager playerHealthIcon = null;
-            bool hasEnemyEntities = false;
-            bool hasPlayerEntities = false;
-            bool hasTargets = false;
-            bool errorOccurred = false;
-            
+
+            // Use cached entities
+            RefreshEntityCaches();
+            List<EntityManager> enemyEntities = _cachedEnemyEntities;
+            List<EntityManager> playerEntities = _cachedPlayerEntities;
+            HealthIconManager playerHealthIcon = GameObject.FindGameObjectWithTag("Player")?.GetComponent<HealthIconManager>();
+
+            bool setupSuccess = false;
+            string errorMessage = null;
+
             try
             {
-                // Check if enemy entities are present using our helper method
-                hasEnemyEntities = HasEntitiesOnField(false);
-                
-                if (hasEnemyEntities)
-                {
-                    // Get all enemy entities that can attack
-                    enemyEntities = _spritePositioning.EnemyEntities
-                        .Where(entity => entity != null)
-                        .Select(entity => entity.GetComponent<EntityManager>())
-                        .Where(entity => entity != null && entity.placed && !entity.dead && !entity.IsFadingOut && 
-                              (_attackLimiter != null ? _attackLimiter.CanAttack(entity) : !entity.HasAttacked))
-                        .ToList();
-                        
-                    hasEnemyEntities = enemyEntities != null && enemyEntities.Count > 0;
-                }
-                
-                // Check if player entities are present using our helper method
-                hasPlayerEntities = HasEntitiesOnField(true);
-                
-                if (hasPlayerEntities)
-                {
-                    // Get all potential player entity targets and filter out any that are dead or null
-                    playerEntities = _spritePositioning.PlayerEntities
-                        .Where(entity => entity != null)
-                        .Select(entity => entity.GetComponent<EntityManager>())
-                        .Where(entity => entity != null && entity.placed && !entity.dead && !entity.IsFadingOut)
-                        .ToList();
-                    
-                    // Update hasPlayerEntities based on the actual filtered list
-                    hasPlayerEntities = playerEntities != null && playerEntities.Count > 0;
-                }
-                
-                // If after filtering we have no player entities, check if the health icon is available
-                if (!hasPlayerEntities)
-                {
-                    // Get player health icon as a potential target
-                    playerHealthIcon = GameObject.FindGameObjectWithTag("Player")?.GetComponent<HealthIconManager>();
-                    hasTargets = playerHealthIcon != null;
-                    
-                    if (hasTargets)
-                    {
-                        Debug.Log("[AttackManager] No valid player entities, targeting health icon");
-                    }
-                }
-                else
-                {
-                    hasTargets = true;
-                    
-                    // Also get the health icon reference even though we'll attack entities first
-                    playerHealthIcon = GameObject.FindGameObjectWithTag("Player")?.GetComponent<HealthIconManager>();
-                }
-                
-                if (!hasEnemyEntities)
-                {
-                    Debug.Log("[AttackManager] No enemy entities available to attack");
-                }
-                else if (!hasTargets)
-                {
-                    Debug.Log("[AttackManager] No valid targets available for enemy attacks");
-                }
-                else
-                {
-                    int playerEntityCount = playerEntities?.Count ?? 0;
-                    Debug.Log($"[AttackManager] Enemy has {enemyEntities.Count} entities that can attack, against {playerEntityCount} player entities");
-                }
+                setupSuccess = ValidateAttackScenario(enemyEntities, playerEntities, playerHealthIcon);
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"[AttackManager] Error in Attack: {e.Message}\n{e.StackTrace}");
-                errorOccurred = true;
+                errorMessage = e.Message;
+                Debug.LogError($"[AttackManager] Error in Attack: {errorMessage}");
             }
-            
-            // If we encountered an error or have no entities or no targets, just exit with a small delay
-            if (errorOccurred || !hasEnemyEntities || !hasTargets)
+
+            if (!setupSuccess || errorMessage != null)
             {
-                yield return new WaitForSeconds(0.5f);
-                Debug.Log("[AttackManager] Attack completed - no action taken");
+                yield return new WaitForSeconds(GetRandomizedDelay(_baseAttackDelay * 0.5f));
                 yield break;
             }
-            
-            // Get current board state for evaluation
-            BoardState boardState = null;
-            if (_boardStateManager != null)
+
+            // Delay to simulate "thinking" about attack strategy
+            yield return new WaitForSeconds(GetRandomizedDelay(_evaluationDelay));
+
+            BoardState boardState = GetCurrentBoardState();
+            var attackOrder = GetAttackOrder(enemyEntities, playerEntities, playerHealthIcon, boardState);
+
+            StrategicMode mode = DetermineStrategicMode(boardState);
+            Debug.Log($"[AttackManager] Current strategy: {mode}");
+
+            // Brief pause after determining strategy before first attack
+            yield return new WaitForSeconds(GetRandomizedDelay(_evaluationDelay * 0.5f));
+
+            // Process each attack with appropriate delays
+            foreach (var attacker in attackOrder)
             {
-                boardState = _boardStateManager.EvaluateBoardState();
+                // Delay before selecting target - simulates AI "thinking"
+                yield return new WaitForSeconds(GetRandomizedDelay(_baseAttackDelay * 0.7f));
+
+                EntityManager targetEntity = SelectTarget(attacker, playerEntities, playerHealthIcon, boardState, mode);
+
+                if (targetEntity != null)
+                {
+                    // Small delay between target selection and attack execution
+                    yield return new WaitForSeconds(GetRandomizedDelay(_baseAttackDelay * 0.3f));
+
+                    yield return ExecuteAttack(attacker, targetEntity);
+
+                    if (targetEntity.dead)
+                    {
+                        // Add longer pause after killing a unit to emphasize the moment
+                        yield return new WaitForSeconds(GetRandomizedDelay(_baseAttackDelay * 1.2f));
+
+                        RefreshEntityCaches();
+                        playerEntities = _cachedPlayerEntities;
+                        if (playerEntities.Count == 0 && playerHealthIcon == null) break;
+                    }
+                    else
+                    {
+                        // Normal post-attack delay
+                        yield return new WaitForSeconds(GetRandomizedDelay(_baseAttackDelay));
+                    }
+                }
+                else if (playerHealthIcon != null && ShouldAttackHealthIcon(attacker, playerEntities, playerHealthIcon, boardState))
+                {
+                    // Dramatic pause before attacking health icon directly
+                    yield return new WaitForSeconds(GetRandomizedDelay(_baseAttackDelay * 0.5f));
+
+                    AttackPlayerHealthIcon(attacker, playerHealthIcon);
+
+                    // Longer pause after attacking health icon to emphasize importance
+                    yield return new WaitForSeconds(GetRandomizedDelay(_baseAttackDelay * 1.5f));
+                }
+            }
+
+            // Final delay after attack sequence completes
+            yield return new WaitForSeconds(GetRandomizedDelay(_baseAttackDelay));
+            Debug.Log("[AttackManager] Attack completed");
+        }
+
+        // Helper method to get randomized delay times for more human feeling
+        private float GetRandomizedDelay(float baseDelay)
+        {
+            if (_delayVariance <= 0) return baseDelay;
+
+            float variance = baseDelay * _delayVariance;
+            return baseDelay + Random.Range(-variance, variance);
+        }
+
+        private List<EntityManager> GetAttackOrder(List<EntityManager> enemies, List<EntityManager> players,
+                                                HealthIconManager healthIcon, BoardState boardState)
+        {
+            var order = enemies.ToList();
+
+            if (Random.value < _attackOrderRandomizationChance && order.Count > 1)
+            {
+                order = GetPartiallyShuffledAttackers(order);
+            }
+
+            if (CanKillPlayerThisTurn(order, players, healthIcon))
+            {
+                order = OptimizeForLethal(order, players);
             }
             else
             {
-                // Create a simple board state if no manager available
-                boardState = new BoardState
-                {
-                    EnemyHealth = _combatManager.EnemyHealth,
-                    PlayerHealth = _combatManager.PlayerHealth,
-                    TurnCount = _combatManager.TurnCount
-                };
-            }
-            
-            // Final validation before proceeding with attacks
-            if (enemyEntities == null || enemyEntities.Count == 0)
-            {
-                Debug.LogWarning("[AttackManager] No enemy entities available for attacking after initialization");
-                yield return new WaitForSeconds(0.5f);
-                Debug.Log("[AttackManager] Attack completed - no action taken");
-                yield break;
-            }
-            
-            // Process each entity's attack
-            foreach (var attacker in enemyEntities)
-            {
-                yield return new WaitForSeconds(0.3f); // Add delay for visual effect
-                
-                // Check for taunt units - must attack these first
-                bool hasTaunts = false;
-                if (playerEntities != null && playerEntities.Count > 0)
-                {
-                    hasTaunts = playerEntities.Any(e => e != null && e.HasKeyword(Keywords.MonsterKeyword.Taunt));
-                }
-                
-                // Select target based on combat rules and AI strategy
-                EntityManager targetEntity = null;
-                
-                if (hasTaunts)
-                {
-                    // Must attack taunt units first
-                    var tauntTargets = playerEntities.Where(e => e != null && e.HasKeyword(Keywords.MonsterKeyword.Taunt)).ToList();
-                    targetEntity = SelectBestTarget(attacker, tauntTargets, boardState);
-                    Debug.Log($"[AttackManager] {attacker.name} must attack taunt unit {targetEntity?.name ?? "unknown"}");
-                }
-                else
-                {
-                    // Decide between attacking a player entity or going for the health icon
-                    bool attackHealthIcon = ShouldAttackHealthIcon(attacker, playerEntities, playerHealthIcon, boardState);
-                    
-                    if (attackHealthIcon && playerHealthIcon != null)
-                    {
-                        // Use our dedicated method for health icon attacks
-                        AttackPlayerHealthIcon(attacker, playerHealthIcon);
-                        continue; // Skip to next attacker
-                    }
-                    else if (playerEntities != null && playerEntities.Count > 0)
-                    {
-                        // Attack a player entity
-                        targetEntity = SelectBestTarget(attacker, playerEntities, boardState);
-                        Debug.Log($"[AttackManager] {attacker.name} targeting {targetEntity?.name ?? "unknown"}");
-                    }
-                    else
-                    {
-                        Debug.LogWarning($"[AttackManager] {attacker.name} has no valid targets to attack");
-                        continue; // Skip to next attacker
-                    }
-                }
-                
-                // Perform the attack if we have a valid target
-                if (targetEntity != null && _combatStage != null)
-                {
-                    _combatStage.HandleMonsterAttack(attacker, targetEntity);
-                    // Register the attack with the AttackLimiter
-                    if (_attackLimiter != null)
-                    {
-                        _attackLimiter.RegisterAttack(attacker);
-                    }
-                    else
-                    {
-                        attacker.HasAttacked = true;
-                    }
-                    Debug.Log($"[AttackManager] {attacker.name} successfully attacked {targetEntity.name}");
-                    
-                    // Re-evaluate board state after significant changes
-                    if (targetEntity.dead && _boardStateManager != null)
-                    {
-                        boardState = _boardStateManager.EvaluateBoardState();
-                        
-                        // Refresh our player entities list to remove dead or dying entities
-                        playerEntities = RefreshPlayerEntities(playerEntities);
-                        
-                        // Check if we have any valid targets left
-                        hasPlayerEntities = playerEntities.Count > 0;
-                        hasTargets = hasPlayerEntities || playerHealthIcon != null;
-                        
-                        // If no more targets, exit early
-                        if (!hasTargets)
-                        {
-                            Debug.Log("[AttackManager] No more targets available, ending attack phase");
-                            break;
-                        }
-                    }
-                }
-                else
-                {
-                    Debug.LogWarning($"[AttackManager] {attacker.name} could not attack - no valid target or CombatStage is null");
-                }
-            }
-            
-            // Additional delay at the end
-            yield return new WaitForSeconds(0.5f);
-            Debug.Log("[AttackManager] Attack completed successfully");
-        }
-        
-        /// <summary>
-        /// Checks if there are any active entities on the specified side
-        /// </summary>
-        /// <param name="isPlayerSide">True to check player side, false to check enemy side</param>
-        /// <returns>True if entities are present on the field</returns>
-        private bool HasEntitiesOnField(bool isPlayerSide)
-        {
-            if (_spritePositioning == null)
-                return false;
-                
-            var entities = isPlayerSide ? _spritePositioning.PlayerEntities : _spritePositioning.EnemyEntities;
-            
-            foreach (var entity in entities)
-            {
-                var entityManager = entity?.GetComponent<EntityManager>();
-                if (entityManager != null && entityManager.placed && !entityManager.dead && !entityManager.IsFadingOut)
-                {
-                    return true;
-                }
-            }
-            
-            return false;
-        }
-        
-        private bool ShouldAttackHealthIcon(EntityManager attacker, List<EntityManager> playerEntities, HealthIconManager playerHealthIcon, BoardState boardState)
-        {
-            if (attacker == null)
-            {
-                Debug.LogError("[AttackManager] Cannot decide attack target: attacker is null");
-                return false;
-            }
-            
-            if (playerHealthIcon == null)
-            {
-                Debug.LogWarning("[AttackManager] Cannot attack health icon: health icon is null");
-                return false;
-            }
-            
-            // Check if player has any active entities on the field using the helper method
-            bool playerEntitiesPresent = HasEntitiesOnField(true);
-            
-            // Alternative check if the helper method failed or returned inconsistent results
-            if (!playerEntitiesPresent && playerEntities != null && playerEntities.Count > 0)
-            {
-                // Double-check with the actual list if there are any valid entities
-                playerEntitiesPresent = playerEntities.Any(e => e != null && !e.dead && !e.IsFadingOut);
-            }
-            
-            // Always prioritize attacking player monsters if they exist
-            if (playerEntitiesPresent)
-            {
-                // Never attack the health icon directly if player has monsters on the field
-                return false;
-            }
-            
-            // If no player entities exist, we must attack the health icon
-            Debug.Log("[AttackManager] No player entities on field, attacking health icon directly");
-            return true;
-        }
-
-        private bool ValidateCombatState()
-        {
-            if (_combatManager == null)
-            {
-                Debug.LogError("[AttackManager] CombatManager reference is missing!");
-                return false;
+                order = order
+                    .OrderByDescending(e => e.HasKeyword(Keywords.MonsterKeyword.Ranged) ? 1 : 0)
+                    .ThenByDescending(e => players.Any(p => e.GetAttack() >= p.GetHealth()) ? 1 : 0)
+                    .ThenByDescending(e => e.GetAttack())
+                    .ThenBy(e => e.GetHealth())
+                    .ToList();
             }
 
-            if (!_combatManager.IsEnemyCombatPhase())
-            {
-                Debug.LogWarning("[AttackManager] Cannot attack in current combat state - Not in EnemyCombat phase");
-                return false;
-            }
-
-            return true;
+            return order;
         }
 
-        private EntityManager SelectBestTarget(EntityManager attacker, List<EntityManager> targets, BoardState boardState)
+        private EntityManager SelectTarget(EntityManager attacker, List<EntityManager> playerEntities,
+                                         HealthIconManager playerHealthIcon, BoardState boardState, StrategicMode mode)
         {
-            if (attacker == null)
-            {
-                Debug.LogError("[AttackManager] Cannot select target: attacker is null");
+            if (playerEntities == null || playerEntities.Count == 0)
                 return null;
-            }
-            
-            if (targets == null || targets.Count == 0)
+
+            bool hasTaunts = playerEntities.Any(e => e != null && e.HasKeyword(Keywords.MonsterKeyword.Taunt));
+
+            if (hasTaunts)
             {
-                Debug.LogWarning($"[AttackManager] No valid targets available for {attacker.name}");
-                return null;
+                var tauntTargets = playerEntities.Where(e => e != null && e.HasKeyword(Keywords.MonsterKeyword.Taunt)).ToList();
+                return SelectBestTarget(attacker, tauntTargets, boardState, mode);
             }
 
-            // Filter out any null, dead, or fading entities
+            return SelectBestTarget(attacker, playerEntities, boardState, mode);
+        }
+
+        private IEnumerator ExecuteAttack(EntityManager attacker, EntityManager target)
+        {
+            _combatStage.HandleMonsterAttack(attacker, target);
+
+            if (_attackLimiter != null)
+            {
+                _attackLimiter.RegisterAttack(attacker);
+            }
+            else
+            {
+                attacker.HasAttacked = true;
+            }
+
+            // Brief pause after attack execution to let animation play
+            yield return new WaitForSeconds(0.2f);
+        }
+
+        private StrategicMode DetermineStrategicMode(BoardState boardState)
+        {
+            if (boardState == null)
+                return StrategicMode.Defensive;
+
+            bool healthAdvantage = boardState.EnemyHealth > boardState.PlayerHealth + _healthThresholdForAggro;
+            bool boardAdvantage = boardState.EnemyBoardControl > boardState.PlayerBoardControl * 1.3f;
+            bool lateGame = boardState.TurnCount > _aggressiveTurnThreshold;
+
+            // New condition: if player is low on health, go aggressive
+            bool playerLowHealth = boardState.PlayerHealth <= 15;
+
+            if (healthAdvantage || boardAdvantage || lateGame || playerLowHealth)
+                return StrategicMode.Aggro;
+
+            if (boardState.EnemyHealth < 15 || boardState.PlayerBoardControl > boardState.EnemyBoardControl)
+                return StrategicMode.Defensive;
+
+            // Default to aggressive more often
+            return Random.value < 0.6f ? StrategicMode.Aggro : StrategicMode.Defensive;
+        }
+
+        private EntityManager SelectBestTarget(EntityManager attacker, List<EntityManager> targets,
+                                            BoardState boardState, StrategicMode mode)
+        {
+            if (attacker == null || targets == null || targets.Count == 0)
+                return null;
+
             var validTargets = targets.Where(t => t != null && !t.dead && !t.IsFadingOut).ToList();
-            
+
             if (validTargets.Count == 0)
-            {
-                Debug.LogWarning($"[AttackManager] All targets were null or dead for {attacker.name}");
                 return null;
-            }
-            
-            // If only one target, return it immediately
+
             if (validTargets.Count == 1)
-            {
                 return validTargets[0];
-            }
 
-            EntityManager bestTarget = null;
-            float bestScore = float.MinValue;
-
+            var targetScores = new Dictionary<EntityManager, float>();
             foreach (var target in validTargets)
             {
                 try
                 {
-                    // Double-check the entity is still valid right before evaluation
-                    if (target == null || target.dead || target.IsFadingOut)
-                    {
-                        continue;
-                    }
-                    
-                    float score = EvaluateTarget(attacker, target, boardState);
-                    if (score > bestScore)
-                    {
-                        bestScore = score;
-                        bestTarget = target;
-                    }
+                    float score = EvaluateTarget(attacker, target, boardState, mode);
+                    targetScores[target] = score;
                 }
                 catch (System.Exception e)
                 {
-                    Debug.LogError($"[AttackManager] Error evaluating target {target?.name ?? "unknown"}: {e.Message}");
-                    // Continue with next target
+                    Debug.LogError($"[AttackManager] Error evaluating target: {e.Message}");
                 }
             }
 
-            // Final validation of the selected target
-            if (bestTarget != null && (bestTarget.dead || bestTarget.IsFadingOut))
-            {
-                Debug.LogWarning($"[AttackManager] Best target for {attacker.name} is dead or dying, returning null");
+            var sortedTargets = targetScores.OrderByDescending(kvp => kvp.Value).ToList();
+
+            if (sortedTargets.Count == 0)
                 return null;
+
+            if (ShouldMakeSuboptimalDecision() && sortedTargets.Count > 1)
+            {
+                int randomIndex = Random.Range(1, Mathf.Min(sortedTargets.Count, 3));
+                return sortedTargets[randomIndex].Key;
             }
 
-            return bestTarget;
+            return sortedTargets[0].Key;
         }
 
-        private float EvaluateTarget(EntityManager attacker, EntityManager target, BoardState boardState)
+        private float EvaluateTarget(EntityManager attacker, EntityManager target, BoardState boardState, StrategicMode mode)
         {
             if (attacker == null || target == null)
                 return float.MinValue;
 
             float score = 0;
 
-            // Base score from attack vs health
-            score += attacker.GetAttack() - target.GetHealth();
+            score += attacker.GetAttack() * 1.2f - target.GetHealth() * 0.8f;
 
-            // Consider keywords
-            if (_keywordEvaluator != null)
+            if (mode == StrategicMode.Aggro)
             {
-                score += _keywordEvaluator.EvaluateKeywords(attacker, target, boardState);
-            }
-            
-            // Consider counter-attack damage and survival chance
-            bool willTakeCounterAttack = !attacker.HasKeyword(Keywords.MonsterKeyword.Ranged); // Ranged units don't take counter-attack damage
-            
-            if (willTakeCounterAttack)
-            {
-                // Calculate expected counter damage
-                float counterDamage = target.GetAttack();
-                
-                // Will our attacker survive the counter-attack?
-                bool willSurvive = attacker.GetHealth() > counterDamage;
-                
-                if (!willSurvive)
-                {
-                    // Big penalty if our unit would die from counter-attack
-                    score -= 100f;
-                    
-                    // However, if we can kill a high-value target, it might be worth the sacrifice
-                    if (target.GetHealth() <= attacker.GetAttack() && 
-                        (target.HasKeyword(Keywords.MonsterKeyword.Taunt) || target.HasKeyword(Keywords.MonsterKeyword.Ranged)))
-                    {
-                        // Trade might be worth it for important targets
-                        score += 50f;
-                    }
-                }
-                else
-                {
-                    // Smaller penalty based on counter damage relative to attacker's health
-                    float counterDamageRatio = counterDamage / attacker.GetHealth();
-                    score -= counterDamageRatio * 50f;
-                }
+                score += target.GetAttack() * 0.7f;
+                if (target.GetHealth() <= attacker.GetAttack())
+                    score += 90f;
             }
             else
             {
-                // Bonus for ranged attackers who won't take counter damage
-                score += 30f;
+                score -= attacker.GetHealth() * 0.2f;
+                if (target.HasKeyword(Keywords.MonsterKeyword.Taunt))
+                    score += 60f;
             }
-            
-            // Consider if we can kill the target
-            if (target.GetHealth() <= attacker.GetAttack())
+
+            if (_keywordEvaluator != null)
             {
-                // Big bonus for killing targets
-                score += 75f;
-                
-                // Extra bonus for killing high-value targets
-                if (target.HasKeyword(Keywords.MonsterKeyword.Taunt) || target.HasKeyword(Keywords.MonsterKeyword.Ranged))
+                score += _keywordEvaluator.EvaluateKeywords(attacker, target, boardState) * 1.2f;
+            }
+
+
+            if (!attacker.HasKeyword(Keywords.MonsterKeyword.Ranged))
+            {
+                if (attacker.GetHealth() <= target.GetAttack())
                 {
-                    score += 50f;
+                    score -= 80f;
+                }
+                else
+                {
+                    score -= (target.GetAttack() / attacker.GetHealth()) * 40f;
                 }
             }
 
-            // Consider board state
-            if (boardState != null)
-            {
-                if (boardState.PlayerBoardControl > boardState.EnemyBoardControl)
-                {
-                    // Prioritize removing threats when behind on board
-                    score += target.GetAttack() * 1.5f;
-                }
-            }
+            score *= Random.Range(1f - _evaluationVariance, 1f + _evaluationVariance);
 
             return score;
         }
 
-        /// <summary>
-        /// Handles an enemy entity attacking the player's health icon
-        /// </summary>
-        /// <param name="attacker">The enemy entity performing the attack</param>
-        /// <param name="healthIcon">The player's health icon</param>
-        /// <returns>True if attack was successful</returns>
+        #region Helper Methods
+        private bool ValidateCombatState()
+        {
+            return _combatManager != null && _combatManager.IsEnemyCombatPhase();
+        }
+
+        private bool ValidateAttackScenario(List<EntityManager> enemyEntities, List<EntityManager> playerEntities,
+                                          HealthIconManager playerHealthIcon)
+        {
+            bool hasEnemyEntities = enemyEntities != null && enemyEntities.Count > 0;
+            bool hasTargets = (playerEntities != null && playerEntities.Count > 0) || playerHealthIcon != null;
+
+            if (!hasEnemyEntities)
+                Debug.Log("[AttackManager] No enemy entities available to attack");
+
+            if (!hasTargets)
+                Debug.Log("[AttackManager] No valid targets available");
+
+            return hasEnemyEntities && hasTargets;
+        }
+
+        private BoardState GetCurrentBoardState()
+        {
+            return _boardStateManager?.EvaluateBoardState() ?? new BoardState
+            {
+                EnemyHealth = _combatManager.EnemyHealth,
+                PlayerHealth = _combatManager.PlayerHealth,
+                TurnCount = _combatManager.TurnCount
+            };
+        }
+
+        private IEnumerator SimulatePlaceholderAttack()
+        {
+            Debug.LogWarning("[AttackManager] Using placeholder attack implementation");
+            // More human-like delays for placeholder implementation
+            yield return new WaitForSeconds(GetRandomizedDelay(_baseAttackDelay));
+            Debug.Log("[AttackManager] Simulating enemy attacks");
+            yield return new WaitForSeconds(GetRandomizedDelay(_baseAttackDelay * 1.5f));
+        }
+
+        private List<EntityManager> GetPartiallyShuffledAttackers(List<EntityManager> original)
+        {
+            var shuffled = new List<EntityManager>(original);
+            for (int i = 0; i < shuffled.Count - 1; i++)
+            {
+                if (Random.value < 0.4f)
+                {
+                    var temp = shuffled[i];
+                    shuffled[i] = shuffled[i + 1];
+                    shuffled[i + 1] = temp;
+                }
+            }
+            Debug.Log("[AttackManager] Applied partial randomization to attack order");
+            return shuffled;
+        }
+
+        private bool ShouldMakeSuboptimalDecision()
+        {
+            return Random.value < _decisionVariance;
+        }
+        private bool CanKillPlayerThisTurn(List<EntityManager> attackers, List<EntityManager> playerEntities,
+                                        HealthIconManager playerHealthIcon)
+        {
+            if (attackers == null || playerHealthIcon == null)
+                return false;
+
+            // If there are taunt monsters, we must attack them first
+            bool hasTaunt = playerEntities != null &&
+                            playerEntities.Any(e => e != null &&
+                                              !e.dead &&
+                                              e.placed &&
+                                              !e.IsFadingOut &&
+                                              e.HasKeyword(Keywords.MonsterKeyword.Taunt));
+
+            if (hasTaunt)
+            {
+                // Calculate remaining damage after dealing with taunts
+                float totalDamage = attackers.Sum(a => a?.GetAttack() ?? 0);
+                float remainingDamage = totalDamage;
+
+                // Get all taunt units
+                var tauntUnits = playerEntities.Where(e => e != null &&
+                                                      !e.dead &&
+                                                      e.placed &&
+                                                      !e.IsFadingOut &&
+                                                      e.HasKeyword(Keywords.MonsterKeyword.Taunt))
+                                              .OrderBy(e => e.GetHealth())
+                                              .ToList();
+
+                // Calculate damage needed to clear taunts
+                foreach (var tauntUnit in tauntUnits)
+                {
+                    remainingDamage -= tauntUnit.GetHealth();
+                }
+
+                // More accurate lethal calculation - if we have exactly enough damage or just a little extra
+                float tauntThreshold = playerHealthIcon.GetHealth() - 2;
+                return remainingDamage >= tauntThreshold;
+            }
+
+            // If no taunt units, check if total damage exceeds player health with a small margin
+            float attackDamage = attackers.Sum(a => a?.GetAttack() ?? 0);
+            float directThreshold = playerHealthIcon.GetHealth() - 1;
+            return attackDamage >= directThreshold;
+        }
+
+        private List<EntityManager> OptimizeForLethal(List<EntityManager> attackers, List<EntityManager> playerEntities)
+        {
+            Debug.Log("[AttackManager] Optimizing attack order for lethal");
+
+            if (playerEntities != null && playerEntities.Any(e => e != null && e.HasKeyword(Keywords.MonsterKeyword.Taunt)))
+            {
+                return attackers
+                    .OrderBy(e => e.GetHealth())
+                    .ThenByDescending(e => e.GetAttack())
+                    .ToList();
+            }
+
+            return attackers
+                .OrderByDescending(e => e.GetAttack())
+                .ToList();
+        }
+
+        private bool ShouldAttackHealthIcon(EntityManager attacker, List<EntityManager> playerEntities,
+                                         HealthIconManager playerHealthIcon, BoardState boardState)
+        {
+            if (attacker == null || playerHealthIcon == null)
+                return false;
+
+            // Use AIUtilities to determine if we can target the health icon
+            return AIUtilities.CanTargetHealthIcon(playerEntities);
+        }
+
+
+        private bool HasEntitiesOnField(bool isPlayerSide)
+        {
+            if (_spritePositioning == null)
+                return false;
+
+            var entities = isPlayerSide ? _spritePositioning.PlayerEntities : _spritePositioning.EnemyEntities;
+
+            foreach (var entity in entities)
+            {
+                if (!_entityManagerCache.TryGetValue(entity, out var entityManager)) continue;
+
+                if (entityManager != null && entityManager.placed && !entityManager.dead && !entityManager.IsFadingOut)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private bool AttackPlayerHealthIcon(EntityManager attacker, HealthIconManager healthIcon)
         {
-            if (attacker == null)
+            if (attacker == null || healthIcon == null || _combatStage == null)
+                return false;
+
+            if (HasEntitiesOnField(true))
             {
-                Debug.LogError("[AttackManager] Cannot attack health icon: attacker is null");
+                Debug.LogWarning("[AttackManager] Cannot attack health icon - player entities present");
                 return false;
             }
-            
-            if (healthIcon == null)
-            {
-                Debug.LogError("[AttackManager] Cannot attack health icon: health icon is null");
-                return false;
-            }
-            
-            if (_combatStage == null)
-            {
-                Debug.LogError("[AttackManager] Cannot attack health icon: CombatStage is null");
-                return false;
-            }
-            
-            // Double-check that there are no player entities on the field
-            // This is a redundant safety check to ensure we never attack health icons when monsters are present
-            bool playerEntitiesPresent = HasEntitiesOnField(true);
-            if (playerEntitiesPresent)
-            {
-                Debug.LogWarning($"[AttackManager] Cannot attack health icon with {attacker.name}: player entities are present on the field");
-                return false;
-            }
-            
-            // Check if attacker is dead or fading out
-            if (attacker.dead || attacker.IsFadingOut)
-            {
-                Debug.LogWarning($"[AttackManager] Cannot attack with {attacker.name}: entity is dead or fading out");
-                return false;
-            }
-            
-            Debug.Log($"[AttackManager] {attacker.name} attacking player health icon");
-            
+
             try
             {
-                // Perform attack against health icon
                 _combatStage.HandleMonsterAttack(attacker, healthIcon);
-                
-                // Register the attack with the AttackLimiter
+
                 if (_attackLimiter != null)
-                {
                     _attackLimiter.RegisterAttack(attacker);
-                }
                 else
-                {
                     attacker.HasAttacked = true;
-                }
-                
-                Debug.Log($"[AttackManager] {attacker.name} successfully attacked player health for {attacker.GetAttackPower()} damage");
+
                 return true;
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"[AttackManager] Error attacking health icon: {e.Message}\n{e.StackTrace}");
+                Debug.LogError($"[AttackManager] Error attacking health icon: {e.Message}");
                 return false;
             }
         }
-
-        /// <summary>
-        /// Safely refreshes the list of player entities by filtering out any that are dead or dying
-        /// </summary>
-        /// <param name="currentEntities">The current list of player entities</param>
-        /// <returns>A filtered list of valid player entities</returns>
-        private List<EntityManager> RefreshPlayerEntities(List<EntityManager> currentEntities)
-        {
-            if (currentEntities == null || currentEntities.Count == 0)
-                return new List<EntityManager>();
-
-            try
-            {
-                // Filter out any entities that are null, dead, or fading out
-                return currentEntities
-                    .Where(e => e != null && !e.dead && !e.IsFadingOut)
-                    .ToList();
-            }
-            catch (System.Exception ex)
-            {
-                Debug.LogError($"[AttackManager] Error refreshing player entities: {ex.Message}");
-                
-                // Manual fallback in case LINQ fails
-                var result = new List<EntityManager>();
-                foreach (var entity in currentEntities)
-                {
-                    if (entity != null && !entity.dead && !entity.IsFadingOut)
-                    {
-                        result.Add(entity);
-                    }
-                }
-                return result;
-            }
-        }
+        #endregion
     }
-} 
+
+    public enum StrategicMode
+    {
+        Aggro,
+        Defensive
+    }
+}

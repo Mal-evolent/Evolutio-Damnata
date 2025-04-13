@@ -1,4 +1,7 @@
 using UnityEngine;
+using EnemyInteraction.Utilities;
+using System.Linq;
+using System.Collections.Generic;  // Add this for Dictionary
 
 public class EnemyCardSelectionHandler : IEnemyCardHandler
 {
@@ -10,6 +13,8 @@ public class EnemyCardSelectionHandler : IEnemyCardHandler
     private readonly IManaChecker _manaChecker;
     private readonly ISpellEffectApplier _spellEffectApplier;
 
+    private readonly Dictionary<GameObject, EntityManager> _entityManagerCache;
+
     public EnemyCardSelectionHandler(
         ICardManager cardManager,
         ICombatManager combatManager,
@@ -17,7 +22,8 @@ public class EnemyCardSelectionHandler : IEnemyCardHandler
         ISpritePositioning spritePositioning,
         ICombatStage combatStage,
         IManaChecker manaChecker,
-        ISpellEffectApplier spellEffectApplier)
+        ISpellEffectApplier spellEffectApplier,
+        Dictionary<GameObject, EntityManager> entityManagerCache)
     {
         _cardManager = cardManager ?? throw new System.ArgumentNullException(nameof(cardManager));
         _combatManager = combatManager ?? throw new System.ArgumentNullException(nameof(combatManager));
@@ -26,6 +32,7 @@ public class EnemyCardSelectionHandler : IEnemyCardHandler
         _combatStage = combatStage ?? throw new System.ArgumentNullException(nameof(combatStage));
         _manaChecker = manaChecker ?? throw new System.ArgumentNullException(nameof(manaChecker));
         _spellEffectApplier = spellEffectApplier ?? throw new System.ArgumentNullException(nameof(spellEffectApplier));
+        _entityManagerCache = entityManagerCache ?? throw new System.ArgumentNullException(nameof(entityManagerCache));
     }
 
     public void HandleEnemyCardSelection(int index, EntityManager entityManager)
@@ -74,19 +81,17 @@ public class EnemyCardSelectionHandler : IEnemyCardHandler
     {
         if (_spritePositioning == null)
             return false;
-            
+
         var entities = isPlayerSide ? _spritePositioning.PlayerEntities : _spritePositioning.EnemyEntities;
-        
-        foreach (var entity in entities)
-        {
-            var entityManager = entity?.GetComponent<EntityManager>();
-            if (entityManager != null && entityManager.placed && !entityManager.dead && !entityManager.IsFadingOut)
-            {
-                return true;
-            }
-        }
-        
-        return false;
+
+        // Convert to EntityManager list for AIUtilities
+        var entityManagers = entities
+            .Where(e => e != null && _entityManagerCache.TryGetValue(e, out _))
+            .Select(e => _entityManagerCache[e])
+            .ToList();
+
+        // Use inverse of AIUtilities.CanTargetHealthIcon since that returns true when NO entities are on field
+        return !AIUtilities.CanTargetHealthIcon(entityManagers);
     }
 
     private void HandleSpellCard(int index, EntityManager entityManager, CardData cardData)
