@@ -55,6 +55,12 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     
     public void UseAttack()
     {
+        if (dead || IsFadingOut)
+        {
+            Debug.Log($"[{name}] Cannot use attack: entity is dead or fading out");
+            return;
+        }
+        
         if (remainingAttacks > 0)
         {
             remainingAttacks--;
@@ -223,7 +229,11 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 
     public virtual void Attack(int damage)
     {
-        if (dead || !placed) return;
+        if (dead || !placed || IsFadingOut) 
+        {
+            Debug.Log($"[{name}] Cannot attack: entity is dead, not placed, or fading out");
+            return;
+        }
         Debug.Log($"Attacking with {damage} damage.");
     }
 

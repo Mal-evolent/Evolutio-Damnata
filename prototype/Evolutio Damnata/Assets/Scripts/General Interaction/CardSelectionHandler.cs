@@ -151,7 +151,7 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
         foreach (var entity in entities)
         {
             var entityManager = entity?.GetComponent<EntityManager>();
-            if (entityManager != null && entityManager.placed && !entityManager.dead)
+            if (entityManager != null && entityManager.placed && !entityManager.dead && !entityManager.IsFadingOut)
             {
                 return true;
             }
@@ -166,38 +166,71 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
     /// </summary>
     private void TryAttackEnemyHealthIcon()
     {
-        // Enforce targeting rules - health icon can only be targeted when no enemy entities are present
-        if (HasEntitiesOnField(false))
+        // Get the card to check if it's a spell or monster
+        var cardUI = _cardManager.CurrentSelectedCard?.GetComponent<CardUI>();
+        bool isSpellCard = cardUI?.Card?.CardType?.IsSpellCard == true;
+
+        // If it's a spell card, check if it's any player phase (prep or combat)
+        if (isSpellCard)
         {
-            Debug.Log("Cannot target enemy health while enemy entities are on the field!");
+            if (_combatManager.IsPlayerPrepPhase() || _combatManager.IsPlayerCombatPhase())
+            {
+                // Get the enemy health icon
+                var spellTargetHealthIcon = GameObject.FindGameObjectWithTag("Enemy")?.GetComponent<HealthIconManager>();
+                if (spellTargetHealthIcon == null)
+                {
+                    Debug.LogError("Could not find enemy health icon to target!");
+                    return;
+                }
+
+                // Spell targeting on health icon
+                _enemyCardSelectionHandler.HandleEnemyCardSelection(-1, spellTargetHealthIcon);
+                return;
+            }
+            else
+            {
+                Debug.Log("Spell cards can only be played during your turn!");
+                return;
+            }
+        }
+        
+        // For monster attacks, must be in combat phase
+        if (!_combatManager.IsPlayerCombatPhase())
+        {
+            Debug.Log("Attacks are not allowed at this stage!");
             return;
         }
 
-        // Attempt to locate and target the enemy health icon
-        var enemyHealthIcon = GameObject.FindGameObjectWithTag("Enemy")?.GetComponent<HealthIconManager>();
-        
-        if (enemyHealthIcon != null)
+        // Check if enemy entities are present on the field
+        bool enemyEntitiesPresent = HasEntitiesOnField(false);
+
+        // Prevent attacking health icon if enemy entities are present
+        if (enemyEntitiesPresent)
         {
-            // Process spell card targeting if applicable
-            if (_cardManager.CurrentSelectedCard != null)
-            {
-                var cardUI = _cardManager.CurrentSelectedCard.GetComponent<CardUI>();
-                if (cardUI?.Card?.CardType?.IsSpellCard == true)
-                {
-                    // Check if we're in a player phase before allowing spell card play
-                    if (!_combatManager.IsPlayerPrepPhase() && !_combatManager.IsPlayerCombatPhase())
-                    {
-                        Debug.Log("Spell cards can only be played during your turn!");
-                        return;
-                    }
-                    _enemyCardSelectionHandler.HandleEnemyCardSelection(-1, enemyHealthIcon);
-                    return;
-                }
-            }
-            HandleHealthIconAttack(enemyHealthIcon);
+            Debug.Log("Cannot attack enemy health directly while enemy monsters are on the field!");
             return;
         }
-        Debug.Log("Could not find enemy health icon to target");
+
+        var attacker = _cardManager.CurrentSelectedCard.GetComponent<EntityManager>();
+        if (attacker == null || !attacker.placed)
+        {
+            Debug.Log("Selected monster is not valid for attacking!");
+            return;
+        }
+
+        // Get the enemy health icon
+        var attackTargetHealthIcon = GameObject.FindGameObjectWithTag("Enemy")?.GetComponent<HealthIconManager>();
+        if (attackTargetHealthIcon == null)
+        {
+            Debug.LogError("Could not find enemy health icon to attack!");
+            return;
+        }
+
+        // Process the attack and reset selection state
+        _combatStage.HandleMonsterAttack(attacker, attackTargetHealthIcon);
+        _cardManager.CurrentSelectedCard = null;
+        _cardOutlineManager.RemoveHighlight();
+        ResetAllMonsterTints();
     }
 
     public void OnEnemyButtonClick(int index)
@@ -218,9 +251,10 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
             var cardUI = _cardManager.CurrentSelectedCard.GetComponent<CardUI>();
             bool isSpellCard = cardUI?.Card?.CardType?.IsSpellCard == true;
 
-            // Process spell targeting - spells can only be played in player phases
+            // Process spell targeting - spells can be played in any player phase
             if (isSpellCard)
             {
+                // Check if it's player's turn (either prep or combat phase)
                 if (!_combatManager.IsPlayerPrepPhase() && !_combatManager.IsPlayerCombatPhase())
                 {
                     Debug.Log("Spell cards can only be played during your turn!");
@@ -329,6 +363,19 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
 
         EntityManager playerEntity = _cardManager.CurrentSelectedCard.GetComponent<EntityManager>();
         if (playerEntity == null || !playerEntity.placed) return;
+
+        // Check for dead or fading entities
+        if (playerEntity.dead || playerEntity.IsFadingOut)
+        {
+            Debug.Log($"Cannot attack with {playerEntity.name}: entity is dead or fading out");
+            return;
+        }
+        
+        if (targetEntity.dead || targetEntity.IsFadingOut)
+        {
+            Debug.Log($"Cannot attack {targetEntity.name}: entity is dead or fading out");
+            return;
+        }
 
         if (_combatManager.IsPlayerCombatPhase())
         {

@@ -75,8 +75,35 @@ namespace EnemyInteraction.Evaluation
 
                 if (evaluation.IsDamaging)
                 {
-                    float damageRatio = target.GetHealth() / target.GetMaxHealth();
-                    if (damageRatio < 0.5f) score *= 1.3f;
+                    // Check if target is a health icon
+                    if (target is HealthIconManager healthIcon) 
+                    {
+                        // Player health icon - prioritize if player health is low
+                        if (healthIcon.IsPlayerIcon)
+                        {
+                            // Significantly higher score for targeting player health icon when it's below 30%
+                            float healthRatio = healthIcon.CurrentHealth / healthIcon.MaxHealth;
+                            if (healthRatio <= 0.3f)
+                                score *= 2.5f;
+                            else if (healthRatio <= 0.5f)
+                                score *= 1.8f;
+                            
+                            // Extra bonus in late game (turn 10+)
+                            if (boardState.TurnCount >= 10)
+                                score *= 1.5f;
+                        }
+                        // Own (enemy) health icon - don't target with damage
+                        else
+                        {
+                            score = 0f; // Don't damage our own health icon
+                        }
+                    }
+                    else
+                    {
+                        // Normal entity damage evaluation
+                        float damageRatio = target.GetHealth() / target.GetMaxHealth();
+                        if (damageRatio < 0.5f) score *= 1.3f;
+                    }
                 }
 
                 if (boardState.HealthAdvantage < 0)
@@ -95,24 +122,91 @@ namespace EnemyInteraction.Evaluation
         public EntityManager GetBestTargetForEffect(SpellEffect effect, bool isOwnCard, BoardState boardState)
         {
             if (!_effectEvaluations.ContainsKey(effect))
+            {
+                Debug.LogWarning($"[EffectEvaluator] Unknown effect: {effect}. Cannot find target.");
                 return null;
+            }
+
+            if (boardState == null)
+            {
+                Debug.LogError("[EffectEvaluator] Board state is null in GetBestTargetForEffect!");
+                return null;
+            }
 
             var evaluation = _effectEvaluations[effect];
             
+            EntityManager selectedTarget = null;
+            
             if (evaluation.IsPositive)
             {
-                return boardState.EnemyMonsters
-                    .Where(m => m != null && !m.dead)
-                    .OrderBy(m => m.GetHealth() / m.GetMaxHealth())
-                    .FirstOrDefault();
+                // For positive effects (like healing), target enemy monsters or enemy health icon
+                if (boardState.EnemyMonsters != null && boardState.EnemyMonsters.Count > 0)
+                {
+                    selectedTarget = boardState.EnemyMonsters
+                        .Where(m => m != null && !m.dead && m.placed)
+                        .OrderBy(m => m.GetHealth() / m.GetMaxHealth())
+                        .FirstOrDefault();
+                }
+                
+                // If no valid enemy monsters, try to target enemy health icon for healing
+                if (selectedTarget == null && evaluation.IsDamaging == false)
+                {
+                    var enemyHealthIcon = GameObject.FindGameObjectWithTag("Enemy")?.GetComponent<HealthIconManager>();
+                    if (enemyHealthIcon != null)
+                    {
+                        Debug.Log("[EffectEvaluator] No enemy monsters available, targeting enemy health icon with positive effect");
+                        selectedTarget = enemyHealthIcon;
+                    }
+                }
             }
             else
             {
-                return boardState.PlayerMonsters
-                    .Where(m => m != null && !m.dead)
-                    .OrderByDescending(m => EvaluateTargetThreat(m, boardState))
-                    .FirstOrDefault();
+                // For negative effects (like damage), target player monsters or player health icon
+                bool playerMonstersExist = boardState.PlayerMonsters != null && 
+                                         boardState.PlayerMonsters.Count > 0 &&
+                                         boardState.PlayerMonsters.Any(m => m != null && !m.dead && m.placed);
+                
+                if (playerMonstersExist)
+                {
+                    selectedTarget = boardState.PlayerMonsters
+                        .Where(m => m != null && !m.dead && m.placed)
+                        .OrderByDescending(m => EvaluateTargetThreat(m, boardState))
+                        .FirstOrDefault();
+                    
+                    // Never target player health icon when monsters are on the field
+                    // selectedTarget will be a monster entity at this point
+                }
+                else
+                {
+                    // Only if no valid player monsters exist, try to target player health icon with damaging spells
+                    if (evaluation.IsDamaging)
+                    {
+                        var playerHealthIcon = GameObject.FindGameObjectWithTag("Player")?.GetComponent<HealthIconManager>();
+                        if (playerHealthIcon != null)
+                        {
+                            Debug.Log("[EffectEvaluator] No player monsters available, targeting player health icon with damaging effect");
+                            selectedTarget = playerHealthIcon;
+                        }
+                    }
+                }
             }
+            
+            if (selectedTarget != null)
+            {
+                Debug.Log($"[EffectEvaluator] Selected target for {effect}: {selectedTarget.name} (placed: {selectedTarget.placed})");
+                
+                // If targeting a health icon, add additional logging
+                if (selectedTarget is HealthIconManager healthIcon)
+                {
+                    Debug.Log($"[EffectEvaluator] Selected health icon target: {(healthIcon.IsPlayerIcon ? "Player" : "Enemy")} icon with {healthIcon.CurrentHealth}/{healthIcon.MaxHealth} health");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[EffectEvaluator] Could not find valid target for {effect}");
+            }
+            
+            return selectedTarget;
         }
 
         private float EvaluateTargetThreat(EntityManager target, BoardState boardState)

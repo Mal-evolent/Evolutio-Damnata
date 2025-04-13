@@ -19,6 +19,19 @@ public class AttackHandler : IAttackHandler
             return;
         }
 
+        // Check if either entity is dead or fading out
+        if (attacker.dead || attacker.IsFadingOut)
+        {
+            Debug.LogWarning($"Cannot attack with {attacker.name}: entity is dead or fading out.");
+            return;
+        }
+
+        if (target.dead || target.IsFadingOut)
+        {
+            Debug.LogWarning($"Cannot attack {target.name}: entity is dead or fading out.");
+            return;
+        }
+
         if (!CanAttack(attacker))
         {
             Debug.LogWarning($"{attacker.name} cannot attack anymore this turn.");

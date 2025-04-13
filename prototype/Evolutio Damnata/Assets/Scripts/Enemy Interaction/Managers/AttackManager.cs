@@ -666,6 +666,22 @@ namespace EnemyInteraction.Managers
                 return false;
             }
             
+            // Double-check that there are no player entities on the field
+            // This is a redundant safety check to ensure we never attack health icons when monsters are present
+            bool playerEntitiesPresent = HasEntitiesOnField(true);
+            if (playerEntitiesPresent)
+            {
+                Debug.LogWarning($"[AttackManager] Cannot attack health icon with {attacker.name}: player entities are present on the field");
+                return false;
+            }
+            
+            // Check if attacker is dead or fading out
+            if (attacker.dead || attacker.IsFadingOut)
+            {
+                Debug.LogWarning($"[AttackManager] Cannot attack with {attacker.name}: entity is dead or fading out");
+                return false;
+            }
+            
             Debug.Log($"[AttackManager] {attacker.name} attacking player health icon");
             
             try

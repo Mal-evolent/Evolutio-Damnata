@@ -65,10 +65,47 @@ public class EnemyCardSelectionHandler : IEnemyCardHandler
         return true;
     }
 
+    /// <summary>
+    /// Check if there are any entities on the specified side of the field
+    /// </summary>
+    /// <param name="isPlayerSide">True to check player side, false to check enemy side</param>
+    /// <returns>True if valid entities are present</returns>
+    private bool HasEntitiesOnField(bool isPlayerSide)
+    {
+        if (_spritePositioning == null)
+            return false;
+            
+        var entities = isPlayerSide ? _spritePositioning.PlayerEntities : _spritePositioning.EnemyEntities;
+        
+        foreach (var entity in entities)
+        {
+            var entityManager = entity?.GetComponent<EntityManager>();
+            if (entityManager != null && entityManager.placed && !entityManager.dead && !entityManager.IsFadingOut)
+            {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
     private void HandleSpellCard(int index, EntityManager entityManager, CardData cardData)
     {
         if (!_manaChecker.HasEnoughPlayerMana(cardData))
             return;
+
+        // If this is a health icon and there are entities on the field, prevent targeting
+        if (entityManager is HealthIconManager)
+        {
+            bool enemyEntitiesPresent = HasEntitiesOnField(false);
+            
+            if (enemyEntitiesPresent)
+            {
+                Debug.Log("Cannot target enemy health icon with spells while enemy monsters are on the field!");
+                ResetSelection();
+                return;
+            }
+        }
 
         _spellEffectApplier.ApplySpellEffects(entityManager, cardData, index);
         _manaChecker.DeductPlayerMana(cardData);

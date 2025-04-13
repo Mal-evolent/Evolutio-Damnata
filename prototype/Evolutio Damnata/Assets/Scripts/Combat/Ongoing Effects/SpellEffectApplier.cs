@@ -83,6 +83,16 @@ public class SpellEffectApplier : ISpellEffectApplier
             Debug.LogError("Invalid spell effect parameters");
             return;
         }
+        
+        // Special handling for health icons, which are always considered "placed"
+        bool isHealthIcon = target is HealthIconManager;
+        
+        // Only check placed status for normal entities, not health icons
+        if (!isHealthIcon && !target.placed)
+        {
+            Debug.LogError($"Cannot apply spell effect to {target.name}: target is not placed on the board");
+            return;
+        }
 
         // Create a simple data wrapper for history tracking instead of a Card MonoBehaviour
         var cardDataWrapper = new CardDataWrapper(spellData);

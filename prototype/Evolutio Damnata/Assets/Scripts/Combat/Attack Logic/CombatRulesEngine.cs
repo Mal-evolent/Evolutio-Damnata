@@ -56,7 +56,8 @@ public class CombatRulesEngine : ICombatRulesEngine
         return entities.Any(entity => 
             entity != null && 
             entity.GetComponent<EntityManager>()?.HasKeyword(Keywords.MonsterKeyword.Taunt) == true &&
-            !entity.GetComponent<EntityManager>().dead);
+            !entity.GetComponent<EntityManager>().dead &&
+            !entity.GetComponent<EntityManager>().IsFadingOut);
     }
 
     /// <summary>
@@ -67,7 +68,10 @@ public class CombatRulesEngine : ICombatRulesEngine
         return entities
             .Where(entity => entity != null)
             .Select(entity => entity.GetComponent<EntityManager>())
-            .Where(entity => entity != null && entity.HasKeyword(Keywords.MonsterKeyword.Taunt) && !entity.dead)
+            .Where(entity => entity != null && 
+                  entity.HasKeyword(Keywords.MonsterKeyword.Taunt) && 
+                  !entity.dead && 
+                  !entity.IsFadingOut)
             .ToList();
     }
 }

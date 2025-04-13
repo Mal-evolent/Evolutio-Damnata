@@ -296,33 +296,49 @@ namespace EnemyInteraction.Managers
                     
                     if (target != null)
                     {
-                        // Apply spell effects
-                        bool success = false;
+                        // Is this a health icon or a normal entity?
+                        bool isHealthIcon = target is HealthIconManager;
                         
-                        try
+                        // Only check placed status for normal entities, not health icons
+                        // Health icons are always considered "placed"
+                        if (isHealthIcon || target.placed)
                         {
-                            // Use correct method for SpellEffectApplier
-                            _spellEffectApplier.ApplySpellEffectsAI(target, card.CardType, 0);
-                            success = true;
-                        }
-                        catch (System.Exception e)
-                        {
-                            Debug.LogError($"[CardPlayManager] Error applying spell effects: {e.Message}");
-                            success = false;
-                        }
-                        
-                        if (success)
-                        {
-                            Debug.Log($"[CardPlayManager] Successfully played spell card {card.CardName} targeting {target.name}");
-                            // Update mana through the property setter
-                            _combatManager.EnemyMana -= card.CardType.ManaCost;
-                            cardSuccessfullyPlayed = true;
+                            // Apply spell effects
+                            bool success = false;
                             
-                            // Re-evaluate board state after playing a card
-                            if (_boardStateManager != null)
+                            try
                             {
-                                boardState = _boardStateManager.EvaluateBoardState();
+                                // Use correct method for SpellEffectApplier
+                                _spellEffectApplier.ApplySpellEffectsAI(target, card.CardType, 0);
+                                success = true;
                             }
+                            catch (System.Exception e)
+                            {
+                                Debug.LogError($"[CardPlayManager] Error applying spell effects: {e.Message}");
+                                success = false;
+                            }
+                            
+                            if (success)
+                            {
+                                string targetType = isHealthIcon ? 
+                                    $"{((target as HealthIconManager).IsPlayerIcon ? "Player" : "Enemy")} health icon" : 
+                                    target.name;
+                                    
+                                Debug.Log($"[CardPlayManager] Successfully played spell card {card.CardName} targeting {targetType}");
+                                // Update mana through the property setter
+                                _combatManager.EnemyMana -= card.CardType.ManaCost;
+                                cardSuccessfullyPlayed = true;
+                                
+                                // Re-evaluate board state after playing a card
+                                if (_boardStateManager != null)
+                                {
+                                    boardState = _boardStateManager.EvaluateBoardState();
+                                }
+                            }
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"[CardPlayManager] Target {target.name} is not placed on the board");
                         }
                     }
                     else
@@ -563,7 +579,24 @@ namespace EnemyInteraction.Managers
 
         private bool IsPlayableCard(Card card)
         {
-            return card != null && card.CardType.ManaCost <= _combatManager.EnemyMana;
+            if (card == null || card.CardType == null || card.CardType.ManaCost > _combatManager.EnemyMana)
+            {
+                return false;
+            }
+            
+            // Spell cards can be played in either prep or combat phase
+            if (card.CardType.IsSpellCard)
+            {
+                return _combatManager.IsEnemyPrepPhase() || _combatManager.IsEnemyCombatPhase();
+            }
+            
+            // Monster cards can only be played during prep phase
+            if (card.CardType.IsMonsterCard)
+            {
+                return _combatManager.IsEnemyPrepPhase();
+            }
+            
+            return false; // Unrecognized card type
         }
 
         private bool ValidateCombatState()
@@ -574,9 +607,10 @@ namespace EnemyInteraction.Managers
                 return false;
             }
 
-            if (!_combatManager.IsEnemyPrepPhase())
+            // Allow card playing during both prep and combat phases
+            if (!_combatManager.IsEnemyPrepPhase() && !_combatManager.IsEnemyCombatPhase())
             {
-                Debug.LogWarning("[CardPlayManager] Basic dependencies check failed - Not in EnemyPrep phase");
+                Debug.LogWarning("[CardPlayManager] Cannot play cards - Not in enemy's turn (needs to be EnemyPrep or EnemyCombat phase)");
                 return false;
             }
 

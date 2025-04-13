@@ -288,9 +288,35 @@ public class PhaseManager : IPhaseManager
         _combatManager.CurrentPhase = CombatPhase.EnemyCombat;
         Debug.Log("[PhaseManager] Enemy's Combat Phase");
         
+        // First, let the AI play spell cards during combat phase
+        Debug.Log("[PhaseManager] Enemy playing spell cards during combat phase");
+        IEnumerator playCardsCoroutine = null;
+        bool playCardsErrorOccurred = false;
+        
+        try 
+        {
+            playCardsCoroutine = _enemyActions.PlayCards();
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[PhaseManager] Error getting PlayCards coroutine in combat phase: {e.Message}\n{e.StackTrace}");
+            playCardsErrorOccurred = true;
+        }
+        
+        if (playCardsCoroutine != null && !playCardsErrorOccurred)
+        {
+            yield return RunSafely(playCardsCoroutine, "Enemy PlayCards during Combat");
+        }
+        else if (playCardsErrorOccurred)
+        {
+            Debug.LogError("[PhaseManager] _enemyActions.PlayCards() in combat phase returned null or error occurred!");
+            yield return new WaitForSeconds(0.5f); // Short delay to prevent freeze
+        }
+        
+        // Now proceed with attacks
         // Extra safety for Attack
         IEnumerator attackCoroutine = null;
-        bool errorOccurred = false;
+        bool attackErrorOccurred = false;
         
         try 
         {
@@ -299,10 +325,10 @@ public class PhaseManager : IPhaseManager
         catch (System.Exception e)
         {
             Debug.LogError($"[PhaseManager] Error getting Attack coroutine: {e.Message}\n{e.StackTrace}");
-            errorOccurred = true;
+            attackErrorOccurred = true;
         }
         
-        if (attackCoroutine == null || errorOccurred)
+        if (attackCoroutine == null || attackErrorOccurred)
         {
             Debug.LogError("[PhaseManager] _enemyActions.Attack() returned null or error occurred!");
             yield return new WaitForSeconds(0.5f); // Short delay to prevent freeze

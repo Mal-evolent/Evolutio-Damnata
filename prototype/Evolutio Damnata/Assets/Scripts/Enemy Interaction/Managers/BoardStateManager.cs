@@ -92,12 +92,16 @@ namespace EnemyInteraction.Managers
             var state = new BoardState
             {
                 EnemyMonsters = _spritePositioning.EnemyEntities
-                    ?.Where(e => e != null && e.GetComponent<EntityManager>() != null && !e.GetComponent<EntityManager>().dead)
+                    ?.Where(e => e != null && e.GetComponent<EntityManager>() != null && 
+                           !e.GetComponent<EntityManager>().dead && 
+                           e.GetComponent<EntityManager>().placed)
                     ?.Select(e => e.GetComponent<EntityManager>())
                     ?.ToList(),
 
                 PlayerMonsters = _spritePositioning.PlayerEntities
-                    ?.Where(e => e != null && e.GetComponent<EntityManager>() != null && !e.GetComponent<EntityManager>().dead)
+                    ?.Where(e => e != null && e.GetComponent<EntityManager>() != null && 
+                           !e.GetComponent<EntityManager>().dead && 
+                           e.GetComponent<EntityManager>().placed)
                     ?.Select(e => e.GetComponent<EntityManager>())
                     ?.ToList(),
 
