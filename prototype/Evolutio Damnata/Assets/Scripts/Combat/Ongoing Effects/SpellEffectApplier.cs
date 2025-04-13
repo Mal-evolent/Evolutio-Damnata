@@ -1,22 +1,39 @@
 using UnityEngine;
 
+// Simple data wrapper class for tracking card usage in CardHistory
+// Not a MonoBehaviour so it can be created with 'new'
+public class CardDataWrapper
+{
+    public string CardName { get; set; }
+    public string Description { get; set; }
+
+    public CardDataWrapper(CardData cardData)
+    {
+        CardName = cardData.CardName;
+        Description = cardData.Description;
+    }
+}
+
 public class SpellEffectApplier : ISpellEffectApplier
 {
     private readonly ICardManager _cardManager;
     private readonly IEffectApplier _effectApplier;
     private readonly IDamageVisualizer _damageVisualizer;
     private readonly GameObject _damageNumberPrefab;
+    private readonly ICardLibrary _cardLibrary;
 
     public SpellEffectApplier(
         ICardManager cardManager,
         IEffectApplier effectApplier,
         IDamageVisualizer damageVisualizer,
-        GameObject damageNumberPrefab)
+        GameObject damageNumberPrefab,
+        ICardLibrary cardLibrary)
     {
         _cardManager = cardManager ?? throw new System.ArgumentNullException(nameof(cardManager));
         _effectApplier = effectApplier ?? throw new System.ArgumentNullException(nameof(effectApplier));
         _damageVisualizer = damageVisualizer ?? throw new System.ArgumentNullException(nameof(damageVisualizer));
         _damageNumberPrefab = damageNumberPrefab ?? throw new System.ArgumentNullException(nameof(damageNumberPrefab));
+        _cardLibrary = cardLibrary ?? throw new System.ArgumentNullException(nameof(cardLibrary));
     }
 
     public void ApplySpellEffects(EntityManager target, CardData spellData, int positionIndex)
@@ -67,16 +84,15 @@ public class SpellEffectApplier : ISpellEffectApplier
             return;
         }
 
-        // Create a temporary SpellCard for history tracking
-        var tempSpellCard = new SpellCard();
-        InitializeSpellCard(tempSpellCard, spellData);
-
+        // Create a simple data wrapper for history tracking instead of a Card MonoBehaviour
+        var cardDataWrapper = new CardDataWrapper(spellData);
+        
         // Record the spell card play in history
         var combatManager = _cardManager as ICombatManager;
         if (combatManager != null)
         {
             CardHistory.Instance?.RecordCardPlay(
-                tempSpellCard,
+                cardDataWrapper,
                 target,
                 combatManager.TurnCount,
                 spellData.ManaCost

@@ -57,29 +57,68 @@ public class CombatStage : MonoBehaviour, ICombatStage
 
     private void Awake()
     {
-        // Initialize interface references first
+        Debug.Log("[CombatStage] Starting initialization...");
+        
+        // Initialize core components first
+        if (_spritePositioningComponent == null)
+        {
+            Debug.LogError("[CombatStage] SpritePositioning component is not assigned in inspector!");
+            enabled = false;
+            return;
+        }
         _spritePositioning = _spritePositioningComponent;
+        
+        // Set all component references first
         _cardManager = _cardManagerComponent;
         _combatManager = _combatManagerComponent;
         _cardOutlineManager = _cardOutlineManagerComponent;
 
         // Initialize combat systems
         attackLimiter = new AttackLimiter();
+        
+        // Ensure _cardManager is set before creating OngoingEffectApplier
         _ongoingEffectApplier = new OngoingEffectApplier(_cardManager);
         
-        // Initialize SpellEffectApplier first since other components depend on it
+        // Initialize SpellEffectApplier with required dependencies
+        if (_damageVisualizer == null || _damageNumberPrefab == null)
+        {
+            Debug.LogError("[CombatStage] Required components for SpellEffectApplier are not assigned!");
+            enabled = false;
+            return;
+        }
+        
+        // Now _cardManager should be properly set before creating SpellEffectApplier
         _spellEffectApplier = new SpellEffectApplier(
             _cardManager,
             _ongoingEffectApplier,
             _damageVisualizer,
-            _damageNumberPrefab
+            _damageNumberPrefab,
+            _cardLibrary
         );
         
+        // Initialize other services
         InitializeServices();
     }
 
     private void InitializeServices()
     {
+        Debug.Log("[CombatStage] Initializing services...");
+        
+        if (_cardManagerComponent == null || _cardLibrary == null || _combatManagerComponent == null)
+        {
+            Debug.LogError("[CombatStage] Required components are not assigned in inspector!");
+            enabled = false;
+            return;
+        }
+
+        // Ensure references are set before proceeding
+        if (_cardManager == null || _combatManager == null || _cardOutlineManager == null)
+        {
+            Debug.LogError("[CombatStage] Required interface references are not set!");
+            enabled = false;
+            return;
+        }
+
         var combatRulesEngine = new CombatRulesEngine();
 
         var spawnerFactory = new CardSpawnerFactory(
@@ -104,27 +143,45 @@ public class CombatStage : MonoBehaviour, ICombatStage
             _cardManager
         );
 
-        _cardSelectionHandler = gameObject.AddComponent<CardSelectionHandler>();
-        _cardSelectionHandler.Initialize(
-            _cardManager,
-            _combatManager,
-            _cardOutlineManager,
-            _spritePositioning,
-            this,
-            _playerCardSpawner,
-            manaChecker,
-            _spellEffectApplier
-        );
+        // Create CardSelectionHandler with null checks
+        if (_spritePositioning != null && _spellEffectApplier != null)
+        {
+            _cardSelectionHandler = gameObject.AddComponent<CardSelectionHandler>();
+            _cardSelectionHandler.Initialize(
+                _cardManager,
+                _combatManager,
+                _cardOutlineManager,
+                _spritePositioning,
+                this,
+                _playerCardSpawner,
+                manaChecker,
+                _spellEffectApplier
+            );
 
-        var buttonCreatorComponent = gameObject.AddComponent<ButtonCreator>();
-        buttonCreatorComponent.Initialize(
-            _battleField,
-            _spritePositioning,
-            _cardSelectionHandler
-        );
-        _buttonCreator = buttonCreatorComponent;
+            // Only create ButtonCreator if CardSelectionHandler was created successfully
+            if (_battleField != null && _cardSelectionHandler != null)
+            {
+                var buttonCreatorComponent = gameObject.AddComponent<ButtonCreator>();
+                buttonCreatorComponent.Initialize(
+                    _battleField,
+                    _spritePositioning,
+                    _cardSelectionHandler
+                );
+                _buttonCreator = buttonCreatorComponent;
+            }
+            else
+            {
+                Debug.LogError("[CombatStage] Cannot initialize ButtonCreator - missing dependencies!");
+            }
+        }
+        else
+        {
+            Debug.LogError("[CombatStage] Cannot initialize CardSelectionHandler - missing dependencies!");
+        }
 
         InitializeSelectionEffectHandlers();
+        
+        Debug.Log("[CombatStage] Services initialized successfully");
     }
 
     public void UpdateManaUI()
@@ -140,10 +197,24 @@ public class CombatStage : MonoBehaviour, ICombatStage
 
     private void InitializeSelectionEffectHandlers()
     {
-        _playerSelectionEffectHandler = new PlayerSelectionEffectHandler(
-            _spritePositioning,
-            _cardManager,
-            new Color(0.5f, 1f, 0.5f, 1f));
+        if (_spritePositioning == null)
+        {
+            Debug.LogError("[CombatStage] Cannot initialize selection effect handlers - SpritePositioning is null!");
+            return;
+        }
+
+        // Only create player selection handler if cardManager is available
+        if (_cardManager != null)
+        {
+            _playerSelectionEffectHandler = new PlayerSelectionEffectHandler(
+                _spritePositioning,
+                _cardManager,
+                new Color(0.5f, 1f, 0.5f, 1f));
+        }
+        else
+        {
+            Debug.LogWarning("[CombatStage] Cannot create PlayerSelectionEffectHandler - CardManager is null!");
+        }
 
         _enemySelectionEffectHandler = new EnemySelectionEffectHandler(
             _spritePositioning,

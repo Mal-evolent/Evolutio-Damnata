@@ -148,70 +148,133 @@ namespace EnemyInteraction
             Debug.Log("[EnemyActions] Found CombatStage");
 
             // Wait for CombatStage to be ready with timeout
-            float spritePositioningTimeout = 3f;
+            float spritePositioningTimeout = 5f; // Increased from 3f to give more time
             float spritePositioningTimer = 0f;
             
-            while ((_combatStage.SpritePositioning == null || _combatStage.SpellEffectApplier == null) 
-                  && spritePositioningTimer < spritePositioningTimeout && _initializationTimer < _maxInitializationTime)
+            // Try to get SpritePositioning first
+            while (_combatStage.SpritePositioning == null && spritePositioningTimer < spritePositioningTimeout && _initializationTimer < _maxInitializationTime)
             {
-                Debug.Log("[EnemyActions] Waiting for CombatStage to be fully initialized...");
+                Debug.Log("[EnemyActions] Waiting for CombatStage.SpritePositioning...");
                 yield return new WaitForSeconds(_componentWaitTime);
                 spritePositioningTimer += _componentWaitTime;
                 _initializationTimer += _componentWaitTime;
             }
             
-            if (_combatStage.SpritePositioning == null || _combatStage.SpellEffectApplier == null)
+            if (_combatStage.SpritePositioning == null)
             {
-                Debug.LogError("[EnemyActions] CombatStage dependencies not available within timeout period!");
+                Debug.LogError("[EnemyActions] CombatStage.SpritePositioning not available within timeout period!");
                 yield break;
             }
-            Debug.Log("[EnemyActions] CombatStage is ready");
-
-            // Get dependencies from CombatStage
+            
+            // Get SpritePositioning
             _spritePositioning = _combatStage.SpritePositioning as SpritePositioning;
-            _cardLibrary = _combatStage.CardLibrary;
-            _spellEffectApplier = _combatStage.SpellEffectApplier;
-            _attackLimiter = _combatStage.GetAttackLimiter();
-            Debug.Log("[EnemyActions] Got CombatStage dependencies");
+            Debug.Log("[EnemyActions] Got SpritePositioning");
+            
+            // Reset timer for SpellEffectApplier
+            spritePositioningTimer = 0f;
+            
+            // Try to get SpellEffectApplier separately with timeout
+            while (_combatStage.SpellEffectApplier == null && spritePositioningTimer < spritePositioningTimeout && _initializationTimer < _maxInitializationTime)
+            {
+                Debug.Log("[EnemyActions] Waiting for CombatStage.SpellEffectApplier...");
+                yield return new WaitForSeconds(_componentWaitTime);
+                spritePositioningTimer += _componentWaitTime;
+                _initializationTimer += _componentWaitTime;
+            }
+            
+            // Continue even if SpellEffectApplier is null - we'll check later
+            if (_combatStage.SpellEffectApplier == null)
+            {
+                Debug.LogWarning("[EnemyActions] CombatStage.SpellEffectApplier not available - will try to initialize without it");
+            }
+            else
+            {
+                _spellEffectApplier = _combatStage.SpellEffectApplier;
+                Debug.Log("[EnemyActions] Got SpellEffectApplier");
+            }
 
+            // Get other dependencies from CombatStage
+            _cardLibrary = _combatStage.CardLibrary;
+            if (_cardLibrary == null)
+            {
+                Debug.LogWarning("[EnemyActions] CardLibrary not available from CombatStage");
+            }
+            
+            _attackLimiter = _combatStage.GetAttackLimiter();
+            if (_attackLimiter == null)
+            {
+                Debug.LogWarning("[EnemyActions] AttackLimiter not available from CombatStage");
+            }
+            
             // Get EnemyDeck from CombatManager
             _enemyDeck = _combatManager.EnemyDeck;
-            Debug.Log("[EnemyActions] Got EnemyDeck");
+            if (_enemyDeck == null)
+            {
+                Debug.LogWarning("[EnemyActions] EnemyDeck not available from CombatManager");
+            }
+            else
+            {
+                Debug.Log("[EnemyActions] Got EnemyDeck");
+            }
         }
 
         private bool ValidateCoreDependencies()
         {
-            if (_combatManager == null)
+            // Required core components
+            bool hasCombatManager = _combatManager != null;
+            bool hasSpritePositioning = _spritePositioning != null;
+            
+            // Non-critical components
+            bool hasEnemyDeck = _enemyDeck != null;
+            bool hasCardLibrary = _cardLibrary != null;
+            bool hasCombatStage = _combatStage != null;
+            bool hasSpellEffectApplier = _spellEffectApplier != null;
+            
+            // Log errors for critical missing components
+            if (!hasCombatManager)
             {
-                Debug.LogError($"[{nameof(EnemyActions)}] Failed to find CombatManager in scene!");
-                return false;
+                Debug.LogError($"[{nameof(EnemyActions)}] CRITICAL: Failed to find CombatManager in scene!");
             }
-            if (_spritePositioning == null)
+            
+            if (!hasSpritePositioning)
             {
-                Debug.LogError($"[{nameof(EnemyActions)}] Failed to get SpritePositioning from CombatStage!");
-                return false;
+                Debug.LogError($"[{nameof(EnemyActions)}] CRITICAL: Failed to get SpritePositioning from CombatStage!");
             }
-            if (_enemyDeck == null)
+            
+            // Log warnings for non-critical missing components
+            if (!hasEnemyDeck)
             {
-                Debug.LogError($"[{nameof(EnemyActions)}] Failed to get EnemyDeck from CombatManager!");
-                return false;
+                Debug.LogWarning($"[{nameof(EnemyActions)}] Non-critical: EnemyDeck is not available yet from CombatManager.");
             }
-            if (_cardLibrary == null)
+            
+            if (!hasCardLibrary)
             {
-                Debug.LogError($"[{nameof(EnemyActions)}] Failed to get CardLibrary from CombatStage!");
-                return false;
+                Debug.LogWarning($"[{nameof(EnemyActions)}] Non-critical: CardLibrary is not available yet from CombatStage.");
             }
-            if (_combatStage == null)
+            
+            if (!hasCombatStage)
             {
-                Debug.LogError($"[{nameof(EnemyActions)}] Failed to find CombatStage in scene!");
-                return false;
+                Debug.LogWarning($"[{nameof(EnemyActions)}] Non-critical: CombatStage reference is null but might be recovered later.");
             }
-            if (_spellEffectApplier == null)
+            
+            if (!hasSpellEffectApplier)
             {
-                Debug.LogError($"[{nameof(EnemyActions)}] Failed to get SpellEffectApplier from CombatStage!");
-                return false;
+                Debug.LogWarning($"[{nameof(EnemyActions)}] Non-critical: SpellEffectApplier is not available yet from CombatStage.");
             }
-            return true;
+            
+            // We MUST have Combat Manager and SpritePositioning to proceed
+            bool hasCriticalComponents = hasCombatManager && hasSpritePositioning;
+            
+            if (!hasCriticalComponents)
+            {
+                Debug.LogError($"[{nameof(EnemyActions)}] One or more critical components are missing. AI initialization cannot continue.");
+            }
+            else
+            {
+                Debug.Log($"[{nameof(EnemyActions)}] Critical components are available. Continuing initialization.");
+            }
+            
+            return hasCriticalComponents;
         }
 
         public IEnumerator PlayCards()
