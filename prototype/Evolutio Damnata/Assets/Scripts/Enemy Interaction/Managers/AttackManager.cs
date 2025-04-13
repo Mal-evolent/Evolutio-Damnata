@@ -213,35 +213,66 @@ namespace EnemyInteraction.Managers
             List<EntityManager> enemyEntities = null;
             List<EntityManager> playerEntities = null;
             HealthIconManager playerHealthIcon = null;
-            bool hasEntities = false;
+            bool hasEnemyEntities = false;
+            bool hasPlayerEntities = false;
             bool hasTargets = false;
             bool errorOccurred = false;
             
             try
             {
-                // Get all enemy entities that can attack
-                enemyEntities = _spritePositioning.EnemyEntities
-                    .Where(entity => entity != null)
-                    .Select(entity => entity.GetComponent<EntityManager>())
-                    .Where(entity => entity != null && entity.placed && !entity.dead && 
-                          (_attackLimiter != null ? _attackLimiter.CanAttack(entity) : !entity.HasAttacked))
-                    .ToList();
+                // Check if enemy entities are present using our helper method
+                hasEnemyEntities = HasEntitiesOnField(false);
+                
+                if (hasEnemyEntities)
+                {
+                    // Get all enemy entities that can attack
+                    enemyEntities = _spritePositioning.EnemyEntities
+                        .Where(entity => entity != null)
+                        .Select(entity => entity.GetComponent<EntityManager>())
+                        .Where(entity => entity != null && entity.placed && !entity.dead && !entity.IsFadingOut && 
+                              (_attackLimiter != null ? _attackLimiter.CanAttack(entity) : !entity.HasAttacked))
+                        .ToList();
+                        
+                    hasEnemyEntities = enemyEntities != null && enemyEntities.Count > 0;
+                }
+                
+                // Check if player entities are present using our helper method
+                hasPlayerEntities = HasEntitiesOnField(true);
+                
+                if (hasPlayerEntities)
+                {
+                    // Get all potential player entity targets and filter out any that are dead or null
+                    playerEntities = _spritePositioning.PlayerEntities
+                        .Where(entity => entity != null)
+                        .Select(entity => entity.GetComponent<EntityManager>())
+                        .Where(entity => entity != null && entity.placed && !entity.dead && !entity.IsFadingOut)
+                        .ToList();
                     
-                hasEntities = enemyEntities != null && enemyEntities.Count > 0;
+                    // Update hasPlayerEntities based on the actual filtered list
+                    hasPlayerEntities = playerEntities != null && playerEntities.Count > 0;
+                }
                 
-                // Get all potential targets
-                playerEntities = _spritePositioning.PlayerEntities
-                    .Where(entity => entity != null)
-                    .Select(entity => entity.GetComponent<EntityManager>())
-                    .Where(entity => entity != null && entity.placed && !entity.dead)
-                    .ToList();
+                // If after filtering we have no player entities, check if the health icon is available
+                if (!hasPlayerEntities)
+                {
+                    // Get player health icon as a potential target
+                    playerHealthIcon = GameObject.FindGameObjectWithTag("Player")?.GetComponent<HealthIconManager>();
+                    hasTargets = playerHealthIcon != null;
+                    
+                    if (hasTargets)
+                    {
+                        Debug.Log("[AttackManager] No valid player entities, targeting health icon");
+                    }
+                }
+                else
+                {
+                    hasTargets = true;
+                    
+                    // Also get the health icon reference even though we'll attack entities first
+                    playerHealthIcon = GameObject.FindGameObjectWithTag("Player")?.GetComponent<HealthIconManager>();
+                }
                 
-                // Get player health icon as a potential target
-                playerHealthIcon = GameObject.FindGameObjectWithTag("Player")?.GetComponent<HealthIconManager>();
-                
-                hasTargets = (playerEntities != null && playerEntities.Count > 0) || playerHealthIcon != null;
-                
-                if (!hasEntities)
+                if (!hasEnemyEntities)
                 {
                     Debug.Log("[AttackManager] No enemy entities available to attack");
                 }
@@ -251,7 +282,8 @@ namespace EnemyInteraction.Managers
                 }
                 else
                 {
-                    Debug.Log($"[AttackManager] Enemy has {enemyEntities.Count} entities that can attack, against {playerEntities.Count} player entities");
+                    int playerEntityCount = playerEntities?.Count ?? 0;
+                    Debug.Log($"[AttackManager] Enemy has {enemyEntities.Count} entities that can attack, against {playerEntityCount} player entities");
                 }
             }
             catch (System.Exception e)
@@ -261,7 +293,7 @@ namespace EnemyInteraction.Managers
             }
             
             // If we encountered an error or have no entities or no targets, just exit with a small delay
-            if (errorOccurred || !hasEntities || !hasTargets)
+            if (errorOccurred || !hasEnemyEntities || !hasTargets)
             {
                 yield return new WaitForSeconds(0.5f);
                 Debug.Log("[AttackManager] Attack completed - no action taken");
@@ -285,13 +317,26 @@ namespace EnemyInteraction.Managers
                 };
             }
             
+            // Final validation before proceeding with attacks
+            if (enemyEntities == null || enemyEntities.Count == 0)
+            {
+                Debug.LogWarning("[AttackManager] No enemy entities available for attacking after initialization");
+                yield return new WaitForSeconds(0.5f);
+                Debug.Log("[AttackManager] Attack completed - no action taken");
+                yield break;
+            }
+            
             // Process each entity's attack
             foreach (var attacker in enemyEntities)
             {
                 yield return new WaitForSeconds(0.3f); // Add delay for visual effect
                 
                 // Check for taunt units - must attack these first
-                bool hasTaunts = playerEntities.Any(e => e.HasKeyword(Keywords.MonsterKeyword.Taunt));
+                bool hasTaunts = false;
+                if (playerEntities != null && playerEntities.Count > 0)
+                {
+                    hasTaunts = playerEntities.Any(e => e != null && e.HasKeyword(Keywords.MonsterKeyword.Taunt));
+                }
                 
                 // Select target based on combat rules and AI strategy
                 EntityManager targetEntity = null;
@@ -299,7 +344,7 @@ namespace EnemyInteraction.Managers
                 if (hasTaunts)
                 {
                     // Must attack taunt units first
-                    var tauntTargets = playerEntities.Where(e => e.HasKeyword(Keywords.MonsterKeyword.Taunt)).ToList();
+                    var tauntTargets = playerEntities.Where(e => e != null && e.HasKeyword(Keywords.MonsterKeyword.Taunt)).ToList();
                     targetEntity = SelectBestTarget(attacker, tauntTargets, boardState);
                     Debug.Log($"[AttackManager] {attacker.name} must attack taunt unit {targetEntity?.name ?? "unknown"}");
                 }
@@ -310,34 +355,20 @@ namespace EnemyInteraction.Managers
                     
                     if (attackHealthIcon && playerHealthIcon != null)
                     {
-                        Debug.Log($"[AttackManager] {attacker.name} attacking player health icon");
-                        // Perform attack against health icon
-                        if (_combatStage != null)
-                        {
-                            _combatStage.HandleMonsterAttack(attacker, playerHealthIcon);
-                            // Register the attack with the AttackLimiter
-                            if (_attackLimiter != null)
-                            {
-                                _attackLimiter.RegisterAttack(attacker);
-                            }
-                            else
-                            {
-                                attacker.HasAttacked = true;
-                            }
-                            Debug.Log($"[AttackManager] {attacker.name} successfully attacked player health for {attacker.GetAttackPower()} damage");
-                        }
-                        else
-                        {
-                            Debug.LogError("[AttackManager] Cannot attack health icon - CombatStage is null");
-                        }
-                        
+                        // Use our dedicated method for health icon attacks
+                        AttackPlayerHealthIcon(attacker, playerHealthIcon);
                         continue; // Skip to next attacker
                     }
-                    else
+                    else if (playerEntities != null && playerEntities.Count > 0)
                     {
                         // Attack a player entity
                         targetEntity = SelectBestTarget(attacker, playerEntities, boardState);
                         Debug.Log($"[AttackManager] {attacker.name} targeting {targetEntity?.name ?? "unknown"}");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[AttackManager] {attacker.name} has no valid targets to attack");
+                        continue; // Skip to next attacker
                     }
                 }
                 
@@ -361,9 +392,12 @@ namespace EnemyInteraction.Managers
                     {
                         boardState = _boardStateManager.EvaluateBoardState();
                         
-                        // Refresh our player entities list (remove dead entities)
-                        playerEntities = playerEntities.Where(e => !e.dead).ToList();
-                        hasTargets = (playerEntities != null && playerEntities.Count > 0) || playerHealthIcon != null;
+                        // Refresh our player entities list to remove dead or dying entities
+                        playerEntities = RefreshPlayerEntities(playerEntities);
+                        
+                        // Check if we have any valid targets left
+                        hasPlayerEntities = playerEntities.Count > 0;
+                        hasTargets = hasPlayerEntities || playerHealthIcon != null;
                         
                         // If no more targets, exit early
                         if (!hasTargets)
@@ -384,63 +418,64 @@ namespace EnemyInteraction.Managers
             Debug.Log("[AttackManager] Attack completed successfully");
         }
         
-        private bool ShouldAttackHealthIcon(EntityManager attacker, List<EntityManager> playerEntities, HealthIconManager playerHealthIcon, BoardState boardState)
+        /// <summary>
+        /// Checks if there are any active entities on the specified side
+        /// </summary>
+        /// <param name="isPlayerSide">True to check player side, false to check enemy side</param>
+        /// <returns>True if entities are present on the field</returns>
+        private bool HasEntitiesOnField(bool isPlayerSide)
         {
-            // Logic to decide whether to attack player health directly or target a monster
-            
-            // Always go for the kill if possible
-            if (playerHealthIcon != null && attacker.GetAttackPower() >= playerHealthIcon.GetHealth())
-            {
-                return true;
-            }
-            
-            // If player has no entities, always go for health
-            if (playerEntities == null || playerEntities.Count == 0)
-            {
-                return true;
-            }
-            
-            // Check if attacker is ranged (doesn't take counter-attack damage)
-            bool isRanged = attacker.HasKeyword(Keywords.MonsterKeyword.Ranged);
-            
-            // If not ranged, consider if attacking creatures would result in death
-            if (!isRanged)
-            {
-                // Check if any attack would lead to trading our creature
-                bool wouldDieToAny = playerEntities.Any(entity => 
-                    entity.GetAttackPower() >= attacker.GetHealth() && 
-                    attacker.GetAttackPower() < entity.GetHealth());
+            if (_spritePositioning == null)
+                return false;
                 
-                // If attacking creatures would kill our creature with no gain, prefer health icon
-                if (wouldDieToAny)
+            var entities = isPlayerSide ? _spritePositioning.PlayerEntities : _spritePositioning.EnemyEntities;
+            
+            foreach (var entity in entities)
+            {
+                var entityManager = entity?.GetComponent<EntityManager>();
+                if (entityManager != null && entityManager.placed && !entityManager.dead && !entityManager.IsFadingOut)
                 {
-                    return Random.value < 0.7f; // 70% chance to go for health instead
+                    return true;
                 }
             }
             
-            // If we have a significant health advantage, be more aggressive
-            if (boardState != null && boardState.EnemyHealth > boardState.PlayerHealth * 1.5f)
+            return false;
+        }
+        
+        private bool ShouldAttackHealthIcon(EntityManager attacker, List<EntityManager> playerEntities, HealthIconManager playerHealthIcon, BoardState boardState)
+        {
+            if (attacker == null)
             {
-                // 70% chance to attack health icon directly when we have a big lead
-                return Random.value < 0.7f;
+                Debug.LogError("[AttackManager] Cannot decide attack target: attacker is null");
+                return false;
             }
             
-            // If player health is low, be aggressive
-            if (playerHealthIcon != null && playerHealthIcon.GetHealth() < 10)
+            if (playerHealthIcon == null)
             {
-                // 80% chance to go for the kill when player health is low
-                return Random.value < 0.8f;
+                Debug.LogWarning("[AttackManager] Cannot attack health icon: health icon is null");
+                return false;
             }
             
-            // In early game (turns 1-3), prefer to attack entities to control the board
-            if (boardState != null && boardState.TurnCount <= 3)
+            // Check if player has any active entities on the field using the helper method
+            bool playerEntitiesPresent = HasEntitiesOnField(true);
+            
+            // Alternative check if the helper method failed or returned inconsistent results
+            if (!playerEntitiesPresent && playerEntities != null && playerEntities.Count > 0)
             {
-                // Only 20% chance to attack health icon in early game
-                return Random.value < 0.2f;
+                // Double-check with the actual list if there are any valid entities
+                playerEntitiesPresent = playerEntities.Any(e => e != null && !e.dead && !e.IsFadingOut);
             }
             
-            // By default, 40% chance to attack health icon directly
-            return Random.value < 0.4f;
+            // Always prioritize attacking player monsters if they exist
+            if (playerEntitiesPresent)
+            {
+                // Never attack the health icon directly if player has monsters on the field
+                return false;
+            }
+            
+            // If no player entities exist, we must attack the health icon
+            Debug.Log("[AttackManager] No player entities on field, attacking health icon directly");
+            return true;
         }
 
         private bool ValidateCombatState()
@@ -462,20 +497,65 @@ namespace EnemyInteraction.Managers
 
         private EntityManager SelectBestTarget(EntityManager attacker, List<EntityManager> targets, BoardState boardState)
         {
-            if (attacker == null || targets == null || targets.Count == 0)
+            if (attacker == null)
+            {
+                Debug.LogError("[AttackManager] Cannot select target: attacker is null");
                 return null;
+            }
+            
+            if (targets == null || targets.Count == 0)
+            {
+                Debug.LogWarning($"[AttackManager] No valid targets available for {attacker.name}");
+                return null;
+            }
+
+            // Filter out any null, dead, or fading entities
+            var validTargets = targets.Where(t => t != null && !t.dead && !t.IsFadingOut).ToList();
+            
+            if (validTargets.Count == 0)
+            {
+                Debug.LogWarning($"[AttackManager] All targets were null or dead for {attacker.name}");
+                return null;
+            }
+            
+            // If only one target, return it immediately
+            if (validTargets.Count == 1)
+            {
+                return validTargets[0];
+            }
 
             EntityManager bestTarget = null;
             float bestScore = float.MinValue;
 
-            foreach (var target in targets.Where(t => t != null))
+            foreach (var target in validTargets)
             {
-                float score = EvaluateTarget(attacker, target, boardState);
-                if (score > bestScore)
+                try
                 {
-                    bestScore = score;
-                    bestTarget = target;
+                    // Double-check the entity is still valid right before evaluation
+                    if (target == null || target.dead || target.IsFadingOut)
+                    {
+                        continue;
+                    }
+                    
+                    float score = EvaluateTarget(attacker, target, boardState);
+                    if (score > bestScore)
+                    {
+                        bestScore = score;
+                        bestTarget = target;
+                    }
                 }
+                catch (System.Exception e)
+                {
+                    Debug.LogError($"[AttackManager] Error evaluating target {target?.name ?? "unknown"}: {e.Message}");
+                    // Continue with next target
+                }
+            }
+
+            // Final validation of the selected target
+            if (bestTarget != null && (bestTarget.dead || bestTarget.IsFadingOut))
+            {
+                Debug.LogWarning($"[AttackManager] Best target for {attacker.name} is dead or dying, returning null");
+                return null;
             }
 
             return bestTarget;
@@ -558,6 +638,93 @@ namespace EnemyInteraction.Managers
             }
 
             return score;
+        }
+
+        /// <summary>
+        /// Handles an enemy entity attacking the player's health icon
+        /// </summary>
+        /// <param name="attacker">The enemy entity performing the attack</param>
+        /// <param name="healthIcon">The player's health icon</param>
+        /// <returns>True if attack was successful</returns>
+        private bool AttackPlayerHealthIcon(EntityManager attacker, HealthIconManager healthIcon)
+        {
+            if (attacker == null)
+            {
+                Debug.LogError("[AttackManager] Cannot attack health icon: attacker is null");
+                return false;
+            }
+            
+            if (healthIcon == null)
+            {
+                Debug.LogError("[AttackManager] Cannot attack health icon: health icon is null");
+                return false;
+            }
+            
+            if (_combatStage == null)
+            {
+                Debug.LogError("[AttackManager] Cannot attack health icon: CombatStage is null");
+                return false;
+            }
+            
+            Debug.Log($"[AttackManager] {attacker.name} attacking player health icon");
+            
+            try
+            {
+                // Perform attack against health icon
+                _combatStage.HandleMonsterAttack(attacker, healthIcon);
+                
+                // Register the attack with the AttackLimiter
+                if (_attackLimiter != null)
+                {
+                    _attackLimiter.RegisterAttack(attacker);
+                }
+                else
+                {
+                    attacker.HasAttacked = true;
+                }
+                
+                Debug.Log($"[AttackManager] {attacker.name} successfully attacked player health for {attacker.GetAttackPower()} damage");
+                return true;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[AttackManager] Error attacking health icon: {e.Message}\n{e.StackTrace}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Safely refreshes the list of player entities by filtering out any that are dead or dying
+        /// </summary>
+        /// <param name="currentEntities">The current list of player entities</param>
+        /// <returns>A filtered list of valid player entities</returns>
+        private List<EntityManager> RefreshPlayerEntities(List<EntityManager> currentEntities)
+        {
+            if (currentEntities == null || currentEntities.Count == 0)
+                return new List<EntityManager>();
+
+            try
+            {
+                // Filter out any entities that are null, dead, or fading out
+                return currentEntities
+                    .Where(e => e != null && !e.dead && !e.IsFadingOut)
+                    .ToList();
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[AttackManager] Error refreshing player entities: {ex.Message}");
+                
+                // Manual fallback in case LINQ fails
+                var result = new List<EntityManager>();
+                foreach (var entity in currentEntities)
+                {
+                    if (entity != null && !entity.dead && !entity.IsFadingOut)
+                    {
+                        result.Add(entity);
+                    }
+                }
+                return result;
+            }
         }
     }
 } 

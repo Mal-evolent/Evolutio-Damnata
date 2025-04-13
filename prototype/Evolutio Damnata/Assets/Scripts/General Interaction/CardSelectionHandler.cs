@@ -139,55 +139,73 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
         ResetAllMonsterTints();
     }
 
-    public void OnEnemyButtonClick(int index)
+    /// <summary>
+    /// Checks if there are any active entities on the specified side
+    /// </summary>
+    /// <param name="isPlayerSide">True to check player side, false to check enemy side</param>
+    /// <returns>True if entities are present on the field</returns>
+    private bool HasEntitiesOnField(bool isPlayerSide)
     {
-        // Validate if any enemy entities are present on the field
-        bool enemyEntitiesPresent = false;
-        foreach (var entity in _spritePositioning.EnemyEntities)
+        var entities = isPlayerSide ? _spritePositioning.PlayerEntities : _spritePositioning.EnemyEntities;
+        
+        foreach (var entity in entities)
         {
             var entityManager = entity?.GetComponent<EntityManager>();
-            if (entityManager != null && entityManager.placed)
+            if (entityManager != null && entityManager.placed && !entityManager.dead)
             {
-                enemyEntitiesPresent = true;
-                break;
+                return true;
             }
         }
+        
+        return false;
+    }
 
+    /// <summary>
+    /// Handle a player's attempt to attack the enemy health icon
+    /// Ensures the attack only occurs if valid (no enemy entities on field)
+    /// </summary>
+    private void TryAttackEnemyHealthIcon()
+    {
+        // Enforce targeting rules - health icon can only be targeted when no enemy entities are present
+        if (HasEntitiesOnField(false))
+        {
+            Debug.Log("Cannot target enemy health while enemy entities are on the field!");
+            return;
+        }
+
+        // Attempt to locate and target the enemy health icon
+        var enemyHealthIcon = GameObject.FindGameObjectWithTag("Enemy")?.GetComponent<HealthIconManager>();
+        
+        if (enemyHealthIcon != null)
+        {
+            // Process spell card targeting if applicable
+            if (_cardManager.CurrentSelectedCard != null)
+            {
+                var cardUI = _cardManager.CurrentSelectedCard.GetComponent<CardUI>();
+                if (cardUI?.Card?.CardType?.IsSpellCard == true)
+                {
+                    // Check if we're in a player phase before allowing spell card play
+                    if (!_combatManager.IsPlayerPrepPhase() && !_combatManager.IsPlayerCombatPhase())
+                    {
+                        Debug.Log("Spell cards can only be played during your turn!");
+                        return;
+                    }
+                    _enemyCardSelectionHandler.HandleEnemyCardSelection(-1, enemyHealthIcon);
+                    return;
+                }
+            }
+            HandleHealthIconAttack(enemyHealthIcon);
+            return;
+        }
+        Debug.Log("Could not find enemy health icon to target");
+    }
+
+    public void OnEnemyButtonClick(int index)
+    {
         // Handle health icon targeting (index -1 represents health icon click)
         if (index == -1)
         {
-            // Enforce targeting rules - health icon can only be targeted when no enemy entities are present
-            if (enemyEntitiesPresent)
-            {
-                Debug.Log("Cannot target enemy health while enemy entities are on the field!");
-                return;
-            }
-
-            // Attempt to locate and target the enemy health icon
-            var enemyHealthIcon = GameObject.FindGameObjectWithTag("Enemy")?.GetComponent<HealthIconManager>();
-            
-            if (enemyHealthIcon != null)
-            {
-                // Process spell card targeting if applicable
-                if (_cardManager.CurrentSelectedCard != null)
-                {
-                    var cardUI = _cardManager.CurrentSelectedCard.GetComponent<CardUI>();
-                    if (cardUI?.Card?.CardType?.IsSpellCard == true)
-                    {
-                        // Check if we're in a player phase before allowing spell card play
-                        if (!_combatManager.IsPlayerPrepPhase() && !_combatManager.IsPlayerCombatPhase())
-                        {
-                            Debug.Log("Spell cards can only be played during your turn!");
-                            return;
-                        }
-                        _enemyCardSelectionHandler.HandleEnemyCardSelection(index, enemyHealthIcon);
-                        return;
-                    }
-                }
-                HandleHealthIconAttack(enemyHealthIcon);
-                return;
-            }
-            Debug.Log("Could not find enemy health icon to target");
+            TryAttackEnemyHealthIcon();
             return;
         }
 
@@ -251,6 +269,16 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
         if (!_combatManager.IsPlayerCombatPhase())
         {
             Debug.Log("Attacks are not allowed at this stage!");
+            return;
+        }
+
+        // Check if enemy entities are present on the field
+        bool enemyEntitiesPresent = HasEntitiesOnField(false);
+
+        // Prevent attacking health icon if enemy entities are present
+        if (enemyEntitiesPresent)
+        {
+            Debug.Log("Cannot attack enemy health directly while enemy monsters are on the field!");
             return;
         }
 
@@ -327,3 +355,4 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
         }
     }
 }
+
