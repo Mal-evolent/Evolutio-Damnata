@@ -291,6 +291,13 @@ namespace EnemyInteraction.Managers
                 }
                 else if (card.CardType.IsSpellCard && _spellEffectApplier != null)
                 {
+                    // Check if the spell card has effect types
+                    if (card.CardType.EffectTypes == null || !card.CardType.EffectTypes.Any())
+                    {
+                        Debug.LogWarning($"[CardPlayManager] Spell card {card.CardName} has no effect types, skipping");
+                        continue;
+                    }
+                    
                     // For spell cards, find a target
                     EntityManager target = GetBestSpellTarget(card.CardType);
                     
@@ -573,6 +580,12 @@ namespace EnemyInteraction.Managers
 
         private EntityManager GetBestSpellTarget(CardData cardType)
         {
+            if (cardType == null || cardType.EffectTypes == null || !cardType.EffectTypes.Any())
+            {
+                Debug.LogWarning($"[CardPlayManager] Card has no effect types: {cardType?.CardName ?? "Unknown"}");
+                return null;
+            }
+            
             var boardState = _boardStateManager.EvaluateBoardState();
             return _effectEvaluator.GetBestTargetForEffect(cardType.EffectTypes.First(), true, boardState);
         }
@@ -587,6 +600,13 @@ namespace EnemyInteraction.Managers
             // Spell cards can be played in either prep or combat phase
             if (card.CardType.IsSpellCard)
             {
+                // Make sure the spell card has valid effect types
+                if (card.CardType.EffectTypes == null || !card.CardType.EffectTypes.Any())
+                {
+                    Debug.LogWarning($"[CardPlayManager] Spell card {card.CardName} has no effect types, marking as unplayable");
+                    return false;
+                }
+                
                 return _combatManager.IsEnemyPrepPhase() || _combatManager.IsEnemyCombatPhase();
             }
             

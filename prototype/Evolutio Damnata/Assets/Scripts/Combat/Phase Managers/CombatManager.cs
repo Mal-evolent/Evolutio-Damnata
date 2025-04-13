@@ -282,4 +282,17 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     bool ICombatManager.IsEnemyPrepPhase() => _currentPhase == CombatPhase.EnemyPrep;
     bool ICombatManager.IsEnemyCombatPhase() => _currentPhase == CombatPhase.EnemyCombat;
     bool ICombatManager.IsCleanUpPhase() => _currentPhase == CombatPhase.CleanUp;
+
+    // Debug method to show card history
+    public void ShowCardHistory()
+    {
+        if (CardHistory.Instance != null)
+        {
+            CardHistory.Instance.LogAllCardHistory();
+        }
+        else
+        {
+            Debug.LogError("[CombatManager] CardHistory.Instance is null!");
+        }
+    }
 }

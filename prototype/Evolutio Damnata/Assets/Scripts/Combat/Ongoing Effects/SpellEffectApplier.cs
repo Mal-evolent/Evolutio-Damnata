@@ -21,6 +21,9 @@ public class SpellEffectApplier : ISpellEffectApplier
     private readonly IDamageVisualizer _damageVisualizer;
     private readonly GameObject _damageNumberPrefab;
     private readonly ICardLibrary _cardLibrary;
+    
+    // Add direct reference to combat manager
+    private ICombatManager _combatManager;
 
     public SpellEffectApplier(
         ICardManager cardManager,
@@ -34,6 +37,40 @@ public class SpellEffectApplier : ISpellEffectApplier
         _damageVisualizer = damageVisualizer ?? throw new System.ArgumentNullException(nameof(damageVisualizer));
         _damageNumberPrefab = damageNumberPrefab ?? throw new System.ArgumentNullException(nameof(damageNumberPrefab));
         _cardLibrary = cardLibrary ?? throw new System.ArgumentNullException(nameof(cardLibrary));
+        
+        // Try to get CombatManager reference
+        _combatManager = _cardManager as ICombatManager;
+        if (_combatManager == null)
+        {
+            _combatManager = FindCombatManager();
+        }
+    }
+    
+    // Helper method to find the combat manager
+    private ICombatManager FindCombatManager()
+    {
+        var combatManager = GameObject.FindObjectOfType<CombatManager>();
+        if (combatManager != null)
+        {
+            Debug.Log("[SpellEffectApplier] Found CombatManager through FindObjectOfType");
+            return combatManager;
+        }
+        Debug.LogWarning("[SpellEffectApplier] Could not find CombatManager in the scene");
+        return null;
+    }
+
+    // Method to explicitly set the combat manager reference
+    public void SetCombatManager(ICombatManager combatManager)
+    {
+        if (combatManager != null)
+        {
+            _combatManager = combatManager;
+            Debug.Log("[SpellEffectApplier] Combat manager reference explicitly set");
+        }
+        else
+        {
+            Debug.LogWarning("[SpellEffectApplier] Attempted to set null combat manager");
+        }
     }
 
     public void ApplySpellEffects(EntityManager target, CardData spellData, int positionIndex)
@@ -60,15 +97,36 @@ public class SpellEffectApplier : ISpellEffectApplier
         }
 
         // Record the spell card play in history
-        var combatManager = _cardManager as ICombatManager;
-        if (combatManager != null)
+        if (_combatManager == null)
         {
-            CardHistory.Instance?.RecordCardPlay(
-                spellCard,
-                target,
-                combatManager.TurnCount,
-                spellData.ManaCost
-            );
+            _combatManager = _cardManager as ICombatManager;
+            if (_combatManager == null)
+            {
+                _combatManager = FindCombatManager();
+            }
+        }
+        
+        if (_combatManager != null)
+        {
+            Debug.Log($"[SpellEffectApplier] Attempting to record player spell card: {spellData.CardName} targeting {target.name}");
+            if (CardHistory.Instance == null)
+            {
+                Debug.LogError("[SpellEffectApplier] CardHistory.Instance is null! Player spell card play won't be recorded.");
+            }
+            else
+            {
+                CardHistory.Instance.RecordCardPlay(
+                    spellCard,
+                    target,
+                    _combatManager.TurnCount,
+                    spellData.ManaCost
+                );
+                Debug.Log($"[SpellEffectApplier] Successfully recorded player spell card: {spellData.CardName}");
+            }
+        }
+        else
+        {
+            Debug.LogError("[SpellEffectApplier] CombatManager reference is null, can't record player spell card history");
         }
 
         ApplyEffectsToTarget(target, spellData);
@@ -98,15 +156,36 @@ public class SpellEffectApplier : ISpellEffectApplier
         var cardDataWrapper = new CardDataWrapper(spellData);
         
         // Record the spell card play in history
-        var combatManager = _cardManager as ICombatManager;
-        if (combatManager != null)
+        if (_combatManager == null)
         {
-            CardHistory.Instance?.RecordCardPlay(
-                cardDataWrapper,
-                target,
-                combatManager.TurnCount,
-                spellData.ManaCost
-            );
+            _combatManager = _cardManager as ICombatManager;
+            if (_combatManager == null)
+            {
+                _combatManager = FindCombatManager();
+            }
+        }
+        
+        if (_combatManager != null)
+        {
+            Debug.Log($"[SpellEffectApplier] Attempting to record AI spell card: {spellData.CardName} targeting {target.name}");
+            if (CardHistory.Instance == null)
+            {
+                Debug.LogError("[SpellEffectApplier] CardHistory.Instance is null! AI spell card play won't be recorded.");
+            }
+            else
+            {
+                CardHistory.Instance.RecordCardPlay(
+                    cardDataWrapper,
+                    target,
+                    _combatManager.TurnCount,
+                    spellData.ManaCost
+                );
+                Debug.Log($"[SpellEffectApplier] Successfully recorded AI spell card: {spellData.CardName}");
+            }
+        }
+        else
+        {
+            Debug.LogError("[SpellEffectApplier] CombatManager reference is null, can't record AI spell card history");
         }
 
         ApplyEffectsToTarget(target, spellData);

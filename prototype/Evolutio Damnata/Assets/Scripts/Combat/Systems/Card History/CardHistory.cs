@@ -31,7 +31,29 @@ public class CardHistory : MonoBehaviour, ICardHistory
             turnNumber = turn;
             manaUsed = mana;
             timestamp = DateTime.Now.ToString("HH:mm:ss");
-            isEnemyCard = entity.GetMonsterType() == EntityManager.MonsterType.Enemy;
+            
+            // Special handling for health icons - determine who PLAYED the card, not the target
+            if (entity is HealthIconManager healthIcon)
+            {
+                // For spells on health icons, the card owner is the opposite of what the target is
+                isEnemyCard = healthIcon.IsPlayerIcon; // if targeting player icon, it's an enemy card; if targeting enemy icon, it's a player card
+                
+                Debug.Log($"[CardHistory] Card played against health icon: {cardName}, target is player icon: {healthIcon.IsPlayerIcon}, isEnemyCard={isEnemyCard}");
+            }
+            else if (card is SpellCard)
+            {
+                // For spell cards targeting monsters, the owner is opposite of the target's type
+                isEnemyCard = entity.GetMonsterType() == EntityManager.MonsterType.Friendly;
+                
+                Debug.Log($"[CardHistory] Spell card played against monster: {cardName}, target is {entity.GetMonsterType()}, isEnemyCard={isEnemyCard}");
+            }
+            else
+            {
+                // For monster cards, use the entity's type directly
+                isEnemyCard = entity.GetMonsterType() == EntityManager.MonsterType.Enemy;
+                
+                Debug.Log($"[CardHistory] Monster card played: {cardName}, entity type is {entity.GetMonsterType()}, isEnemyCard={isEnemyCard}");
+            }
         }
         
         public CardPlayRecord(CardDataWrapper cardWrapper, EntityManager entity, int turn, int mana)
@@ -42,7 +64,22 @@ public class CardHistory : MonoBehaviour, ICardHistory
             turnNumber = turn;
             manaUsed = mana;
             timestamp = DateTime.Now.ToString("HH:mm:ss");
-            isEnemyCard = entity.GetMonsterType() == EntityManager.MonsterType.Enemy;
+            
+            // Special handling for health icons - determine who PLAYED the card, not the target
+            if (entity is HealthIconManager healthIcon)
+            {
+                // For spells on health icons, the card owner is the opposite of what the target is
+                isEnemyCard = healthIcon.IsPlayerIcon; // if targeting player icon, it's an enemy card; if targeting enemy icon, it's a player card
+                
+                Debug.Log($"[CardHistory] Spell played against health icon: {cardName}, target is player icon: {healthIcon.IsPlayerIcon}, isEnemyCard={isEnemyCard}");
+            }
+            else
+            {
+                // For spell cards targeting monsters, the owner is opposite of the target's type
+                isEnemyCard = entity.GetMonsterType() == EntityManager.MonsterType.Friendly;
+                
+                Debug.Log($"[CardHistory] Spell played against monster: {cardName}, target is {entity.GetMonsterType()}, isEnemyCard={isEnemyCard}");
+            }
         }
     }
 
@@ -103,6 +140,8 @@ public class CardHistory : MonoBehaviour, ICardHistory
             Debug.LogWarning("Attempted to record card play with null card or entity!");
             return;
         }
+
+        Debug.Log($"[CardHistory] Recording card play: {card.CardName} (IsSpellCard: {card is SpellCard}) by {(entity.GetMonsterType() == EntityManager.MonsterType.Enemy ? "Enemy" : "Player")}");
 
         // Create and add new record
         var record = new CardPlayRecord(card, entity, turnNumber, manaUsed);
@@ -170,6 +209,8 @@ public class CardHistory : MonoBehaviour, ICardHistory
             Debug.LogWarning("Attempted to record card play with null card wrapper or entity!");
             return;
         }
+
+        Debug.Log($"[CardHistory] Recording spell card play: {cardWrapper.CardName} by {(entity.GetMonsterType() == EntityManager.MonsterType.Enemy ? "Enemy" : "Player")}");
 
         // Create and add new record
         var record = new CardPlayRecord(cardWrapper, entity, turnNumber, manaUsed);
@@ -269,6 +310,35 @@ public class CardHistory : MonoBehaviour, ICardHistory
     public List<CardPlayRecord> GetPlayerCardPlays()
     {
         return cardHistory.Where(record => !record.IsEnemyCard).ToList();
+    }
+
+    public void LogAllCardHistory()
+    {
+        Debug.Log("=== CARD HISTORY LOG ===");
+        Debug.Log($"Total cards recorded: {cardHistory.Count}");
+
+        Debug.Log("\n=== PLAYER CARDS ===");
+        var playerCards = GetPlayerCardPlays();
+        foreach (var record in playerCards)
+        {
+            Debug.Log($"- {record.CardName} (Turn {record.TurnNumber})");
+        }
+
+        Debug.Log("\n=== ENEMY CARDS ===");
+        var enemyCards = GetEnemyCardPlays();
+        foreach (var record in enemyCards)
+        {
+            Debug.Log($"- {record.CardName} (Turn {record.TurnNumber})");
+        }
+
+        Debug.Log("\n=== STATISTICS ===");
+        Debug.Log($"Total Cards Played: {totalCardsPlayed} (Player: {playerCardsPlayed}, Enemy: {enemyCardsPlayed})");
+        
+        Debug.Log("\n=== CARDS BY TYPE ===");
+        foreach (var kvp in cardsPlayedByType)
+        {
+            Debug.Log($"{kvp.Key}: {kvp.Value} cards");
+        }
     }
 
     // Editor-only methods

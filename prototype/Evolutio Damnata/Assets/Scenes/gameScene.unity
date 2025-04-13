@@ -1901,6 +1901,8 @@ MonoBehaviour:
   maxHistorySize: 100
   cardHistory: []
   totalCardsPlayed: 0
+  playerCardsPlayed: 0
+  enemyCardsPlayed: 0
 --- !u!4 &655618344
 Transform:
   m_ObjectHideFlags: 0
@@ -2938,7 +2940,7 @@ MonoBehaviour:
     AttackPower: 0
     Health: 0
     Keywords: 
-    EffectTypes: 
+    EffectTypes: 03000000
     EffectValue: 0
     Duration: 4
     EffectValuePerRound: 3
@@ -3187,10 +3189,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee8e7a3919b0c2144be8fbb2660076f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _spritePositioning: {fileID: 1417216789}
-  _enemyDeck: {fileID: 825410030}
-  _cardLibrary: {fileID: 1159794893}
-  _combatStage: {fileID: 6081315368044828686}
+  _maxInitializationTime: 10
+  _componentWaitTime: 0.1
 --- !u!4 &1184513449
 Transform:
   m_ObjectHideFlags: 0
@@ -3694,7 +3694,6 @@ MonoBehaviour:
   _endTurnButtonShadow: {fileID: 1759442322}
   _playerDeck: {fileID: 294774779}
   _enemyDeck: {fileID: 825410030}
-  _enemyActionsComponent: {fileID: 1184513448}
   _manaSlider: {fileID: 1793571146}
   _manaText: {fileID: 1870554167}
   _turnCount: 0
