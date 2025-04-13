@@ -84,6 +84,95 @@ public class CardPlayRecordDrawer : PropertyDrawer
     }
 }
 
+[CustomPropertyDrawer(typeof(CardHistory.AttackRecord))]
+public class AttackRecordDrawer : PropertyDrawer
+{
+    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+    {
+        EditorGUI.BeginProperty(position, label, property);
+
+        // Get properties
+        var attackerName = property.FindPropertyRelative("attackerName");
+        var targetName = property.FindPropertyRelative("targetName");
+        var turnNumber = property.FindPropertyRelative("turnNumber");
+        var damageDealt = property.FindPropertyRelative("damageDealt");
+        var counterDamage = property.FindPropertyRelative("counterDamage");
+        var timestamp = property.FindPropertyRelative("timestamp");
+        var isEnemyAttack = property.FindPropertyRelative("isEnemyAttack");
+        var wasRangedAttack = property.FindPropertyRelative("wasRangedAttack");
+
+        if (attackerName == null || targetName == null)
+        {
+            EditorGUI.LabelField(position, "Invalid Attack Record");
+            EditorGUI.EndProperty();
+            return;
+        }
+
+        // Determine attacker type for display
+        string attackerType = isEnemyAttack != null && isEnemyAttack.boolValue ? "Enemy" : "Player";
+        
+        // Use custom colors for enemy vs player
+        Color defaultColor = GUI.color;
+        if (isEnemyAttack != null && isEnemyAttack.boolValue)
+        {
+            GUI.color = new Color(1f, 0.7f, 0.7f); // Light red for enemy
+        }
+        else
+        {
+            GUI.color = new Color(0.7f, 1f, 0.7f); // Light green for player
+        }
+
+        // Draw foldout header with safe string access
+        string rangedText = wasRangedAttack != null && wasRangedAttack.boolValue ? " (Ranged)" : "";
+        var headerText = $"Turn {turnNumber?.intValue ?? 0}: {attackerType} {attackerName?.stringValue ?? "Unknown"} → {targetName?.stringValue ?? "Unknown"} ({damageDealt?.floatValue ?? 0} dmg){rangedText}";
+        var foldoutRect = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
+        property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, headerText);
+        
+        // Reset color
+        GUI.color = defaultColor;
+
+        if (property.isExpanded)
+        {
+            EditorGUI.indentLevel++;
+            var y = position.y + EditorGUIUtility.singleLineHeight;
+
+            // Draw details with null checks
+            DrawField("Attacker:", attackerName?.stringValue ?? "Unknown", ref y);
+            DrawField("Target:", targetName?.stringValue ?? "Unknown", ref y);
+            DrawField("Attacker Type:", attackerType, ref y);
+            DrawField("Damage Dealt:", damageDealt?.floatValue.ToString("F1") ?? "0", ref y);
+            
+            string counterText = wasRangedAttack != null && wasRangedAttack.boolValue 
+                ? "0 (Ranged Attack)" 
+                : counterDamage?.floatValue.ToString("F1") ?? "0";
+            DrawField("Counter Damage:", counterText, ref y);
+            
+            DrawField("Turn:", turnNumber?.intValue.ToString() ?? "0", ref y);
+            DrawField("Time:", timestamp?.stringValue ?? "Unknown", ref y);
+
+            EditorGUI.indentLevel--;
+        }
+
+        EditorGUI.EndProperty();
+    }
+
+    private void DrawField(string label, string value, ref float y)
+    {
+        var rect = new Rect(30, y, 300, EditorGUIUtility.singleLineHeight);
+        EditorGUI.LabelField(rect, $"{label} {value}");
+        y += EditorGUIUtility.singleLineHeight;
+    }
+
+    public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+    {
+        if (property.isExpanded)
+        {
+            return EditorGUIUtility.singleLineHeight * 8; // Header + 7 fields
+        }
+        return EditorGUIUtility.singleLineHeight;
+    }
+}
+
 [CustomEditor(typeof(CardHistory))]
 public class CardHistoryEditor : Editor
 {
@@ -92,11 +181,15 @@ public class CardHistoryEditor : Editor
     private SerializedProperty totalCardsPlayed;
     private SerializedProperty playerCardsPlayed;
     private SerializedProperty enemyCardsPlayed;
+    private SerializedProperty totalAttacks;
+    private SerializedProperty playerAttacks;
+    private SerializedProperty enemyAttacks;
     private SerializedProperty cardsPerTurn;
     private SerializedProperty cardsPlayedByType;
     private SerializedProperty playerCardsPlayedByType;
     private SerializedProperty enemyCardsPlayedByType;
     private SerializedProperty cardHistory;
+    private SerializedProperty attackHistory;
 
     private void OnEnable()
     {
@@ -106,11 +199,15 @@ public class CardHistoryEditor : Editor
         totalCardsPlayed = serializedObject.FindProperty("totalCardsPlayed");
         playerCardsPlayed = serializedObject.FindProperty("playerCardsPlayed");
         enemyCardsPlayed = serializedObject.FindProperty("enemyCardsPlayed");
+        totalAttacks = serializedObject.FindProperty("totalAttacks");
+        playerAttacks = serializedObject.FindProperty("playerAttacks");
+        enemyAttacks = serializedObject.FindProperty("enemyAttacks");
         cardsPerTurn = serializedObject.FindProperty("cardsPerTurn");
         cardsPlayedByType = serializedObject.FindProperty("cardsPlayedByType");
         playerCardsPlayedByType = serializedObject.FindProperty("playerCardsPlayedByType");
         enemyCardsPlayedByType = serializedObject.FindProperty("enemyCardsPlayedByType");
         cardHistory = serializedObject.FindProperty("cardHistory");
+        attackHistory = serializedObject.FindProperty("attackHistory");
     }
 
     public override void OnInspectorGUI()
@@ -129,7 +226,7 @@ public class CardHistoryEditor : Editor
         EditorGUILayout.PropertyField(maxHistorySize);
 
         EditorGUILayout.Space();
-        EditorGUILayout.LabelField("Statistics", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Card Statistics", EditorStyles.boldLabel);
         EditorGUI.BeginDisabledGroup(true);
         
         // Total cards section
@@ -160,6 +257,36 @@ public class CardHistoryEditor : Editor
         }
         
         EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Attack Statistics", EditorStyles.boldLabel);
+        
+        // Total attacks
+        if (totalAttacks != null)
+        {
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Total Attacks", GUILayout.Width(150));
+            EditorGUILayout.LabelField(totalAttacks.intValue.ToString());
+            EditorGUILayout.EndHorizontal();
+        }
+        
+        // Player attacks
+        if (playerAttacks != null)
+        {
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Player Attacks", GUILayout.Width(150));
+            EditorGUILayout.LabelField(playerAttacks.intValue.ToString());
+            EditorGUILayout.EndHorizontal();
+        }
+        
+        // Enemy attacks
+        if (enemyAttacks != null)
+        {
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Enemy Attacks", GUILayout.Width(150));
+            EditorGUILayout.LabelField(enemyAttacks.intValue.ToString());
+            EditorGUILayout.EndHorizontal();
+        }
+        
+        EditorGUILayout.Space();
         
         // More detailed statistics in foldouts
         if (cardsPerTurn != null) EditorGUILayout.PropertyField(cardsPerTurn);
@@ -179,9 +306,16 @@ public class CardHistoryEditor : Editor
         EditorGUI.EndDisabledGroup();
 
         EditorGUILayout.Space();
+        EditorGUILayout.LabelField("History", EditorStyles.boldLabel);
+        
         if (cardHistory != null)
         {
             EditorGUILayout.PropertyField(cardHistory, new GUIContent("Card Play History"));
+        }
+        
+        if (attackHistory != null)
+        {
+            EditorGUILayout.PropertyField(attackHistory, new GUIContent("Attack History"));
         }
 
         EditorGUILayout.Space();

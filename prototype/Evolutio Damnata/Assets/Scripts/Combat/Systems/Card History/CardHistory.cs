@@ -83,6 +83,48 @@ public class CardHistory : MonoBehaviour, ICardHistory
         }
     }
 
+    [System.Serializable]
+    public class AttackRecord
+    {
+        [SerializeField] private string attackerName;
+        [SerializeField] private string targetName;
+        [SerializeField] private int turnNumber;
+        [SerializeField] private float damageDealt;
+        [SerializeField] private string timestamp;
+        [SerializeField] private bool isEnemyAttack;
+        [SerializeField] private bool wasRangedAttack;
+        [SerializeField] private float counterDamage;
+
+        public string EditorSummary =>
+            $"Turn {turnNumber}: {(isEnemyAttack ? "Enemy" : "Player")} {attackerName} attacked {targetName} for {damageDealt} damage" + 
+            (wasRangedAttack ? " (Ranged)" : "") + 
+            (!wasRangedAttack ? $" (Took {counterDamage} counter damage)" : "") +
+            $" - {timestamp}";
+
+        public bool IsEnemyAttack => isEnemyAttack;
+        public string AttackerName => attackerName;
+        public string TargetName => targetName;
+        public int TurnNumber => turnNumber;
+        public float DamageDealt => damageDealt;
+        public bool WasRangedAttack => wasRangedAttack;
+
+        public AttackRecord(EntityManager attacker, EntityManager target, int turn, float damage, float counterDamage, bool isRanged)
+        {
+            attackerName = attacker.name;
+            targetName = target.name;
+            turnNumber = turn;
+            damageDealt = damage;
+            this.counterDamage = counterDamage;
+            timestamp = DateTime.Now.ToString("HH:mm:ss");
+            wasRangedAttack = isRanged;
+            
+            // Determine if this is an enemy attack based on attacker type
+            isEnemyAttack = attacker.GetMonsterType() == EntityManager.MonsterType.Enemy;
+            
+            Debug.Log($"[CardHistory] Recorded attack: {attackerName} -> {targetName}, damage: {damage}, counter: {counterDamage}, isEnemyAttack: {isEnemyAttack}");
+        }
+    }
+
     [Header("History Settings")]
     [SerializeField] private bool keepHistoryBetweenGames = true;
     [SerializeField] private int maxHistorySize = 100;
@@ -90,10 +132,16 @@ public class CardHistory : MonoBehaviour, ICardHistory
     [Header("Card Play History")]
     [SerializeField] private List<CardPlayRecord> cardHistory = new List<CardPlayRecord>();
     
+    [Header("Attack History")]
+    [SerializeField] private List<AttackRecord> attackHistory = new List<AttackRecord>();
+    
     [Header("Statistics")]
     [SerializeField] private int totalCardsPlayed;
     [SerializeField] private int playerCardsPlayed;
     [SerializeField] private int enemyCardsPlayed;
+    [SerializeField] private int totalAttacks;
+    [SerializeField] private int playerAttacks;
+    [SerializeField] private int enemyAttacks;
     [SerializeField] private Dictionary<int, int> cardsPerTurn = new Dictionary<int, int>();
     [SerializeField] private Dictionary<string, int> cardsPlayedByType = new Dictionary<string, int>();
     [SerializeField] private Dictionary<string, int> playerCardsPlayedByType = new Dictionary<string, int>();
@@ -271,10 +319,53 @@ public class CardHistory : MonoBehaviour, ICardHistory
         Debug.Log($"[CardHistory] {record.EditorSummary}");
     }
 
+    public void RecordAttack(EntityManager attacker, EntityManager target, int turnNumber, float damageDealt, float counterDamage, bool isRangedAttack)
+    {
+        if (attacker == null || target == null)
+        {
+            Debug.LogWarning("Attempted to record attack with null attacker or target!");
+            return;
+        }
+
+        Debug.Log($"[CardHistory] Recording attack: {attacker.name} attacked {target.name} for {damageDealt} damage" +
+                 (isRangedAttack ? " (Ranged)" : ""));
+
+        // Create and add new record
+        var record = new AttackRecord(attacker, target, turnNumber, damageDealt, counterDamage, isRangedAttack);
+        attackHistory.Add(record);
+
+        // Update statistics
+        totalAttacks++;
+        
+        // Update player/enemy specific counts
+        if (record.IsEnemyAttack)
+        {
+            enemyAttacks++;
+        }
+        else
+        {
+            playerAttacks++;
+        }
+        
+        // Trim history if needed
+        if (attackHistory.Count > maxHistorySize)
+        {
+            attackHistory.RemoveAt(0);
+        }
+
+        Debug.Log($"[CardHistory] {record.EditorSummary}");
+    }
+
     public void ClearHistory()
     {
         cardHistory.Clear();
+        attackHistory.Clear();
         totalCardsPlayed = 0;
+        playerCardsPlayed = 0;
+        enemyCardsPlayed = 0;
+        totalAttacks = 0;
+        playerAttacks = 0;
+        enemyAttacks = 0;
         cardsPerTurn.Clear();
         cardsPlayedByType.Clear();
         playerCardsPlayedByType.Clear();
@@ -352,7 +443,15 @@ public class CardHistory : MonoBehaviour, ICardHistory
             Debug.Log(record.EditorSummary);
         }
         
+        Debug.Log("\n=== Attack History ===");
+        foreach (var record in attackHistory)
+        {
+            Debug.Log(record.EditorSummary);
+        }
+        
         Debug.Log($"\nTotal Cards Played: {totalCardsPlayed} (Player: {playerCardsPlayed}, Enemy: {enemyCardsPlayed})");
+        Debug.Log($"Total Attacks: {totalAttacks} (Player: {playerAttacks}, Enemy: {enemyAttacks})");
+        
         Debug.Log("\nCards Per Turn:");
         foreach (var kvp in cardsPerTurn)
         {
@@ -401,3 +500,4 @@ public class CardHistory : MonoBehaviour, ICardHistory
     }
 #endif
 }
+

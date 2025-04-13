@@ -64,6 +64,31 @@ public class AttackHandler : IAttackHandler
             attacker.ShowDamageNumber(0);
         }
 
+        // Record the attack in the CardHistory
+        if (CardHistory.Instance != null)
+        {
+            // Find the current turn number from any available CombatManager
+            int turnNumber = 0;
+            var combatManager = GameObject.FindObjectOfType<CombatManager>();
+            if (combatManager != null)
+            {
+                turnNumber = combatManager.TurnCount;
+            }
+            
+            CardHistory.Instance.RecordAttack(
+                attacker,
+                target,
+                turnNumber,
+                ruleResult.ModifiedAttackerDamage,
+                ruleResult.ShouldTakeCounterDamage ? ruleResult.ModifiedTargetDamage : 0,
+                !ruleResult.ShouldTakeCounterDamage
+            );
+        }
+        else
+        {
+            Debug.LogWarning("[AttackHandler] CardHistory.Instance is null, cannot record attack");
+        }
+
         _attackLimiter.RegisterAttack(attacker);
 
         // Log the attack results
