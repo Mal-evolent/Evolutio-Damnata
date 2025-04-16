@@ -27,16 +27,13 @@ public class CombatRulesEngine : ICombatRulesEngine
 
         // Apply attacker's offensive keywords
         ApplyRangedRule(attacker, result);
+        ApplyOverwhelmRule(attacker, target, result);
 
         // Apply target's defensive keywords - target takes less damage when Tough
         ApplyToughRuleForDefender(target, result);
 
         // Apply attacker's defensive keywords - attacker takes less counter damage when Tough
         ApplyToughRuleForAttacker(attacker, result);
-
-        // Add future rules here
-        // ApplyTauntRule(target, result);
-        // ApplyLifestealRule(attacker, result);
 
         return result;
     }
@@ -89,6 +86,88 @@ public class CombatRulesEngine : ICombatRulesEngine
     }
 
     /// <summary>
+    /// Overwhelm attackers deal splash damage to all other active entities on the same side
+    /// </summary>
+    private void ApplyOverwhelmRule(EntityManager attacker, EntityManager target, AttackRuleResult result)
+    {
+        if (attacker != null && attacker.HasKeyword(Keywords.MonsterKeyword.Overwhelm))
+        {
+            // Calculate splash damage (half of the regular damage)
+            float splashDamage = Mathf.Floor(result.ModifiedAttackerDamage * 0.5f);
+
+            // Store the target's side (enemy or player) to find other entities later
+            result.IsTargetEnemy = target.GetMonsterType() == EntityManager.MonsterType.Enemy;
+            result.HasSplashDamage = true;
+            result.SplashDamageAmount = splashDamage;
+            result.TargetEntity = target;
+
+            string currentDescription = result.RuleDescription;
+            result.RuleDescription = string.IsNullOrEmpty(currentDescription) || currentDescription == "Normal Attack" ?
+                "Overwhelm" : $"{currentDescription}, Overwhelm";
+
+            Debug.Log($"[CombatRulesEngine] {attacker.name} attacks with Overwhelm, causing {splashDamage} splash damage to all other units!");
+        }
+    }
+
+    /// <summary>
+    /// Applies splash damage to all active entities from an Overwhelm attack
+    /// </summary>
+    public static void ApplySplashDamage(AttackRuleResult result)
+    {
+        if (!result.HasSplashDamage || result.SplashDamageAmount <= 0 || result.TargetEntity == null)
+            return;
+
+        // Get the appropriate SpritePositioning reference
+        var spritePositioning = Object.FindObjectOfType<SpritePositioning>();
+        if (spritePositioning == null)
+        {
+            var combatStage = Object.FindObjectOfType<CombatStage>();
+            if (combatStage != null)
+            {
+                spritePositioning = combatStage.SpritePositioning as SpritePositioning;
+            }
+        }
+
+        if (spritePositioning == null)
+        {
+            Debug.LogError("[CombatRulesEngine] Cannot apply splash damage - SpritePositioning not found");
+            return;
+        }
+
+        // Get the appropriate entity list based on target side
+        var entityList = result.IsTargetEnemy ? spritePositioning.EnemyEntities : spritePositioning.PlayerEntities;
+        if (entityList == null || entityList.Count == 0)
+            return;
+
+        // Find all valid entities that are NOT the target
+        List<EntityManager> otherEntities = new List<EntityManager>();
+
+        foreach (var entity in entityList)
+        {
+            if (entity == null) continue;
+
+            var entityManager = entity.GetComponent<EntityManager>();
+            if (entityManager == null) continue;
+
+            // Skip the original target
+            if (entityManager == result.TargetEntity) continue;
+
+            // Only include active entities
+            if (entityManager.placed && !entityManager.dead && !entityManager.IsFadingOut)
+            {
+                otherEntities.Add(entityManager);
+            }
+        }
+
+        // Apply splash damage to all other active entities
+        foreach (var entity in otherEntities)
+        {
+            entity.TakeDamage(result.SplashDamageAmount);
+            Debug.Log($"[CombatRulesEngine] Overwhelm splash damage: {entity.name} takes {result.SplashDamageAmount} damage!");
+        }
+    }
+
+    /// <summary>
     /// Checks if there are any taunt units on the field that should be targeted first
     /// </summary>
     public static bool HasTauntUnits(System.Collections.Generic.List<GameObject> entities)
@@ -125,4 +204,10 @@ public class AttackRuleResult
     public float ModifiedTargetDamage { get; set; }
     public bool ShouldTakeCounterDamage { get; set; }
     public string RuleDescription { get; set; }
+
+    // Properties for Overwhelm splash damage
+    public bool HasSplashDamage { get; set; } = false;
+    public float SplashDamageAmount { get; set; } = 0f;
+    public bool IsTargetEnemy { get; set; } = false;
+    public EntityManager TargetEntity { get; set; } = null;
 }
