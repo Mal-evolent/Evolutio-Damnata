@@ -16,5 +16,8 @@ namespace EnemyInteraction.Models
         public float BoardControlDifference { get; set; }
         public int HealthAdvantage { get; set; }
         public float HealthRatio { get; set; }
+        public int playerHandSize { get; set; }
+        public int enemyHandSize { get; set; }
+        public int CardAdvantage { get; set; }
     }
 } 

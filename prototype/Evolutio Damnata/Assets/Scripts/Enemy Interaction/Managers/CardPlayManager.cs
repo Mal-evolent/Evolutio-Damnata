@@ -359,6 +359,14 @@ namespace EnemyInteraction.Managers
                 return false;
             }
 
+            // Check if the card contains only Draw and/or Bloodprice effects
+            if (ContainsOnlyDrawAndBloodpriceEffects(card.CardType))
+            {
+                // These effects don't require a target, so always return true
+                return true;
+            }
+
+            // For other spell effects, find a valid target
             var target = GetBestSpellTarget(card.CardType);
             if (target == null)
             {
@@ -369,23 +377,109 @@ namespace EnemyInteraction.Managers
             return true;
         }
 
+        private bool ContainsOnlyDrawAndBloodpriceEffects(CardData cardData)
+        {
+            if (cardData?.EffectTypes == null || !cardData.EffectTypes.Any())
+                return false;
+
+            foreach (var effect in cardData.EffectTypes)
+            {
+                if (effect != SpellEffect.Draw && effect != SpellEffect.Bloodprice)
+                    return false;
+            }
+
+            return true;
+        }
+
         private IEnumerator PlaySpellCardWithDelay(Card card)
         {
-            var target = GetBestSpellTarget(card.CardType);
-            Debug.Log($"[CardPlayManager] Preparing to cast {card.CardName} on {target.name}");
-
             // Small pause before applying the effect
             yield return new WaitForSeconds(_actionDelay * 0.5f);
 
             try
             {
-                _spellEffectApplier.ApplySpellEffectsAI(target, card.CardType, 0);
-                Debug.Log($"[CardPlayManager] Cast {card.CardName} on {target.name}");
+                // Check if it's a Draw/Bloodprice only card
+                if (ContainsOnlyDrawAndBloodpriceEffects(card.CardType))
+                {
+                    // For Draw/Bloodprice effects, we can use any valid entity as the target
+                    // since the SpellEffectApplier will handle these effects appropriately
+                    var dummyTarget = GetDummyTarget();
+                    if (dummyTarget != null)
+                    {
+                        Debug.Log($"[CardPlayManager] Casting utility spell {card.CardName}");
+                        _spellEffectApplier.ApplySpellEffectsAI(dummyTarget, card.CardType, 0);
+                    }
+                    else
+                    {
+                        Debug.LogError($"[CardPlayManager] Could not find any target for utility spell {card.CardName}");
+                    }
+                }
+                else
+                {
+                    // For spells that target specific entities
+                    var target = GetBestSpellTarget(card.CardType);
+                    if (target != null)
+                    {
+                        Debug.Log($"[CardPlayManager] Casting {card.CardName} on {target.name}");
+                        _spellEffectApplier.ApplySpellEffectsAI(target, card.CardType, 0);
+                    }
+                    else
+                    {
+                        Debug.LogError($"[CardPlayManager] Target was null for spell {card.CardName}");
+                    }
+                }
             }
             catch (System.Exception e)
             {
                 Debug.LogError($"[CardPlayManager] Spell error: {e.Message}");
             }
+        }
+
+        private EntityManager GetDummyTarget()
+        {
+            // For cards with only Draw/Bloodprice effects, we can use any entity including empty placeholders
+
+            // First try to find the enemy health icon as it's a safe target for utility spells
+            var enemyHealth = GameObject.FindGameObjectWithTag("Enemy")?.GetComponent<HealthIconManager>();
+            if (enemyHealth != null)
+                return enemyHealth;
+
+            // If enemy health icon not available, try to find any enemy entity - including empty placeholders
+            if (_spritePositioning != null && _entityCache.Count > 0)
+            {
+                // For Draw/Bloodprice only effects, we can use empty placeholders as well
+                foreach (var entity in _spritePositioning.EnemyEntities)
+                {
+                    if (entity != null && _entityCache.TryGetValue(entity, out var entityManager) && entityManager != null)
+                    {
+                        // Return the entity whether it's placed or not, since Draw/Bloodprice don't need actual targets
+                        return entityManager;
+                    }
+                }
+            }
+
+            // As a fallback, try to find any valid entity in the cache
+            var anyEntity = _entityCache.Values.FirstOrDefault(e => e != null);
+            if (anyEntity != null)
+                return anyEntity;
+
+            // Ultimate fallback - create a temporary entity if needed
+            Debug.LogWarning("[CardPlayManager] No valid entities found for dummy target, creating a temporary one");
+
+            return CreateTemporaryEntityForDummyTarget();
+        }
+
+        private EntityManager CreateTemporaryEntityForDummyTarget()
+        {
+            // Create a temporary, invisible entity that can be used as a target
+            // This entity won't be displayed or affect gameplay
+            var tempEntity = new GameObject("TempDummyTarget").AddComponent<EntityManager>();
+            tempEntity.gameObject.SetActive(false);
+
+            // Destroy it after a short delay
+            Destroy(tempEntity.gameObject, 0.5f);
+
+            return tempEntity;
         }
 
 
@@ -458,7 +552,20 @@ namespace EnemyInteraction.Managers
             if (cardType?.EffectTypes == null || !cardType.EffectTypes.Any())
                 return null;
 
-            var effect = cardType.EffectTypes.First();
+            // For Draw/Bloodprice only cards, return a dummy target
+            if (ContainsOnlyDrawAndBloodpriceEffects(cardType))
+            {
+                return GetDummyTarget();
+            }
+
+            // For other spells, find the most appropriate target
+            var effect = cardType.EffectTypes.FirstOrDefault(e =>
+                e != SpellEffect.Draw && e != SpellEffect.Bloodprice);
+
+            // If no targetable effect is found, use the first effect
+            if (effect == 0)
+                effect = cardType.EffectTypes.First();
+
             bool isDamagingEffect = effect == SpellEffect.Damage || effect == SpellEffect.Burn;
 
             var potentialTargets = GetAllValidTargets(effect);
@@ -622,10 +729,50 @@ namespace EnemyInteraction.Managers
         {
             if (card.CardType.EffectTypes == null) return 0f;
 
-            return card.CardType.EffectTypes
-                .Sum(effect => _effectEvaluator?.EvaluateEffect(effect, true,
-                    _effectEvaluator.GetBestTargetForEffect(effect, true, boardState),
-                    boardState) ?? 0f);
+            float totalScore = 0f;
+
+            // Special evaluations for cards with specific effect combinations
+            bool hasDrawEffect = card.CardType.EffectTypes.Contains(SpellEffect.Draw);
+            bool hasBloodpriceEffect = card.CardType.EffectTypes.Contains(SpellEffect.Bloodprice);
+
+            // Evaluate each effect individually
+            foreach (var effect in card.CardType.EffectTypes)
+            {
+                var target = _effectEvaluator?.GetBestTargetForEffect(effect, true, boardState);
+                float effectScore = _effectEvaluator?.EvaluateEffect(effect, true, target, boardState) ?? 0f;
+                totalScore += effectScore;
+            }
+
+            // Special case for cards with both Draw and Bloodprice effects
+            if (hasDrawEffect && hasBloodpriceEffect)
+            {
+                // Calculate the draw-to-bloodprice value ratio (fixed to avoid duplicate declaration)
+                float bloodpriceValue = card.CardType.BloodpriceValue > 0 ? card.CardType.BloodpriceValue : 1f;
+                float drawValueRatio = card.CardType.DrawValue / bloodpriceValue;
+
+                // If we get more cards than health lost, increase the score
+                if (drawValueRatio > 1.5f)
+                {
+                    totalScore *= 1.2f;
+                    Debug.Log($"[CardPlayManager] Card {card.CardName} has favorable draw-to-bloodprice ratio: {drawValueRatio}");
+                }
+
+                // Consider current health situation
+                if (boardState.EnemyHealth < 15 && card.CardType.BloodpriceValue > 3)
+                {
+                    totalScore *= 0.6f; // Reduce score if health is low and blood price is high
+                    Debug.Log($"[CardPlayManager] Reduced score for {card.CardName} due to low health ({boardState.EnemyHealth})");
+                }
+            }
+
+            // Extra bonus for Draw cards when hand is nearly empty
+            if (hasDrawEffect && boardState.enemyHandSize <= 1)
+            {
+                totalScore *= 1.5f;
+                Debug.Log($"[CardPlayManager] Increased score for Draw card {card.CardName} due to low hand size");
+            }
+
+            return totalScore;
         }
     }
 }
