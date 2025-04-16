@@ -95,30 +95,26 @@ public class Deck : MonoBehaviour
 
     public void DrawOneCard()
     {
-        // Ensure the hand is filled up to the hand size limit
-        if (Hand.Count <= HandSize)
-        {
-            if (Cards.Count == 0)
-            {
-                Debug.LogWarning("Deck is empty. Cannot draw more cards.");
-                return;
-            }
-            if (Hand.Count >= HandSize)
-            {
-                Debug.Log("Hand is full. Cannot draw more cards.");
-                return;
-            }
-
-            Card drawnCard = Cards[0];
-            Cards.RemoveAt(0);
-            Hand.Add(drawnCard);
-            Debug.Log("Drew Card: " + drawnCard.CardName);
-            cardManager.RefreshUI();
-        }
-        else
+        // First check if hand is already full
+        if (Hand.Count >= HandSize)
         {
             Debug.Log("Hand is full. Cannot draw more cards.");
+            return;
         }
+
+        // Then check if there are cards in the deck
+        if (Cards.Count == 0)
+        {
+            Debug.LogWarning("Deck is empty. Cannot draw more cards.");
+            return;
+        }
+
+        // If we passed both checks, draw a card
+        Card drawnCard = Cards[0];
+        Cards.RemoveAt(0);
+        Hand.Add(drawnCard);
+        Debug.Log("Drew Card: " + drawnCard.CardName);
+        cardManager.RefreshUI();
     }
 
     public void AddCard(Card card)

@@ -93,7 +93,7 @@ public class SpellEffectApplier : ISpellEffectApplier
                 _combatManager = FindCombatManager();
             }
         }
-        
+
         if (_combatManager != null)
         {
             Debug.Log($"[SpellEffectApplier] Attempting to record player spell card: {spellData.CardName} targeting {target.name}");
@@ -117,8 +117,12 @@ public class SpellEffectApplier : ISpellEffectApplier
             Debug.LogError("[SpellEffectApplier] CombatManager reference is null, can't record player spell card history");
         }
 
-        ApplyEffectsToTarget(target, spellData);
+        // IMPORTANT: Remove the card from the hand BEFORE applying effects
+        // This ensures the hand has room for any cards that might be drawn
         _cardManager.RemoveCard(selectedCard);
+
+        // Now apply effects after the card is removed
+        ApplyEffectsToTarget(target, spellData);
     }
 
     // New overload for AI use that doesn't require a selected card
@@ -254,7 +258,7 @@ public class SpellEffectApplier : ISpellEffectApplier
                     ApplyBurnEffect(target, spellData);
                     break;
                 case SpellEffect.Draw:
-                    Debug.Log($"Drawing {spellData.DrawValue} cards");
+                    ApplyDrawEffect(spellData.DrawValue);
                     break;
                 case SpellEffect.Bloodprice:
                     // The bloodprice effect is handled at the beginning of this method
@@ -266,6 +270,57 @@ public class SpellEffectApplier : ISpellEffectApplier
             }
         }
     }
+
+    private void ApplyDrawEffect(int drawCount)
+    {
+        if (drawCount <= 0)
+        {
+            Debug.LogWarning("[SpellEffectApplier] Draw effect called with invalid draw count: " + drawCount);
+            return;
+        }
+
+        if (_combatManager == null)
+        {
+            Debug.LogError("[SpellEffectApplier] CombatManager is null, cannot determine whose turn it is for draw effect");
+            return;
+        }
+
+        // Determine which deck to draw from based on the current phase
+        Deck deckToDraw = null;
+
+        if (_combatManager.IsPlayerPrepPhase() || _combatManager.IsPlayerCombatPhase())
+        {
+            // If in player phase, draw from player deck
+            deckToDraw = _combatManager.PlayerDeck;
+            Debug.Log($"[SpellEffectApplier] Drawing {drawCount} cards for Player");
+        }
+        else if (_combatManager.IsEnemyPrepPhase() || _combatManager.IsEnemyCombatPhase())
+        {
+            // If in enemy phase, draw from enemy deck
+            deckToDraw = _combatManager.EnemyDeck;
+            Debug.Log($"[SpellEffectApplier] Drawing {drawCount} cards for Enemy");
+        }
+        else
+        {
+            Debug.LogWarning($"[SpellEffectApplier] Unexpected phase for draw effect: {_combatManager.CurrentPhase}");
+            return;
+        }
+
+        if (deckToDraw == null)
+        {
+            Debug.LogError("[SpellEffectApplier] Could not determine which deck to draw from");
+            return;
+        }
+
+        // Draw the specified number of cards
+        for (int i = 0; i < drawCount; i++)
+        {
+            deckToDraw.DrawOneCard();
+        }
+
+        Debug.Log($"[SpellEffectApplier] Successfully drew {drawCount} cards");
+    }
+
 
     private void ApplyBurnEffect(EntityManager target, CardData spellData)
     {
@@ -305,23 +360,5 @@ public class SpellEffectApplier : ISpellEffectApplier
                 GraveYard.Instance.AddSpellKill(target, "Direct Damage Spell", damage);
             }
         }
-    }
-
-    private void ApplyBuff(EntityManager target, int value, int duration)
-    {
-        target.ModifyAttack(value);
-        Debug.Log($"Buffed {target.name}'s attack by {value} for {duration} turns");
-    }
-
-    private void ApplyDebuff(EntityManager target, int value, int duration)
-    {
-        target.ModifyAttack(-value);
-        Debug.Log($"Debuffed {target.name}'s attack by {value} for {duration} turns");
-    }
-
-    private void ApplyDoubleAttack(EntityManager target, int duration)
-    {
-        target.SetDoubleAttack(duration);
-        Debug.Log($"{target.name} gains double attack for {duration} turns");
     }
 }

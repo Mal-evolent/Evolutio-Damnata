@@ -299,22 +299,30 @@ namespace EnemyInteraction.Managers
                 if (card.CardType.IsMonsterCard)
                 {
                     playedSuccessfully = PlayMonsterCard(card, boardState);
+
+                    if (playedSuccessfully)
+                    {
+                        _combatManager.EnemyMana -= card.CardType.ManaCost;
+                        enemyDeck.RemoveCard(card);
+                    }
                 }
                 else
                 {
-                    // Instead of trying to return a value from the coroutine, use a separate method
+                    // For spell cards, check if we can play it
                     playedSuccessfully = CanPlaySpellCard(card);
                     if (playedSuccessfully)
                     {
+                        // First remove the card and deduct mana
+                        _combatManager.EnemyMana -= card.CardType.ManaCost;
+                        enemyDeck.RemoveCard(card);
+
+                        // Then play the spell effect
                         yield return PlaySpellCardWithDelay(card);
                     }
                 }
 
                 if (playedSuccessfully)
                 {
-                    _combatManager.EnemyMana -= card.CardType.ManaCost;
-                    enemyDeck.RemoveCard(card);
-
                     // Update board state after successful play
                     boardState = GetCurrentBoardState();
 

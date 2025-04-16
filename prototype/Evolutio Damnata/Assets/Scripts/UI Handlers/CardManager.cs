@@ -132,7 +132,7 @@ public class CardManager : MonoBehaviour, ICardManager
             Debug.Log($"Card {card.CardName} - Original Sprite: {(card.CardImage != null ? "Valid" : "NULL")}");
             cardImage.sprite = card.CardImage ?? CardLibrary.DefaultSprite;
             Debug.Log($"Card {card.CardName} - Final Sprite: {(cardImage.sprite != null ? "Valid" : "NULL")}");
-            
+
             if (cardImage.sprite == null)
             {
                 Debug.LogWarning($"No sprite found for card {card.CardName} and no default sprite available");
@@ -140,12 +140,8 @@ public class CardManager : MonoBehaviour, ICardManager
             cardTransform.GetChild(1).GetComponent<TextMeshProUGUI>().text = card.CardName;
             cardTransform.GetChild(2).GetComponent<TextMeshProUGUI>().text = card.Description;
 
-            string attributes = card switch
-            {
-                MonsterCard monster => $"Health: {monster.Health}\nAttack: {monster.AttackPower}\nCost: {monster.ManaCost}",
-                SpellCard spell => $"Effect: {string.Join(", ", spell.EffectTypes)}\nValue: {spell.EffectValue}\nDuration: {spell.Duration}\nCost: {spell.ManaCost}",
-                _ => string.Empty
-            };
+            // Generate attributes text based on card type with only non-zero values
+            string attributes = GenerateCardAttributes(card);
             cardTransform.GetChild(3).GetComponent<TextMeshProUGUI>().text = attributes;
         }
         catch (System.Exception e)
@@ -156,6 +152,96 @@ public class CardManager : MonoBehaviour, ICardManager
         }
 
         return cardObject;
+    }
+
+    private string GenerateCardAttributes(Card card)
+    {
+        var attributesList = new List<string>();
+
+        // Show mana cost for all card types
+        attributesList.Add($"Cost: {card.ManaCost}");
+
+        // Monster card attributes
+        if (card is MonsterCard monsterCard)
+        {
+            // Always show Health and Attack for monster cards
+            attributesList.Add($"Health: {monsterCard.Health}");
+            attributesList.Add($"Attack: {monsterCard.AttackPower}");
+
+            // Only show keywords if present
+            if (monsterCard.Keywords != null && monsterCard.Keywords.Count > 0)
+            {
+                attributesList.Add($"Keywords: {string.Join(", ", monsterCard.Keywords)}");
+            }
+        }
+        // Spell card attributes
+        else if (card is SpellCard spellCard)
+        {
+            // Get the CardData which contains all the effect information
+            CardData cardData = card.CardType;
+
+            if (cardData != null)
+            {
+                // Show effect types if present
+                if (cardData.EffectTypes != null && cardData.EffectTypes.Count > 0)
+                {
+                    attributesList.Add($"Effect: {string.Join(", ", cardData.EffectTypes)}");
+                }
+
+                // Only show non-zero values
+                if (cardData.EffectValue > 0)
+                {
+                    attributesList.Add($"Value: {cardData.EffectValue}");
+                }
+
+                if (cardData.Duration > 0)
+                {
+                    attributesList.Add($"Duration: {cardData.Duration}");
+                }
+
+                if (cardData.EffectValuePerRound > 0)
+                {
+                    attributesList.Add($"Damage/Round: {cardData.EffectValuePerRound}");
+                }
+
+                // Add Draw Value if the card has a Draw effect
+                if (cardData.EffectTypes.Contains(SpellEffect.Draw) && cardData.DrawValue > 0)
+                {
+                    attributesList.Add($"Draw: {cardData.DrawValue}");
+                }
+
+                // Add Bloodprice Value if the card has a Bloodprice effect
+                if (cardData.EffectTypes.Contains(SpellEffect.Bloodprice) && cardData.BloodpriceValue > 0)
+                {
+                    attributesList.Add($"Blood Price: {cardData.BloodpriceValue}");
+                }
+            }
+            else
+            {
+                // Fallback to using SpellCard properties if CardData is not available
+                if (spellCard.EffectTypes != null && spellCard.EffectTypes.Count > 0)
+                {
+                    attributesList.Add($"Effect: {string.Join(", ", spellCard.EffectTypes)}");
+                }
+
+                if (spellCard.EffectValue > 0)
+                {
+                    attributesList.Add($"Value: {spellCard.EffectValue}");
+                }
+
+                if (spellCard.Duration > 0)
+                {
+                    attributesList.Add($"Duration: {spellCard.Duration}");
+                }
+
+                if (spellCard.DamagePerRound > 0)
+                {
+                    attributesList.Add($"Damage/Round: {spellCard.DamagePerRound}");
+                }
+            }
+        }
+
+        return string.Join("\n", attributesList);
     }
 
     private void SetupCardInteraction(GameObject cardObject)
