@@ -15,6 +15,7 @@ public class CardData
         get => _cardImage;
         set => _cardImage = value ?? CardLibrary.DefaultSprite;
     }
+
     [SerializeField]
     public string Description;
     [SerializeField]
@@ -96,5 +97,10 @@ public class CardData
     private bool HasBloodpriceEffect()
     {
         return IsSpellCard && EffectTypes != null && EffectTypes.Contains(SpellEffect.Bloodprice);
+    }
+
+    public bool HasKeyword(Keywords.MonsterKeyword keyword)
+    {
+        return Keywords != null && Keywords.Contains(keyword);
     }
 }

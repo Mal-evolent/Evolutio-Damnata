@@ -8,6 +8,7 @@ using EnemyInteraction.Models;
 using EnemyInteraction.Services;
 using EnemyInteraction.Extensions;
 using EnemyInteraction.Interfaces;
+using EnemyInteraction.MachineLearning;
 
 namespace EnemyInteraction
 {
@@ -21,6 +22,8 @@ namespace EnemyInteraction
         private ISpellEffectApplier _spellEffectApplier;
         private StackManager _stackManager;
         private AttackLimiter _attackLimiter;
+
+        private PlayerBehaviorPredictor _playerPredictor;
 
         // Public properties for controlled access
         public ICombatManager CombatManager { get => _combatManager; set => _combatManager = value; }
@@ -43,9 +46,37 @@ namespace EnemyInteraction
 
         private float _initializationTimer = 0f;
 
+        private void Start()
+        {
+            // Initialize predictor and other components
+            _playerPredictor = new PlayerBehaviorPredictor();
+            _combatManager = FindObjectOfType<CombatManager>();
+
+            // Subscribe to phase changes
+            if (_combatManager is CombatManager combatManagerImpl)
+            {
+                combatManagerImpl.SubscribeToPhaseChanges(OnPhaseChanged);
+            }
+        }
+
         private void Awake()
         {
             StartCoroutine(Initialize());
+        }
+
+        private void OnPhaseChanged(CombatPhase newPhase)
+        {
+            Debug.Log($"[EnemyActions] Phase changed to {newPhase}");
+            _playerPredictor?.PhaseSwitched(newPhase);
+        }
+
+        private void OnDestroy()
+        {
+            // Unsubscribe to prevent memory leaks
+            if (_combatManager is CombatManager combatManagerImpl)
+            {
+                combatManagerImpl.UnsubscribeFromPhaseChanges(OnPhaseChanged);
+            }
         }
 
         private IEnumerator Initialize()

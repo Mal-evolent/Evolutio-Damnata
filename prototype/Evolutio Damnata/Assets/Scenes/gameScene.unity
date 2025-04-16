@@ -2520,19 +2520,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 1051826824}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 50797241c0bb55947b9ea818e5405c7e, type: 3}
+  m_Script: {fileID: 11500000, guid: 0ff79b1bdbb2b284d807d89b66fbb516, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _spritePositioning: {fileID: 0}
-  _decisionVariance: 0.1
-  _evaluationVariance: 0.15
-  _attackOrderRandomizationChance: 0.1
-  _healthThresholdForAggro: 8
-  _aggressiveTurnThreshold: 4
-  _baseAttackDelay: 0.6
-  _delayVariance: 0.3
   _initialAttackDelay: 0.8
   _evaluationDelay: 0.4
+  _skipTurnConsiderationChance: 0.25
+  _skipTurnBoardAdvantageThreshold: 1.5
 --- !u!1 &1159794892
 GameObject:
   m_ObjectHideFlags: 0
@@ -3493,6 +3488,37 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1226457707}
   m_CullTransparentMesh: 1
+--- !u!1 &1274003430
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1274003431}
+  m_Layer: 0
+  m_Name: Prediction Model
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1274003431
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1274003430}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1346.2666, y: 567.04315, z: -3.7124066}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1281395480
 GameObject:
   m_ObjectHideFlags: 0
@@ -3784,8 +3810,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _spritePositioning: {fileID: 0}
-  _lateGameTurnThreshold: 10
-  _lateGameBonusMultiplier: 1.1
+  _settings: {fileID: 0}
 --- !u!1 &1394303770
 GameObject:
   m_ObjectHideFlags: 0
@@ -5890,3 +5915,4 @@ SceneRoots:
   - {fileID: 655618344}
   - {fileID: 1937691901}
   - {fileID: 644541760}
+  - {fileID: 1274003431}

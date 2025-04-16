@@ -47,13 +47,60 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
 
     private bool _isInitialized = false;
 
+    // Event for phase changes
+    public event Action<CombatPhase> OnPhaseChanged;
+
     // Properties
-    public int TurnCount { get => _turnCount; set => _turnCount = value; }
-    public int PlayerHealth { get => _playerHealth; set => _playerHealth = value; }
-    public int EnemyHealth { get => _enemyHealth; set => _enemyHealth = value; }
+    public int TurnCount
+    {
+        get => _turnCount;
+        set => _turnCount = value;
+    }
+
+    public int PlayerHealth
+    {
+        get => _playerHealth;
+        set
+        {
+            _playerHealth = value;
+            if (_playerHealthSlider != null)
+            {
+                _playerHealthSlider.value = value;
+            }
+        }
+    }
+
+    public int EnemyHealth
+    {
+        get => _enemyHealth;
+        set
+        {
+            _enemyHealth = value;
+            if (_enemyHealthSlider != null)
+            {
+                _enemyHealthSlider.value = value;
+            }
+        }
+    }
+
     public bool PlayerTurn { get => _playerTurn; set => _playerTurn = value; }
     public bool PlayerGoesFirst { get => _playerGoesFirst; set => _playerGoesFirst = value; }
-    public CombatPhase CurrentPhase { get => _currentPhase; set => _currentPhase = value; }
+
+    // Modified CurrentPhase property that invokes the event
+    public CombatPhase CurrentPhase
+    {
+        get => _currentPhase;
+        set
+        {
+            if (_currentPhase != value)
+            {
+                Debug.Log($"[CombatManager] Phase changing: {_currentPhase} -> {value}");
+                _currentPhase = value;
+                OnPhaseChanged?.Invoke(_currentPhase);
+            }
+        }
+    }
+
     public CombatStage CombatStage => _combatStage;
     public Deck PlayerDeck => _playerDeck;
     public Deck EnemyDeck => _enemyDeck;
@@ -66,6 +113,9 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     public Slider PlayerHealthSlider => _playerHealthSlider;
     public Slider EnemyHealthSlider => _enemyHealthSlider;
     public int MaxHealth => _maxHealth;
+    public int PlayerHandSize => _playerDeck != null ? _playerDeck.HandSize : 0;
+    public int EnemyHandSize => _enemyDeck != null ? _enemyDeck.HandSize : 0;
+
 
     public int PlayerMana
     {
@@ -99,6 +149,16 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
         }
     }
 
+    public void SubscribeToPhaseChanges(Action<CombatPhase> callback)
+    {
+        OnPhaseChanged += callback;
+    }
+
+    public void UnsubscribeFromPhaseChanges(Action<CombatPhase> callback)
+    {
+        OnPhaseChanged -= callback;
+    }
+
     private void Awake()
     {
         try
@@ -129,7 +189,7 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     private IEnumerator InitializeManagers()
     {
         Debug.Log("[CombatManager] Starting manager initialization...");
-        
+
         // Wait for CombatStage to be fully initialized
         while (_combatStage == null || _combatStage.SpritePositioning == null || _combatStage.SpellEffectApplier == null)
         {
@@ -246,7 +306,7 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
 
         var cardManager = _combatStage.GetComponent<CardManager>();
         var cardOutlineManager = _combatStage.GetComponent<CardOutlineManager>();
-        
+
         if (cardManager != null)
         {
             cardManager.CurrentSelectedCard = null;
@@ -273,7 +333,8 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
 
     public void ResetPhaseState()
     {
-        _currentPhase = CombatPhase.None;
+        // Use the property to ensure event firing
+        CurrentPhase = CombatPhase.None;
     }
 
     // Phase checks

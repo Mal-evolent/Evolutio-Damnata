@@ -29,11 +29,13 @@ public class CombatRulesEngine : ICombatRulesEngine
         ApplyRangedRule(attacker, result);
         ApplyOverwhelmRule(attacker, target, result);
 
-        // Apply target's defensive keywords - target takes less damage when Tough
-        ApplyToughRuleForDefender(target, result);
+        // NOTE: We no longer reduce damage here since it's handled in EntityManager.TakeDamage
+        // We just update the description for clarity
+        ApplyToughRuleDescription(target, result, "Defender");
 
-        // Apply attacker's defensive keywords - attacker takes less counter damage when Tough
-        ApplyToughRuleForAttacker(attacker, result);
+        // NOTE: We no longer reduce damage here since it's handled in EntityManager.TakeDamage
+        // We just update the description for clarity
+        ApplyToughRuleDescription(attacker, result, "Attacker");
 
         return result;
     }
@@ -52,36 +54,17 @@ public class CombatRulesEngine : ICombatRulesEngine
     }
 
     /// <summary>
-    /// Tough defenders take half damage from attacks
+    /// Add Tough description to the result (damage reduction now handled in EntityManager)
     /// </summary>
-    private void ApplyToughRuleForDefender(EntityManager target, AttackRuleResult result)
+    private void ApplyToughRuleDescription(EntityManager entity, AttackRuleResult result, string role)
     {
-        if (target != null && target.HasKeyword(Keywords.MonsterKeyword.Tough))
+        if (entity != null && entity.HasKeyword(Keywords.MonsterKeyword.Tough))
         {
-            result.ModifiedAttackerDamage = Mathf.Floor(result.ModifiedAttackerDamage / 2f);
-
             string currentDescription = result.RuleDescription;
             result.RuleDescription = string.IsNullOrEmpty(currentDescription) || currentDescription == "Normal Attack" ?
-                "Defender Tough" : $"{currentDescription}, Defender Tough";
+                $"{role} Tough" : $"{currentDescription}, {role} Tough";
 
-            Debug.Log($"[CombatRulesEngine] {target.name} is tough and reduces incoming damage by half!");
-        }
-    }
-
-    /// <summary>
-    /// Tough attackers take half damage from counter-attacks
-    /// </summary>
-    private void ApplyToughRuleForAttacker(EntityManager attacker, AttackRuleResult result)
-    {
-        if (attacker != null && attacker.HasKeyword(Keywords.MonsterKeyword.Tough) && result.ShouldTakeCounterDamage)
-        {
-            result.ModifiedTargetDamage = Mathf.Floor(result.ModifiedTargetDamage / 2f);
-
-            string currentDescription = result.RuleDescription;
-            result.RuleDescription = string.IsNullOrEmpty(currentDescription) || currentDescription == "Normal Attack" ?
-                "Attacker Tough" : $"{currentDescription}, Attacker Tough";
-
-            Debug.Log($"[CombatRulesEngine] {attacker.name} is tough and reduces incoming counter damage by half!");
+            Debug.Log($"[CombatRulesEngine] {entity.name} is tough and will reduce all incoming damage by half!");
         }
     }
 
@@ -109,90 +92,42 @@ public class CombatRulesEngine : ICombatRulesEngine
         }
     }
 
+    // Add these methods to the CombatRulesEngine class in Assets/Scripts/Combat/Attack Logic/CombatRulesEngine.cs
+
     /// <summary>
-    /// Applies splash damage to all active entities from an Overwhelm attack
+    /// Checks if any entities in the provided list have the Taunt keyword
     /// </summary>
-    public static void ApplySplashDamage(AttackRuleResult result)
+    public static bool HasTauntUnits(List<GameObject> entities)
     {
-        if (!result.HasSplashDamage || result.SplashDamageAmount <= 0 || result.TargetEntity == null)
-            return;
+        if (entities == null) return false;
 
-        // Get the appropriate SpritePositioning reference
-        var spritePositioning = Object.FindObjectOfType<SpritePositioning>();
-        if (spritePositioning == null)
-        {
-            var combatStage = Object.FindObjectOfType<CombatStage>();
-            if (combatStage != null)
-            {
-                spritePositioning = combatStage.SpritePositioning as SpritePositioning;
-            }
-        }
-
-        if (spritePositioning == null)
-        {
-            Debug.LogError("[CombatRulesEngine] Cannot apply splash damage - SpritePositioning not found");
-            return;
-        }
-
-        // Get the appropriate entity list based on target side
-        var entityList = result.IsTargetEnemy ? spritePositioning.EnemyEntities : spritePositioning.PlayerEntities;
-        if (entityList == null || entityList.Count == 0)
-            return;
-
-        // Find all valid entities that are NOT the target
-        List<EntityManager> otherEntities = new List<EntityManager>();
-
-        foreach (var entity in entityList)
-        {
-            if (entity == null) continue;
-
-            var entityManager = entity.GetComponent<EntityManager>();
-            if (entityManager == null) continue;
-
-            // Skip the original target
-            if (entityManager == result.TargetEntity) continue;
-
-            // Only include active entities
-            if (entityManager.placed && !entityManager.dead && !entityManager.IsFadingOut)
-            {
-                otherEntities.Add(entityManager);
-            }
-        }
-
-        // Apply splash damage to all other active entities
-        foreach (var entity in otherEntities)
-        {
-            entity.TakeDamage(result.SplashDamageAmount);
-            Debug.Log($"[CombatRulesEngine] Overwhelm splash damage: {entity.name} takes {result.SplashDamageAmount} damage!");
-        }
+        return entities.Any(e => {
+            var entityManager = e?.GetComponent<EntityManager>();
+            return entityManager != null &&
+                   !entityManager.dead &&
+                   entityManager.placed &&
+                   !entityManager.IsFadingOut &&
+                   entityManager.HasKeyword(Keywords.MonsterKeyword.Taunt);
+        });
     }
 
     /// <summary>
-    /// Checks if there are any taunt units on the field that should be targeted first
+    /// Returns all EntityManagers in the provided list that have the Taunt keyword
     /// </summary>
-    public static bool HasTauntUnits(System.Collections.Generic.List<GameObject> entities)
+    public static List<EntityManager> GetAllTauntUnits(List<GameObject> entities)
     {
-        return entities.Any(entity =>
-            entity != null &&
-            entity.GetComponent<EntityManager>()?.HasKeyword(Keywords.MonsterKeyword.Taunt) == true &&
-            !entity.GetComponent<EntityManager>().dead &&
-            !entity.GetComponent<EntityManager>().IsFadingOut);
-    }
+        if (entities == null) return new List<EntityManager>();
 
-    /// <summary>
-    /// Gets all taunt units from a list of entities
-    /// </summary>
-    public static System.Collections.Generic.List<EntityManager> GetAllTauntUnits(System.Collections.Generic.List<GameObject> entities)
-    {
         return entities
-            .Where(entity => entity != null)
-            .Select(entity => entity.GetComponent<EntityManager>())
-            .Where(entity => entity != null &&
-                  entity.HasKeyword(Keywords.MonsterKeyword.Taunt) &&
-                  !entity.dead &&
-                  !entity.IsFadingOut)
+            .Select(e => e?.GetComponent<EntityManager>())
+            .Where(e => e != null &&
+                       !e.dead &&
+                       e.placed &&
+                       !e.IsFadingOut &&
+                       e.HasKeyword(Keywords.MonsterKeyword.Taunt))
             .ToList();
     }
+
 }
 
 /// <summary>

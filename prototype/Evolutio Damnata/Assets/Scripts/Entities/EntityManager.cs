@@ -160,6 +160,13 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     {
         if (dead || !placed) return;
 
+        // Apply Tough damage reduction to ALL incoming damage sources
+        if (HasKeyword(Keywords.MonsterKeyword.Tough))
+        {
+            damageAmount = Mathf.Floor(damageAmount / 2f);
+            Debug.Log($"[EntityManager] {name} is tough and reduces all incoming damage by half! Taking {damageAmount} damage.");
+        }
+
         lastDamageTaken = damageAmount;
         health = Mathf.Clamp(health - damageAmount, 0, maxHealth);
         UpdateHealthUI();
