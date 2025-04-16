@@ -12,6 +12,9 @@ namespace EnemyInteraction.Managers
 {
     public class BoardStateManager : MonoBehaviour, IBoardStateManager
     {
+        // Singleton instance
+        public static BoardStateManager Instance { get; private set; }
+
         [Header("Core Settings")]
         [SerializeField] private SpritePositioning _spritePositioning;
         [SerializeField] private BoardStateSettings _settings;
@@ -27,6 +30,16 @@ namespace EnemyInteraction.Managers
 
         private void Awake()
         {
+            // Implement singleton pattern
+            if (Instance != null && Instance != this)
+            {
+                Debug.LogWarning("[BoardStateManager] Another instance already exists, destroying this one");
+                Destroy(gameObject);
+                return;
+            }
+
+            Instance = this;
+
             // Create default settings if none are assigned
             if (_settings == null)
             {
@@ -36,7 +49,6 @@ namespace EnemyInteraction.Managers
 
             StartCoroutine(Initialize());
         }
-
 
         private IEnumerator Initialize()
         {
@@ -75,9 +87,6 @@ namespace EnemyInteraction.Managers
 
                 // Initialize the entity cache manager
                 (_entityCacheManager as EntityCacheManager).Initialize(_spritePositioning, attackLimiter);
-
-                // This will make it be properly recognized as the singleton
-                // No need for DontDestroyOnLoad here as the singleton pattern will handle that
             }
             else
             {
@@ -103,7 +112,6 @@ namespace EnemyInteraction.Managers
             _isInitialized = true;
             Debug.Log("[BoardStateManager] Initialization complete");
         }
-
 
         public BoardState EvaluateBoardState()
         {
@@ -188,6 +196,16 @@ namespace EnemyInteraction.Managers
             }
 
             return null;
+        }
+
+        // Handle destruction cleanup for the singleton
+        private void OnDestroy()
+        {
+            // Only clear the static reference if this instance is being destroyed
+            if (Instance == this)
+            {
+                Instance = null;
+            }
         }
     }
 }

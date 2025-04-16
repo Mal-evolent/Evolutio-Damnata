@@ -65,7 +65,8 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
             _playerHealth = value;
             if (_playerHealthSlider != null)
             {
-                _playerHealthSlider.value = value;
+                // Normalize the health value based on max health
+                _playerHealthSlider.value = (float)value / _maxHealth;
             }
         }
     }
@@ -78,7 +79,8 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
             _enemyHealth = value;
             if (_enemyHealthSlider != null)
             {
-                _enemyHealthSlider.value = value;
+                // Normalize the health value based on max health
+                _enemyHealthSlider.value = (float)value / _maxHealth;
             }
         }
     }

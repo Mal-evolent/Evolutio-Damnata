@@ -12,15 +12,18 @@ namespace EnemyInteraction.Managers
 {
     public class AttackManager : MonoBehaviour, IAttackManager
     {
+        // Add singleton pattern
+        public static AttackManager Instance { get; private set; }
+
         [SerializeField] private SpritePositioning _spritePositioning;
-        
+
         // Core components
         private ICombatManager _combatManager;
         private CombatStage _combatStage;
         private IKeywordEvaluator _keywordEvaluator;
         private IBoardStateManager _boardStateManager;
         private AttackLimiter _attackLimiter;
-        
+
         // Refactored components
         private IEntityCacheManager _entityCacheManager;
         private IAttackStrategyManager _attackStrategyManager;
@@ -44,12 +47,51 @@ namespace EnemyInteraction.Managers
 
         private void Awake()
         {
-            StartCoroutine(Initialize());
+            // Implement singleton pattern - only register if we're the first instance
+            if (Instance != null && Instance != this)
+            {
+                Debug.LogWarning("[AttackManager] Another instance already exists, destroying this one");
+                Destroy(gameObject);
+                return;
+            }
+
+            Instance = this;
+
+            // Instead of starting initialization here, 
+            // register this instance with AIServices and let it handle initialization
+            StartCoroutine(RegisterWithAIServices());
         }
 
-        private IEnumerator Initialize()
+        private IEnumerator RegisterWithAIServices()
         {
-            Debug.Log("[AttackManager] Starting initialization...");
+            Debug.Log("[AttackManager] Registering with AIServices...");
+
+            // Wait for AIServices to be available
+            int attempts = 0;
+            int maxAttempts = 30;
+
+            while (AIServices.Instance == null && attempts < maxAttempts)
+            {
+                yield return new WaitForSeconds(0.1f);
+                attempts++;
+            }
+
+            if (AIServices.Instance == null)
+            {
+                Debug.LogError("[AttackManager] AIServices not available after waiting");
+                yield break;
+            }
+
+            // Register this instance with AIServices
+            AIServices.Instance.RegisterAttackManager(this);
+
+            // Wait for scene dependencies before initializing components
+            yield return StartCoroutine(WaitForSceneDependencies());
+        }
+
+        private IEnumerator WaitForSceneDependencies()
+        {
+            Debug.Log("[AttackManager] Waiting for scene dependencies...");
 
             int maxAttempts = 30;
             int attempts = 0;
@@ -87,28 +129,23 @@ namespace EnemyInteraction.Managers
                 }
             }
 
-            if (AIServices.Instance != null)
-            {
-                var services = AIServices.Instance;
-                _keywordEvaluator = _keywordEvaluator ?? services.KeywordEvaluator;
-                _boardStateManager = _boardStateManager ?? services.BoardStateManager;
-            }
+            // Let AIServices know we're ready for dependency injection
+            AIServices.Instance.InjectAttackManagerDependencies(this);
+        }
 
-            if (_keywordEvaluator == null)
-            {
-                var keywordEvaluatorObj = new GameObject("KeywordEvaluator_Local");
-                keywordEvaluatorObj.transform.SetParent(transform);
-                _keywordEvaluator = keywordEvaluatorObj.AddComponent<KeywordEvaluator>();
-            }
+        // Method that AIServices can call to inject dependencies
+        public void InjectDependencies(
+            IKeywordEvaluator keywordEvaluator,
+            IBoardStateManager boardStateManager,
+            IEntityCacheManager entityCacheManager)
+        {
+            Debug.Log("[AttackManager] Receiving dependencies from AIServices");
 
-            if (_boardStateManager == null)
-            {
-                var boardStateManagerObj = new GameObject("BoardStateManager_Local");
-                boardStateManagerObj.transform.SetParent(transform);
-                _boardStateManager = boardStateManagerObj.AddComponent<BoardStateManager>();
-            }
+            _keywordEvaluator = keywordEvaluator;
+            _boardStateManager = boardStateManager;
+            _entityCacheManager = entityCacheManager;
 
-            // Initialize refactored components
+            // After receiving dependencies, initialize components that rely on them
             InitializeRefactoredComponents();
 
             Debug.Log("[AttackManager] Initialization completed");
@@ -116,14 +153,9 @@ namespace EnemyInteraction.Managers
 
         private void InitializeRefactoredComponents()
         {
-            // Create and initialize EntityCacheManager
-            if (_entityCacheManager == null)
-            {
-                var entityCacheManagerObj = gameObject.AddComponent<EntityCacheManager>();
-                _entityCacheManager = entityCacheManagerObj;
-                (entityCacheManagerObj as EntityCacheManager).Initialize(_spritePositioning, _attackLimiter);
-            }
-            
+            // Only create components, don't try to find or create manager instances
+            // as they should be injected by AIServices
+
             // Create and initialize TargetEvaluator
             if (_targetEvaluator == null)
             {
@@ -131,7 +163,7 @@ namespace EnemyInteraction.Managers
                 _targetEvaluator = targetEvaluatorObj;
                 (targetEvaluatorObj as TargetEvaluator).Initialize(_keywordEvaluator, _entityCacheManager);
             }
-            
+
             // Create and initialize AttackStrategyManager
             if (_attackStrategyManager == null)
             {
@@ -139,7 +171,7 @@ namespace EnemyInteraction.Managers
                 _attackStrategyManager = attackStrategyManagerObj;
                 (attackStrategyManagerObj as AttackStrategyManager).Initialize(_targetEvaluator, _entityCacheManager);
             }
-            
+
             // Create and initialize AttackExecutor
             if (_attackExecutor == null)
             {
@@ -235,7 +267,7 @@ namespace EnemyInteraction.Managers
                         yield return new WaitForSeconds(_attackExecutor.GetRandomizedDelay(_evaluationDelay));
                     }
                 }
-                else if (playerHealthIcon != null && 
+                else if (playerHealthIcon != null &&
                          _attackStrategyManager.ShouldAttackHealthIcon(attacker, playerEntities, playerHealthIcon, boardState))
                 {
                     // Dramatic pause before attacking health icon directly
@@ -289,6 +321,16 @@ namespace EnemyInteraction.Managers
             yield return new WaitForSeconds(_attackExecutor?.GetRandomizedDelay(_evaluationDelay) ?? 0.5f);
             Debug.Log("[AttackManager] Simulating enemy attacks");
             yield return new WaitForSeconds(_attackExecutor?.GetRandomizedDelay(_evaluationDelay * 1.5f) ?? 0.8f);
+        }
+
+        // Handle destruction cleanup for the singleton
+        private void OnDestroy()
+        {
+            // Only clear the static reference if this instance is being destroyed
+            if (Instance == this)
+            {
+                Instance = null;
+            }
         }
     }
 

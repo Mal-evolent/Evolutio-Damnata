@@ -152,9 +152,33 @@ namespace EnemyInteraction.Managers
 
         private void InitializeFallbackServices()
         {
+            // First try to find the BoardStateManager singleton
+            BoardStateManager existingManager = null;
+            try
+            {
+                existingManager = BoardStateManager.Instance;
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning($"[CardPlayManager] Error accessing BoardStateManager.Instance: {ex.Message}");
+            }
+
+            // Use the singleton if found
+            if (existingManager != null)
+            {
+                _boardStateManager = existingManager;
+            }
+
+            // Only create local services if absolutely necessary
             _keywordEvaluator ??= CreateLocalService<KeywordEvaluator>("KeywordEvaluator_Local");
             _effectEvaluator ??= CreateLocalService<EffectEvaluator>("EffectEvaluator_Local");
-            _boardStateManager ??= CreateLocalService<BoardStateManager>("BoardStateManager_Local");
+
+            // Only create a local BoardStateManager if no singleton exists
+            if (_boardStateManager == null)
+            {
+                Debug.LogWarning("[CardPlayManager] No BoardStateManager singleton found, creating local instance");
+                _boardStateManager = CreateLocalService<BoardStateManager>("BoardStateManager_Local");
+            }
         }
 
         private T CreateLocalService<T>(string name) where T : Component
