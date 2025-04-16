@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 
 public class Deck : MonoBehaviour
@@ -29,13 +30,29 @@ public class Deck : MonoBehaviour
             return;
         }
 
-        List<Card> newDeck = _cardLibrary.CreateDeckFromLibrary();
-        foreach (Card card in newDeck)
+        // Get all available cards from the library
+        var allCardData = _cardLibrary.CardDataList.ToList();
+
+        // Determine number of cards to add to the deck
+        int cardsToAdd = Mathf.Min(MaxDeckSize > 0 ? MaxDeckSize : 30, allCardData.Count);
+
+        // Randomly select cards from the library
+        for (int i = 0; i < cardsToAdd; i++)
         {
-            AddCard(card);
+            if (allCardData.Count == 0) break;
+
+            // Select a random card data from the remaining pool
+            int randomIndex = Random.Range(0, allCardData.Count);
+            CardData selectedCardData = allCardData[randomIndex];
+
+            // Create a card from the selected data and add it to the deck
+            Card newCard = _cardLibrary.CreateCardFromData(selectedCardData);
+            AddCard(newCard);
+
+            allCardData.RemoveAt(randomIndex);
         }
 
-        Debug.Log("Deck Populated");
+        Debug.Log($"Deck Populated with {Cards.Count} random cards");
         Shuffle();
         DrawCard();
     }

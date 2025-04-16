@@ -2025,6 +2025,8 @@ MonoBehaviour:
     EffectValue: 0
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 0
     IsMonsterCard: 0
   spriteImage: {fileID: 0}
@@ -2266,6 +2268,8 @@ MonoBehaviour:
     EffectValue: 0
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 0
     IsMonsterCard: 0
   spriteImage: {fileID: 0}
@@ -2572,6 +2576,8 @@ MonoBehaviour:
     EffectValue: 0
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 0
     IsMonsterCard: 1
   - CardName: Bonepicker Imp
@@ -2585,6 +2591,8 @@ MonoBehaviour:
     EffectValue: 0
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 0
     IsMonsterCard: 1
   - CardName: Forsaken Guard
@@ -2598,6 +2606,8 @@ MonoBehaviour:
     EffectValue: 0
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 0
     IsMonsterCard: 1
   - CardName: Blight Archer
@@ -2611,6 +2621,8 @@ MonoBehaviour:
     EffectValue: 0
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 0
     IsMonsterCard: 1
   - CardName: Cult Warhound
@@ -2624,6 +2636,8 @@ MonoBehaviour:
     EffectValue: 0
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 0
     IsMonsterCard: 1
   - CardName: Ghoul Of Grief
@@ -2637,6 +2651,8 @@ MonoBehaviour:
     EffectValue: 0
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 0
     IsMonsterCard: 1
   - CardName: Corrupted Wall
@@ -2650,6 +2666,8 @@ MonoBehaviour:
     EffectValue: 0
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 0
     IsMonsterCard: 1
   - CardName: Scarred Outrider
@@ -2663,6 +2681,8 @@ MonoBehaviour:
     EffectValue: 0
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 0
     IsMonsterCard: 1
   - CardName: Doomcaller Shade
@@ -2676,6 +2696,8 @@ MonoBehaviour:
     EffectValue: 0
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 0
     IsMonsterCard: 1
   - CardName: Umbra Sniper
@@ -2689,6 +2711,8 @@ MonoBehaviour:
     EffectValue: 0
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 0
     IsMonsterCard: 1
   - CardName: Juggernaut of Dust
@@ -2702,6 +2726,8 @@ MonoBehaviour:
     EffectValue: 0
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 0
     IsMonsterCard: 1
   - CardName: Revenant Berserker
@@ -2715,6 +2741,8 @@ MonoBehaviour:
     EffectValue: 0
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 0
     IsMonsterCard: 1
   - CardName: Watcher Of Silence
@@ -2728,6 +2756,8 @@ MonoBehaviour:
     EffectValue: 0
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 0
     IsMonsterCard: 1
   - CardName: Wraith Lance
@@ -2741,6 +2771,8 @@ MonoBehaviour:
     EffectValue: 0
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 0
     IsMonsterCard: 1
   - CardName: Abyssal Behemouth
@@ -2754,6 +2786,8 @@ MonoBehaviour:
     EffectValue: 0
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 0
     IsMonsterCard: 1
   - CardName: Ember Touch
@@ -2767,6 +2801,8 @@ MonoBehaviour:
     EffectValue: 2
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 1
     IsMonsterCard: 0
   - CardName: Soul Burn
@@ -2780,6 +2816,8 @@ MonoBehaviour:
     EffectValue: 1
     Duration: 3
     EffectValuePerRound: 2
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 1
     IsMonsterCard: 0
   - CardName: Mend Wound
@@ -2793,6 +2831,8 @@ MonoBehaviour:
     EffectValue: 3
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 1
     IsMonsterCard: 0
   - CardName: Chain Reaction
@@ -2806,6 +2846,8 @@ MonoBehaviour:
     EffectValue: 2
     Duration: 2
     EffectValuePerRound: 2
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 1
     IsMonsterCard: 0
   - CardName: Purge
@@ -2819,6 +2861,8 @@ MonoBehaviour:
     EffectValue: 5
     Duration: 3
     EffectValuePerRound: 2
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 1
     IsMonsterCard: 0
   - CardName: Blessing Of Decay
@@ -2832,6 +2876,8 @@ MonoBehaviour:
     EffectValue: 3
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 1
     IsMonsterCard: 0
   - CardName: Surge Of Agony
@@ -2845,6 +2891,8 @@ MonoBehaviour:
     EffectValue: 7
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 1
     IsMonsterCard: 0
   - CardName: Blazing Wounds
@@ -2858,6 +2906,8 @@ MonoBehaviour:
     EffectValue: 0
     Duration: 4
     EffectValuePerRound: 3
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 1
     IsMonsterCard: 0
   - CardName: Radiant Renewel
@@ -2871,6 +2921,8 @@ MonoBehaviour:
     EffectValue: 4
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 1
     IsMonsterCard: 0
   - CardName: Infernal Meteor
@@ -2884,6 +2936,8 @@ MonoBehaviour:
     EffectValue: 8
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 1
     IsMonsterCard: 0
   - CardName: Spirit Drain
@@ -2897,6 +2951,8 @@ MonoBehaviour:
     EffectValue: 0
     Duration: 3
     EffectValuePerRound: 5
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 1
     IsMonsterCard: 0
   - CardName: Hellfire Barrage
@@ -2910,6 +2966,8 @@ MonoBehaviour:
     EffectValue: 5
     Duration: 2
     EffectValuePerRound: 4
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 1
     IsMonsterCard: 0
   - CardName: Undying Grace
@@ -2923,6 +2981,8 @@ MonoBehaviour:
     EffectValue: 6
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 1
     IsMonsterCard: 0
   - CardName: Oblivion Surge
@@ -2936,6 +2996,8 @@ MonoBehaviour:
     EffectValue: 10
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 1
     IsMonsterCard: 0
   - CardName: Creeping Rot
@@ -2949,71 +3011,158 @@ MonoBehaviour:
     EffectValue: 1
     Duration: 3
     EffectValuePerRound: 3
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 1
     IsMonsterCard: 0
-  - CardName: Dark Insight
+  - CardName: Painful Clarity
     _cardImage: {fileID: 0}
     Description: 
     ManaCost: 2
     AttackPower: 0
     Health: 0
     Keywords: 
-    EffectTypes: 04000000
-    EffectValue: 2
+    EffectTypes: 0400000005000000
+    EffectValue: 0
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 2
+    BloodpriceValue: 3
     IsSpellCard: 1
     IsMonsterCard: 0
-  - CardName: Flame Reflection
+  - CardName: Flare of Thought
     _cardImage: {fileID: 0}
     Description: 
-    ManaCost: 3
+    ManaCost: 1
     AttackPower: 0
     Health: 0
     Keywords: 
-    EffectTypes: 0100000004000000
-    EffectValue: 3
+    EffectTypes: 0400000005000000
+    EffectValue: 0
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 1
+    BloodpriceValue: 1
     IsSpellCard: 1
     IsMonsterCard: 0
-  - CardName: Insightful Offering
-    _cardImage: {fileID: 0}
-    Description: 
-    ManaCost: 4
-    AttackPower: 0
-    Health: 0
-    Keywords: 
-    EffectTypes: 04000000
-    EffectValue: 3
-    Duration: 0
-    EffectValuePerRound: 0
-    IsSpellCard: 1
-    IsMonsterCard: 0
-  - CardName: Ashes of Memory
-    _cardImage: {fileID: 0}
-    Description: 
-    ManaCost: 5
-    AttackPower: 0
-    Health: 0
-    Keywords: 
-    EffectTypes: 0300000004000000
-    EffectValue: 1
-    Duration: 3
-    EffectValuePerRound: 2
-    IsSpellCard: 1
-    IsMonsterCard: 0
-  - CardName: Forbidden Wisdom
+  - CardName: Wretched Insight
     _cardImage: {fileID: 0}
     Description: 
     ManaCost: 0
     AttackPower: 0
     Health: 0
     Keywords: 
-    EffectTypes: 04000000
-    EffectValue: 4
+    EffectTypes: 0400000005000000
+    EffectValue: 0
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 3
+    BloodpriceValue: 4
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: The Ninth Page
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 4
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 040000000300000005000000
+    EffectValue: 0
+    Duration: 3
+    EffectValuePerRound: 2
+    DrawValue: 2
+    BloodpriceValue: 5
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Sacrificial Reading
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 3
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 0500000004000000
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 3
+    BloodpriceValue: 5
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: 'Crimson Gamble '
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 2
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 0400000005000000
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 1
+    BloodpriceValue: 3
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Thirst for Insight
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 5
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 0400000005000000
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 4
+    BloodpriceValue: 6
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Ashen Curiostiy
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 3
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 0400000003000000
+    EffectValue: 0
+    Duration: 2
+    EffectValuePerRound: 1
+    DrawValue: 2
+    BloodpriceValue: 0
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Sanguine Scroll
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 1
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 0500000004000000
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 1
+    BloodpriceValue: 2
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Delirium's Whisper
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 4
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 040000000300000005000000
+    EffectValue: 0
+    Duration: 3
+    EffectValuePerRound: 1
+    DrawValue: 3
+    BloodpriceValue: 4
     IsSpellCard: 1
     IsMonsterCard: 0
   _defaultCardSprite: {fileID: 21300000, guid: 7aeec1cbde0927e43b184ad00a19733b, type: 3}
@@ -3132,6 +3281,8 @@ MonoBehaviour:
     EffectValue: 0
     Duration: 0
     EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
     IsSpellCard: 0
     IsMonsterCard: 0
   spriteImage: {fileID: 0}

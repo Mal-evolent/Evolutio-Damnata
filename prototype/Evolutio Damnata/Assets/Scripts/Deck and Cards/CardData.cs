@@ -41,6 +41,12 @@ public class CardData
     [SerializeField, ShowIf(nameof(IsSpellCard))]
     public int EffectValuePerRound = 0;
 
+    [SerializeField, ShowIf("HasDrawEffect")]
+    public int DrawValue = 0;
+
+    [SerializeField, ShowIf("HasBloodpriceEffect")]
+    public int BloodpriceValue = 0;
+
     [SerializeField, OnValueChanged(nameof(OnIsSpellCardChanged))]
     public bool IsSpellCard;
 
@@ -50,7 +56,7 @@ public class CardData
     public CardData(
         string name, Sprite image, string description, int manaCost, int attackPower, int health,
         List<Keywords.MonsterKeyword> keywords = null, List<SpellEffect> effectTypes = null,
-        int effectValue = 0, int duration = 0, int damagePerRound = 0)
+        int effectValue = 0, int duration = 0, int damagePerRound = 0, int drawValue = 0, int bloodpriceValue = 0)
     {
         CardName = name;
         CardImage = image;
@@ -63,6 +69,8 @@ public class CardData
         EffectValue = effectValue;
         Duration = duration;
         EffectValuePerRound = damagePerRound;
+        DrawValue = drawValue;
+        BloodpriceValue = bloodpriceValue;
 
         IsSpellCard = EffectTypes.Count > 0;
         IsMonsterCard = !IsSpellCard;
@@ -76,5 +84,17 @@ public class CardData
     private void OnIsMonsterCardChanged()
     {
         IsSpellCard = !IsMonsterCard;
+    }
+
+    // This property is used by ShowIf attribute to determine whether to display DrawValue
+    private bool HasDrawEffect()
+    {
+        return IsSpellCard && EffectTypes != null && EffectTypes.Contains(SpellEffect.Draw);
+    }
+
+    // This property is used by ShowIf attribute to determine whether to display BloodpriceValue
+    private bool HasBloodpriceEffect()
+    {
+        return IsSpellCard && EffectTypes != null && EffectTypes.Contains(SpellEffect.Bloodprice);
     }
 }

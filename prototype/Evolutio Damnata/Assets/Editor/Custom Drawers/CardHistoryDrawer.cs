@@ -17,6 +17,7 @@ public class CardPlayRecordDrawer : PropertyDrawer
         var manaUsed = property.FindPropertyRelative("manaUsed");
         var timestamp = property.FindPropertyRelative("timestamp");
         var isEnemyCard = property.FindPropertyRelative("isEnemyCard");
+        var keywords = property.FindPropertyRelative("keywords");
 
         if (cardName == null || turnNumber == null)
         {
@@ -27,7 +28,7 @@ public class CardPlayRecordDrawer : PropertyDrawer
 
         // Determine player type for display
         string playerType = isEnemyCard != null && isEnemyCard.boolValue ? "Enemy" : "Player";
-        
+
         // Use custom colors for enemy vs player
         Color defaultColor = GUI.color;
         if (isEnemyCard != null && isEnemyCard.boolValue)
@@ -41,9 +42,16 @@ public class CardPlayRecordDrawer : PropertyDrawer
 
         // Draw foldout header with safe string access
         var headerText = $"Turn {turnNumber.intValue}: {playerType} → {cardName.stringValue ?? "Unknown"} ({manaUsed?.intValue ?? 0} mana)";
+
+        // Add keywords to header if available
+        if (keywords != null && !string.IsNullOrEmpty(keywords.stringValue))
+        {
+            headerText += $" [{keywords.stringValue}]";
+        }
+
         var foldoutRect = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
         property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, headerText);
-        
+
         // Reset color
         GUI.color = defaultColor;
 
@@ -54,11 +62,30 @@ public class CardPlayRecordDrawer : PropertyDrawer
 
             // Draw details with null checks
             DrawField("Card:", cardName?.stringValue ?? "Unknown", ref y);
-            DrawField("Description:", cardDescription?.stringValue ?? "No description", ref y);
+
+            // Only draw description if it's not empty
+            if (!string.IsNullOrEmpty(cardDescription?.stringValue))
+            {
+                DrawField("Description:", cardDescription.stringValue, ref y);
+            }
+
             DrawField("Player Type:", playerType, ref y);
-            DrawField("Entity Name:", playerName?.stringValue ?? "Unknown", ref y);
+
+            // Only show entity name if it's not empty
+            if (!string.IsNullOrEmpty(playerName?.stringValue))
+            {
+                DrawField("Entity Name:", playerName.stringValue, ref y);
+            }
+
             DrawField("Turn:", turnNumber?.intValue.ToString() ?? "0", ref y);
             DrawField("Mana Used:", manaUsed?.intValue.ToString() ?? "0", ref y);
+
+            // Only show keywords if they exist
+            if (keywords != null && !string.IsNullOrEmpty(keywords.stringValue))
+            {
+                DrawField("Keywords:", keywords.stringValue, ref y);
+            }
+
             DrawField("Time:", timestamp?.stringValue ?? "Unknown", ref y);
 
             EditorGUI.indentLevel--;
@@ -78,7 +105,19 @@ public class CardPlayRecordDrawer : PropertyDrawer
     {
         if (property.isExpanded)
         {
-            return EditorGUIUtility.singleLineHeight * 8; // Header + 7 fields (added player type)
+            var cardDescription = property.FindPropertyRelative("cardDescription");
+            var playerName = property.FindPropertyRelative("playerName");
+            var keywords = property.FindPropertyRelative("keywords");
+
+            // Start with base height for the always-shown fields
+            int fieldCount = 5; // Card, Player Type, Turn, Mana Used, Time
+
+            // Add optional fields
+            if (!string.IsNullOrEmpty(cardDescription?.stringValue)) fieldCount++;
+            if (!string.IsNullOrEmpty(playerName?.stringValue)) fieldCount++;
+            if (keywords != null && !string.IsNullOrEmpty(keywords.stringValue)) fieldCount++;
+
+            return EditorGUIUtility.singleLineHeight * (fieldCount + 1); // +1 for the header
         }
         return EditorGUIUtility.singleLineHeight;
     }
@@ -110,7 +149,7 @@ public class AttackRecordDrawer : PropertyDrawer
 
         // Determine attacker type for display
         string attackerType = isEnemyAttack != null && isEnemyAttack.boolValue ? "Enemy" : "Player";
-        
+
         // Use custom colors for enemy vs player
         Color defaultColor = GUI.color;
         if (isEnemyAttack != null && isEnemyAttack.boolValue)
@@ -127,7 +166,7 @@ public class AttackRecordDrawer : PropertyDrawer
         var headerText = $"Turn {turnNumber?.intValue ?? 0}: {attackerType} {attackerName?.stringValue ?? "Unknown"} → {targetName?.stringValue ?? "Unknown"} ({damageDealt?.floatValue ?? 0} dmg){rangedText}";
         var foldoutRect = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
         property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, headerText);
-        
+
         // Reset color
         GUI.color = defaultColor;
 
@@ -141,12 +180,12 @@ public class AttackRecordDrawer : PropertyDrawer
             DrawField("Target:", targetName?.stringValue ?? "Unknown", ref y);
             DrawField("Attacker Type:", attackerType, ref y);
             DrawField("Damage Dealt:", damageDealt?.floatValue.ToString("F1") ?? "0", ref y);
-            
-            string counterText = wasRangedAttack != null && wasRangedAttack.boolValue 
-                ? "0 (Ranged Attack)" 
+
+            string counterText = wasRangedAttack != null && wasRangedAttack.boolValue
+                ? "0 (Ranged Attack)"
                 : counterDamage?.floatValue.ToString("F1") ?? "0";
             DrawField("Counter Damage:", counterText, ref y);
-            
+
             DrawField("Turn:", turnNumber?.intValue.ToString() ?? "0", ref y);
             DrawField("Time:", timestamp?.stringValue ?? "Unknown", ref y);
 
@@ -228,7 +267,7 @@ public class CardHistoryEditor : Editor
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Card Statistics", EditorStyles.boldLabel);
         EditorGUI.BeginDisabledGroup(true);
-        
+
         // Total cards section
         if (totalCardsPlayed != null)
         {
@@ -237,7 +276,7 @@ public class CardHistoryEditor : Editor
             EditorGUILayout.LabelField(totalCardsPlayed.intValue.ToString());
             EditorGUILayout.EndHorizontal();
         }
-        
+
         // Player cards
         if (playerCardsPlayed != null)
         {
@@ -246,7 +285,7 @@ public class CardHistoryEditor : Editor
             EditorGUILayout.LabelField(playerCardsPlayed.intValue.ToString());
             EditorGUILayout.EndHorizontal();
         }
-        
+
         // Enemy cards
         if (enemyCardsPlayed != null)
         {
@@ -255,10 +294,10 @@ public class CardHistoryEditor : Editor
             EditorGUILayout.LabelField(enemyCardsPlayed.intValue.ToString());
             EditorGUILayout.EndHorizontal();
         }
-        
+
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Attack Statistics", EditorStyles.boldLabel);
-        
+
         // Total attacks
         if (totalAttacks != null)
         {
@@ -267,7 +306,7 @@ public class CardHistoryEditor : Editor
             EditorGUILayout.LabelField(totalAttacks.intValue.ToString());
             EditorGUILayout.EndHorizontal();
         }
-        
+
         // Player attacks
         if (playerAttacks != null)
         {
@@ -276,7 +315,7 @@ public class CardHistoryEditor : Editor
             EditorGUILayout.LabelField(playerAttacks.intValue.ToString());
             EditorGUILayout.EndHorizontal();
         }
-        
+
         // Enemy attacks
         if (enemyAttacks != null)
         {
@@ -285,34 +324,34 @@ public class CardHistoryEditor : Editor
             EditorGUILayout.LabelField(enemyAttacks.intValue.ToString());
             EditorGUILayout.EndHorizontal();
         }
-        
+
         EditorGUILayout.Space();
-        
+
         // More detailed statistics in foldouts
         if (cardsPerTurn != null) EditorGUILayout.PropertyField(cardsPerTurn);
-        if (cardsPlayedByType != null) 
+        if (cardsPlayedByType != null)
         {
             EditorGUILayout.PropertyField(cardsPlayedByType, new GUIContent("Cards By Type (All)"));
         }
-        if (playerCardsPlayedByType != null) 
+        if (playerCardsPlayedByType != null)
         {
             EditorGUILayout.PropertyField(playerCardsPlayedByType, new GUIContent("Cards By Type (Player)"));
         }
-        if (enemyCardsPlayedByType != null) 
+        if (enemyCardsPlayedByType != null)
         {
             EditorGUILayout.PropertyField(enemyCardsPlayedByType, new GUIContent("Cards By Type (Enemy)"));
         }
-        
+
         EditorGUI.EndDisabledGroup();
 
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("History", EditorStyles.boldLabel);
-        
+
         if (cardHistory != null)
         {
             EditorGUILayout.PropertyField(cardHistory, new GUIContent("Card Play History"));
         }
-        
+
         if (attackHistory != null)
         {
             EditorGUILayout.PropertyField(attackHistory, new GUIContent("Attack History"));
@@ -320,7 +359,7 @@ public class CardHistoryEditor : Editor
 
         EditorGUILayout.Space();
         EditorGUILayout.BeginHorizontal();
-        
+
         if (GUILayout.Button("Clear History"))
         {
             var cardHistoryComponent = (CardHistory)target;
@@ -330,14 +369,14 @@ public class CardHistoryEditor : Editor
                 EditorUtility.SetDirty(target);
             }
         }
-        
+
         if (GUILayout.Button("Log All History"))
         {
             var cardHistoryComponent = (CardHistory)target;
             if (cardHistoryComponent != null)
             {
                 // Use reflection to call the private method
-                var method = typeof(CardHistory).GetMethod("LogFullHistory", 
+                var method = typeof(CardHistory).GetMethod("LogFullHistory",
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (method != null)
                 {
@@ -345,7 +384,7 @@ public class CardHistoryEditor : Editor
                 }
             }
         }
-        
+
         EditorGUILayout.EndHorizontal();
 
         serializedObject.ApplyModifiedProperties();

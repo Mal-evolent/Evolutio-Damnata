@@ -1,18 +1,6 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-// Simple data wrapper class for tracking card usage in CardHistory
-// Not a MonoBehaviour so it can be created with 'new'
-public class CardDataWrapper
-{
-    public string CardName { get; set; }
-    public string Description { get; set; }
-
-    public CardDataWrapper(CardData cardData)
-    {
-        CardName = cardData.CardName;
-        Description = cardData.Description;
-    }
-}
 
 public class SpellEffectApplier : ISpellEffectApplier
 {
@@ -204,6 +192,51 @@ public class SpellEffectApplier : ISpellEffectApplier
 
     private void ApplyEffectsToTarget(EntityManager target, CardData spellData)
     {
+        // Check for bloodprice first to apply self-damage to the caster
+        if (spellData.EffectTypes.Contains(SpellEffect.Bloodprice) && spellData.BloodpriceValue > 0)
+        {
+            // Get health icons
+            var playerHealthIcon = GameObject.FindGameObjectWithTag("Player")?.GetComponent<EntityManager>();
+            var enemyHealthIcon = GameObject.FindGameObjectWithTag("Enemy")?.GetComponent<EntityManager>();
+            EntityManager casterHealthIcon = null;
+
+            // Determine which health icon is the caster based on current combat phase
+            if (_combatManager != null)
+            {
+                if (_combatManager.IsPlayerPrepPhase() || _combatManager.IsPlayerCombatPhase())
+                {
+                    // If in player phase, the player is the caster
+                    casterHealthIcon = playerHealthIcon;
+                    Debug.Log("[SpellEffectApplier] Player phase - Player is caster");
+                }
+                else if (_combatManager.IsEnemyPrepPhase() || _combatManager.IsEnemyCombatPhase())
+                {
+                    // If in enemy phase, the enemy is the caster
+                    casterHealthIcon = enemyHealthIcon;
+                    Debug.Log("[SpellEffectApplier] Enemy phase - Enemy is caster");
+                }
+                else
+                {
+                    Debug.LogWarning($"[SpellEffectApplier] Unexpected phase for bloodprice: {_combatManager.CurrentPhase}");
+                }
+
+                if (casterHealthIcon != null)
+                {
+                    ApplyDamageEffect(casterHealthIcon, spellData.BloodpriceValue);
+                    Debug.Log($"Applied {spellData.BloodpriceValue} bloodprice damage to {casterHealthIcon.name}");
+                }
+                else
+                {
+                    Debug.LogError("Could not find caster's health icon for bloodprice effect");
+                }
+            }
+            else
+            {
+                Debug.LogError("CombatManager is null, cannot determine whose turn it is for bloodprice effect");
+            }
+        }
+
+        // Continue with the rest of the effects
         foreach (var effectType in spellData.EffectTypes)
         {
             switch (effectType)
@@ -219,6 +252,12 @@ public class SpellEffectApplier : ISpellEffectApplier
                     break;
                 case SpellEffect.Burn:
                     ApplyBurnEffect(target, spellData);
+                    break;
+                case SpellEffect.Draw:
+                    Debug.Log($"Drawing {spellData.DrawValue} cards");
+                    break;
+                case SpellEffect.Bloodprice:
+                    // The bloodprice effect is handled at the beginning of this method
                     break;
 
                 default:

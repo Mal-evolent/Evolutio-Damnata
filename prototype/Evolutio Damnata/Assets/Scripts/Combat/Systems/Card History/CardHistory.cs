@@ -15,73 +15,104 @@ public class CardHistory : MonoBehaviour, ICardHistory
         [SerializeField] private int manaUsed;
         [SerializeField] private string timestamp;
         [SerializeField] private bool isEnemyCard;
+        [SerializeField] private string keywords;
 
         public string EditorSummary =>
-            $"Turn {turnNumber}: {(isEnemyCard ? "Enemy" : "Player")} played {cardName} ({manaUsed} mana) - {timestamp}";
+            $"Turn {turnNumber}: {(isEnemyCard ? "Enemy" : "Player")} played {cardName} ({manaUsed} mana)" +
+            (!string.IsNullOrEmpty(keywords) ? $" [{keywords}]" : "") +
+            $" - {timestamp}";
 
         public bool IsEnemyCard => isEnemyCard;
         public string CardName => cardName;
         public int TurnNumber => turnNumber;
+        public string Keywords => keywords;
 
         public CardPlayRecord(Card card, EntityManager entity, int turn, int mana)
         {
             cardName = card.CardName;
             cardDescription = card.Description;
-            playerName = entity.name;
             turnNumber = turn;
             manaUsed = mana;
             timestamp = DateTime.Now.ToString("HH:mm:ss");
-            
-            // Special handling for health icons - determine who PLAYED the card, not the target
+
+            // Extract keywords based on card type
+            keywords = string.Empty;
+
+            if (card is SpellCard spellCard && spellCard.EffectTypes != null && spellCard.EffectTypes.Count > 0)
+            {
+                keywords = string.Join(", ", spellCard.EffectTypes);
+            }
+            else if (card.CardType != null && card.CardType.Keywords != null && card.CardType.Keywords.Count > 0)
+            {
+                keywords = string.Join(", ", card.CardType.Keywords);
+            }
+
+            // Handle empty position (entity not placed)
+            if (entity == null || !entity.placed)
+            {
+                playerName = "";
+                isEnemyCard = false; // Default to player card if no valid target
+                Debug.Log($"[CardHistory] Spell card played on an empty position: {cardName}. Target is blank.");
+                return;
+            }
+
+            // Set player name
+            playerName = entity.name;
+
+            // Special handling for health icons
             if (entity is HealthIconManager healthIcon)
             {
-                // For spells on health icons, the card owner is the opposite of what the target is
-                isEnemyCard = healthIcon.IsPlayerIcon; // if targeting player icon, it's an enemy card; if targeting enemy icon, it's a player card
-                
+                isEnemyCard = healthIcon.IsPlayerIcon;
                 Debug.Log($"[CardHistory] Card played against health icon: {cardName}, target is player icon: {healthIcon.IsPlayerIcon}, isEnemyCard={isEnemyCard}");
             }
             else if (card is SpellCard)
             {
-                // For spell cards targeting monsters, the owner is opposite of the target's type
                 isEnemyCard = entity.GetMonsterType() == EntityManager.MonsterType.Friendly;
-                
                 Debug.Log($"[CardHistory] Spell card played against monster: {cardName}, target is {entity.GetMonsterType()}, isEnemyCard={isEnemyCard}");
             }
             else
             {
-                // For monster cards, use the entity's type directly
                 isEnemyCard = entity.GetMonsterType() == EntityManager.MonsterType.Enemy;
-                
                 Debug.Log($"[CardHistory] Monster card played: {cardName}, entity type is {entity.GetMonsterType()}, isEnemyCard={isEnemyCard}");
             }
         }
-        
+
         public CardPlayRecord(CardDataWrapper cardWrapper, EntityManager entity, int turn, int mana)
         {
             cardName = cardWrapper.CardName;
             cardDescription = cardWrapper.Description;
-            playerName = entity.name;
+            playerName = entity != null ? entity.name : string.Empty;
             turnNumber = turn;
             manaUsed = mana;
             timestamp = DateTime.Now.ToString("HH:mm:ss");
-            
+
+            // Initialize keywords to empty since CardDataWrapper may not have this info directly accessible
+            keywords = string.Empty;
+
+            // Try to extract effect types if available as spell effects
+            if (cardWrapper is CardDataWrapper spellWrapper && spellWrapper.EffectTypes != null && spellWrapper.EffectTypes.Count > 0)
+            {
+                keywords = string.Join(", ", spellWrapper.EffectTypes);
+            }
+
             // Special handling for health icons - determine who PLAYED the card, not the target
             if (entity is HealthIconManager healthIcon)
             {
                 // For spells on health icons, the card owner is the opposite of what the target is
                 isEnemyCard = healthIcon.IsPlayerIcon; // if targeting player icon, it's an enemy card; if targeting enemy icon, it's a player card
-                
+
                 Debug.Log($"[CardHistory] Spell played against health icon: {cardName}, target is player icon: {healthIcon.IsPlayerIcon}, isEnemyCard={isEnemyCard}");
             }
             else
             {
                 // For spell cards targeting monsters, the owner is opposite of the target's type
-                isEnemyCard = entity.GetMonsterType() == EntityManager.MonsterType.Friendly;
-                
-                Debug.Log($"[CardHistory] Spell played against monster: {cardName}, target is {entity.GetMonsterType()}, isEnemyCard={isEnemyCard}");
+                isEnemyCard = entity != null && entity.GetMonsterType() == EntityManager.MonsterType.Friendly;
+
+                Debug.Log($"[CardHistory] Spell played against monster: {cardName}, target is {(entity != null ? entity.GetMonsterType().ToString() : "none")}, isEnemyCard={isEnemyCard}");
             }
         }
     }
+
 
     [System.Serializable]
     public class AttackRecord

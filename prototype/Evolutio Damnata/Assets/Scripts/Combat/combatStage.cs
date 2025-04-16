@@ -352,12 +352,38 @@ public class CombatStage : MonoBehaviour, ICombatStage
 
         // Check if the selected card is a spell card
         bool isSpellCard = false;
+        bool isDrawBloodpriceOnlySpell = false;
+
         if (_cardManager.CurrentSelectedCard != null)
         {
             var cardUI = _cardManager.CurrentSelectedCard.GetComponent<CardUI>();
             if (cardUI != null && cardUI.Card != null && cardUI.Card.CardType != null)
             {
-                isSpellCard = cardUI.Card.CardType.IsSpellCard;
+                CardData cardData = cardUI.Card.CardType;
+                isSpellCard = cardData.IsSpellCard;
+
+                // Check if the spell card only has Draw and/or Bloodprice effects
+                if (isSpellCard && cardData.EffectTypes != null && cardData.EffectTypes.Count > 0)
+                {
+                    bool hasDrawOrBloodprice = false;
+                    bool hasOtherEffects = false;
+
+                    foreach (var effect in cardData.EffectTypes)
+                    {
+                        if (effect == SpellEffect.Draw || effect == SpellEffect.Bloodprice)
+                        {
+                            hasDrawOrBloodprice = true;
+                        }
+                        else
+                        {
+                            hasOtherEffects = true;
+                            break;
+                        }
+                    }
+
+                    // Only set true if it has at least one Draw/Bloodprice effect and NO other effects
+                    isDrawBloodpriceOnlySpell = hasDrawOrBloodprice && !hasOtherEffects;
+                }
             }
         }
 
@@ -371,8 +397,16 @@ public class CombatStage : MonoBehaviour, ICombatStage
 
                 if (isSpellCard)
                 {
-                    // If a spell card is selected, only show entities that are placed
-                    placeholder.SetActive(entityManager.placed);
+                    if (isDrawBloodpriceOnlySpell)
+                    {
+                        // If a spell card with only Draw and/or Bloodprice effects is selected, show all placeholders
+                        placeholder.SetActive(true);
+                    }
+                    else
+                    {
+                        // For other spell cards, only show entities that are placed
+                        placeholder.SetActive(entityManager.placed);
+                    }
                 }
                 else
                 {

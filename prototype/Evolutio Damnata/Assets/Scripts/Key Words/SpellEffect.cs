@@ -5,5 +5,6 @@ public enum SpellEffect
     Damage,
     Heal,
     Burn,
-    Draw
+    Draw,
+    Bloodprice
 }

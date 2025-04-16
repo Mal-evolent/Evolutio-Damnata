@@ -38,15 +38,49 @@ public class PlayerCardSelectionHandler : IPlayerCardHandler
 
         if (cardData != null)
         {
-            if (cardData.IsMonsterCard && entityManager.placed)
+            // Early check for mana availability
+            if (_combatManager.PlayerMana < cardData.ManaCost)
             {
-                Debug.LogError("Cannot place a monster on an already occupied space!");
+                Debug.Log($"Not enough mana. Required: {cardData.ManaCost}, Available: {_combatManager.PlayerMana}");
                 ResetCardSelection();
                 return;
             }
-            else if (!cardData.IsMonsterCard && !entityManager.placed)
+
+            // Check if the card is a spell with only Draw and/or Blood Price effects
+            bool isDrawOrBloodPriceOnlySpell = false;
+            if (cardData.IsSpellCard && !entityManager.placed)
             {
-                Debug.LogError("Cannot cast a spell on an unoccupied space!");
+                bool hasOtherEffects = false;
+                bool hasDrawOrBloodPrice = false;
+
+                foreach (var effect in cardData.EffectTypes)
+                {
+                    if (effect == SpellEffect.Draw || effect == SpellEffect.Bloodprice)
+                    {
+                        hasDrawOrBloodPrice = true;
+                    }
+                    else
+                    {
+                        hasOtherEffects = true;
+                        break;
+                    }
+                }
+
+                // If it only has Draw and/or Blood Price effects, allow placement on empty spots
+                isDrawOrBloodPriceOnlySpell = hasDrawOrBloodPrice && !hasOtherEffects;
+            }
+
+            // Standard validations for monster cards and spell cards
+            if (cardData.IsMonsterCard && entityManager.placed)
+            {
+                Debug.LogWarning("Cannot place a monster on an already occupied space!");
+                ResetCardSelection();
+                return;
+            }
+            // Add exception for Draw/Blood Price only spell cards
+            else if (!cardData.IsMonsterCard && !entityManager.placed && !isDrawOrBloodPriceOnlySpell)
+            {
+                Debug.LogWarning("Cannot cast a spell on an unoccupied space!");
                 ResetCardSelection();
                 return;
             }
@@ -77,7 +111,8 @@ public class PlayerCardSelectionHandler : IPlayerCardHandler
     {
         if (_combatManager.PlayerMana < cardData.ManaCost)
         {
-            Debug.Log($"Not enough mana. Required: {cardData.ManaCost}");
+            Debug.Log($"Not enough mana. Required: {cardData.ManaCost}, Available: {_combatManager.PlayerMana}");
+            ResetCardSelection(); // Reset card selection if not enough mana
             return;
         }
 
