@@ -532,16 +532,36 @@ namespace EnemyInteraction.Managers
             }
             else if (hasTaunt)
             {
-                score += (_spritePositioning.EnemyEntities.Count - position) * 5f; // Prefer frontline
+                score += (_spritePositioning.EnemyEntities.Count - position) * 5f;
             }
             else if (card.CardType.Health >= 5)
             {
-                score += (_spritePositioning.EnemyEntities.Count - position) * 3f; // Tanky units frontline
+                score += (_spritePositioning.EnemyEntities.Count - position) * 3f;
             }
             else if (card.CardType.AttackPower >= 5)
             {
                 float midValue = 1 - midDist / (_spritePositioning.EnemyEntities.Count / 2f);
-                score += midValue * 15f; // Damage dealers mid
+                score += midValue * 15f;
+            }
+
+            // New position logic for Tough and Overwhelm
+            bool hasTough = card.CardType.HasKeyword(Keywords.MonsterKeyword.Tough);
+            bool hasOverwhelm = card.CardType.HasKeyword(Keywords.MonsterKeyword.Overwhelm);
+
+            if (hasTough)
+            {
+                // Tough units are good on the front line to block incoming damage
+                score += (_spritePositioning.EnemyEntities.Count - position) * 4f;
+            }
+
+            if (hasOverwhelm)
+            {
+                // Overwhelm units are best in positions where they can attack
+                // Prefer middle to front positions for these
+                if (position < _spritePositioning.EnemyEntities.Count / 2)
+                {
+                    score += (_spritePositioning.EnemyEntities.Count / 2 - position) * 3f;
+                }
             }
 
             return score;
@@ -658,6 +678,22 @@ namespace EnemyInteraction.Managers
             if (target.HasKeyword(Keywords.MonsterKeyword.Taunt))
                 score += 40f;
 
+            // Add threat assessment for other keywords
+            if (target.HasKeyword(Keywords.MonsterKeyword.Tough))
+            {
+                score += 25f; // Tough units are higher priority targets
+                if (cardType.EffectTypes != null && cardType.EffectTypes.Contains(SpellEffect.Damage))
+                {
+                    // Damage spells are less effective against Tough units
+                    score -= 15f;
+                }
+            }
+
+            if (target.HasKeyword(Keywords.MonsterKeyword.Overwhelm))
+            {
+                score += 35f; // Overwhelm units are high priority threats
+            }
+
             return score;
         }
 
@@ -713,10 +749,111 @@ namespace EnemyInteraction.Managers
                 if (card.CardType.Health <= 2 && card.CardType.AttackPower > 3) score -= 10f;
             }
 
-            // Evaluate other keywords with higher weights
+            // Add specific handling for Tough and Overwhelm keywords
+            bool hasTough = card.CardType.HasKeyword(Keywords.MonsterKeyword.Tough);
+            bool hasOverwhelm = card.CardType.HasKeyword(Keywords.MonsterKeyword.Overwhelm);
+
+            // Tough is more valuable when health is low or enemy has high-damage units
+            if (hasTough)
+            {
+                if (boardState.HealthAdvantage < 0)
+                {
+                    // When at health disadvantage, tough units help us stabilize
+                    score += 25f;
+                }
+
+                // Tough is more valuable on high-health units
+                if (card.CardType.Health >= 4)
+                {
+                    score += 15f;
+                }
+
+                // Check if player has high-attack monsters that Tough would be good against
+                bool playerHasHighAttackUnits = boardState.PlayerMonsters != null &&
+                                              boardState.PlayerMonsters.Any(m => m.GetAttack() >= 4);
+                if (playerHasHighAttackUnits)
+                {
+                    score += 20f;
+                    Debug.Log($"[CardPlayManager] Prioritizing Tough unit {card.CardName} against high-attack enemies");
+                }
+            }
+
+            // Overwhelm is more valuable when the player has low-health units or we're in a winning position
+            if (hasOverwhelm)
+            {
+                if (boardState.HealthAdvantage > 0)
+                {
+                    // When already ahead, Overwhelm helps close the game faster
+                    score += 30f;
+                }
+
+                // High attack is more valuable with Overwhelm
+                if (card.CardType.AttackPower >= 4)
+                {
+                    score += card.CardType.AttackPower * 2.5f;
+                }
+
+                // Check if player has lots of low-health units that Overwhelm would be good against
+                bool playerHasLowHealthUnits = boardState.PlayerMonsters != null &&
+                                             boardState.PlayerMonsters.Any(m => m.GetHealth() <= 2);
+                if (playerHasLowHealthUnits)
+                {
+                    score += 25f;
+                    Debug.Log($"[CardPlayManager] Prioritizing Overwhelm unit {card.CardName} against low-health defenders");
+                }
+
+                // Overwhelm is extremely valuable when player is low on health
+                if (boardState.PlayerHealth <= 10)
+                {
+                    score += 40f;
+                    Debug.Log($"[CardPlayManager] Prioritizing Overwhelm unit {card.CardName} for potential lethal damage");
+                }
+
+                // NEW: Enhanced splash damage evaluation
+                if (boardState.PlayerMonsters != null && boardState.PlayerMonsters.Count > 0)
+                {
+                    // Estimate splash damage (assuming splash is 50% of attack)
+                    float splashDamage = card.CardType.AttackPower * 0.5f;
+
+                    // Count how many units would die to splash damage
+                    int potentialSplashKills = boardState.PlayerMonsters.Count(m =>
+                        m.GetHealth() <= splashDamage);
+
+                    // Value multi-kill potential highly
+                    if (potentialSplashKills > 0)
+                    {
+                        float splashKillBonus = potentialSplashKills * 20f;
+                        score += splashKillBonus;
+                        Debug.Log($"[CardPlayManager] Overwhelm unit {card.CardName} could kill {potentialSplashKills} units with splash damage! Adding {splashKillBonus} to score.");
+                    }
+
+                    // Additional bonus if there are clustered low-health units (even if they won't die)
+                    int lowHealthUnits = boardState.PlayerMonsters.Count(m => m.GetHealth() <= splashDamage * 2);
+                    if (lowHealthUnits >= 2)
+                    {
+                        float damageEfficiencyBonus = lowHealthUnits * 10f;
+                        score += damageEfficiencyBonus;
+                        Debug.Log($"[CardPlayManager] Overwhelm unit {card.CardName} effective against {lowHealthUnits} clustered low-health units. Adding {damageEfficiencyBonus} to score.");
+                    }
+
+                    // Consider splash value against combinations of units and player health
+                    if (boardState.PlayerHealth <= splashDamage * 2 && boardState.PlayerMonsters.Count >= 1)
+                    {
+                        score += 50f;
+                        Debug.Log($"[CardPlayManager] Overwhelm unit {card.CardName} could damage both units AND player with low health! Major strategic advantage.");
+                    }
+                }
+            }
+
             foreach (Keywords.MonsterKeyword keyword in System.Enum.GetValues(typeof(Keywords.MonsterKeyword)))
             {
-                if (keyword != Keywords.MonsterKeyword.Ranged && card.CardType.HasKeyword(keyword))
+                // Skip keywords we've already explicitly handled
+                if (keyword == Keywords.MonsterKeyword.Ranged ||
+                    (keyword == Keywords.MonsterKeyword.Tough && hasTough) ||
+                    (keyword == Keywords.MonsterKeyword.Overwhelm && hasOverwhelm))
+                    continue;
+
+                if (card.CardType.HasKeyword(keyword))
                 {
                     score += (_keywordEvaluator?.EvaluateKeyword(keyword, true, boardState) ?? 0f) * 1.2f;
                 }

@@ -24,7 +24,7 @@ namespace EnemyInteraction.Managers
 
         private void Awake()
         {
-            _entityManagerCache = new Dictionary<GameObject, EntityManager>(); // Updated variable name
+            _entityManagerCache = new Dictionary<GameObject, EntityManager>();
             StartCoroutine(Initialize());
         }
 
@@ -183,6 +183,8 @@ namespace EnemyInteraction.Managers
                 // Bonus for keywords
                 if (e.HasKeyword(Keywords.MonsterKeyword.Taunt)) value *= 1.3f;
                 if (e.HasKeyword(Keywords.MonsterKeyword.Ranged)) value *= 1.2f;
+                if (e.HasKeyword(Keywords.MonsterKeyword.Tough)) value *= 1.15f;
+                if (e.HasKeyword(Keywords.MonsterKeyword.Overwhelm)) value *= 1.25f;
 
                 // Account for ongoing effects
                 var stackManager = StackManager.Instance;

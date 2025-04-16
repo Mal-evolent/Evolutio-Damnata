@@ -3048,7 +3048,7 @@ MonoBehaviour:
   - CardName: Wretched Insight
     _cardImage: {fileID: 0}
     Description: 
-    ManaCost: 0
+    ManaCost: 3
     AttackPower: 0
     Health: 0
     Keywords: 
@@ -3056,7 +3056,7 @@ MonoBehaviour:
     EffectValue: 0
     Duration: 0
     EffectValuePerRound: 0
-    DrawValue: 3
+    DrawValue: 2
     BloodpriceValue: 4
     IsSpellCard: 1
     IsMonsterCard: 0

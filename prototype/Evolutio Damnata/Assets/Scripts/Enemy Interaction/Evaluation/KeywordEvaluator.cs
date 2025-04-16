@@ -38,6 +38,28 @@ namespace EnemyInteraction.Evaluation
                         IsOffensive = true,
                         RequiresTarget = false
                     }
+                },
+                {
+                    Keywords.MonsterKeyword.Tough,
+                    new KeywordEvaluation
+                    {
+                        BaseScore = 35f,
+                        IsPositive = true,
+                        IsDefensive = true,
+                        IsOffensive = false,
+                        RequiresTarget = false
+                    }
+                },
+                {
+                    Keywords.MonsterKeyword.Overwhelm,
+                    new KeywordEvaluation
+                    {
+                        BaseScore = 45f,
+                        IsPositive = true,
+                        IsDefensive = false,
+                        IsOffensive = true,
+                        RequiresTarget = true
+                    }
                 }
             };
         }

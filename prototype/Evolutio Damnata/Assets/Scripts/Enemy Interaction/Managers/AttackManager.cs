@@ -301,9 +301,18 @@ namespace EnemyInteraction.Managers
             }
             else
             {
+                // Prioritize Overwhelm attackers when there are multiple targets to hit with splash
+                bool hasMultiplePlayerEntities = players != null && players.Count > 1;
+
                 order = order
-                    .OrderByDescending(e => e.HasKeyword(Keywords.MonsterKeyword.Ranged) ? 1 : 0)
+                    // Overwhelm is most valuable when there are multiple targets to splash damage
+                    .OrderByDescending(e => e.HasKeyword(Keywords.MonsterKeyword.Overwhelm) && hasMultiplePlayerEntities ? 2 : 0)
+                    // Ranged attackers are always valuable
+                    .ThenByDescending(e => e.HasKeyword(Keywords.MonsterKeyword.Ranged) ? 1 : 0)
+                    // Prioritize attackers that can kill targets
                     .ThenByDescending(e => players.Any(p => e.GetAttack() >= p.GetHealth()) ? 1 : 0)
+                    // Tough attackers are better for attacking high-attack targets
+                    .ThenByDescending(e => e.HasKeyword(Keywords.MonsterKeyword.Tough) && players.Any(p => p.GetAttack() >= 4) ? 1 : 0)
                     .ThenByDescending(e => e.GetAttack())
                     .ThenBy(e => e.GetHealth())
                     .ToList();
@@ -323,11 +332,66 @@ namespace EnemyInteraction.Managers
             if (hasTaunts)
             {
                 var tauntTargets = playerEntities.Where(e => e != null && e.HasKeyword(Keywords.MonsterKeyword.Taunt)).ToList();
+
+                // For Overwhelm attackers against taunt, use specialized targeting
+                if (attacker.HasKeyword(Keywords.MonsterKeyword.Overwhelm) && tauntTargets.Count > 0)
+                    return SelectTargetForOverwhelmAttacker(attacker, tauntTargets, boardState);
+
                 return SelectBestTarget(attacker, tauntTargets, boardState, mode);
             }
 
+            // For Overwhelm attackers with multiple targets, use specialized targeting
+            if (attacker.HasKeyword(Keywords.MonsterKeyword.Overwhelm) && playerEntities.Count > 1)
+                return SelectTargetForOverwhelmAttacker(attacker, playerEntities, boardState);
+
             return SelectBestTarget(attacker, playerEntities, boardState, mode);
         }
+
+        private EntityManager SelectTargetForOverwhelmAttacker(EntityManager attacker, List<EntityManager> targets, BoardState boardState)
+        {
+            if (targets == null || targets.Count <= 1)
+                return targets?.FirstOrDefault();
+
+            // Calculate splash damage (50% of attacker's damage)
+            float splashDamage = Mathf.Floor(attacker.GetAttack() * 0.5f);
+
+            // Prioritize targets where:
+            // 1. We can kill the main target
+            // 2. Splash damage can kill or significantly damage other targets
+
+            var scoredTargets = new Dictionary<EntityManager, float>();
+
+            foreach (var target in targets)
+            {
+                float score = 0;
+
+                // Base score for being able to kill the main target
+                if (attacker.GetAttack() >= target.GetHealth())
+                    score += 100f;
+
+                // Calculate splash potential against other targets
+                var otherTargets = targets.Where(t => t != target).ToList();
+                int potentialKills = otherTargets.Count(t => t.GetHealth() <= splashDamage);
+                int damagedTargets = otherTargets.Count(t => t.GetHealth() > splashDamage);
+
+                // Add score for potential splash kills and damage
+                score += potentialKills * 50f;
+                score += damagedTargets * splashDamage * 2f;
+
+                // Prefer targets with high attack if we can kill them
+                if (attacker.GetAttack() >= target.GetHealth())
+                    score += target.GetAttack() * 5f;
+
+                // Prefer targets surrounded by many other targets to maximize splash
+                score += otherTargets.Count * 5f;
+
+                scoredTargets[target] = score;
+            }
+
+            // Return target with highest score
+            return scoredTargets.OrderByDescending(kvp => kvp.Value).First().Key;
+        }
+
 
         private IEnumerator ExecuteAttack(EntityManager attacker, EntityManager target)
         {
@@ -432,11 +496,13 @@ namespace EnemyInteraction.Managers
                     score += 60f;
             }
 
+            // Add the new keyword interactions evaluation
+            score += EvaluateKeywordInteractions(attacker, target, boardState);
+
             if (_keywordEvaluator != null)
             {
                 score += _keywordEvaluator.EvaluateKeywords(attacker, target, boardState) * 1.2f;
             }
-
 
             if (!attacker.HasKeyword(Keywords.MonsterKeyword.Ranged))
             {
@@ -560,6 +626,95 @@ namespace EnemyInteraction.Managers
             float directThreshold = playerHealthIcon.GetHealth() - 1;
             return attackDamage >= directThreshold;
         }
+
+        // Add this method to your AttackManager.cs class to specifically evaluate 
+        // how these keywords affect the attack decisions
+        private float EvaluateKeywordInteractions(EntityManager attacker, EntityManager target, BoardState boardState)
+        {
+            if (attacker == null || target == null)
+                return 0f;
+
+            float score = 0f;
+
+            // Evaluate Overwhelm offensive potential
+            if (attacker.HasKeyword(Keywords.MonsterKeyword.Overwhelm))
+            {
+                // Calculate potential splash damage
+                float splashDamage = Mathf.Floor(attacker.GetAttack() * 0.5f);
+
+                // Get all other entities on target's side
+                var targetSideEntities = target.GetMonsterType() == EntityManager.MonsterType.Enemy ?
+                    _cachedEnemyEntities : _cachedPlayerEntities;
+
+                // Count how many entities could be damaged by splash
+                int splashTargets = targetSideEntities.Count(e => e != target && !e.dead && !e.IsFadingOut);
+
+                // Count how many could potentially die from splash damage
+                int potentialSplashKills = targetSideEntities.Count(e =>
+                    e != target && !e.dead && !e.IsFadingOut && e.GetHealth() <= splashDamage);
+
+                // Add score based on potential splash damage value
+                score += splashDamage * splashTargets * 2.0f;
+
+                // Add significant bonus for potential kills
+                score += potentialSplashKills * 40f;
+
+                Debug.Log($"[AttackManager] Evaluating Overwhelm: {splashTargets} splash targets, " +
+                          $"{potentialSplashKills} potential splash kills, adding {score} to score");
+            }
+
+            // Evaluate attacking against Tough defenders
+            if (target.HasKeyword(Keywords.MonsterKeyword.Tough))
+            {
+                // Tough reduces damage by half, making the target less attractive unless:
+                // 1. We have enough damage to still kill it
+                // 2. We are using Overwhelm which can bypass Tough with splash damage to other units
+
+                // Reduce target score as it's harder to kill
+                score -= 20f;
+
+                // But if we can still kill it with our attack even after reduction, it's a good target
+                float damageAfterTough = Mathf.Floor(attacker.GetAttack() / 2f);
+                if (damageAfterTough >= target.GetHealth())
+                {
+                    // We can still kill it despite Tough - high priority target
+                    score += 40f;
+                    Debug.Log($"[AttackManager] Can kill Tough entity {target.name} with {attacker.name}");
+                }
+
+                // If we have Overwhelm, targeting a Tough unit might still be good for splash damage
+                if (attacker.HasKeyword(Keywords.MonsterKeyword.Overwhelm))
+                {
+                    score += 15f;
+                    Debug.Log($"[AttackManager] Overwhelm attack against Tough target still valuable for splash");
+                }
+            }
+
+            // Evaluate attacking with Tough attackers
+            if (attacker.HasKeyword(Keywords.MonsterKeyword.Tough))
+            {
+                // Tough attackers take less counter damage, making them better for attacking
+                score += 15f;
+
+                // Extra value when attacking a high-attack target
+                if (target.GetAttack() >= 4)
+                {
+                    score += 20f;
+                    Debug.Log($"[AttackManager] Using Tough attacker {attacker.name} against high-attack target {target.name}");
+                }
+
+                // If attacker won't die from counter attack due to Tough, it's very valuable
+                float counterDamage = Mathf.Floor(target.GetAttack() / 2f);
+                if (counterDamage < attacker.GetHealth())
+                {
+                    score += 30f;
+                    Debug.Log($"[AttackManager] Tough attacker {attacker.name} will survive counter attack");
+                }
+            }
+
+            return score;
+        }
+
 
         private List<EntityManager> OptimizeForLethal(List<EntityManager> attackers, List<EntityManager> playerEntities)
         {
