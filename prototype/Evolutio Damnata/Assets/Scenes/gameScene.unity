@@ -1779,6 +1779,40 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &644541759
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 644541760}
+  m_Layer: 0
+  m_Name: AI Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &644541760
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 644541759}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1333.9086, y: 694.94275, z: -4.0553184}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1051826825}
+  - {fileID: 1343209370}
+  - {fileID: 1519528581}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &655618342
 GameObject:
   m_ObjectHideFlags: 0
@@ -2441,6 +2475,60 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1015579717}
   m_CullTransparentMesh: 1
+--- !u!1 &1051826824
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1051826825}
+  - component: {fileID: 1051826826}
+  m_Layer: 0
+  m_Name: Attack Managers
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1051826825
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051826824}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 644541760}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1051826826
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051826824}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 50797241c0bb55947b9ea818e5405c7e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _spritePositioning: {fileID: 0}
+  _decisionVariance: 0.1
+  _evaluationVariance: 0.15
+  _attackOrderRandomizationChance: 0.1
+  _healthThresholdForAggro: 8
+  _aggressiveTurnThreshold: 4
+  _baseAttackDelay: 0.6
+  _delayVariance: 0.3
+  _initialAttackDelay: 0.8
+  _evaluationDelay: 0.4
 --- !u!1 &1159794892
 GameObject:
   m_ObjectHideFlags: 0
@@ -2861,6 +2949,71 @@ MonoBehaviour:
     EffectValue: 1
     Duration: 3
     EffectValuePerRound: 3
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Dark Insight
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 2
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 04000000
+    EffectValue: 2
+    Duration: 0
+    EffectValuePerRound: 0
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Flame Reflection
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 3
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 0100000004000000
+    EffectValue: 3
+    Duration: 0
+    EffectValuePerRound: 0
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Insightful Offering
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 4
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 04000000
+    EffectValue: 3
+    Duration: 0
+    EffectValuePerRound: 0
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Ashes of Memory
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 5
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 0300000004000000
+    EffectValue: 1
+    Duration: 3
+    EffectValuePerRound: 2
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Forbidden Wisdom
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 0
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 04000000
+    EffectValue: 4
+    Duration: 0
+    EffectValuePerRound: 0
     IsSpellCard: 1
     IsMonsterCard: 0
   _defaultCardSprite: {fileID: 21300000, guid: 7aeec1cbde0927e43b184ad00a19733b, type: 3}
@@ -3435,6 +3588,53 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1343209369
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1343209370}
+  - component: {fileID: 1343209371}
+  m_Layer: 0
+  m_Name: Board State Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1343209370
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1343209369}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 644541760}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1343209371
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1343209369}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbae2319b1e1569498c1fffdb5e649a6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _spritePositioning: {fileID: 0}
+  _lateGameTurnThreshold: 10
+  _lateGameBonusMultiplier: 1.1
 --- !u!1 &1394303770
 GameObject:
   m_ObjectHideFlags: 0
@@ -4223,6 +4423,54 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: -20, y: -20}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &1519528580
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1519528581}
+  - component: {fileID: 1519528582}
+  m_Layer: 0
+  m_Name: Card Play Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1519528581
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1519528580}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 644541760}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1519528582
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1519528580}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b22daaa5901f87b4b95d160fd195cacd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _spritePositioning: {fileID: 0}
+  _suboptimalPlayChance: 0.1
+  _evaluationVariance: 0.15
+  _actionDelay: 0.5
 --- !u!1001 &1580362483
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5490,3 +5738,4 @@ SceneRoots:
   - {fileID: 1316461466}
   - {fileID: 655618344}
   - {fileID: 1937691901}
+  - {fileID: 644541760}
