@@ -170,6 +170,7 @@ public class CardHistory : MonoBehaviour, ICardHistory
         [SerializeField] private bool isEnemyAttack;
         [SerializeField] private bool wasRangedAttack;
         [SerializeField] private float counterDamage;
+        [SerializeField] private List<Keywords.MonsterKeyword> attackerKeywords = new List<Keywords.MonsterKeyword>();
 
         public string EditorSummary =>
             $"Turn {turnNumber}: {(isEnemyAttack ? "Enemy" : "Player")} {attackerName} attacked {targetName} for {damageDealt} damage" +
@@ -183,6 +184,7 @@ public class CardHistory : MonoBehaviour, ICardHistory
         public int TurnNumber => turnNumber;
         public float DamageDealt => damageDealt;
         public bool WasRangedAttack => wasRangedAttack;
+        public IReadOnlyList<Keywords.MonsterKeyword> AttackerKeywords => attackerKeywords;
 
         public AttackRecord(EntityManager attacker, EntityManager target, int turn, float damage, float counterDamage, bool isRanged)
         {
@@ -195,7 +197,20 @@ public class CardHistory : MonoBehaviour, ICardHistory
             wasRangedAttack = isRanged;
             isEnemyAttack = attacker.GetMonsterType() == EntityManager.MonsterType.Enemy;
 
-            Debug.Log($"[CardHistory] Recorded attack: {attackerName} -> {targetName}, damage: {damage}, counter: {counterDamage}, isEnemyAttack: {isEnemyAttack}");
+            // Store the attacker's keywords
+            if (attacker.GetCardData()?.Keywords != null)
+            {
+                attackerKeywords.AddRange(attacker.GetCardData().Keywords);
+            }
+
+            // If the attack is ranged but the Ranged keyword isn't in the list, add it
+            // This ensures consistency with the wasRangedAttack flag
+            if (isRanged && !attackerKeywords.Contains(Keywords.MonsterKeyword.Ranged))
+            {
+                attackerKeywords.Add(Keywords.MonsterKeyword.Ranged);
+            }
+
+            Debug.Log($"[CardHistory] Recorded attack: {attackerName} -> {targetName}, damage: {damage}, counter: {counterDamage}, isEnemyAttack: {isEnemyAttack}, keywords: {string.Join(", ", attackerKeywords)}");
         }
     }
 
@@ -245,13 +260,6 @@ public class CardHistory : MonoBehaviour, ICardHistory
             effectValue = effect.EffectValue;
             sourceName = sourceCardName ?? "Unknown";
             timestamp = DateTime.Now.ToString("HH:mm:ss");
-
-            // Record the target in the card history as an additional effect target
-            if (CardHistory.Instance != null && !string.IsNullOrEmpty(targetName) && targetName != "Unknown")
-            {
-                CardHistory.Instance.RecordAdditionalEffectTarget(effectType, targetName);
-                Debug.Log($"[CardHistory] Linked ongoing effect {effectType} to target {targetName} in card history");
-            }
 
             Debug.Log($"[CardHistory] Recorded ongoing effect: {effectType} targeting {targetName} for {effectValue}/turn over {duration} turns from {sourceName}");
         }
@@ -429,7 +437,7 @@ public class CardHistory : MonoBehaviour, ICardHistory
         var record = new OngoingEffectRecord(effect, duration, turnNumber, sourceCardName);
         AddOngoingEffectRecord(record);
 
-        // Additionally, if this is associated with a card, record the target in the card play history
+        // Only add the effect target to the card history once
         if (effect.TargetEntity != null && !string.IsNullOrEmpty(sourceCardName))
         {
             RecordAdditionalEffectTarget(effect.EffectType.ToString(), effect.TargetEntity.name);

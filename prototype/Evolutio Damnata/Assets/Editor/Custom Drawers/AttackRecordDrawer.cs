@@ -1,5 +1,6 @@
 ﻿using UnityEditor;
 using UnityEngine;
+using System.Collections.Generic;
 
 [CustomPropertyDrawer(typeof(CardHistory.AttackRecord))]
 public class AttackRecordDrawer : PropertyDrawer
@@ -8,8 +9,17 @@ public class AttackRecordDrawer : PropertyDrawer
     private static GUIStyle targetStyle;
     private static GUIStyle damageStyle;
     private static GUIStyle counterDamageStyle;
-    private static GUIStyle rangedBadgeStyle;
+    private static GUIStyle badgeStyle;
     private static GUIStyle timestampStyle;
+
+    // Add dictionary to map keywords to colors
+    private static readonly Dictionary<string, Color> keywordColors = new Dictionary<string, Color>
+    {
+        { "RANGED", new Color(0.2f, 0.6f, 0.2f) },
+        { "TAUNT", new Color(0.7f, 0.5f, 0.1f) },
+        { "TOUGH", new Color(0.3f, 0.3f, 0.7f) },
+        { "OVERWHELM", new Color(0.7f, 0.2f, 0.5f) }
+    };
 
     private void InitializeStyles()
     {
@@ -32,13 +42,13 @@ public class AttackRecordDrawer : PropertyDrawer
             counterDamageStyle.normal.textColor = new Color(0.6f, 0.4f, 0.1f); // Orange for counter damage
         }
 
-        if (rangedBadgeStyle == null)
+        if (badgeStyle == null)
         {
-            rangedBadgeStyle = new GUIStyle(EditorStyles.miniLabel);
-            rangedBadgeStyle.normal.textColor = Color.white;
-            rangedBadgeStyle.fontStyle = FontStyle.Bold;
-            rangedBadgeStyle.alignment = TextAnchor.MiddleCenter;
-            rangedBadgeStyle.padding = new RectOffset(4, 4, 2, 2);
+            badgeStyle = new GUIStyle(EditorStyles.miniLabel);
+            badgeStyle.normal.textColor = Color.white;
+            badgeStyle.fontStyle = FontStyle.Bold;
+            badgeStyle.alignment = TextAnchor.MiddleCenter;
+            badgeStyle.padding = new RectOffset(4, 4, 2, 2);
         }
 
         if (timestampStyle == null)
@@ -69,6 +79,7 @@ public class AttackRecordDrawer : PropertyDrawer
         var timestamp = property.FindPropertyRelative("timestamp");
         var isEnemyAttack = property.FindPropertyRelative("isEnemyAttack");
         var wasRangedAttack = property.FindPropertyRelative("wasRangedAttack");
+        var attackerKeywordsArray = property.FindPropertyRelative("attackerKeywords");
 
         if (attackerName == null || targetName == null)
         {
@@ -117,22 +128,47 @@ public class AttackRecordDrawer : PropertyDrawer
         // Display damage with color
         GUI.Label(damageRect, $"{damageValue:F1} damage", damageStyle);
 
-        // Draw ranged badge if applicable
-        // Draw ranged badge if applicable
-        if (isRangedAttack)
-        {
-            var badgeRect = new Rect(
-                foldoutRect.xMax - 180,
-                foldoutRect.y - 1,      
-                80,                     
-                foldoutRect.height + 2  
-            );
+        // Define badge spacing and positioning
+        float badgeWidth = 80;
+        float badgeSpacing = 5;
 
-            Color badgeColor = isEnemyAttackValue ? new Color(0.7f, 0.2f, 0.2f) : new Color(0.2f, 0.6f, 0.2f);
-            EditorGUI.DrawRect(badgeRect, badgeColor);
-            GUI.Label(badgeRect, "RANGED", rangedBadgeStyle);
+        // Collect active keywords from the attacker's saved keywords
+        List<Keywords.MonsterKeyword> activeKeywords = new List<Keywords.MonsterKeyword>();
+
+        // Read keywords from the serialized array
+        if (attackerKeywordsArray != null)
+        {
+            for (int i = 0; i < attackerKeywordsArray.arraySize; i++)
+            {
+                var keywordProp = attackerKeywordsArray.GetArrayElementAtIndex(i);
+                if (keywordProp != null)
+                {
+                    // The enum value is stored as an integer
+                    Keywords.MonsterKeyword keyword = (Keywords.MonsterKeyword)keywordProp.enumValueIndex;
+                    if (keyword != Keywords.MonsterKeyword.None)
+                    {
+                        activeKeywords.Add(keyword);
+                    }
+                }
+            }
         }
 
+        // Calculate total width needed for badges
+        float totalWidth = activeKeywords.Count * (badgeWidth + badgeSpacing) - badgeSpacing;
+
+        // Start position for the first badge, adjusting for the total width
+        float badgesStartX = foldoutRect.xMax - 180 - totalWidth + badgeWidth;
+
+        // Draw badges for all active keywords
+        foreach (var keyword in activeKeywords)
+        {
+            if (keyword != Keywords.MonsterKeyword.None)
+            {
+                string keywordText = keyword.ToString().ToUpper();
+                DrawKeywordBadge(keywordText, badgesStartX, foldoutRect.y - 1, badgeWidth, foldoutRect.height + 2, isEnemyAttackValue);
+                badgesStartX += (badgeWidth + badgeSpacing);
+            }
+        }
 
         // Reset color
         GUI.color = defaultColor;
@@ -145,6 +181,22 @@ public class AttackRecordDrawer : PropertyDrawer
 
             // Draw attacker with appropriate styling
             DrawField("Attacker:", attackerName?.stringValue ?? "Unknown", contentWidth, ref y);
+
+            // Show keywords present on attacker
+            if (activeKeywords.Count > 0)
+            {
+                List<string> keywordStrings = new List<string>();
+                foreach (var keyword in activeKeywords)
+                {
+                    if (keyword != Keywords.MonsterKeyword.None)
+                    {
+                        keywordStrings.Add(keyword.ToString());
+                    }
+                }
+
+                string keywordsText = string.Join(", ", keywordStrings);
+                DrawField("Keywords:", keywordsText, contentWidth, ref y);
+            }
 
             // Draw target with target highlighting style
             GUI.color = new Color(0.0f, 0.5f, 0.0f); // Green for target
@@ -225,6 +277,25 @@ public class AttackRecordDrawer : PropertyDrawer
         EditorGUI.EndProperty();
     }
 
+    private void DrawKeywordBadge(string keyword, float x, float y, float width, float height, bool isEnemyAttack)
+    {
+        var badgeRect = new Rect(x, y, width, height);
+
+        // Get the color for this keyword, fallback to default if not found
+        Color badgeColor;
+        if (keywordColors.TryGetValue(keyword, out Color color))
+        {
+            badgeColor = isEnemyAttack ? color * 0.8f : color; // Slightly darken enemy badges
+        }
+        else
+        {
+            badgeColor = isEnemyAttack ? new Color(0.7f, 0.2f, 0.2f) : new Color(0.2f, 0.6f, 0.2f);
+        }
+
+        EditorGUI.DrawRect(badgeRect, badgeColor);
+        GUI.Label(badgeRect, keyword, badgeStyle);
+    }
+
     private void DrawField(string label, string value, float contentWidth, ref float y)
     {
         var rect = new Rect(30, y, contentWidth, EditorGUIUtility.singleLineHeight);
@@ -240,30 +311,13 @@ public class AttackRecordDrawer : PropertyDrawer
             bool isRanged = wasRangedAttack != null && wasRangedAttack.boolValue;
 
             // Calculate the height based on content
-            int baseFieldCount = 7; // Attacker, Target, Attack Type, Damage visualization, Turn, Time
+            int baseFieldCount = 8; // Attacker, Keywords, Target, Attack Type, Damage visualization, Turn, Time
             if (!isRanged)
             {
-                if (rangedBadgeStyle == null)
-                {
-                    rangedBadgeStyle = new GUIStyle(EditorStyles.miniLabel);
-                    rangedBadgeStyle.normal.textColor = Color.white;
-                    rangedBadgeStyle.fontStyle = FontStyle.Bold;
-                    rangedBadgeStyle.alignment = TextAnchor.MiddleCenter;
-                    rangedBadgeStyle.padding = new RectOffset(20, 20, 3, 3);
-                }
-                
-                baseFieldCount += 2;
+                baseFieldCount += 2; // Add 2 more lines for counter damage
             }
 
             // Add additional padding to ensure no clipping
-            if (rangedBadgeStyle == null)
-            {
-                rangedBadgeStyle = new GUIStyle(EditorStyles.miniLabel);
-                rangedBadgeStyle.normal.textColor = Color.white;
-                rangedBadgeStyle.fontStyle = FontStyle.Bold;
-                rangedBadgeStyle.alignment = TextAnchor.MiddleCenter;
-                rangedBadgeStyle.padding = new RectOffset(10, 10, 4, 4); 
-            }
             return EditorGUIUtility.singleLineHeight * baseFieldCount + 50;
         }
         return EditorGUIUtility.singleLineHeight + 10;
