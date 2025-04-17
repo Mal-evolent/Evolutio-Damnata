@@ -228,13 +228,30 @@ public class CardHistory : MonoBehaviour, ICardHistory
             isEnemyEffect = IsCurrentPhaseEnemyPhase();
 
             effectType = effect.EffectType.ToString();
-            targetName = effect.TargetEntity?.name ?? "Unknown";
+
+            // Explicitly capture the target entity information
+            if (effect.TargetEntity != null)
+            {
+                targetName = effect.TargetEntity.name;
+            }
+            else
+            {
+                targetName = "Unknown";
+            }
+
             turnApplied = turnNumber;
             initialDuration = duration;
             RemainingDuration = duration;
             effectValue = effect.EffectValue;
             sourceName = sourceCardName ?? "Unknown";
             timestamp = DateTime.Now.ToString("HH:mm:ss");
+
+            // Record the target in the card history as an additional effect target
+            if (CardHistory.Instance != null && !string.IsNullOrEmpty(targetName) && targetName != "Unknown")
+            {
+                CardHistory.Instance.RecordAdditionalEffectTarget(effectType, targetName);
+                Debug.Log($"[CardHistory] Linked ongoing effect {effectType} to target {targetName} in card history");
+            }
 
             Debug.Log($"[CardHistory] Recorded ongoing effect: {effectType} targeting {targetName} for {effectValue}/turn over {duration} turns from {sourceName}");
         }
@@ -392,10 +409,14 @@ public class CardHistory : MonoBehaviour, ICardHistory
             return;
         }
 
+        // Log the target entity even if it's null
         if (effect.TargetEntity == null)
         {
-            Debug.LogWarning("[CardHistory] Attempted to record ongoing effect with null target entity!");
-            return;
+            Debug.LogWarning("[CardHistory] Ongoing effect has null target entity. Recording with 'Unknown' target.");
+        }
+        else
+        {
+            Debug.Log($"[CardHistory] Recording ongoing effect targeting {effect.TargetEntity.name}");
         }
 
         // Get current turn if not provided
@@ -407,6 +428,12 @@ public class CardHistory : MonoBehaviour, ICardHistory
 
         var record = new OngoingEffectRecord(effect, duration, turnNumber, sourceCardName);
         AddOngoingEffectRecord(record);
+
+        // Additionally, if this is associated with a card, record the target in the card play history
+        if (effect.TargetEntity != null && !string.IsNullOrEmpty(sourceCardName))
+        {
+            RecordAdditionalEffectTarget(effect.EffectType.ToString(), effect.TargetEntity.name);
+        }
     }
 
     /// <summary>

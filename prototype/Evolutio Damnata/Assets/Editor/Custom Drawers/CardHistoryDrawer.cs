@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
+using System.Collections.Generic;
 
 [CustomPropertyDrawer(typeof(CardHistory.CardPlayRecord))]
 public class CardPlayRecordDrawer : PropertyDrawer
@@ -12,12 +13,13 @@ public class CardPlayRecordDrawer : PropertyDrawer
         // Get properties
         var cardName = property.FindPropertyRelative("cardName");
         var cardDescription = property.FindPropertyRelative("cardDescription");
-        var playerName = property.FindPropertyRelative("playerName");
+        var targetName = property.FindPropertyRelative("targetName");
         var turnNumber = property.FindPropertyRelative("turnNumber");
         var manaUsed = property.FindPropertyRelative("manaUsed");
         var timestamp = property.FindPropertyRelative("timestamp");
         var isEnemyCard = property.FindPropertyRelative("isEnemyCard");
         var keywords = property.FindPropertyRelative("keywords");
+        var effectTargets = property.FindPropertyRelative("effectTargets");
 
         if (cardName == null || turnNumber == null)
         {
@@ -49,6 +51,12 @@ public class CardPlayRecordDrawer : PropertyDrawer
             headerText += $" [{keywords.stringValue}]";
         }
 
+        // Add target to header if available
+        if (targetName != null && !string.IsNullOrEmpty(targetName.stringValue) && targetName.stringValue != "None")
+        {
+            headerText += $" → {targetName.stringValue}";
+        }
+
         var foldoutRect = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
         property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, headerText);
 
@@ -71,10 +79,27 @@ public class CardPlayRecordDrawer : PropertyDrawer
 
             DrawField("Player Type:", playerType, ref y);
 
-            // Only show entity name if it's not empty
-            if (!string.IsNullOrEmpty(playerName?.stringValue))
+            // Show target name with highlighted style
+            if (targetName != null && !string.IsNullOrEmpty(targetName.stringValue) && targetName.stringValue != "None")
             {
-                DrawField("Entity Name:", playerName.stringValue, ref y);
+                GUI.color = new Color(0.0f, 0.5f, 0.0f); // Green for target
+                DrawField("Target:", targetName.stringValue, ref y);
+                GUI.color = defaultColor;
+            }
+
+            // Display effect targets with highlighted style
+            if (effectTargets != null && effectTargets.arraySize > 0)
+            {
+                GUI.color = new Color(0.0f, 0.0f, 0.7f); // Blue for effect targets
+                DrawField("Effect Targets:", "", ref y);
+
+                for (int i = 0; i < effectTargets.arraySize; i++)
+                {
+                    var effectTarget = effectTargets.GetArrayElementAtIndex(i);
+                    DrawField($"  • ", effectTarget.stringValue, ref y);
+                }
+
+                GUI.color = defaultColor;
             }
 
             DrawField("Turn:", turnNumber?.intValue.ToString() ?? "0", ref y);
@@ -106,16 +131,23 @@ public class CardPlayRecordDrawer : PropertyDrawer
         if (property.isExpanded)
         {
             var cardDescription = property.FindPropertyRelative("cardDescription");
-            var playerName = property.FindPropertyRelative("playerName");
+            var targetName = property.FindPropertyRelative("targetName"); // Changed from playerName
             var keywords = property.FindPropertyRelative("keywords");
+            var effectTargets = property.FindPropertyRelative("effectTargets");
 
             // Start with base height for the always-shown fields
             int fieldCount = 5; // Card, Player Type, Turn, Mana Used, Time
 
             // Add optional fields
             if (!string.IsNullOrEmpty(cardDescription?.stringValue)) fieldCount++;
-            if (!string.IsNullOrEmpty(playerName?.stringValue)) fieldCount++;
+            if (targetName != null && !string.IsNullOrEmpty(targetName.stringValue) && targetName.stringValue != "None") fieldCount++;
             if (keywords != null && !string.IsNullOrEmpty(keywords.stringValue)) fieldCount++;
+
+            // Add effect targets count
+            if (effectTargets != null && effectTargets.arraySize > 0)
+            {
+                fieldCount += effectTargets.arraySize + 1; // +1 for the header
+            }
 
             return EditorGUIUtility.singleLineHeight * (fieldCount + 1); // +1 for the header
         }
@@ -123,36 +155,36 @@ public class CardPlayRecordDrawer : PropertyDrawer
     }
 }
 
-[CustomPropertyDrawer(typeof(CardHistory.AttackRecord))]
-public class AttackRecordDrawer : PropertyDrawer
+[CustomPropertyDrawer(typeof(CardHistory.OngoingEffectRecord))]
+public class OngoingEffectRecordDrawer : PropertyDrawer
 {
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
         EditorGUI.BeginProperty(position, label, property);
 
         // Get properties
-        var attackerName = property.FindPropertyRelative("attackerName");
+        var effectType = property.FindPropertyRelative("effectType");
         var targetName = property.FindPropertyRelative("targetName");
-        var turnNumber = property.FindPropertyRelative("turnNumber");
-        var damageDealt = property.FindPropertyRelative("damageDealt");
-        var counterDamage = property.FindPropertyRelative("counterDamage");
+        var turnApplied = property.FindPropertyRelative("turnApplied");
+        var initialDuration = property.FindPropertyRelative("initialDuration");
+        var effectValue = property.FindPropertyRelative("effectValue");
+        var sourceName = property.FindPropertyRelative("sourceName");
+        var isEnemyEffect = property.FindPropertyRelative("isEnemyEffect");
         var timestamp = property.FindPropertyRelative("timestamp");
-        var isEnemyAttack = property.FindPropertyRelative("isEnemyAttack");
-        var wasRangedAttack = property.FindPropertyRelative("wasRangedAttack");
 
-        if (attackerName == null || targetName == null)
+        if (effectType == null || targetName == null)
         {
-            EditorGUI.LabelField(position, "Invalid Attack Record");
+            EditorGUI.LabelField(position, "Invalid Effect Record");
             EditorGUI.EndProperty();
             return;
         }
 
-        // Determine attacker type for display
-        string attackerType = isEnemyAttack != null && isEnemyAttack.boolValue ? "Enemy" : "Player";
+        // Determine owner type for display
+        string ownerType = isEnemyEffect != null && isEnemyEffect.boolValue ? "Enemy" : "Player";
 
         // Use custom colors for enemy vs player
         Color defaultColor = GUI.color;
-        if (isEnemyAttack != null && isEnemyAttack.boolValue)
+        if (isEnemyEffect != null && isEnemyEffect.boolValue)
         {
             GUI.color = new Color(1f, 0.7f, 0.7f); // Light red for enemy
         }
@@ -162,8 +194,7 @@ public class AttackRecordDrawer : PropertyDrawer
         }
 
         // Draw foldout header with safe string access
-        string rangedText = wasRangedAttack != null && wasRangedAttack.boolValue ? " (Ranged)" : "";
-        var headerText = $"Turn {turnNumber?.intValue ?? 0}: {attackerType} {attackerName?.stringValue ?? "Unknown"} → {targetName?.stringValue ?? "Unknown"} ({damageDealt?.floatValue ?? 0} dmg){rangedText}";
+        var headerText = $"Turn {turnApplied?.intValue ?? 0}: {ownerType} {effectType?.stringValue ?? "Unknown"} → {targetName?.stringValue ?? "Unknown"} ({effectValue?.intValue ?? 0} dmg/{initialDuration?.intValue ?? 0} turns)";
         var foldoutRect = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
         property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, headerText);
 
@@ -176,17 +207,18 @@ public class AttackRecordDrawer : PropertyDrawer
             var y = position.y + EditorGUIUtility.singleLineHeight;
 
             // Draw details with null checks
-            DrawField("Attacker:", attackerName?.stringValue ?? "Unknown", ref y);
+            DrawField("Effect Type:", effectType?.stringValue ?? "Unknown", ref y);
+
+            // Highlight target name
+            GUI.color = new Color(0.0f, 0.5f, 0.0f); // Green for target
             DrawField("Target:", targetName?.stringValue ?? "Unknown", ref y);
-            DrawField("Attacker Type:", attackerType, ref y);
-            DrawField("Damage Dealt:", damageDealt?.floatValue.ToString("F1") ?? "0", ref y);
+            GUI.color = defaultColor;
 
-            string counterText = wasRangedAttack != null && wasRangedAttack.boolValue
-                ? "0 (Ranged Attack)"
-                : counterDamage?.floatValue.ToString("F1") ?? "0";
-            DrawField("Counter Damage:", counterText, ref y);
-
-            DrawField("Turn:", turnNumber?.intValue.ToString() ?? "0", ref y);
+            DrawField("Source Card:", sourceName?.stringValue ?? "Unknown", ref y);
+            DrawField("Owner:", ownerType, ref y);
+            DrawField("Effect Value:", effectValue?.intValue.ToString() ?? "0", ref y);
+            DrawField("Duration:", initialDuration?.intValue.ToString() ?? "0", ref y);
+            DrawField("Turn Applied:", turnApplied?.intValue.ToString() ?? "0", ref y);
             DrawField("Time:", timestamp?.stringValue ?? "Unknown", ref y);
 
             EditorGUI.indentLevel--;
@@ -206,7 +238,74 @@ public class AttackRecordDrawer : PropertyDrawer
     {
         if (property.isExpanded)
         {
-            return EditorGUIUtility.singleLineHeight * 8; // Header + 7 fields
+            return EditorGUIUtility.singleLineHeight * 9; // Header + 8 fields
+        }
+        return EditorGUIUtility.singleLineHeight;
+    }
+}
+
+[CustomPropertyDrawer(typeof(CardHistory.OngoingEffectApplicationRecord))]
+public class OngoingEffectApplicationRecordDrawer : PropertyDrawer
+{
+    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+    {
+        EditorGUI.BeginProperty(position, label, property);
+
+        // Get properties
+        var effectType = property.FindPropertyRelative("effectType");
+        var targetName = property.FindPropertyRelative("targetName");
+        var turnApplied = property.FindPropertyRelative("turnApplied");
+        var damageDealt = property.FindPropertyRelative("damageDealt");
+        var timestamp = property.FindPropertyRelative("timestamp");
+
+        if (effectType == null || targetName == null)
+        {
+            EditorGUI.LabelField(position, "Invalid Effect Application Record");
+            EditorGUI.EndProperty();
+            return;
+        }
+
+        // Draw foldout header with safe string access
+        var headerText = $"Turn {turnApplied?.intValue ?? 0}: {effectType?.stringValue ?? "Unknown"} → {targetName?.stringValue ?? "Unknown"} ({damageDealt?.intValue ?? 0} damage)";
+        var foldoutRect = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
+        property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, headerText);
+
+        if (property.isExpanded)
+        {
+            EditorGUI.indentLevel++;
+            var y = position.y + EditorGUIUtility.singleLineHeight;
+
+            // Draw details with null checks
+            DrawField("Effect Type:", effectType?.stringValue ?? "Unknown", ref y);
+
+            // Highlight target name
+            Color defaultColor = GUI.color;
+            GUI.color = new Color(0.0f, 0.5f, 0.0f); // Green for target
+            DrawField("Target:", targetName?.stringValue ?? "Unknown", ref y);
+            GUI.color = defaultColor;
+
+            DrawField("Damage Dealt:", damageDealt?.intValue.ToString() ?? "0", ref y);
+            DrawField("Turn Applied:", turnApplied?.intValue.ToString() ?? "0", ref y);
+            DrawField("Time:", timestamp?.stringValue ?? "Unknown", ref y);
+
+            EditorGUI.indentLevel--;
+        }
+
+        EditorGUI.EndProperty();
+    }
+
+    private void DrawField(string label, string value, ref float y)
+    {
+        var rect = new Rect(30, y, 300, EditorGUIUtility.singleLineHeight);
+        EditorGUI.LabelField(rect, $"{label} {value}");
+        y += EditorGUIUtility.singleLineHeight;
+    }
+
+    public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+    {
+        if (property.isExpanded)
+        {
+            return EditorGUIUtility.singleLineHeight * 6; // Header + 5 fields
         }
         return EditorGUIUtility.singleLineHeight;
     }
@@ -223,12 +322,23 @@ public class CardHistoryEditor : Editor
     private SerializedProperty totalAttacks;
     private SerializedProperty playerAttacks;
     private SerializedProperty enemyAttacks;
+    private SerializedProperty totalOngoingEffects;
+    private SerializedProperty playerOngoingEffects;
+    private SerializedProperty enemyOngoingEffects;
     private SerializedProperty cardsPerTurn;
     private SerializedProperty cardsPlayedByType;
     private SerializedProperty playerCardsPlayedByType;
     private SerializedProperty enemyCardsPlayedByType;
+    private SerializedProperty effectsByType;
     private SerializedProperty cardHistory;
     private SerializedProperty attackHistory;
+    private SerializedProperty ongoingEffectHistory;
+    private SerializedProperty effectApplicationHistory;
+
+    private bool showCardHistory = true;
+    private bool showAttackHistory = true;
+    private bool showOngoingEffectHistory = true;
+    private bool showEffectApplicationHistory = true;
 
     private void OnEnable()
     {
@@ -241,12 +351,18 @@ public class CardHistoryEditor : Editor
         totalAttacks = serializedObject.FindProperty("totalAttacks");
         playerAttacks = serializedObject.FindProperty("playerAttacks");
         enemyAttacks = serializedObject.FindProperty("enemyAttacks");
+        totalOngoingEffects = serializedObject.FindProperty("totalOngoingEffects");
+        playerOngoingEffects = serializedObject.FindProperty("playerOngoingEffects");
+        enemyOngoingEffects = serializedObject.FindProperty("enemyOngoingEffects");
         cardsPerTurn = serializedObject.FindProperty("cardsPerTurn");
         cardsPlayedByType = serializedObject.FindProperty("cardsPlayedByType");
         playerCardsPlayedByType = serializedObject.FindProperty("playerCardsPlayedByType");
         enemyCardsPlayedByType = serializedObject.FindProperty("enemyCardsPlayedByType");
+        effectsByType = serializedObject.FindProperty("effectsByType");
         cardHistory = serializedObject.FindProperty("cardHistory");
         attackHistory = serializedObject.FindProperty("attackHistory");
+        ongoingEffectHistory = serializedObject.FindProperty("ongoingEffectHistory");
+        effectApplicationHistory = serializedObject.FindProperty("effectApplicationHistory");
     }
 
     public override void OnInspectorGUI()
@@ -325,6 +441,28 @@ public class CardHistoryEditor : Editor
             EditorGUILayout.EndHorizontal();
         }
 
+        // Ongoing effect statistics
+        if (totalOngoingEffects != null)
+        {
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Ongoing Effect Statistics", EditorStyles.boldLabel);
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Total Ongoing Effects", GUILayout.Width(150));
+            EditorGUILayout.LabelField(totalOngoingEffects.intValue.ToString());
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Player Ongoing Effects", GUILayout.Width(150));
+            EditorGUILayout.LabelField(playerOngoingEffects.intValue.ToString());
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Enemy Ongoing Effects", GUILayout.Width(150));
+            EditorGUILayout.LabelField(enemyOngoingEffects.intValue.ToString());
+            EditorGUILayout.EndHorizontal();
+        }
+
         EditorGUILayout.Space();
 
         // More detailed statistics in foldouts
@@ -342,19 +480,62 @@ public class CardHistoryEditor : Editor
             EditorGUILayout.PropertyField(enemyCardsPlayedByType, new GUIContent("Cards By Type (Enemy)"));
         }
 
+        if (effectsByType != null)
+        {
+            EditorGUILayout.PropertyField(effectsByType, new GUIContent("Effects By Type"));
+        }
+
         EditorGUI.EndDisabledGroup();
 
         EditorGUILayout.Space();
-        EditorGUILayout.LabelField("History", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("History Records", EditorStyles.boldLabel);
 
+        // Card play history
         if (cardHistory != null)
         {
-            EditorGUILayout.PropertyField(cardHistory, new GUIContent("Card Play History"));
+            showCardHistory = EditorGUILayout.Foldout(showCardHistory, $"Card Play History ({cardHistory.arraySize} records)", true);
+            if (showCardHistory)
+            {
+                EditorGUI.indentLevel++;
+                EditorGUILayout.PropertyField(cardHistory, GUIContent.none, true);
+                EditorGUI.indentLevel--;
+            }
         }
 
+        // Attack history
         if (attackHistory != null)
         {
-            EditorGUILayout.PropertyField(attackHistory, new GUIContent("Attack History"));
+            showAttackHistory = EditorGUILayout.Foldout(showAttackHistory, $"Attack History ({attackHistory.arraySize} records)", true);
+            if (showAttackHistory)
+            {
+                EditorGUI.indentLevel++;
+                EditorGUILayout.PropertyField(attackHistory, GUIContent.none, true);
+                EditorGUI.indentLevel--;
+            }
+        }
+
+        // Ongoing effect history
+        if (ongoingEffectHistory != null)
+        {
+            showOngoingEffectHistory = EditorGUILayout.Foldout(showOngoingEffectHistory, $"Ongoing Effect History ({ongoingEffectHistory.arraySize} records)", true);
+            if (showOngoingEffectHistory)
+            {
+                EditorGUI.indentLevel++;
+                EditorGUILayout.PropertyField(ongoingEffectHistory, GUIContent.none, true);
+                EditorGUI.indentLevel--;
+            }
+        }
+
+        // Effect application history
+        if (effectApplicationHistory != null)
+        {
+            showEffectApplicationHistory = EditorGUILayout.Foldout(showEffectApplicationHistory, $"Effect Application History ({effectApplicationHistory.arraySize} records)", true);
+            if (showEffectApplicationHistory)
+            {
+                EditorGUI.indentLevel++;
+                EditorGUILayout.PropertyField(effectApplicationHistory, GUIContent.none, true);
+                EditorGUI.indentLevel--;
+            }
         }
 
         EditorGUILayout.Space();
@@ -390,4 +571,4 @@ public class CardHistoryEditor : Editor
         serializedObject.ApplyModifiedProperties();
     }
 }
-#endif 
+#endif
