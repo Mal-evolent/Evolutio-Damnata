@@ -245,10 +245,6 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
                     {
                         Debug.Log("Monster cards can only be played during the preparation phase!");
                     }
-                    else if (!isDrawOrBloodpriceOnlySpell)
-                    {
-                        Debug.Log("Regular spell cards can only be played during the preparation phase!");
-                    }
                     else
                     {
                         Debug.Log("Cannot play this card in the current phase!");
