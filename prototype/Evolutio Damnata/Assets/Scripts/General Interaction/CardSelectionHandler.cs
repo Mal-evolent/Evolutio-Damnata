@@ -521,46 +521,121 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
 
     private void HandlePossibleAttack(EntityManager targetEntity)
     {
-        if (_cardManager.CurrentSelectedCard == null) return;
+        // Check if we have a selected card
+        if (_cardManager.CurrentSelectedCard == null)
+        {
+            Debug.LogWarning("Attack failed: No card is currently selected");
+            return;
+        }
 
+        // Validate attacker entity
         EntityManager playerEntity = _cardManager.CurrentSelectedCard.GetComponent<EntityManager>();
-        if (playerEntity == null || !playerEntity.placed) return;
+        if (playerEntity == null)
+        {
+            Debug.LogWarning($"Attack failed: Selected card {_cardManager.CurrentSelectedCard.name} has no EntityManager component");
+            return;
+        }
+
+        if (!playerEntity.placed)
+        {
+            Debug.LogWarning($"Attack failed: Selected entity {playerEntity.name} is not placed on the field");
+            return;
+        }
+
+        // Validate target entity
+        if (targetEntity == null)
+        {
+            Debug.LogError("Attack failed: Target entity is null");
+            return;
+        }
+
+        // Check if target entity is in the cache
+        bool isInCache = false;
+        foreach (var entity in _spritePositioning.EnemyEntities)
+        {
+            if (entity != null && _entityManagerCache.TryGetValue(entity, out var cachedEM) && cachedEM == targetEntity)
+            {
+                isInCache = true;
+                break;
+            }
+        }
+
+        if (!isInCache)
+        {
+            Debug.LogWarning($"Attack failed: Target entity {targetEntity.name} is not in the enemy entity cache");
+            // Attempt to refresh the cache
+            BuildEntityCache();
+            return;
+        }
 
         // Check for dead or fading entities
         if (playerEntity.dead || playerEntity.IsFadingOut)
         {
-            Debug.Log($"Cannot attack with {playerEntity.name}: entity is dead or fading out");
-            return;
-        }
-        
-        if (targetEntity.dead || targetEntity.IsFadingOut)
-        {
-            Debug.Log($"Cannot attack {targetEntity.name}: entity is dead or fading out");
+            Debug.LogWarning($"Attack failed: Attacker {playerEntity.name} is dead or fading out");
             return;
         }
 
-        if (_combatManager.IsPlayerCombatPhase())
+        if (targetEntity.dead || targetEntity.IsFadingOut)
         {
-            // Check if there are any taunt units on the enemy side
-            if (CombatRulesEngine.HasTauntUnits(_spritePositioning.EnemyEntities))
+            Debug.LogWarning($"Attack failed: Target {targetEntity.name} is dead or fading out");
+            return;
+        }
+
+        // Check game phase
+        if (!_combatManager.IsPlayerCombatPhase())
+        {
+            Debug.LogWarning("Attack failed: Not in player combat phase");
+            return;
+        }
+
+        // Log attack attempt for debugging
+        Debug.Log($"Attempting attack: {playerEntity.name} -> {targetEntity.name}");
+
+        // Check if attacker is allowed to attack (e.g., has already attacked)
+        AttackLimiter attackLimiter = null;
+        if (_combatStage is CombatStage combatStage)
+        {
+            attackLimiter = combatStage.GetAttackLimiter();
+        }
+
+        if (attackLimiter != null && !attackLimiter.CanAttack(playerEntity))
+        {
+            Debug.LogWarning($"Attack failed: {playerEntity.name} has already used its attack this turn");
+            return;
+        }
+
+        // Check for taunt mechanics
+        if (CombatRulesEngine.HasTauntUnits(_spritePositioning.EnemyEntities))
+        {
+            var tauntUnits = CombatRulesEngine.GetAllTauntUnits(_spritePositioning.EnemyEntities);
+            if (tauntUnits.Count > 0)
             {
-                var tauntUnits = CombatRulesEngine.GetAllTauntUnits(_spritePositioning.EnemyEntities);
-                if (tauntUnits.Count > 0 && !tauntUnits.Contains(targetEntity))
+                bool isTauntTarget = tauntUnits.Contains(targetEntity);
+                if (!isTauntTarget)
                 {
-                    Debug.Log($"Cannot attack {targetEntity.name} while there are taunt units on the field!");
+                    Debug.LogWarning($"Attack failed: Cannot attack {targetEntity.name} while there are taunt units on the field");
+
+                    // List all taunt units for debugging
+                    string tauntUnitNames = string.Join(", ", tauntUnits.Select(u => u.name));
+                    Debug.Log($"Taunt units present: {tauntUnitNames}");
                     return;
                 }
             }
+        }
 
+        // If we've made it this far, execute the attack
+        try
+        {
             _combatStage.HandleMonsterAttack(playerEntity, targetEntity);
             // Deselect everything after attack
             _cardManager.CurrentSelectedCard = null;
             _cardOutlineManager.RemoveHighlight();
             ResetAllMonsterTints();
+            Debug.Log($"Attack successful: {playerEntity.name} attacked {targetEntity.name}");
         }
-        else
+        catch (System.Exception ex)
         {
-            Debug.Log("Attacks are not allowed at this stage!");
+            Debug.LogError($"Attack failed with exception: {ex.Message}\n{ex.StackTrace}");
         }
     }
     // Add this method to CardSelectionHandler.cs
