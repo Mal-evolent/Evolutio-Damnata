@@ -62,8 +62,22 @@ public class CardHistory : MonoBehaviour, ICardHistory
             // Special handling for health icons
             if (entity is HealthIconManager healthIcon)
             {
-                isEnemyCard = healthIcon.IsPlayerIcon;
-                Debug.Log($"[CardHistory] Card played against health icon: {cardName}, target is player icon: {healthIcon.IsPlayerIcon}, isEnemyCard={isEnemyCard}");
+                bool hasBloodpriceKeyword =
+                    (keywords.Contains("Bloodprice") || keywords.Contains("bloodprice") ||
+                     keywords.Contains("BloodPrice") || keywords.Contains("Blood Price"));
+
+                if (hasBloodpriceKeyword)
+                {
+                    // For bloodprice, the card is played by the same entity it targets
+                    isEnemyCard = !healthIcon.IsPlayerIcon;
+                    Debug.Log($"[CardHistory] Bloodprice card targeting health icon: {cardName}, is player icon: {healthIcon.IsPlayerIcon}, isEnemyCard={isEnemyCard}");
+                }
+                else
+                {
+                    // Normal case for non-bloodprice cards
+                    isEnemyCard = healthIcon.IsPlayerIcon;
+                    Debug.Log($"[CardHistory] Card played against health icon: {cardName}, target is player icon: {healthIcon.IsPlayerIcon}, isEnemyCard={isEnemyCard}");
+                }
             }
             else if (card is SpellCard)
             {
@@ -98,10 +112,22 @@ public class CardHistory : MonoBehaviour, ICardHistory
             // Special handling for health icons - determine who PLAYED the card, not the target
             if (entity is HealthIconManager healthIcon)
             {
-                // For spells on health icons, the card owner is the opposite of what the target is
-                isEnemyCard = healthIcon.IsPlayerIcon; // if targeting player icon, it's an enemy card; if targeting enemy icon, it's a player card
+                bool hasBloodpriceKeyword =
+                    (keywords.Contains("Bloodprice") || keywords.Contains("bloodprice") ||
+                     keywords.Contains("BloodPrice") || keywords.Contains("Blood Price"));
 
-                Debug.Log($"[CardHistory] Spell played against health icon: {cardName}, target is player icon: {healthIcon.IsPlayerIcon}, isEnemyCard={isEnemyCard}");
+                if (hasBloodpriceKeyword)
+                {
+                    // For bloodprice, the card is played by the same entity it targets
+                    isEnemyCard = !healthIcon.IsPlayerIcon;
+                    Debug.Log($"[CardHistory] Bloodprice card targeting health icon: {cardName}, is player icon: {healthIcon.IsPlayerIcon}, isEnemyCard={isEnemyCard}");
+                }
+                else
+                {
+                    // For spells on health icons, the card owner is the opposite of what the target is
+                    isEnemyCard = healthIcon.IsPlayerIcon; // if targeting player icon, it's an enemy card; if targeting enemy icon, it's a player card
+                    Debug.Log($"[CardHistory] Spell played against health icon: {cardName}, target is player icon: {healthIcon.IsPlayerIcon}, isEnemyCard={isEnemyCard}");
+                }
             }
             else
             {

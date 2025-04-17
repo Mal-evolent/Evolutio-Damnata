@@ -186,21 +186,35 @@ public class HealthIconManager : EntityManager, IHealthIconManager
         float healthBefore = health;
         health = Mathf.Max(0, health - damageAmount);
 
-        // Looking at TakeDamage in this class, we should:
-        // 1. Update the combat manager health
+        // Update the combat manager health
         UpdateCombatManagerHealth();
 
-        // 2. Show damage number - this is accessible from base class
+        // Show damage number
         ShowDamageNumber(damageAmount);
 
-        // 3. Log with clear indication this is self-inflicted blood price damage
+        // IMPORTANT: Record this as self-damage in the card history
+        if (CardHistory.Instance != null && combatManagerRef != null)
+        {
+            // Use this entity as both attacker and target to record self-damage
+            CardHistory.Instance.RecordAttack(
+                this,                        // Self as attacker
+                this,                        // Self as target
+                combatManagerRef.TurnCount,  // Current turn
+                damageAmount,                // Damage dealt
+                0f,                          // No counter damage for self-inflicted damage
+                false                        // Not a ranged attack
+            );
+            Debug.Log($"[CardHistory] Recorded Blood Price self-damage of {damageAmount} for {(isPlayerIcon ? "Player" : "Enemy")}");
+        }
+
+        // Log with clear indication this is self-inflicted blood price damage
         Debug.Log($"[Blood Price] {(isPlayerIcon ? "Player" : "Enemy")} used Blood Price and took {damageAmount} self-inflicted damage. Health: {health}/{MaxHealth}");
 
-        // 4. Check for critical health
+        // Check for critical health
         if (GetHealth() / MaxHealth <= 0.25f)
             Debug.Log($"{(isPlayerIcon ? "Player" : "Enemy")} health critical!");
 
-        // 5. Check for death
+        // Check for death
         if (health <= 0 && healthBefore > 0)
             Die();
     }
