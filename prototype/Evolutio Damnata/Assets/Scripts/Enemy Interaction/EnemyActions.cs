@@ -38,7 +38,7 @@ namespace EnemyInteraction
         [SerializeField] private float _maxInitializationTime = 10f;
         [SerializeField] private float _componentWaitTime = 0.1f;
         private bool _isInitialized = false;
-        
+
         public bool IsInitialized => _isInitialized;
 
         private float _initializationTimer = 0f;
@@ -76,10 +76,10 @@ namespace EnemyInteraction
         private IEnumerator Initialize()
         {
             Debug.Log("[EnemyActions] Starting initialization...");
-            
+
             // First, find and initialize core scene dependencies
             yield return StartCoroutine(InitializeCoreDependencies());
-            
+
             // Continue only if core dependencies are valid
             if (!ValidateCoreDependencies())
             {
@@ -92,7 +92,7 @@ namespace EnemyInteraction
             // Get services from AIServices
             // This will create AIServices if it doesn't exist
             var services = AIServices.Instance;
-            
+
             // Get all required services
             if (services != null)
             {
@@ -101,7 +101,7 @@ namespace EnemyInteraction
                 _boardStateManager = services.BoardStateManager;
                 _cardPlayManager = services.CardPlayManager;
                 _attackManager = services.AttackManager;
-                
+
                 Debug.Log("[EnemyActions] Got available services from AIServices");
             }
             else
@@ -110,9 +110,9 @@ namespace EnemyInteraction
                 enabled = false;
                 yield break;
             }
-            
+
             // Ensure all services are available
-            if (_keywordEvaluator == null || _effectEvaluator == null || 
+            if (_keywordEvaluator == null || _effectEvaluator == null ||
                 _boardStateManager == null || _cardPlayManager == null || _attackManager == null)
             {
                 Debug.LogError("[EnemyActions] Critical AI services are missing, cannot continue");
@@ -126,7 +126,7 @@ namespace EnemyInteraction
             {
                 Debug.LogWarning("[EnemyActions] StackManager instance is null, effect stacking evaluations will not work");
             }
-            
+
             // Mark as initialized
             _isInitialized = true;
             Debug.Log("[EnemyActions] Initialization completed");
@@ -145,7 +145,7 @@ namespace EnemyInteraction
                     _initializationTimer += _componentWaitTime;
                 }
             }
-            
+
             if (_combatManager == null)
             {
                 Debug.LogError("[EnemyActions] Failed to find CombatManager within timeout period!");
@@ -164,7 +164,7 @@ namespace EnemyInteraction
                     _initializationTimer += _componentWaitTime;
                 }
             }
-            
+
             if (_combatStage == null)
             {
                 Debug.LogError("[EnemyActions] Failed to find CombatStage within timeout period!");
@@ -175,7 +175,7 @@ namespace EnemyInteraction
             // Wait for CombatStage to be ready with timeout
             float spritePositioningTimeout = 5f; // Increased from 3f to give more time
             float spritePositioningTimer = 0f;
-            
+
             // Try to get SpritePositioning first
             while (_combatStage.SpritePositioning == null && spritePositioningTimer < spritePositioningTimeout && _initializationTimer < _maxInitializationTime)
             {
@@ -184,20 +184,20 @@ namespace EnemyInteraction
                 spritePositioningTimer += _componentWaitTime;
                 _initializationTimer += _componentWaitTime;
             }
-            
+
             if (_combatStage.SpritePositioning == null)
             {
                 Debug.LogError("[EnemyActions] CombatStage.SpritePositioning not available within timeout period!");
                 yield break;
             }
-            
+
             // Get SpritePositioning
             _spritePositioning = _combatStage.SpritePositioning as SpritePositioning;
             Debug.Log("[EnemyActions] Got SpritePositioning");
-            
+
             // Reset timer for SpellEffectApplier
             spritePositioningTimer = 0f;
-            
+
             // Try to get SpellEffectApplier separately with timeout
             while (_combatStage.SpellEffectApplier == null && spritePositioningTimer < spritePositioningTimeout && _initializationTimer < _maxInitializationTime)
             {
@@ -206,7 +206,7 @@ namespace EnemyInteraction
                 spritePositioningTimer += _componentWaitTime;
                 _initializationTimer += _componentWaitTime;
             }
-            
+
             // Continue even if SpellEffectApplier is null - we'll check later
             if (_combatStage.SpellEffectApplier == null)
             {
@@ -224,13 +224,13 @@ namespace EnemyInteraction
             {
                 Debug.LogWarning("[EnemyActions] CardLibrary not available from CombatStage");
             }
-            
+
             _attackLimiter = _combatStage.GetAttackLimiter();
             if (_attackLimiter == null)
             {
                 Debug.LogWarning("[EnemyActions] AttackLimiter not available from CombatStage");
             }
-            
+
             // Get EnemyDeck from CombatManager
             _enemyDeck = _combatManager.EnemyDeck;
             if (_enemyDeck == null)
@@ -248,48 +248,48 @@ namespace EnemyInteraction
             // Required core components
             bool hasCombatManager = _combatManager != null;
             bool hasSpritePositioning = _spritePositioning != null;
-            
+
             // Non-critical components
             bool hasEnemyDeck = _enemyDeck != null;
             bool hasCardLibrary = _cardLibrary != null;
             bool hasCombatStage = _combatStage != null;
             bool hasSpellEffectApplier = _spellEffectApplier != null;
-            
+
             // Log errors for critical missing components
             if (!hasCombatManager)
             {
                 Debug.LogError($"[{nameof(EnemyActions)}] CRITICAL: Failed to find CombatManager in scene!");
             }
-            
+
             if (!hasSpritePositioning)
             {
                 Debug.LogError($"[{nameof(EnemyActions)}] CRITICAL: Failed to get SpritePositioning from CombatStage!");
             }
-            
+
             // Log warnings for non-critical missing components
             if (!hasEnemyDeck)
             {
                 Debug.LogWarning($"[{nameof(EnemyActions)}] Non-critical: EnemyDeck is not available yet from CombatManager.");
             }
-            
+
             if (!hasCardLibrary)
             {
                 Debug.LogWarning($"[{nameof(EnemyActions)}] Non-critical: CardLibrary is not available yet from CombatStage.");
             }
-            
+
             if (!hasCombatStage)
             {
                 Debug.LogWarning($"[{nameof(EnemyActions)}] Non-critical: CombatStage reference is null but might be recovered later.");
             }
-            
+
             if (!hasSpellEffectApplier)
             {
                 Debug.LogWarning($"[{nameof(EnemyActions)}] Non-critical: SpellEffectApplier is not available yet from CombatStage.");
             }
-            
+
             // We MUST have Combat Manager and SpritePositioning to proceed
             bool hasCriticalComponents = hasCombatManager && hasSpritePositioning;
-            
+
             if (!hasCriticalComponents)
             {
                 Debug.LogError($"[{nameof(EnemyActions)}] One or more critical components are missing. AI initialization cannot continue.");
@@ -298,14 +298,14 @@ namespace EnemyInteraction
             {
                 Debug.Log($"[{nameof(EnemyActions)}] Critical components are available. Continuing initialization.");
             }
-            
+
             return hasCriticalComponents;
         }
 
         public IEnumerator PlayCards()
         {
             Debug.Log("[EnemyActions] Starting PlayCards");
-            
+
             // Wait for initialization if needed but with timeout
             if (!_isInitialized)
             {
@@ -317,7 +317,7 @@ namespace EnemyInteraction
                     yield return new WaitForSeconds(0.1f);
                     waitTime += 0.1f;
                 }
-                
+
                 // If still not initialized, abort
                 if (!_isInitialized)
                 {
@@ -325,7 +325,7 @@ namespace EnemyInteraction
                     yield break;
                 }
             }
-            
+
             // Make sure AIServices is ready before proceeding
             if (!AIServices.IsInitialized)
             {
@@ -337,26 +337,26 @@ namespace EnemyInteraction
                     yield return new WaitForSeconds(0.1f);
                     waitTime += 0.1f;
                 }
-                
+
                 if (!AIServices.IsInitialized)
                 {
                     Debug.LogError("[EnemyActions] AIServices initialization timed out");
                     yield break;
                 }
             }
-            
+
             // Ensure CardPlayManager is available
             if (_cardPlayManager == null)
             {
                 Debug.LogError("[EnemyActions] CardPlayManager is null, cannot play cards");
                 yield break;
             }
-            
+
             // Get the coroutine outside the try block
             IEnumerator playCardsCoroutine = null;
             bool errorOccurred = false;
-            
-            try 
+
+            try
             {
                 playCardsCoroutine = _cardPlayManager.PlayCards();
             }
@@ -365,7 +365,7 @@ namespace EnemyInteraction
                 Debug.LogError($"[EnemyActions] Error in CardPlayManager.PlayCards: {e.Message}\n{e.StackTrace}");
                 errorOccurred = true;
             }
-            
+
             // Execute the coroutine outside the try-catch if we got one successfully
             if (playCardsCoroutine != null && !errorOccurred)
             {
@@ -376,14 +376,14 @@ namespace EnemyInteraction
                 // Add a placeholder delay if there was an error
                 yield return new WaitForSeconds(0.5f);
             }
-            
+
             Debug.Log("[EnemyActions] PlayCards completed");
         }
-        
+
         public IEnumerator Attack()
         {
             Debug.Log("[EnemyActions] Starting Attack");
-            
+
             // Wait for initialization if needed but with timeout
             if (!_isInitialized)
             {
@@ -395,7 +395,7 @@ namespace EnemyInteraction
                     yield return new WaitForSeconds(0.1f);
                     waitTime += 0.1f;
                 }
-                
+
                 // If still not initialized, abort
                 if (!_isInitialized)
                 {
@@ -403,7 +403,7 @@ namespace EnemyInteraction
                     yield break;
                 }
             }
-            
+
             // Make sure AIServices is ready before proceeding
             if (!AIServices.IsInitialized)
             {
@@ -415,26 +415,26 @@ namespace EnemyInteraction
                     yield return new WaitForSeconds(0.1f);
                     waitTime += 0.1f;
                 }
-                
+
                 if (!AIServices.IsInitialized)
                 {
                     Debug.LogError("[EnemyActions] AIServices initialization timed out");
                     yield break;
                 }
             }
-            
+
             // Ensure AttackManager is available
             if (_attackManager == null)
             {
                 Debug.LogError("[EnemyActions] AttackManager is null, cannot perform attack");
                 yield break;
             }
-            
+
             // Get the coroutine outside the try block
             IEnumerator attackCoroutine = null;
             bool errorOccurred = false;
-            
-            try 
+
+            try
             {
                 attackCoroutine = _attackManager.Attack();
             }
@@ -443,7 +443,7 @@ namespace EnemyInteraction
                 Debug.LogError($"[EnemyActions] Error in AttackManager.Attack: {e.Message}\n{e.StackTrace}");
                 errorOccurred = true;
             }
-            
+
             // Execute the coroutine outside the try-catch if we got one successfully
             if (attackCoroutine != null && !errorOccurred)
             {
@@ -454,7 +454,7 @@ namespace EnemyInteraction
                 // Add a placeholder delay if there was an error
                 yield return new WaitForSeconds(0.5f);
             }
-            
+
             Debug.Log("[EnemyActions] Attack completed");
         }
 
@@ -475,30 +475,6 @@ namespace EnemyInteraction
                 }
             }
         }
-
-        private bool ValidateCombatState()
-        {
-            return _combatManager != null &&
-                   _combatStage != null &&
-                   _combatManager.EnemyDeck != null;
-        }
-
-        private bool HasOngoingEffect(EntityManager target, SpellEffect effectType)
-        {
-            // Check if target has the specified ongoing effect
-            if (_stackManager == null)
-            {
-                Debug.LogWarning("[EnemyActions] StackManager is null when checking effects, attempting to find it");
-                _stackManager = StackManager.Instance;
-                
-                if (_stackManager == null)
-                {
-                    Debug.LogWarning("[EnemyActions] Could not find StackManager instance, effect check will return false");
-                    return false;
-                }
-            }
-            
-            return _stackManager.HasEffect(target, effectType);
-        }
     }
 }
+

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
@@ -10,135 +10,154 @@ public class CardHistory : MonoBehaviour, ICardHistory
     {
         [SerializeField] private string cardName;
         [SerializeField] private string cardDescription;
-        [SerializeField] private string playerName;
+        [SerializeField] private string targetName;
         [SerializeField] private int turnNumber;
         [SerializeField] private int manaUsed;
         [SerializeField] private string timestamp;
         [SerializeField] private bool isEnemyCard;
         [SerializeField] private string keywords;
+        [SerializeField] private List<string> effectTargets = new List<string>();
 
-        public string EditorSummary =>
-            $"Turn {turnNumber}: {(isEnemyCard ? "Enemy" : "Player")} played {cardName} ({manaUsed} mana)" +
-            (!string.IsNullOrEmpty(keywords) ? $" [{keywords}]" : "") +
-            $" - {timestamp}";
+        public string EditorSummary
+        {
+            get
+            {
+                string summary = $"Turn {turnNumber}: {(isEnemyCard ? "Enemy" : "Player")} played {cardName} ({manaUsed} mana)";
+
+                if (!string.IsNullOrEmpty(keywords))
+                    summary += $" [{keywords}]";
+
+                if (!string.IsNullOrEmpty(targetName))
+                    summary += $" targeting {targetName}";
+
+                if (effectTargets.Count > 0)
+                {
+                    string effectsText = string.Join(", ", effectTargets);
+                    summary += $" | Effects: {effectsText}";
+                }
+
+                summary += $" - {timestamp}";
+                return summary;
+            }
+        }
 
         public bool IsEnemyCard => isEnemyCard;
         public string CardName => cardName;
         public int TurnNumber => turnNumber;
         public string Keywords => keywords;
+        public string TargetName => targetName;
+        public IReadOnlyList<string> EffectTargets => effectTargets;
 
-        public CardPlayRecord(Card card, EntityManager entity, int turn, int mana)
+        public CardPlayRecord(Card card, EntityManager target, int turn, int mana)
         {
-            cardName = card.CardName;
-            cardDescription = card.Description;
+            // Determine card ownership directly from the current game phase
+            isEnemyCard = IsCurrentPhaseEnemyPhase();
+
+            // Initialize basic card information
+            InitializeCardInfo(card?.CardName, card?.Description, target, turn, mana);
+            ExtractKeywords(card);
+
+            // Record primary target
+            if (target != null)
+            {
+                targetName = target.name;
+            }
+
+            // For Bloodprice effect, record that it also targets the caster
+            if (HasBloodpriceEffect())
+            {
+                RecordBloodpriceTarget();
+            }
+
+            LogCardCreation();
+        }
+
+        public CardPlayRecord(CardDataWrapper cardWrapper, EntityManager target, int turn, int mana)
+        {
+            // Determine card ownership directly from the current game phase
+            isEnemyCard = IsCurrentPhaseEnemyPhase();
+
+            // Initialize basic card information
+            InitializeCardInfo(cardWrapper?.CardName, cardWrapper?.Description, target, turn, mana);
+
+            // Extract keywords from the wrapper
+            if (cardWrapper?.EffectTypes != null && cardWrapper.EffectTypes.Count > 0)
+            {
+                keywords = string.Join(", ", cardWrapper.EffectTypes);
+            }
+
+            // Record primary target
+            if (target != null)
+            {
+                targetName = target.name;
+            }
+
+            // For Bloodprice effect, record that it also targets the caster
+            if (HasBloodpriceEffect())
+            {
+                RecordBloodpriceTarget();
+            }
+
+            LogCardCreation();
+        }
+
+        private void InitializeCardInfo(string name, string description, EntityManager entity, int turn, int mana)
+        {
+            cardName = name ?? "Unknown";
+            cardDescription = description ?? string.Empty;
             turnNumber = turn;
             manaUsed = mana;
             timestamp = DateTime.Now.ToString("HH:mm:ss");
-
-            // Extract keywords based on card type
+            targetName = entity?.name ?? "None";
             keywords = string.Empty;
+        }
 
-            if (card is SpellCard spellCard && spellCard.EffectTypes != null && spellCard.EffectTypes.Count > 0)
+        private void ExtractKeywords(Card card)
+        {
+            if (card == null) return;
+
+            if (card is SpellCard spellCard && spellCard.EffectTypes?.Count > 0)
             {
                 keywords = string.Join(", ", spellCard.EffectTypes);
             }
-            else if (card.CardType != null && card.CardType.Keywords != null && card.CardType.Keywords.Count > 0)
+            else if (card.CardType?.Keywords?.Count > 0)
             {
                 keywords = string.Join(", ", card.CardType.Keywords);
             }
-
-            // Handle empty position (entity not placed)
-            if (entity == null || !entity.placed)
-            {
-                playerName = "";
-                isEnemyCard = false; // Default to player card if no valid target
-                Debug.Log($"[CardHistory] Spell card played on an empty position: {cardName}. Target is blank.");
-                return;
-            }
-
-            // Set player name
-            playerName = entity.name;
-
-            // Special handling for health icons
-            if (entity is HealthIconManager healthIcon)
-            {
-                bool hasBloodpriceKeyword =
-                    (keywords.Contains("Bloodprice") || keywords.Contains("bloodprice") ||
-                     keywords.Contains("BloodPrice") || keywords.Contains("Blood Price"));
-
-                if (hasBloodpriceKeyword)
-                {
-                    // For bloodprice, the card is played by the same entity it targets
-                    isEnemyCard = !healthIcon.IsPlayerIcon;
-                    Debug.Log($"[CardHistory] Bloodprice card targeting health icon: {cardName}, is player icon: {healthIcon.IsPlayerIcon}, isEnemyCard={isEnemyCard}");
-                }
-                else
-                {
-                    // Normal case for non-bloodprice cards
-                    isEnemyCard = healthIcon.IsPlayerIcon;
-                    Debug.Log($"[CardHistory] Card played against health icon: {cardName}, target is player icon: {healthIcon.IsPlayerIcon}, isEnemyCard={isEnemyCard}");
-                }
-            }
-            else if (card is SpellCard)
-            {
-                isEnemyCard = entity.GetMonsterType() == EntityManager.MonsterType.Friendly;
-                Debug.Log($"[CardHistory] Spell card played against monster: {cardName}, target is {entity.GetMonsterType()}, isEnemyCard={isEnemyCard}");
-            }
-            else
-            {
-                isEnemyCard = entity.GetMonsterType() == EntityManager.MonsterType.Enemy;
-                Debug.Log($"[CardHistory] Monster card played: {cardName}, entity type is {entity.GetMonsterType()}, isEnemyCard={isEnemyCard}");
-            }
         }
 
-        public CardPlayRecord(CardDataWrapper cardWrapper, EntityManager entity, int turn, int mana)
+        private bool HasBloodpriceEffect()
         {
-            cardName = cardWrapper.CardName;
-            cardDescription = cardWrapper.Description;
-            playerName = entity != null ? entity.name : string.Empty;
-            turnNumber = turn;
-            manaUsed = mana;
-            timestamp = DateTime.Now.ToString("HH:mm:ss");
+            return keywords.Contains("Bloodprice");
+        }
 
-            // Initialize keywords to empty since CardDataWrapper may not have this info directly accessible
-            keywords = string.Empty;
+        private void RecordBloodpriceTarget()
+        {
+            // Find the appropriate health icon based on card owner
+            string bloodpriceTarget = isEnemyCard ? "Enemy Health" : "Player Health";
+            effectTargets.Add($"Bloodprice → {bloodpriceTarget}");
 
-            // Try to extract effect types if available as spell effects
-            if (cardWrapper is CardDataWrapper spellWrapper && spellWrapper.EffectTypes != null && spellWrapper.EffectTypes.Count > 0)
-            {
-                keywords = string.Join(", ", spellWrapper.EffectTypes);
-            }
+            Debug.Log($"[CardHistory] Recorded bloodprice effect targeting {bloodpriceTarget} for card {cardName}");
+        }
 
-            // Special handling for health icons - determine who PLAYED the card, not the target
-            if (entity is HealthIconManager healthIcon)
-            {
-                bool hasBloodpriceKeyword =
-                    (keywords.Contains("Bloodprice") || keywords.Contains("bloodprice") ||
-                     keywords.Contains("BloodPrice") || keywords.Contains("Blood Price"));
+        private void LogCardCreation()
+        {
+            Debug.Log($"[CardHistory] Created record for '{cardName}' ({(isEnemyCard ? "Enemy" : "Player")})" +
+                     $" targeting {targetName} with keywords: {keywords}");
+        }
 
-                if (hasBloodpriceKeyword)
-                {
-                    // For bloodprice, the card is played by the same entity it targets
-                    isEnemyCard = !healthIcon.IsPlayerIcon;
-                    Debug.Log($"[CardHistory] Bloodprice card targeting health icon: {cardName}, is player icon: {healthIcon.IsPlayerIcon}, isEnemyCard={isEnemyCard}");
-                }
-                else
-                {
-                    // For spells on health icons, the card owner is the opposite of what the target is
-                    isEnemyCard = healthIcon.IsPlayerIcon; // if targeting player icon, it's an enemy card; if targeting enemy icon, it's a player card
-                    Debug.Log($"[CardHistory] Spell played against health icon: {cardName}, target is player icon: {healthIcon.IsPlayerIcon}, isEnemyCard={isEnemyCard}");
-                }
-            }
-            else
-            {
-                // For spell cards targeting monsters, the owner is opposite of the target's type
-                isEnemyCard = entity != null && entity.GetMonsterType() == EntityManager.MonsterType.Friendly;
+        // Helper method to determine if the current phase belongs to the enemy
+        private bool IsCurrentPhaseEnemyPhase()
+        {
+            var combatManager = GameObject.FindObjectOfType<CombatManager>();
+            if (combatManager == null) return false;
 
-                Debug.Log($"[CardHistory] Spell played against monster: {cardName}, target is {(entity != null ? entity.GetMonsterType().ToString() : "none")}, isEnemyCard={isEnemyCard}");
-            }
+            ICombatManager combatManagerInterface = combatManager as ICombatManager;
+            return combatManagerInterface != null &&
+                (combatManagerInterface.IsEnemyPrepPhase() ||
+                 combatManagerInterface.IsEnemyCombatPhase());
         }
     }
-
 
     [System.Serializable]
     public class AttackRecord
@@ -153,8 +172,8 @@ public class CardHistory : MonoBehaviour, ICardHistory
         [SerializeField] private float counterDamage;
 
         public string EditorSummary =>
-            $"Turn {turnNumber}: {(isEnemyAttack ? "Enemy" : "Player")} {attackerName} attacked {targetName} for {damageDealt} damage" + 
-            (wasRangedAttack ? " (Ranged)" : "") + 
+            $"Turn {turnNumber}: {(isEnemyAttack ? "Enemy" : "Player")} {attackerName} attacked {targetName} for {damageDealt} damage" +
+            (wasRangedAttack ? " (Ranged)" : "") +
             (!wasRangedAttack ? $" (Took {counterDamage} counter damage)" : "") +
             $" - {timestamp}";
 
@@ -174,10 +193,8 @@ public class CardHistory : MonoBehaviour, ICardHistory
             this.counterDamage = counterDamage;
             timestamp = DateTime.Now.ToString("HH:mm:ss");
             wasRangedAttack = isRanged;
-            
-            // Determine if this is an enemy attack based on attacker type
             isEnemyAttack = attacker.GetMonsterType() == EntityManager.MonsterType.Enemy;
-            
+
             Debug.Log($"[CardHistory] Recorded attack: {attackerName} -> {targetName}, damage: {damage}, counter: {counterDamage}, isEnemyAttack: {isEnemyAttack}");
         }
     }
@@ -188,10 +205,10 @@ public class CardHistory : MonoBehaviour, ICardHistory
 
     [Header("Card Play History")]
     [SerializeField] private List<CardPlayRecord> cardHistory = new List<CardPlayRecord>();
-    
+
     [Header("Attack History")]
     [SerializeField] private List<AttackRecord> attackHistory = new List<AttackRecord>();
-    
+
     [Header("Statistics")]
     [SerializeField] private int totalCardsPlayed;
     [SerializeField] private int playerCardsPlayed;
@@ -205,21 +222,7 @@ public class CardHistory : MonoBehaviour, ICardHistory
     [SerializeField] private Dictionary<string, int> enemyCardsPlayedByType = new Dictionary<string, int>();
 
     private static CardHistory instance;
-    public static CardHistory Instance
-    {
-        get
-        {
-            if (instance == null)
-            {
-                instance = FindObjectOfType<CardHistory>();
-                if (instance == null)
-                {
-                    Debug.LogError("No CardHistory found in scene!");
-                }
-            }
-            return instance;
-        }
-    }
+    public static CardHistory Instance => instance ?? (instance = FindObjectOfType<CardHistory>());
 
     private void Awake()
     {
@@ -240,65 +243,71 @@ public class CardHistory : MonoBehaviour, ICardHistory
 
     public void RecordCardPlay(Card card, EntityManager entity, int turnNumber, int manaUsed)
     {
-        if (card == null || entity == null)
+        if (card == null)
         {
-            Debug.LogWarning("Attempted to record card play with null card or entity!");
+            Debug.LogWarning("[CardHistory] Attempted to record card play with null card!");
             return;
         }
 
-        Debug.Log($"[CardHistory] Recording card play: {card.CardName} (IsSpellCard: {card is SpellCard}) by {(entity.GetMonsterType() == EntityManager.MonsterType.Enemy ? "Enemy" : "Player")}");
-
-        // Create and add new record
         var record = new CardPlayRecord(card, entity, turnNumber, manaUsed);
-        cardHistory.Add(record);
+        AddCardRecord(record, card.GetType().Name);
+    }
 
-        // Update statistics
+    public void RecordCardPlay(CardDataWrapper cardWrapper, EntityManager entity, int turnNumber, int manaUsed)
+    {
+        if (cardWrapper == null)
+        {
+            Debug.LogWarning("[CardHistory] Attempted to record card play with null card wrapper!");
+            return;
+        }
+
+        var record = new CardPlayRecord(cardWrapper, entity, turnNumber, manaUsed);
+        AddCardRecord(record, "SpellCard");
+    }
+
+    // Records an additional effect target for the most recently played card
+    // Useful for spells with multiple effects targeting different entities
+    public void RecordAdditionalEffectTarget(string effectName, string targetName)
+    {
+        if (cardHistory.Count == 0) return;
+
+        var latestRecord = cardHistory[cardHistory.Count - 1];
+        string effectInfo = $"{effectName} → {targetName}";
+
+        // Add to effectTargets through reflection (since the field is private)
+        var effectTargetsField = typeof(CardPlayRecord).GetField("effectTargets",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+        if (effectTargetsField != null)
+        {
+            var effectTargets = effectTargetsField.GetValue(latestRecord) as List<string>;
+            if (effectTargets != null)
+            {
+                effectTargets.Add(effectInfo);
+                Debug.Log($"[CardHistory] Added effect target: {effectInfo} to card {latestRecord.CardName}");
+            }
+        }
+    }
+
+    private void AddCardRecord(CardPlayRecord record, string cardType)
+    {
+        cardHistory.Add(record);
         totalCardsPlayed++;
-        
-        // Update player/enemy specific counts
+
         if (record.IsEnemyCard)
         {
             enemyCardsPlayed++;
+            UpdateCardTypeCount(enemyCardsPlayedByType, cardType);
         }
         else
         {
             playerCardsPlayed++;
-        }
-        
-        // Update cards per turn
-        if (!cardsPerTurn.ContainsKey(turnNumber))
-        {
-            cardsPerTurn[turnNumber] = 0;
-        }
-        cardsPerTurn[turnNumber]++;
-
-        // Update cards by type
-        string cardType = card.GetType().Name;
-        if (!cardsPlayedByType.ContainsKey(cardType))
-        {
-            cardsPlayedByType[cardType] = 0;
-        }
-        cardsPlayedByType[cardType]++;
-
-        // Update player or enemy cards by type
-        if (record.IsEnemyCard)
-        {
-            if (!enemyCardsPlayedByType.ContainsKey(cardType))
-            {
-                enemyCardsPlayedByType[cardType] = 0;
-            }
-            enemyCardsPlayedByType[cardType]++;
-        }
-        else
-        {
-            if (!playerCardsPlayedByType.ContainsKey(cardType))
-            {
-                playerCardsPlayedByType[cardType] = 0;
-            }
-            playerCardsPlayedByType[cardType]++;
+            UpdateCardTypeCount(playerCardsPlayedByType, cardType);
         }
 
-        // Trim history if needed
+        UpdateTurnCount(record.TurnNumber);
+        UpdateCardTypeCount(cardsPlayedByType, cardType);
+
         if (cardHistory.Count > maxHistorySize)
         {
             cardHistory.RemoveAt(0);
@@ -307,104 +316,38 @@ public class CardHistory : MonoBehaviour, ICardHistory
         Debug.Log($"[CardHistory] {record.EditorSummary}");
     }
 
-    public void RecordCardPlay(CardDataWrapper cardWrapper, EntityManager entity, int turnNumber, int manaUsed)
+    private void UpdateTurnCount(int turnNumber)
     {
-        if (cardWrapper == null || entity == null)
-        {
-            Debug.LogWarning("Attempted to record card play with null card wrapper or entity!");
-            return;
-        }
-
-        Debug.Log($"[CardHistory] Recording spell card play: {cardWrapper.CardName} by {(entity.GetMonsterType() == EntityManager.MonsterType.Enemy ? "Enemy" : "Player")}");
-
-        // Create and add new record
-        var record = new CardPlayRecord(cardWrapper, entity, turnNumber, manaUsed);
-        cardHistory.Add(record);
-
-        // Update statistics
-        totalCardsPlayed++;
-        
-        // Update player/enemy specific counts
-        if (record.IsEnemyCard)
-        {
-            enemyCardsPlayed++;
-        }
-        else
-        {
-            playerCardsPlayed++;
-        }
-        
-        // Update cards per turn
         if (!cardsPerTurn.ContainsKey(turnNumber))
         {
             cardsPerTurn[turnNumber] = 0;
         }
         cardsPerTurn[turnNumber]++;
+    }
 
-        // Update cards by type - use a generic "SpellCard" type since we don't have actual type info
-        string cardType = "SpellCard";
-        if (!cardsPlayedByType.ContainsKey(cardType))
+    private void UpdateCardTypeCount(Dictionary<string, int> dictionary, string cardType)
+    {
+        if (!dictionary.ContainsKey(cardType))
         {
-            cardsPlayedByType[cardType] = 0;
+            dictionary[cardType] = 0;
         }
-        cardsPlayedByType[cardType]++;
-
-        // Update player or enemy cards by type
-        if (record.IsEnemyCard)
-        {
-            if (!enemyCardsPlayedByType.ContainsKey(cardType))
-            {
-                enemyCardsPlayedByType[cardType] = 0;
-            }
-            enemyCardsPlayedByType[cardType]++;
-        }
-        else
-        {
-            if (!playerCardsPlayedByType.ContainsKey(cardType))
-            {
-                playerCardsPlayedByType[cardType] = 0;
-            }
-            playerCardsPlayedByType[cardType]++;
-        }
-
-        // Trim history if needed
-        if (cardHistory.Count > maxHistorySize)
-        {
-            cardHistory.RemoveAt(0);
-        }
-
-        Debug.Log($"[CardHistory] {record.EditorSummary}");
+        dictionary[cardType]++;
     }
 
     public void RecordAttack(EntityManager attacker, EntityManager target, int turnNumber, float damageDealt, float counterDamage, bool isRangedAttack)
     {
         if (attacker == null || target == null)
         {
-            Debug.LogWarning("Attempted to record attack with null attacker or target!");
+            Debug.LogWarning("[CardHistory] Attempted to record attack with null attacker or target!");
             return;
         }
 
-        Debug.Log($"[CardHistory] Recording attack: {attacker.name} attacked {target.name} for {damageDealt} damage" +
-                 (isRangedAttack ? " (Ranged)" : ""));
-
-        // Create and add new record
         var record = new AttackRecord(attacker, target, turnNumber, damageDealt, counterDamage, isRangedAttack);
         attackHistory.Add(record);
 
-        // Update statistics
         totalAttacks++;
-        
-        // Update player/enemy specific counts
-        if (record.IsEnemyAttack)
-        {
-            enemyAttacks++;
-        }
-        else
-        {
-            playerAttacks++;
-        }
-        
-        // Trim history if needed
+        if (record.IsEnemyAttack) enemyAttacks++; else playerAttacks++;
+
         if (attackHistory.Count > maxHistorySize)
         {
             attackHistory.RemoveAt(0);
@@ -430,35 +373,12 @@ public class CardHistory : MonoBehaviour, ICardHistory
         Debug.Log("[CardHistory] History cleared");
     }
 
-    public int GetTotalCardsPlayed()
-    {
-        return totalCardsPlayed;
-    }
-    
-    public int GetPlayerCardsPlayed()
-    {
-        return playerCardsPlayed;
-    }
-    
-    public int GetEnemyCardsPlayed()
-    {
-        return enemyCardsPlayed;
-    }
-
-    public int GetCardsPlayedInTurn(int turnNumber)
-    {
-        return cardsPerTurn.ContainsKey(turnNumber) ? cardsPerTurn[turnNumber] : 0;
-    }
-    
-    public List<CardPlayRecord> GetEnemyCardPlays()
-    {
-        return cardHistory.Where(record => record.IsEnemyCard).ToList();
-    }
-    
-    public List<CardPlayRecord> GetPlayerCardPlays()
-    {
-        return cardHistory.Where(record => !record.IsEnemyCard).ToList();
-    }
+    public int GetTotalCardsPlayed() => totalCardsPlayed;
+    public int GetPlayerCardsPlayed() => playerCardsPlayed;
+    public int GetEnemyCardsPlayed() => enemyCardsPlayed;
+    public int GetCardsPlayedInTurn(int turnNumber) => cardsPerTurn.ContainsKey(turnNumber) ? cardsPerTurn[turnNumber] : 0;
+    public List<CardPlayRecord> GetEnemyCardPlays() => cardHistory.Where(record => record.IsEnemyCard).ToList();
+    public List<CardPlayRecord> GetPlayerCardPlays() => cardHistory.Where(record => !record.IsEnemyCard).ToList();
 
     public void LogAllCardHistory()
     {
@@ -466,22 +386,20 @@ public class CardHistory : MonoBehaviour, ICardHistory
         Debug.Log($"Total cards recorded: {cardHistory.Count}");
 
         Debug.Log("\n=== PLAYER CARDS ===");
-        var playerCards = GetPlayerCardPlays();
-        foreach (var record in playerCards)
+        foreach (var record in GetPlayerCardPlays())
         {
             Debug.Log($"- {record.CardName} (Turn {record.TurnNumber})");
         }
 
         Debug.Log("\n=== ENEMY CARDS ===");
-        var enemyCards = GetEnemyCardPlays();
-        foreach (var record in enemyCards)
+        foreach (var record in GetEnemyCardPlays())
         {
             Debug.Log($"- {record.CardName} (Turn {record.TurnNumber})");
         }
 
         Debug.Log("\n=== STATISTICS ===");
         Debug.Log($"Total Cards Played: {totalCardsPlayed} (Player: {playerCardsPlayed}, Enemy: {enemyCardsPlayed})");
-        
+
         Debug.Log("\n=== CARDS BY TYPE ===");
         foreach (var kvp in cardsPlayedByType)
         {
@@ -489,7 +407,6 @@ public class CardHistory : MonoBehaviour, ICardHistory
         }
     }
 
-    // Editor-only methods
 #if UNITY_EDITOR
     [ContextMenu("Log Full History")]
     private void LogFullHistory()
@@ -499,41 +416,41 @@ public class CardHistory : MonoBehaviour, ICardHistory
         {
             Debug.Log(record.EditorSummary);
         }
-        
+
         Debug.Log("\n=== Attack History ===");
         foreach (var record in attackHistory)
         {
             Debug.Log(record.EditorSummary);
         }
-        
+
         Debug.Log($"\nTotal Cards Played: {totalCardsPlayed} (Player: {playerCardsPlayed}, Enemy: {enemyCardsPlayed})");
         Debug.Log($"Total Attacks: {totalAttacks} (Player: {playerAttacks}, Enemy: {enemyAttacks})");
-        
+
         Debug.Log("\nCards Per Turn:");
         foreach (var kvp in cardsPerTurn)
         {
             Debug.Log($"Turn {kvp.Key}: {kvp.Value} cards");
         }
-        
+
         Debug.Log("\nCards By Type (All):");
         foreach (var kvp in cardsPlayedByType)
         {
             Debug.Log($"{kvp.Key}: {kvp.Value} cards");
         }
-        
+
         Debug.Log("\nCards By Type (Player):");
         foreach (var kvp in playerCardsPlayedByType)
         {
             Debug.Log($"{kvp.Key}: {kvp.Value} cards");
         }
-        
+
         Debug.Log("\nCards By Type (Enemy):");
         foreach (var kvp in enemyCardsPlayedByType)
         {
             Debug.Log($"{kvp.Key}: {kvp.Value} cards");
         }
     }
-    
+
     [ContextMenu("Log Enemy Card History")]
     private void LogEnemyCardHistory()
     {
@@ -544,7 +461,7 @@ public class CardHistory : MonoBehaviour, ICardHistory
             Debug.Log(record.EditorSummary);
         }
     }
-    
+
     [ContextMenu("Log Player Card History")]
     private void LogPlayerCardHistory()
     {
@@ -557,4 +474,3 @@ public class CardHistory : MonoBehaviour, ICardHistory
     }
 #endif
 }
-
