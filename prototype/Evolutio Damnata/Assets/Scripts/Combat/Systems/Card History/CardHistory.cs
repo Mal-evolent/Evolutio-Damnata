@@ -559,6 +559,14 @@ public class CardHistory : MonoBehaviour, ICardHistory
             return;
         }
 
+        // Check if attacker has Tough keyword and adjust counter damage
+        // Tough units take half damage (rounded down) for counter attacks too
+        if (attacker.HasKeyword(Keywords.MonsterKeyword.Tough))
+        {
+            counterDamage = Mathf.Floor(counterDamage / 2f);
+            Debug.Log($"[CardHistory] Adjusted counter damage for Tough unit {attacker.name}: {counterDamage} (halved)");
+        }
+
         var record = new AttackRecord(attacker, target, turnNumber, damageDealt, counterDamage, isRangedAttack);
         attackHistory.Add(record);
 

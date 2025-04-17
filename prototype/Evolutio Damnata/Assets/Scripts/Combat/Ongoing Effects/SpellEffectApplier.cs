@@ -358,7 +358,13 @@ public class SpellEffectApplier : ISpellEffectApplier
         {
             // Only apply damage for non-bloodprice effects
             target.TakeDamage(damage);
-            _damageVisualizer?.CreateDamageNumber(target, damage, target.transform.position, _damageNumberPrefab);
+
+            // Only show damage number if the target doesn't have the Tough keyword
+            // EntityManager will handle the visualization for Tough units
+            if (!target.HasKeyword(Keywords.MonsterKeyword.Tough))
+            {
+                _damageVisualizer?.CreateDamageNumber(target, damage, target.transform.position, _damageNumberPrefab);
+            }
         }
 
         // Check if the spell killed the entity
