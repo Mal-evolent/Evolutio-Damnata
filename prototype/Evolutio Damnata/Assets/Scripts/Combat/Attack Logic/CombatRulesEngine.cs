@@ -8,6 +8,14 @@ using System.Linq;
 public interface ICombatRulesEngine
 {
     AttackRuleResult ApplyRules(EntityManager attacker, EntityManager target, float baseAttackerDamage, float baseTargetDamage);
+    /// <summary>
+    /// Applies splash damage to all entities on the same side as the target
+    /// </summary>
+    /// <param name="result">The attack result containing splash damage information</param>
+    /// <param name="entitiesOnSameSide">List of GameObjects on the same side as the target</param>
+    public void ApplySplashDamage(AttackRuleResult result, List<GameObject> entitiesOnSameSide)
+    {
+    }
 }
 
 public class CombatRulesEngine : ICombatRulesEngine
@@ -83,6 +91,7 @@ public class CombatRulesEngine : ICombatRulesEngine
             result.HasSplashDamage = true;
             result.SplashDamageAmount = splashDamage;
             result.TargetEntity = target;
+            result.SourceAttacker = attacker;
 
             string currentDescription = result.RuleDescription;
             result.RuleDescription = string.IsNullOrEmpty(currentDescription) || currentDescription == "Normal Attack" ?
@@ -92,7 +101,44 @@ public class CombatRulesEngine : ICombatRulesEngine
         }
     }
 
-    // Add these methods to the CombatRulesEngine class in Assets/Scripts/Combat/Attack Logic/CombatRulesEngine.cs
+    /// <summary>
+    /// Applies splash damage to all entities on the same side as the target
+    /// </summary>
+    /// <param name="result">The attack result containing splash damage information</param>
+    /// <param name="entitiesOnSameSide">List of GameObjects on the same side as the target</param>
+    public void ApplySplashDamage(AttackRuleResult result, List<GameObject> entitiesOnSameSide)
+    {
+        if (!result.HasSplashDamage || entitiesOnSameSide == null || entitiesOnSameSide.Count == 0 || result.SourceAttacker == null)
+            return;
+
+        Debug.Log($"[CombatRulesEngine] Applying splash damage of {result.SplashDamageAmount} from {result.SourceAttacker.name} to entities on same side");
+
+        foreach (var entityObj in entitiesOnSameSide)
+        {
+            // Skip null objects
+            if (entityObj == null) continue;
+
+            EntityManager entity = entityObj.GetComponent<EntityManager>();
+
+            // Skip if entity is null, is the primary target, is dead, is not placed, or is fading out
+            if (entity == null ||
+                entity == result.TargetEntity ||
+                entity.dead ||
+                !entity.placed ||
+                entity.IsFadingOut)
+            {
+                continue;
+            }
+
+            // Set the entity's killer to the original attacker before applying damage
+            entity.SetKilledBy(result.SourceAttacker);
+
+            // Apply splash damage to valid entity
+            entity.TakeDamage(result.SplashDamageAmount);
+            Debug.Log($"[CombatRulesEngine] {entity.name} took {result.SplashDamageAmount} splash damage from {result.SourceAttacker.name}'s Overwhelm effect");
+        }
+    }
+
 
     /// <summary>
     /// Checks if any entities in the provided list have the Taunt keyword
@@ -101,7 +147,8 @@ public class CombatRulesEngine : ICombatRulesEngine
     {
         if (entities == null) return false;
 
-        return entities.Any(e => {
+        return entities.Any(e =>
+        {
             var entityManager = e?.GetComponent<EntityManager>();
             return entityManager != null &&
                    !entityManager.dead &&
@@ -127,7 +174,6 @@ public class CombatRulesEngine : ICombatRulesEngine
                        e.HasKeyword(Keywords.MonsterKeyword.Taunt))
             .ToList();
     }
-
 }
 
 /// <summary>
@@ -145,4 +191,5 @@ public class AttackRuleResult
     public float SplashDamageAmount { get; set; } = 0f;
     public bool IsTargetEnemy { get; set; } = false;
     public EntityManager TargetEntity { get; set; } = null;
+    public EntityManager SourceAttacker { get; set; } = null;
 }
