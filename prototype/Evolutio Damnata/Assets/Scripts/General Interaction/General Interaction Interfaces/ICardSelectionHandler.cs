@@ -11,4 +11,6 @@ public interface ICardSelectionHandler
         ICardSpawner playerCardSpawner,
         IManaChecker manaChecker,
         ISpellEffectApplier spellEffectApplier);
+        public void OnPlayerHealthIconClick();
+
 }

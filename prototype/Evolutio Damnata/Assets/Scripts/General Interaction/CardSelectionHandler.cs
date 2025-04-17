@@ -500,5 +500,86 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
             Debug.Log("Attacks are not allowed at this stage!");
         }
     }
+    // Add this method to CardSelectionHandler.cs
+    public void OnPlayerHealthIconClick()
+    {
+        // Get the card to check if it's a spell
+        var cardUI = _cardManager.CurrentSelectedCard?.GetComponent<CardUI>();
+        bool isSpellCard = cardUI?.Card?.CardType?.IsSpellCard == true;
+
+        if (!isSpellCard || _cardManager.CurrentSelectedCard == null)
+        {
+            Debug.Log("Only spell cards can target your own health icon!");
+            return;
+        }
+
+        // Check if it's the player's turn (either prep or combat phase)
+        if (!_combatManager.IsPlayerPrepPhase() && !_combatManager.IsPlayerCombatPhase())
+        {
+            Debug.Log("Spell cards can only be played during your turn!");
+            return;
+        }
+
+        // Get the player health icon
+        var playerHealthIcon = GameObject.FindGameObjectWithTag("Player")?.GetComponent<HealthIconManager>();
+        if (playerHealthIcon == null)
+        {
+            Debug.LogError("Could not find player health icon to target!");
+            return;
+        }
+
+        // Apply spell to player's health icon
+        ApplySpellToPlayerHealthIcon(playerHealthIcon);
+    }
+
+    private void ApplySpellToPlayerHealthIcon(HealthIconManager playerHealthIcon)
+    {
+        if (_cardManager.CurrentSelectedCard == null)
+        {
+            Debug.Log("No spell card selected!");
+            return;
+        }
+
+        var cardUI = _cardManager.CurrentSelectedCard.GetComponent<CardUI>();
+        if (cardUI == null || cardUI.Card == null || cardUI.Card.CardType == null)
+        {
+            Debug.LogError("Invalid card data!");
+            return;
+        }
+
+        CardData spellData = cardUI.Card.CardType;
+
+        // Check if player has enough mana - FIXED: pass CardData instead of int
+        if (!_manaChecker.HasEnoughPlayerMana(spellData))
+        {
+            Debug.Log("Not enough mana to cast this spell!");
+            return;
+        }
+
+        // Apply spell effect to player health icon
+        _spellEffectApplier.ApplySpellEffects(playerHealthIcon, spellData, -1);
+
+        // Remove the card from hand
+        DestroyCard(_cardManager.CurrentSelectedCard);
+        _cardManager.CurrentSelectedCard = null;
+        _cardOutlineManager.RemoveHighlight();
+
+        // Spend mana - FIXED: pass CardData instead of int
+        _manaChecker.DeductPlayerMana(spellData);
+    }
+
+    private void DestroyCard(GameObject card)
+    {
+        if (card == null) return;
+
+        // Remove from hand card objects list
+        if (_cardManager.HandCardObjects.Contains(card))
+        {
+            _cardManager.HandCardObjects.Remove(card);
+        }
+
+        // Destroy the card object
+        Destroy(card);
+    }
 }
 

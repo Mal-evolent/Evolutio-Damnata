@@ -17,11 +17,18 @@ namespace EnemyInteraction.Managers.Evaluation
         {
             if (card.CardType.EffectTypes == null) return 0f;
 
+            // Check for lethal blood price immediately before any other evaluation
+            bool hasBloodpriceEffect = card.CardType.EffectTypes.Contains(SpellEffect.Bloodprice);
+            if (hasBloodpriceEffect && card.CardType.BloodpriceValue >= boardState.EnemyHealth)
+            {
+                Debug.Log($"[SpellCardEvaluator] Card {card.CardName} rejected - blood price would be lethal");
+                return -1000000f;
+            }
+
             float totalScore = 0f;
 
             // Special evaluations for cards with specific effect combinations
             bool hasDrawEffect = card.CardType.EffectTypes.Contains(SpellEffect.Draw);
-            bool hasBloodpriceEffect = card.CardType.EffectTypes.Contains(SpellEffect.Bloodprice);
             bool hasDamageEffect = card.CardType.EffectTypes.Contains(SpellEffect.Damage);
             bool hasBurnEffect = card.CardType.EffectTypes.Contains(SpellEffect.Burn);
             bool hasHealEffect = card.CardType.EffectTypes.Contains(SpellEffect.Heal);

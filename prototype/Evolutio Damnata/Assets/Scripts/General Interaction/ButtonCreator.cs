@@ -76,19 +76,27 @@ namespace GeneralInteraction
             }
         }
 
+        // Modification to ButtonCreator.cs - Adding player health icon button support
         public void AddButtonsToHealthIcons()
         {
-            // Only create buttons for enemy health icons
+            // Create buttons for enemy health icons
             var enemyHealthIcons = GameObject.FindGameObjectsWithTag("Enemy");
-            
             foreach (var icon in enemyHealthIcons)
             {
                 if (icon == null) continue;
-                CreateHealthIconButton(icon, "Enemy_Health_Button", icon.transform.position);
+                CreateHealthIconButton(icon, "Enemy_Health_Button", icon.transform.position, true);
+            }
+
+            // Add buttons for player health icons
+            var playerHealthIcons = GameObject.FindGameObjectsWithTag("Player");
+            foreach (var icon in playerHealthIcons)
+            {
+                if (icon == null) continue;
+                CreateHealthIconButton(icon, "Player_Health_Button", icon.transform.position, false);
             }
         }
 
-        private void CreateHealthIconButton(GameObject icon, string buttonName, Vector3 position)
+        private void CreateHealthIconButton(GameObject icon, string buttonName, Vector3 position, bool isEnemyIcon)
         {
             // Create button as canvas child
             GameObject buttonObject = new GameObject(buttonName)
@@ -105,7 +113,12 @@ namespace GeneralInteraction
             rectTransform.sizeDelta = new Vector2(200f, 200f); // Adjust size as needed
 
             var button = buttonObject.AddComponent<Button>();
-            button.onClick.AddListener(() => _cardSelectionHandler.OnEnemyButtonClick(-1)); // Use -1 to indicate health icon click
+
+            // Use different handlers for enemy and player health icons
+            if (isEnemyIcon)
+                button.onClick.AddListener(() => _cardSelectionHandler.OnEnemyButtonClick(-1)); // Use -1 to indicate enemy health icon click
+            else
+                button.onClick.AddListener(() => _cardSelectionHandler.OnPlayerHealthIconClick());
 
             var buttonImage = buttonObject.AddComponent<Image>();
             buttonImage.color = new Color(1, 1, 1, 0);
