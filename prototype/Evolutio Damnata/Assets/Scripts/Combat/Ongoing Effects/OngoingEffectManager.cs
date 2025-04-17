@@ -22,10 +22,10 @@ public class OngoingEffectManager : IOngoingEffect
         // 2. Entity is dead
         // 3. Entity is fading out (in the process of dying)
         // 4. The entity passed doesn't match our target entity
-        if (entity == null || 
-            entity.dead || 
-            entity.IsFadingOut || 
-            entity != TargetEntity) 
+        if (entity == null ||
+            entity.dead ||
+            entity.IsFadingOut ||
+            entity != TargetEntity)
         {
             return;
         }
@@ -37,6 +37,13 @@ public class OngoingEffectManager : IOngoingEffect
                 entity.TakeDamage(EffectValue);
                 // Show damage number directly if TakeDamage() doesn't handle it
                 entity.ShowDamageNumber(EffectValue);
+
+                // Record the effect application in history
+                if (CardHistory.Instance != null)
+                {
+                    CardHistory.Instance.RecordEffectApplication(EffectType, entity, EffectValue);
+                }
+
                 Debug.Log($"Applying burn effect: {EffectValue} damage to {entity.name}");
 
                 // Check if the effect killed the entity

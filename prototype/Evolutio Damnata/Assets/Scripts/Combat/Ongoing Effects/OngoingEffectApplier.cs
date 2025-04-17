@@ -22,6 +22,12 @@ public class OngoingEffectApplier : IEffectApplier
         string cardName = GetCardName();
         StackManager.Instance?.PushEffect(effect, duration, cardName);
 
+        // Record the ongoing effect in history
+        if (CardHistory.Instance != null)
+        {
+            CardHistory.Instance.RecordOngoingEffect(effect, duration, cardName);
+        }
+
         Debug.Log($"Added {effect.EffectType} effect from {cardName} to {effect.TargetEntity.name} " +
                  $"with value {effect.EffectValue} for {duration} turns");
     }
@@ -49,7 +55,7 @@ public class OngoingEffectApplier : IEffectApplier
     public void RemoveEffectsForEntity(EntityManager entity)
     {
         if (entity == null) return; // Only check for null, not for dead
-        
+
         StackManager.Instance?.RemoveEffectsForEntity(entity);
         Debug.Log($"Removed all ongoing effects from {entity.name}");
     }

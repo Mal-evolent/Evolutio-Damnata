@@ -199,6 +199,88 @@ public class CardHistory : MonoBehaviour, ICardHistory
         }
     }
 
+    [System.Serializable]
+    public class OngoingEffectRecord
+    {
+        [SerializeField] private string effectType;
+        [SerializeField] private string targetName;
+        [SerializeField] private int turnApplied;
+        [SerializeField] private int initialDuration;
+        [SerializeField] private int effectValue;
+        [SerializeField] private string sourceName;
+        [SerializeField] private bool isEnemyEffect;
+        [SerializeField] private string timestamp;
+
+        public string EditorSummary =>
+            $"Turn {turnApplied}: {(isEnemyEffect ? "Enemy" : "Player")} applied {effectType} to {targetName} " +
+            $"({effectValue} dmg/turn for {initialDuration} turns) from {sourceName} - {timestamp}";
+
+        public bool IsEnemyEffect => isEnemyEffect;
+        public string EffectType => effectType;
+        public string TargetName => targetName;
+        public int TurnApplied => turnApplied;
+        public int RemainingDuration { get; set; }
+        public int EffectValue => effectValue;
+
+        public OngoingEffectRecord(IOngoingEffect effect, int duration, int turnNumber, string sourceCardName)
+        {
+            // Determine effect ownership directly from the current game phase
+            isEnemyEffect = IsCurrentPhaseEnemyPhase();
+
+            effectType = effect.EffectType.ToString();
+            targetName = effect.TargetEntity?.name ?? "Unknown";
+            turnApplied = turnNumber;
+            initialDuration = duration;
+            RemainingDuration = duration;
+            effectValue = effect.EffectValue;
+            sourceName = sourceCardName ?? "Unknown";
+            timestamp = DateTime.Now.ToString("HH:mm:ss");
+
+            Debug.Log($"[CardHistory] Recorded ongoing effect: {effectType} targeting {targetName} for {effectValue}/turn over {duration} turns from {sourceName}");
+        }
+
+        // Helper method to determine if the current phase belongs to the enemy
+        private bool IsCurrentPhaseEnemyPhase()
+        {
+            var combatManager = GameObject.FindObjectOfType<CombatManager>();
+            if (combatManager == null) return false;
+
+            ICombatManager combatManagerInterface = combatManager as ICombatManager;
+            return combatManagerInterface != null &&
+                (combatManagerInterface.IsEnemyPrepPhase() ||
+                 combatManagerInterface.IsEnemyCombatPhase());
+        }
+    }
+
+    [System.Serializable]
+    public class OngoingEffectApplicationRecord
+    {
+        [SerializeField] private string effectType;
+        [SerializeField] private string targetName;
+        [SerializeField] private int turnApplied;
+        [SerializeField] private int damageDealt;
+        [SerializeField] private string timestamp;
+
+        public string EditorSummary =>
+            $"Turn {turnApplied}: {effectType} applied to {targetName} dealing {damageDealt} damage - {timestamp}";
+
+        public string EffectType => effectType;
+        public string TargetName => targetName;
+        public int TurnApplied => turnApplied;
+        public int DamageDealt => damageDealt;
+
+        public OngoingEffectApplicationRecord(SpellEffect effectType, EntityManager target, int turnNumber, int damage)
+        {
+            this.effectType = effectType.ToString();
+            targetName = target?.name ?? "Unknown";
+            turnApplied = turnNumber;
+            damageDealt = damage;
+            timestamp = DateTime.Now.ToString("HH:mm:ss");
+
+            Debug.Log($"[CardHistory] Recorded effect application: {this.effectType} applied to {targetName} for {damage} damage");
+        }
+    }
+
     [Header("History Settings")]
     [SerializeField] private bool keepHistoryBetweenGames = true;
     [SerializeField] private int maxHistorySize = 100;
@@ -209,6 +291,12 @@ public class CardHistory : MonoBehaviour, ICardHistory
     [Header("Attack History")]
     [SerializeField] private List<AttackRecord> attackHistory = new List<AttackRecord>();
 
+    [Header("Ongoing Effect History")]
+    [SerializeField] private List<OngoingEffectRecord> ongoingEffectHistory = new List<OngoingEffectRecord>();
+
+    [Header("Effect Application History")]
+    [SerializeField] private List<OngoingEffectApplicationRecord> effectApplicationHistory = new List<OngoingEffectApplicationRecord>();
+
     [Header("Statistics")]
     [SerializeField] private int totalCardsPlayed;
     [SerializeField] private int playerCardsPlayed;
@@ -216,10 +304,14 @@ public class CardHistory : MonoBehaviour, ICardHistory
     [SerializeField] private int totalAttacks;
     [SerializeField] private int playerAttacks;
     [SerializeField] private int enemyAttacks;
+    [SerializeField] private int totalOngoingEffects;
+    [SerializeField] private int playerOngoingEffects;
+    [SerializeField] private int enemyOngoingEffects;
     [SerializeField] private Dictionary<int, int> cardsPerTurn = new Dictionary<int, int>();
     [SerializeField] private Dictionary<string, int> cardsPlayedByType = new Dictionary<string, int>();
     [SerializeField] private Dictionary<string, int> playerCardsPlayedByType = new Dictionary<string, int>();
     [SerializeField] private Dictionary<string, int> enemyCardsPlayedByType = new Dictionary<string, int>();
+    [SerializeField] private Dictionary<string, int> effectsByType = new Dictionary<string, int>();
 
     private static CardHistory instance;
     public static CardHistory Instance => instance ?? (instance = FindObjectOfType<CardHistory>());
@@ -289,6 +381,63 @@ public class CardHistory : MonoBehaviour, ICardHistory
         }
     }
 
+    /// <summary>
+    /// Records a new ongoing effect being applied to an entity
+    /// </summary>
+    public void RecordOngoingEffect(IOngoingEffect effect, int duration, string sourceCardName, int turnNumber = -1)
+    {
+        if (effect == null)
+        {
+            Debug.LogWarning("[CardHistory] Attempted to record ongoing effect with null effect!");
+            return;
+        }
+
+        if (effect.TargetEntity == null)
+        {
+            Debug.LogWarning("[CardHistory] Attempted to record ongoing effect with null target entity!");
+            return;
+        }
+
+        // Get current turn if not provided
+        if (turnNumber < 0)
+        {
+            var combatManager = GameObject.FindObjectOfType<CombatManager>();
+            turnNumber = combatManager != null ? combatManager.TurnCount : 1;
+        }
+
+        var record = new OngoingEffectRecord(effect, duration, turnNumber, sourceCardName);
+        AddOngoingEffectRecord(record);
+    }
+
+    /// <summary>
+    /// Records an application of an ongoing effect (e.g., Burn damage)
+    /// </summary>
+    public void RecordEffectApplication(SpellEffect effectType, EntityManager target, int damage, int turnNumber = -1)
+    {
+        if (target == null)
+        {
+            Debug.LogWarning("[CardHistory] Attempted to record effect application with null target!");
+            return;
+        }
+
+        // Get current turn if not provided
+        if (turnNumber < 0)
+        {
+            var combatManager = GameObject.FindObjectOfType<CombatManager>();
+            turnNumber = combatManager != null ? combatManager.TurnCount : 1;
+        }
+
+        var record = new OngoingEffectApplicationRecord(effectType, target, turnNumber, damage);
+        effectApplicationHistory.Add(record);
+
+        if (effectApplicationHistory.Count > maxHistorySize)
+        {
+            effectApplicationHistory.RemoveAt(0);
+        }
+
+        Debug.Log($"[CardHistory] {record.EditorSummary}");
+    }
+
     private void AddCardRecord(CardPlayRecord record, string cardType)
     {
         cardHistory.Add(record);
@@ -316,6 +465,30 @@ public class CardHistory : MonoBehaviour, ICardHistory
         Debug.Log($"[CardHistory] {record.EditorSummary}");
     }
 
+    private void AddOngoingEffectRecord(OngoingEffectRecord record)
+    {
+        ongoingEffectHistory.Add(record);
+        totalOngoingEffects++;
+
+        if (record.IsEnemyEffect)
+        {
+            enemyOngoingEffects++;
+        }
+        else
+        {
+            playerOngoingEffects++;
+        }
+
+        UpdateEffectTypeCount(record.EffectType);
+
+        if (ongoingEffectHistory.Count > maxHistorySize)
+        {
+            ongoingEffectHistory.RemoveAt(0);
+        }
+
+        Debug.Log($"[CardHistory] {record.EditorSummary}");
+    }
+
     private void UpdateTurnCount(int turnNumber)
     {
         if (!cardsPerTurn.ContainsKey(turnNumber))
@@ -332,6 +505,15 @@ public class CardHistory : MonoBehaviour, ICardHistory
             dictionary[cardType] = 0;
         }
         dictionary[cardType]++;
+    }
+
+    private void UpdateEffectTypeCount(string effectType)
+    {
+        if (!effectsByType.ContainsKey(effectType))
+        {
+            effectsByType[effectType] = 0;
+        }
+        effectsByType[effectType]++;
     }
 
     public void RecordAttack(EntityManager attacker, EntityManager target, int turnNumber, float damageDealt, float counterDamage, bool isRangedAttack)
@@ -360,16 +542,25 @@ public class CardHistory : MonoBehaviour, ICardHistory
     {
         cardHistory.Clear();
         attackHistory.Clear();
+        ongoingEffectHistory.Clear();
+        effectApplicationHistory.Clear();
+
         totalCardsPlayed = 0;
         playerCardsPlayed = 0;
         enemyCardsPlayed = 0;
         totalAttacks = 0;
         playerAttacks = 0;
         enemyAttacks = 0;
+        totalOngoingEffects = 0;
+        playerOngoingEffects = 0;
+        enemyOngoingEffects = 0;
+
         cardsPerTurn.Clear();
         cardsPlayedByType.Clear();
         playerCardsPlayedByType.Clear();
         enemyCardsPlayedByType.Clear();
+        effectsByType.Clear();
+
         Debug.Log("[CardHistory] History cleared");
     }
 
@@ -379,6 +570,12 @@ public class CardHistory : MonoBehaviour, ICardHistory
     public int GetCardsPlayedInTurn(int turnNumber) => cardsPerTurn.ContainsKey(turnNumber) ? cardsPerTurn[turnNumber] : 0;
     public List<CardPlayRecord> GetEnemyCardPlays() => cardHistory.Where(record => record.IsEnemyCard).ToList();
     public List<CardPlayRecord> GetPlayerCardPlays() => cardHistory.Where(record => !record.IsEnemyCard).ToList();
+
+    // Additional getter methods for the new history types
+    public List<OngoingEffectRecord> GetOngoingEffectHistory() => ongoingEffectHistory.ToList();
+    public List<OngoingEffectApplicationRecord> GetEffectApplicationHistory() => effectApplicationHistory.ToList();
+    public List<OngoingEffectRecord> GetPlayerOngoingEffects() => ongoingEffectHistory.Where(record => !record.IsEnemyEffect).ToList();
+    public List<OngoingEffectRecord> GetEnemyOngoingEffects() => ongoingEffectHistory.Where(record => record.IsEnemyEffect).ToList();
 
     public void LogAllCardHistory()
     {
@@ -423,8 +620,21 @@ public class CardHistory : MonoBehaviour, ICardHistory
             Debug.Log(record.EditorSummary);
         }
 
+        Debug.Log("\n=== Ongoing Effect History ===");
+        foreach (var record in ongoingEffectHistory)
+        {
+            Debug.Log(record.EditorSummary);
+        }
+
+        Debug.Log("\n=== Effect Application History ===");
+        foreach (var record in effectApplicationHistory)
+        {
+            Debug.Log(record.EditorSummary);
+        }
+
         Debug.Log($"\nTotal Cards Played: {totalCardsPlayed} (Player: {playerCardsPlayed}, Enemy: {enemyCardsPlayed})");
         Debug.Log($"Total Attacks: {totalAttacks} (Player: {playerAttacks}, Enemy: {enemyAttacks})");
+        Debug.Log($"Total Ongoing Effects: {totalOngoingEffects} (Player: {playerOngoingEffects}, Enemy: {enemyOngoingEffects})");
 
         Debug.Log("\nCards Per Turn:");
         foreach (var kvp in cardsPerTurn)
@@ -449,6 +659,12 @@ public class CardHistory : MonoBehaviour, ICardHistory
         {
             Debug.Log($"{kvp.Key}: {kvp.Value} cards");
         }
+
+        Debug.Log("\nEffects By Type:");
+        foreach (var kvp in effectsByType)
+        {
+            Debug.Log($"{kvp.Key}: {kvp.Value} effects");
+        }
     }
 
     [ContextMenu("Log Enemy Card History")]
@@ -468,6 +684,38 @@ public class CardHistory : MonoBehaviour, ICardHistory
         var playerCards = GetPlayerCardPlays();
         Debug.Log($"=== Player Card Play History ({playerCards.Count} plays) ===");
         foreach (var record in playerCards)
+        {
+            Debug.Log(record.EditorSummary);
+        }
+    }
+
+    [ContextMenu("Log Ongoing Effect History")]
+    private void LogOngoingEffectHistory()
+    {
+        Debug.Log($"=== Ongoing Effect History ({ongoingEffectHistory.Count} effects) ===");
+        foreach (var record in ongoingEffectHistory)
+        {
+            Debug.Log(record.EditorSummary);
+        }
+
+        Debug.Log($"\n=== Player Ongoing Effects ({playerOngoingEffects} effects) ===");
+        foreach (var record in GetPlayerOngoingEffects())
+        {
+            Debug.Log(record.EditorSummary);
+        }
+
+        Debug.Log($"\n=== Enemy Ongoing Effects ({enemyOngoingEffects} effects) ===");
+        foreach (var record in GetEnemyOngoingEffects())
+        {
+            Debug.Log(record.EditorSummary);
+        }
+    }
+
+    [ContextMenu("Log Effect Applications")]
+    private void LogEffectApplicationHistory()
+    {
+        Debug.Log($"=== Effect Application History ({effectApplicationHistory.Count} applications) ===");
+        foreach (var record in effectApplicationHistory)
         {
             Debug.Log(record.EditorSummary);
         }
