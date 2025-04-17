@@ -175,21 +175,87 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
         if (!ValidateSelection(index, _spritePositioning.PlayerEntities, out EntityManager entityManager))
             return;
 
-        // If we have a card selected and it's our turn, try to play it
-        if (_cardManager.HandCardObjects.Contains(_cardManager.CurrentSelectedCard) && _combatManager.IsPlayerPrepPhase())
+        // Check if we have a card selected from hand
+        bool hasCardSelected = _cardManager.HandCardObjects.Contains(_cardManager.CurrentSelectedCard);
+
+        if (hasCardSelected)
         {
             var cardUI = _cardManager.CurrentSelectedCard.GetComponent<CardUI>();
             var cardData = cardUI?.Card?.CardType;
 
-            // Only check for occupied space if it's a monster card
-            if (cardData != null && cardData.IsMonsterCard && entityManager != null && entityManager.placed)
+            if (cardData != null)
             {
-                Debug.Log("Cannot place a monster on an already occupied space!");
-                return;
-            }
+                // Determine if this is a draw/bloodprice-only spell card
+                bool isDrawOrBloodpriceOnlySpell = false;
+                if (cardData.IsSpellCard && cardData.EffectTypes != null && cardData.EffectTypes.Count > 0)
+                {
+                    bool hasDrawOrBloodprice = false;
+                    bool hasOtherEffects = false;
 
-            _playerCardSelectionHandler.HandlePlayerCardSelection(index, entityManager);
-            return;
+                    foreach (var effect in cardData.EffectTypes)
+                    {
+                        if (effect == SpellEffect.Draw || effect == SpellEffect.Bloodprice)
+                        {
+                            hasDrawOrBloodprice = true;
+                        }
+                        else
+                        {
+                            hasOtherEffects = true;
+                            break;
+                        }
+                    }
+
+                    isDrawOrBloodpriceOnlySpell = hasDrawOrBloodprice && !hasOtherEffects;
+                }
+
+                // Check if we can play this card based on the current phase
+                bool canPlayInCurrentPhase = false;
+
+                // Monster cards can only be played during prep phase
+                if (cardData.IsMonsterCard)
+                {
+                    canPlayInCurrentPhase = _combatManager.IsPlayerPrepPhase();
+                }
+                // Draw/bloodprice-only spell cards can be played in both prep and combat phases
+                else if (isDrawOrBloodpriceOnlySpell)
+                {
+                    canPlayInCurrentPhase = _combatManager.IsPlayerPrepPhase() || _combatManager.IsPlayerCombatPhase();
+                }
+                // Regular spell cards follow standard phase restrictions
+                else
+                {
+                    canPlayInCurrentPhase = _combatManager.IsPlayerPrepPhase();
+                }
+
+                if (canPlayInCurrentPhase)
+                {
+                    // Only check for occupied space if it's a monster card
+                    if (cardData.IsMonsterCard && entityManager != null && entityManager.placed)
+                    {
+                        Debug.Log("Cannot place a monster on an already occupied space!");
+                        return;
+                    }
+
+                    _playerCardSelectionHandler.HandlePlayerCardSelection(index, entityManager);
+                    return;
+                }
+                else
+                {
+                    if (cardData.IsMonsterCard)
+                    {
+                        Debug.Log("Monster cards can only be played during the preparation phase!");
+                    }
+                    else if (!isDrawOrBloodpriceOnlySpell)
+                    {
+                        Debug.Log("Regular spell cards can only be played during the preparation phase!");
+                    }
+                    else
+                    {
+                        Debug.Log("Cannot play this card in the current phase!");
+                    }
+                    return;
+                }
+            }
         }
 
         // If it's a placed monster we're selecting
@@ -214,8 +280,9 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
             return;
         }
 
-        Debug.Log("No card selected or not the players turn!");
+        Debug.Log("No card selected or not the player's turn!");
         _cardManager.CurrentSelectedCard = null;
+        _cardOutlineManager.RemoveHighlight();
         ResetAllMonsterTints();
     }
 
