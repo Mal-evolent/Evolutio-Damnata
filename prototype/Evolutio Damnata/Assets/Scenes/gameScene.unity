@@ -1846,12 +1846,17 @@ MonoBehaviour:
   maxHistorySize: 100
   cardHistory: []
   attackHistory: []
+  ongoingEffectHistory: []
+  effectApplicationHistory: []
   totalCardsPlayed: 0
   playerCardsPlayed: 0
   enemyCardsPlayed: 0
   totalAttacks: 0
   playerAttacks: 0
   enemyAttacks: 0
+  totalOngoingEffects: 0
+  playerOngoingEffects: 0
+  enemyOngoingEffects: 0
 --- !u!4 &655618344
 Transform:
   m_ObjectHideFlags: 0
@@ -3158,6 +3163,606 @@ MonoBehaviour:
     EffectValuePerRound: 1
     DrawValue: 3
     BloodpriceValue: 4
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Iron Maw
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 3
+    AttackPower: 2
+    Health: 8
+    Keywords: 03000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Cragback Brute
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 4
+    AttackPower: 5
+    Health: 6
+    Keywords: 
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Bulwark of Ashes
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 5
+    AttackPower: 3
+    Health: 12
+    Keywords: 0100000003000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Wretched Borer
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 2
+    AttackPower: 4
+    Health: 2
+    Keywords: 04000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Flesh Bastion
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 6
+    AttackPower: 2
+    Health: 16
+    Keywords: 0300000001000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Flamehron Charger
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 5
+    AttackPower: 7
+    Health: 4
+    Keywords: 0400000002000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Gravestone Gnasher
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 6
+    AttackPower: 6
+    Health: 3
+    Keywords: 04000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Twilight Warder
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 3
+    AttackPower: 2
+    Health: 6
+    Keywords: 0300000002000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Voidhorn Alpha
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 7
+    AttackPower: 8
+    Health: 8
+    Keywords: 0400000003000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Grimsteel Sentinel
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 4
+    AttackPower: 3
+    Health: 10
+    Keywords: 03000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Pulse Of Renewal
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 2
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 02000000
+    EffectValue: 2
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Sanctified Grace
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 3
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 02000000
+    EffectValue: 5
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Soulbind Remedy
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 4
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 0200000005000000
+    EffectValue: 7
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 4
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Lifeforge Contract
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 3
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 0200000005000000
+    EffectValue: 4
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 2
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Blessed Radiance
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 5
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 02000000
+    EffectValue: 10
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Cageborn Imp
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 1
+    AttackPower: 1
+    Health: 2
+    Keywords: 02000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Pale Initiate
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 1
+    AttackPower: 0
+    Health: 3
+    Keywords: 01000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Gnawling Vermin
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 2
+    AttackPower: 2
+    Health: 2
+    Keywords: 
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Gravetower Scout
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 2
+    AttackPower: 2
+    Health: 1
+    Keywords: 02000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Wailing Shieldbearer
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 2
+    AttackPower: 1
+    Health: 4
+    Keywords: 01000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Cursed Husk
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 3
+    AttackPower: 3
+    Health: 3
+    Keywords: 
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Ashfang Hound
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 3
+    AttackPower: 4
+    Health: 2
+    Keywords: 
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Runebone Acolyte
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 3
+    AttackPower: 2
+    Health: 2
+    Keywords: 03000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Hollow Crawler
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 3
+    AttackPower: 3
+    Health: 2
+    Keywords: 02000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Wall of Regret
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 3
+    AttackPower: 0
+    Health: 6
+    Keywords: 0100000003000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Skullborn Vermin
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 1
+    AttackPower: 1
+    Health: 1
+    Keywords: 
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Bitterfang Cub
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 2
+    AttackPower: 3
+    Health: 2
+    Keywords: 
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Hollowbound Brute
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 3
+    AttackPower: 4
+    Health: 3
+    Keywords: 
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Mirefiend Ravager
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 4
+    AttackPower: 5
+    Health: 5
+    Keywords: 
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Ossified Goliath
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 5
+    AttackPower: 7
+    Health: 6
+    Keywords: 
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Spark Javelin
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 1
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 01000000
+    EffectValue: 3
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Crimson Scorch
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 2
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 03000000
+    EffectValue: 0
+    Duration: 2
+    EffectValuePerRound: 2
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Ashen Blast
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 2
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 01000000
+    EffectValue: 5
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Witchfire Surge
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 3
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 0300000001000000
+    EffectValue: 1
+    Duration: 3
+    EffectValuePerRound: 3
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Bolt of Ruin
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 4
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 0100000003000000
+    EffectValue: 3
+    Duration: 2
+    EffectValuePerRound: 2
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Sever the Mind
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 8
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 0100000005000000
+    EffectValue: 10
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 3
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Scorching Collapse
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 8
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 0100000003000000
+    EffectValue: 3
+    Duration: 4
+    EffectValuePerRound: 4
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Oblivion Ray
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 10
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 0100000005000000
+    EffectValue: 15
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 5
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: 'Pyrestorm '
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 10
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 03000000
+    EffectValue: 0
+    Duration: 6
+    EffectValuePerRound: 5
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 1
+    IsMonsterCard: 0
+  - CardName: Final Judgement
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 15
+    AttackPower: 0
+    Health: 0
+    Keywords: 
+    EffectTypes: 0100000005000000
+    EffectValue: 20
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 6
     IsSpellCard: 1
     IsMonsterCard: 0
   _defaultCardSprite: {fileID: 21300000, guid: 7aeec1cbde0927e43b184ad00a19733b, type: 3}
@@ -4914,7 +5519,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: -1.1573495, y: -3.8421173}
+  m_AnchoredPosition: {x: -1.1573495, y: -3.842102}
   m_SizeDelta: {x: 160, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1793571146
