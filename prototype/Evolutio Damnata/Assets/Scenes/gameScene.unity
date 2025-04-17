@@ -2533,6 +2533,13 @@ MonoBehaviour:
   _evaluationDelay: 0.4
   _skipTurnConsiderationChance: 0.25
   _skipTurnBoardAdvantageThreshold: 1.5
+  _suboptimalTargetChance: 0.15
+  _delayRandomizationFactor: 0.3
+  _strategyChangeChance: 0.1
+  _attackOrderRandomizationChance: 0.2
+  _missedAttackChance: 0.05
+  _targetReconsiderationChance: 0.15
+  _reconsiderationDelay: 1.2
 --- !u!1 &1159794892
 GameObject:
   m_ObjectHideFlags: 0
@@ -4386,6 +4393,8 @@ MonoBehaviour:
   _spritePositioning: {fileID: 0}
   _settings: {fileID: 0}
   _cacheTimeout: 0.5
+  _initializationTimeout: 10
+  _initializationCheckDelay: 0.1
 --- !u!1 &1394303770
 GameObject:
   m_ObjectHideFlags: 0
@@ -5225,6 +5234,19 @@ MonoBehaviour:
   _skipCardPlayChance: 0.15
   _cardHoldBoardAdvantageThreshold: 1.3
   _futureValueMultiplier: 0.7
+  _strategicStopChance: 0.3
+  _earlyStopBoardAdvantageThreshold: 1.2
+  _lowValueCardThreshold: 60
+  _highValueCardThreshold: 70
+  _playerLowHealthThreshold: 10
+  _earlyGameExpensiveCardMultiplier: 1.5
+  _holdExpensiveCardChance: 0.6
+  _holdHighFutureValueChance: 0.5
+  _futureToCurrentValueRatio: 0.7
+  _maxInitializationAttempts: 30
+  _initializationRetryDelay: 0.1
+  _lowDeckSizeThreshold: 2
+  _lowDeckSizeConservationChance: 0.4
 --- !u!1001 &1580362483
 PrefabInstance:
   m_ObjectHideFlags: 0

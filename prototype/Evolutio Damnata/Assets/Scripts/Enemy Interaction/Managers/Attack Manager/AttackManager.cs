@@ -45,6 +45,29 @@ namespace EnemyInteraction.Managers
         [SerializeField, Tooltip("Minimum enemy board advantage required to consider skipping")]
         private float _skipTurnBoardAdvantageThreshold = 1.5f;
 
+        // Human error simulation parameters
+        [Header("Human Error Simulation")]
+        [SerializeField, Range(0f, 1f), Tooltip("Chance to make a suboptimal target selection")]
+        private float _suboptimalTargetChance = 0.15f;
+
+        [SerializeField, Range(0f, 1f), Tooltip("Maximum randomization of delay times (0 = fixed delays, 1 = fully random)")]
+        private float _delayRandomizationFactor = 0.3f;
+
+        [SerializeField, Range(0f, 0.5f), Tooltip("Chance to randomly change strategic mode during a turn")]
+        private float _strategyChangeChance = 0.1f;
+
+        [SerializeField, Range(0f, 0.5f), Tooltip("Chance to reorder attack sequence suboptimally")]
+        private float _attackOrderRandomizationChance = 0.2f;
+
+        [SerializeField, Range(0f, 0.2f), Tooltip("Chance to 'forget' to attack with an entity")]
+        private float _missedAttackChance = 0.05f;
+
+        [SerializeField, Range(0f, 0.3f), Tooltip("Chance to reconsider target after selecting")]
+        private float _targetReconsiderationChance = 0.15f;
+
+        [SerializeField, Range(0.5f, 3f), Tooltip("Additional thinking time when 'reconsidering' decisions")]
+        private float _reconsiderationDelay = 1.2f;
+
         private void Awake()
         {
             // Implement singleton pattern - only register if we're the first instance
@@ -170,15 +193,33 @@ namespace EnemyInteraction.Managers
                 var attackStrategyManagerObj = gameObject.AddComponent<AttackStrategyManager>();
                 _attackStrategyManager = attackStrategyManagerObj;
                 (attackStrategyManagerObj as AttackStrategyManager).Initialize(_targetEvaluator, _entityCacheManager);
+
+                // Pass human error simulation parameters to AttackStrategyManager if it supports them
+                if (attackStrategyManagerObj is IHumanErrorSimulator)
+                {
+                    (attackStrategyManagerObj as IHumanErrorSimulator).SetErrorSimulationParameters(
+                        _suboptimalTargetChance,
+                        _attackOrderRandomizationChance,
+                        _strategyChangeChance
+                    );
+                }
             }
 
+            // Create and initialize AttackExecutor
             // Create and initialize AttackExecutor
             if (_attackExecutor == null)
             {
                 var attackExecutorObj = gameObject.AddComponent<AttackExecutor>();
                 _attackExecutor = attackExecutorObj;
                 (attackExecutorObj as AttackExecutor).Initialize(_combatStage, _attackLimiter, _entityCacheManager);
+
+                // Pass delay randomization to AttackExecutor if it has this method
+                if (attackExecutorObj is AttackExecutor)
+                {
+                    (attackExecutorObj as AttackExecutor).SetDelayRandomizationFactor(_delayRandomizationFactor);
+                }
             }
+
         }
 
         public IEnumerator Attack()
@@ -242,6 +283,13 @@ namespace EnemyInteraction.Managers
 
             var attackOrder = _attackStrategyManager.GetAttackOrder(enemyEntities, playerEntities, playerHealthIcon, boardState);
 
+            // Apply attack order randomization based on chance
+            if (Random.value < _attackOrderRandomizationChance && attackOrder.Count > 1)
+            {
+                Debug.Log("[AttackManager] Applying attack order randomization (simulating human error)");
+                attackOrder = RandomizeAttackOrder(attackOrder);
+            }
+
             StrategicMode mode = _attackStrategyManager.DetermineStrategicMode(boardState);
             Debug.Log($"[AttackManager] Current strategy: {mode}");
 
@@ -251,10 +299,43 @@ namespace EnemyInteraction.Managers
             // Process each attack with appropriate delays
             foreach (var attacker in attackOrder)
             {
+                // Simulate "forgetting" to attack with this entity
+                if (Random.value < _missedAttackChance)
+                {
+                    Debug.Log($"[AttackManager] 'Forgot' to attack with {attacker.name} (simulating human error)");
+                    continue;
+                }
+
+                // Check if we should change strategy mid-turn
+                if (Random.value < _strategyChangeChance)
+                {
+                    mode = mode == StrategicMode.Aggro ? StrategicMode.Defensive : StrategicMode.Aggro;
+                    Debug.Log($"[AttackManager] Changed strategy mid-turn to: {mode} (simulating human error)");
+
+                    // Add extra "thinking" time after changing strategy
+                    yield return new WaitForSeconds(_attackExecutor.GetRandomizedDelay(_evaluationDelay * 0.8f));
+                }
+
                 // Delay before selecting target - simulates AI "thinking"
                 yield return new WaitForSeconds(_attackExecutor.GetRandomizedDelay(_evaluationDelay * 0.7f));
 
                 EntityManager targetEntity = _attackStrategyManager.SelectTarget(attacker, playerEntities, playerHealthIcon, boardState, mode);
+
+                // Simulate reconsidering the target
+                if (Random.value < _targetReconsiderationChance && targetEntity != null)
+                {
+                    Debug.Log($"[AttackManager] Reconsidering target selection (simulating human error)");
+                    yield return new WaitForSeconds(_attackExecutor.GetRandomizedDelay(_reconsiderationDelay));
+
+                    // 50% chance to actually change the target
+                    if (Random.value < 0.5f && playerEntities.Count > 1)
+                    {
+                        int currentIndex = playerEntities.IndexOf(targetEntity);
+                        int newIndex = (currentIndex + 1) % playerEntities.Count;
+                        targetEntity = playerEntities[newIndex];
+                        Debug.Log($"[AttackManager] Changed target to {targetEntity.name}");
+                    }
+                }
 
                 if (targetEntity != null)
                 {
@@ -294,6 +375,27 @@ namespace EnemyInteraction.Managers
             // Final delay after attack sequence completes
             yield return new WaitForSeconds(_attackExecutor.GetRandomizedDelay(_evaluationDelay));
             Debug.Log("[AttackManager] Attack completed");
+        }
+
+        /// <summary>
+        /// Randomizes the attack order to simulate human imperfection in decision making
+        /// </summary>
+        private List<EntityManager> RandomizeAttackOrder(List<EntityManager> originalOrder)
+        {
+            List<EntityManager> randomizedOrder = new List<EntityManager>(originalOrder);
+
+            // Simple shuffling algorithm
+            int n = randomizedOrder.Count;
+            while (n > 1)
+            {
+                n--;
+                int k = Random.Range(0, n + 1);
+                EntityManager temp = randomizedOrder[k];
+                randomizedOrder[k] = randomizedOrder[n];
+                randomizedOrder[n] = temp;
+            }
+
+            return randomizedOrder;
         }
 
         /// <summary>
@@ -424,6 +526,12 @@ namespace EnemyInteraction.Managers
                 Instance = null;
             }
         }
+    }
+
+    // New interface for components that support human error simulation parameters
+    public interface IHumanErrorSimulator
+    {
+        void SetErrorSimulationParameters(float suboptimalTargetChance, float attackOrderRandomizationChance, float strategyChangeChance);
     }
 
     // Keep the enum in the same file

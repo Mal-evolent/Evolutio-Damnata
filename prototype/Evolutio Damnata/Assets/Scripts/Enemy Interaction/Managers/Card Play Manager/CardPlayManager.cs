@@ -24,6 +24,7 @@ namespace EnemyInteraction.Managers
         private IBoardStateManager _boardStateManager;
         private ISpellEffectApplier _spellEffectApplier;
 
+        [Header("Card Evaluation Settings")]
         [SerializeField, Range(0f, 1f), Tooltip("Chance to make intentionally suboptimal plays")]
         private float _suboptimalPlayChance = 0.10f;
 
@@ -43,6 +44,47 @@ namespace EnemyInteraction.Managers
 
         [SerializeField, Range(0f, 1f), Tooltip("Value multiplier for cards held for future turns")]
         private float _futureValueMultiplier = 0.7f;
+
+        [Header("Strategic Gameplay Settings")]
+        [SerializeField, Range(0f, 1f), Tooltip("Chance to stop playing cards when in advantageous position")]
+        private float _strategicStopChance = 0.3f;
+
+        [SerializeField, Range(1f, 3f), Tooltip("Minimum board advantage ratio to consider stopping early")]
+        private float _earlyStopBoardAdvantageThreshold = 1.2f;
+
+        [SerializeField, Range(0f, 100f), Tooltip("Score threshold below which cards are considered low value")]
+        private float _lowValueCardThreshold = 60f;
+
+        [SerializeField, Range(0f, 100f), Tooltip("Score threshold above which cards are considered high value")]
+        private float _highValueCardThreshold = 70f;
+
+        [SerializeField, Range(3, 15), Tooltip("Health threshold at which player is considered at low health")]
+        private int _playerLowHealthThreshold = 10;
+
+        [SerializeField, Range(0f, 2f), Tooltip("Future value multiplier for expensive cards in early game")]
+        private float _earlyGameExpensiveCardMultiplier = 1.5f;
+
+        [SerializeField, Range(0f, 1f), Tooltip("Chance to hold expensive cards for future turns")]
+        private float _holdExpensiveCardChance = 0.6f;
+
+        [SerializeField, Range(0f, 1f), Tooltip("Chance to hold cards with high future value")]
+        private float _holdHighFutureValueChance = 0.5f;
+
+        [SerializeField, Range(0f, 1f), Tooltip("Factor for comparing future value to current value")]
+        private float _futureToCurrentValueRatio = 0.7f;
+
+        [Header("Initialization Settings")]
+        [SerializeField, Range(5, 60), Tooltip("Maximum attempts when initializing critical components")]
+        private int _maxInitializationAttempts = 30;
+
+        [SerializeField, Range(0.05f, 1f), Tooltip("Delay between initialization attempts in seconds")]
+        private float _initializationRetryDelay = 0.1f;
+
+        [SerializeField, Range(1, 20), Tooltip("Minimum deck size to consider card conservation strategies")]
+        private int _lowDeckSizeThreshold = 10;
+
+        [SerializeField, Range(0f, 1f), Tooltip("Chance to be selective with cards when deck size is low")]
+        private float _lowDeckSizeConservationChance = 0.4f;
 
         private Dictionary<GameObject, EntityManager> _entityCache;
 
@@ -100,16 +142,15 @@ namespace EnemyInteraction.Managers
         private IEnumerator InitializeCriticalComponents()
         {
             int attempts = 0;
-            const int maxAttempts = 30;
 
-            while (attempts < maxAttempts)
+            while (attempts < _maxInitializationAttempts)
             {
                 _combatManager ??= FindObjectOfType<CombatManager>();
                 _combatStage ??= FindObjectOfType<CombatStage>();
 
                 if (_combatManager != null && _combatStage != null) break;
 
-                yield return new WaitForSeconds(0.1f);
+                yield return new WaitForSeconds(_initializationRetryDelay);
                 attempts++;
             }
 
@@ -132,12 +173,11 @@ namespace EnemyInteraction.Managers
         private IEnumerator InitializeCombatStageDependencies()
         {
             int attempts = 0;
-            const int maxAttempts = 30;
 
             while ((_combatStage.SpritePositioning == null || _combatStage.SpellEffectApplier == null) &&
-                   attempts < maxAttempts)
+                   attempts < _maxInitializationAttempts)
             {
-                yield return new WaitForSeconds(0.1f);
+                yield return new WaitForSeconds(_initializationRetryDelay);
                 attempts++;
             }
 
@@ -154,11 +194,10 @@ namespace EnemyInteraction.Managers
         private IEnumerator InitializeAIServices()
         {
             int attempts = 0;
-            const int maxAttempts = 30;
 
-            while (AIServices.Instance == null && attempts < maxAttempts)
+            while (AIServices.Instance == null && attempts < _maxInitializationAttempts)
             {
-                yield return new WaitForSeconds(0.1f);
+                yield return new WaitForSeconds(_initializationRetryDelay);
                 attempts++;
             }
 
@@ -305,7 +344,7 @@ namespace EnemyInteraction.Managers
             // Check if we're in a defensive or late game position
             bool isLateGame = boardState.TurnCount >= 5;
             bool isDefensive = boardState.EnemyHealth < boardState.PlayerHealth;
-            bool playerLowHealth = boardState.PlayerHealth <= 10;
+            bool playerLowHealth = boardState.PlayerHealth <= _playerLowHealthThreshold;
 
             // Don't skip if player is at critically low health - press the advantage
             if (playerLowHealth)
@@ -330,7 +369,7 @@ namespace EnemyInteraction.Managers
 
             // Consider skipping if we see only low-value cards
             float averageCardValue = playableCards.Average(c => _cardEvaluator.EvaluateCardPlay(c, boardState));
-            if (averageCardValue < 40 && hasBoardAdvantage)
+            if (averageCardValue < _lowValueCardThreshold && hasBoardAdvantage)
             {
                 Debug.Log($"[CardPlayManager] Skipping card play - cards have low average value ({averageCardValue:F2})");
                 return true;
@@ -344,11 +383,11 @@ namespace EnemyInteraction.Managers
             }
 
             // Consider card conservation based on deck size and hand quality
-            if (boardState.EnemyDeck != null && boardState.EnemyDeckSize < 10)
+            if (boardState.EnemyDeck != null && boardState.EnemyDeckSize < _lowDeckSizeThreshold)
             {
                 // If we're running low on cards, be more strategic about using them
                 Debug.Log("[CardPlayManager] Low on cards in deck, being more selective");
-                return Random.value < 0.4f;
+                return Random.value < _lowDeckSizeConservationChance;
             }
 
             Debug.Log("[CardPlayManager] Decided not to skip playing cards this turn");
@@ -368,7 +407,7 @@ namespace EnemyInteraction.Managers
                     Score = _cardEvaluator.EvaluateCardPlay(card, boardState),
                     // Higher mana cost cards generally have higher strategic value
                     FutureValue = card.CardType.ManaCost * _futureValueMultiplier *
-                                 (boardState.TurnCount < 3 ? 1.5f : 1.0f)
+                                 (boardState.TurnCount < 3 ? _earlyGameExpensiveCardMultiplier : 1.0f)
                 })
                 .OrderByDescending(c => c.Score)
                 .ToList();
@@ -397,7 +436,9 @@ namespace EnemyInteraction.Managers
                     float boardAdvantage = boardState.EnemyBoardControl /
                         (boardState.PlayerBoardControl > 0 ? boardState.PlayerBoardControl : 1);
 
-                    if (boardAdvantage > 1.2f && cardData.Score < 70 && Random.value < 0.6f)
+                    if (boardAdvantage > _earlyStopBoardAdvantageThreshold &&
+                        cardData.Score < _highValueCardThreshold &&
+                        Random.value < _holdExpensiveCardChance)
                     {
                         Debug.Log($"[CardPlayManager] Holding expensive card '{cardData.Card.CardName}' for future turns");
                         continue;
@@ -406,11 +447,11 @@ namespace EnemyInteraction.Managers
 
                 // If a card has higher future value than current value and we're in a good position,
                 // consider holding it for later
-                if (cardData.FutureValue > cardData.Score * 0.7f &&
+                if (cardData.FutureValue > cardData.Score * _futureToCurrentValueRatio &&
                     boardState.EnemyBoardControl > boardState.PlayerBoardControl)
                 {
                     // Apply randomness to the decision
-                    if (Random.value < 0.5f)
+                    if (Random.value < _holdHighFutureValueChance)
                     {
                         Debug.Log($"[CardPlayManager] Holding card '{cardData.Card.CardName}' for higher future value");
                         continue;
@@ -435,12 +476,12 @@ namespace EnemyInteraction.Managers
                     float boardAdvantage = boardState.EnemyBoardControl /
                         (boardState.PlayerBoardControl > 0 ? boardState.PlayerBoardControl : 1);
 
-                    bool hasGoodAdvantage = boardAdvantage > 1.2f;
+                    bool hasGoodAdvantage = boardAdvantage > _earlyStopBoardAdvantageThreshold;
                     bool remainingCardsLowValue = evaluatedCards
                         .Where(c => c.Card.CardType.ManaCost <= remainingMana)
-                        .All(c => c.Score < 60);
+                        .All(c => c.Score < _lowValueCardThreshold);
 
-                    if (hasGoodAdvantage && remainingCardsLowValue && Random.value < 0.3f)
+                    if (hasGoodAdvantage && remainingCardsLowValue && Random.value < _strategicStopChance)
                     {
                         Debug.Log("[CardPlayManager] Stopping card play with strategic advantage and low-value remaining cards");
                         break;

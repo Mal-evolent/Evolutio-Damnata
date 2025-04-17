@@ -22,6 +22,12 @@ namespace EnemyInteraction.Managers
         [SerializeField, Tooltip("Timeout in seconds before cached board state is refreshed")]
         private float _cacheTimeout = 0.5f;
 
+        [Header("Initialization Settings")]
+        [SerializeField, Range(5, 60), Tooltip("Maximum timeout in seconds for component initialization")]
+        private float _initializationTimeout = 10f;
+        [SerializeField, Range(0.05f, 1f), Tooltip("Delay between initialization checks in seconds")]
+        private float _initializationCheckDelay = 0.1f;
+
         private ICombatManager _combatManager;
         private IEntityCacheManager _entityCacheManager;
         private BoardStateEvaluator _boardStateEvaluator;
@@ -85,7 +91,7 @@ namespace EnemyInteraction.Managers
             _combatManager = FindObjectOfType<CombatManager>();
 
             // Wait for combat manager to be available
-            float timeout = Time.time + 10f; // 10 second timeout
+            float timeout = Time.time + _initializationTimeout;
             while (_combatManager == null)
             {
                 if (Time.time > timeout)
@@ -94,7 +100,7 @@ namespace EnemyInteraction.Managers
                     yield break;
                 }
 
-                yield return new WaitForSeconds(0.1f);
+                yield return new WaitForSeconds(_initializationCheckDelay);
                 _combatManager = FindObjectOfType<CombatManager>();
             }
 
@@ -107,7 +113,7 @@ namespace EnemyInteraction.Managers
             var combatStage = FindObjectOfType<CombatStage>();
 
             // Wait for combat stage to be available
-            float timeout = Time.time + 10f; // 10 second timeout
+            float timeout = Time.time + _initializationTimeout;
             while (combatStage == null)
             {
                 if (Time.time > timeout)
@@ -116,12 +122,12 @@ namespace EnemyInteraction.Managers
                     yield break;
                 }
 
-                yield return new WaitForSeconds(0.1f);
+                yield return new WaitForSeconds(_initializationCheckDelay);
                 combatStage = FindObjectOfType<CombatStage>();
             }
 
             // Wait for sprite positioning to be available
-            timeout = Time.time + 5f; // 5 second timeout
+            timeout = Time.time + _initializationTimeout / 2;
             while (combatStage.SpritePositioning == null)
             {
                 if (Time.time > timeout)
@@ -130,7 +136,7 @@ namespace EnemyInteraction.Managers
                     yield break;
                 }
 
-                yield return new WaitForSeconds(0.1f);
+                yield return new WaitForSeconds(_initializationCheckDelay);
             }
 
             _spritePositioning ??= combatStage.SpritePositioning as SpritePositioning;
@@ -391,7 +397,6 @@ namespace EnemyInteraction.Managers
 
             return closestEntity;
         }
-
 
         private void OnDestroy()
         {

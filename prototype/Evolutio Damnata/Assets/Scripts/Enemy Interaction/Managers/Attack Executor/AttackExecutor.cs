@@ -73,5 +73,9 @@ namespace EnemyInteraction.Managers
             float variance = baseDelay * _delayVariance;
             return baseDelay + Random.Range(-variance, variance);
         }
+        public void SetDelayRandomizationFactor(float factor)
+        {
+            _delayVariance = Mathf.Clamp01(factor);
+        }
     }
 }
