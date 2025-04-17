@@ -2,7 +2,6 @@ using UnityEngine;
 
 public class CardSpawnerFactory : ICardSpawnerFactory
 {
-    // Add this to existing fields
     private readonly OngoingEffectApplier _ongoingEffectApplier;
     private readonly ISpritePositioning _spritePositioning;
     private readonly CardLibrary _cardLibrary;

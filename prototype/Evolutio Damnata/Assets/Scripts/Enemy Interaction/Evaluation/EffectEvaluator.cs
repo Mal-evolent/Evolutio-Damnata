@@ -21,66 +21,71 @@ namespace EnemyInteraction.Evaluation
         private void InitializeEvaluations()
         {
             _effectEvaluations = new Dictionary<SpellEffect, SpellEffectEvaluation>
-            {
                 {
-                    SpellEffect.Damage,
-                    new SpellEffectEvaluation
                     {
-                        BaseScore = 35f,
-                        IsPositive = false,
-                        IsStackable = false,
-                        RequiresTarget = true,
-                        IsDamaging = true
-                    }
-                },
-                {
-                    SpellEffect.Burn,
-                    new SpellEffectEvaluation
+                        SpellEffect.Damage,
+                        new SpellEffectEvaluation
+                        {
+                            BaseScore = 35f,
+                            IsPositive = false,
+                            IsStackable = false,
+                            RequiresTarget = true,
+                            IsDamaging = true
+                        }
+                    },
                     {
-                        BaseScore = 30f,
-                        IsPositive = false,
-                        IsStackable = true,
-                        RequiresTarget = true,
-                        IsDamaging = true
-                    }
-                },
-                {
-                    SpellEffect.Heal,
-                    new SpellEffectEvaluation
+                        SpellEffect.Burn,
+                        new SpellEffectEvaluation
+                        {
+                            BaseScore = 30f,
+                            IsPositive = false,
+                            IsStackable = true,
+                            RequiresTarget = true,
+                            IsDamaging = true
+                        }
+                    },
                     {
-                        BaseScore = 25f,
-                        IsPositive = true,
-                        IsStackable = false,
-                        RequiresTarget = true,
-                        IsDamaging = false
-                    }
-                },
-                {
-                    SpellEffect.Draw,
-                    new SpellEffectEvaluation
+                        SpellEffect.Heal,
+                        new SpellEffectEvaluation
+                        {
+                            BaseScore = 25f,
+                            IsPositive = true,
+                            IsStackable = false,
+                            RequiresTarget = true,
+                            IsDamaging = false
+                        }
+                    },
                     {
-                        BaseScore = 40f,
-                        IsPositive = true,
-                        IsStackable = false,
-                        RequiresTarget = false,
-                        IsDamaging = false
-                    }
-                },
-                {
-                    SpellEffect.Bloodprice,
-                    new SpellEffectEvaluation
+                        SpellEffect.Draw,
+                        new SpellEffectEvaluation
+                        {
+                            BaseScore = 40f,
+                            IsPositive = true,
+                            IsStackable = false,
+                            RequiresTarget = false,
+                            IsDamaging = false
+                        }
+                    },
                     {
-                        BaseScore = -15f,
-                        IsPositive = false,
-                        IsStackable = false,
-                        RequiresTarget = false,
-                        IsDamaging = true
+                        SpellEffect.Bloodprice,
+                        new SpellEffectEvaluation
+                        {
+                            BaseScore = -15f,
+                            IsPositive = false,
+                            IsStackable = false,
+                            RequiresTarget = false,
+                            IsDamaging = true
+                        }
                     }
-                }
-            };
+                };
         }
 
         public float EvaluateEffect(SpellEffect effect, bool isOwnCard, EntityManager target, BoardState boardState)
+        {
+            return EvaluateEffect(effect, isOwnCard, target, boardState, null);
+        }
+
+        public float EvaluateEffect(SpellEffect effect, bool isOwnCard, EntityManager target, BoardState boardState, CardData cardData)
         {
             if (!_effectEvaluations.ContainsKey(effect))
             {
@@ -140,7 +145,7 @@ namespace EnemyInteraction.Evaluation
                 if (effect == SpellEffect.Draw)
                 {
                     // Higher value when hand is nearly empty
-                    int handSize = boardState.enemyHandSize;
+                    int handSize = boardState.EnemyHandSize;
                     if (handSize <= 1)
                         score *= 2.0f;
                     else if (handSize <= 2)
@@ -165,6 +170,21 @@ namespace EnemyInteraction.Evaluation
                     // Consider board state - more valuable when behind on board
                     if (boardState.BoardControlDifference < 0)
                         score *= 1.2f;
+
+                    // NEW: Check if we would overflow our hand with this card
+                    if (cardData != null && cardData.DrawValue > 0)
+                    {
+                        // Get available hand slots
+                        int maxHandSize = boardState.EnemyHandSize > 0 ? boardState.EnemyHandSize : boardState.EnemyHandSize;
+                        int availableSlots = maxHandSize - boardState.EnemyHandSize;
+
+                        // If draw value exceeds available slots, apply a severe penalty
+                        if (cardData.DrawValue > availableSlots)
+                        {
+                            score *= 0.2f; // Severe penalty
+                            Debug.Log($"[EffectEvaluator] Applied severe penalty to Draw card that would draw {cardData.DrawValue} cards with only {availableSlots} slots available");
+                        }
+                    }
 
                     Debug.Log($"[EffectEvaluator] Draw effect score: {score} (hand size: {handSize}, card advantage: {boardState.CardAdvantage}, turn: {boardState.TurnCount})");
                 }
@@ -300,10 +320,10 @@ namespace EnemyInteraction.Evaluation
         private float EvaluateTargetThreat(EntityManager target, BoardState boardState)
         {
             float threat = 0f;
-            
+
             threat += target.GetAttackPower() * 1.2f;
             threat += target.GetHealth() * 0.8f;
-            
+
             return threat;
         }
 

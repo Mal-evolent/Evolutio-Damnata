@@ -1,4 +1,3 @@
-// Assets/Scripts/Enemy Interaction/Managers/Board State Manager/BoardStateEvaluator.cs
 using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
@@ -235,9 +234,32 @@ namespace EnemyInteraction.Managers
             float enemyHealthRatio = state.EnemyHealth / (float)state.EnemyMaxHealth;
             float playerHealthRatio = state.PlayerHealth / (float)state.PlayerMaxHealth;
 
-            // Base health influence
-            bool isLateGame = state.TurnCount > _settings.LateGameTurnThreshold;
-            float healthFactor = _settings.HealthInfluenceFactor * (isLateGame ? _settings.LateGameBonusMultiplier : 1f);
+            // Basic health-based factors
+            float baseHealthFactor = 1.0f;
+
+            // Adjust based on game progression
+            if (state.TurnCount <= 3)
+            {
+                // Early game - health is less critical
+                baseHealthFactor *= 0.8f;
+            }
+            else if (state.TurnCount >= _settings.LateGameTurnThreshold)
+            {
+                // Late game - health becomes more critical
+                baseHealthFactor *= 1.5f;
+
+                // Even more critical at very low health
+                if (state.EnemyHealth < state.EnemyMaxHealth * 0.3f)
+                {
+                    baseHealthFactor *= 2.0f;
+                }
+            }
+
+            // Apply the adjusted factor for health importance
+            state.HealthImportanceFactor = baseHealthFactor;
+
+            // Base health influence using the importance factor
+            float healthFactor = _settings.HealthInfluenceFactor * baseHealthFactor;
 
             state.EnemyBoardControl += state.EnemyHealth * healthFactor;
             state.PlayerBoardControl += state.PlayerHealth * healthFactor;

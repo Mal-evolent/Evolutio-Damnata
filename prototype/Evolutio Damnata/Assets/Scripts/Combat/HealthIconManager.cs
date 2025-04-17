@@ -172,5 +172,37 @@ public class HealthIconManager : EntityManager, IHealthIconManager
     public override float GetAttackDamage() => 0f;
     public override void AttackBuff(float buffAmount) { }
     public override void AttackDebuff(float debuffAmount) { }
+
+    /// <summary>
+    /// Applies blood price damage which is self-inflicted and should not be
+    /// attributed to an opponent in the combat history.
+    /// </summary>
+    /// <param name="damageAmount">Amount of blood price damage to apply</param>
+    public void ApplyBloodPriceDamage(float damageAmount)
+    {
+        if (damageAmount <= 0 || dead) return;
+
+        // Apply the damage directly to health
+        float healthBefore = health;
+        health = Mathf.Max(0, health - damageAmount);
+
+        // Looking at TakeDamage in this class, we should:
+        // 1. Update the combat manager health
+        UpdateCombatManagerHealth();
+
+        // 2. Show damage number - this is accessible from base class
+        ShowDamageNumber(damageAmount);
+
+        // 3. Log with clear indication this is self-inflicted blood price damage
+        Debug.Log($"[Blood Price] {(isPlayerIcon ? "Player" : "Enemy")} used Blood Price and took {damageAmount} self-inflicted damage. Health: {health}/{MaxHealth}");
+
+        // 4. Check for critical health
+        if (GetHealth() / MaxHealth <= 0.25f)
+            Debug.Log($"{(isPlayerIcon ? "Player" : "Enemy")} health critical!");
+
+        // 5. Check for death
+        if (health <= 0 && healthBefore > 0)
+            Die();
+    }
     #endregion
 } 

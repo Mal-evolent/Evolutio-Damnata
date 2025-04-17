@@ -200,9 +200,9 @@ public class SpellEffectApplier : ISpellEffectApplier
         if (spellData.EffectTypes.Contains(SpellEffect.Bloodprice) && spellData.BloodpriceValue > 0)
         {
             // Get health icons
-            var playerHealthIcon = GameObject.FindGameObjectWithTag("Player")?.GetComponent<EntityManager>();
-            var enemyHealthIcon = GameObject.FindGameObjectWithTag("Enemy")?.GetComponent<EntityManager>();
-            EntityManager casterHealthIcon = null;
+            var playerHealthIcon = GameObject.FindGameObjectWithTag("Player")?.GetComponent<HealthIconManager>();
+            var enemyHealthIcon = GameObject.FindGameObjectWithTag("Enemy")?.GetComponent<HealthIconManager>();
+            HealthIconManager casterHealthIcon = null;
 
             // Determine which health icon is the caster based on current combat phase
             if (_combatManager != null)
@@ -226,7 +226,8 @@ public class SpellEffectApplier : ISpellEffectApplier
 
                 if (casterHealthIcon != null)
                 {
-                    ApplyDamageEffect(casterHealthIcon, spellData.BloodpriceValue);
+                    // Use the specialized method for blood price
+                    casterHealthIcon.ApplyBloodPriceDamage(spellData.BloodpriceValue);
                     Debug.Log($"Applied {spellData.BloodpriceValue} bloodprice damage to {casterHealthIcon.name}");
                 }
                 else
@@ -239,6 +240,8 @@ public class SpellEffectApplier : ISpellEffectApplier
                 Debug.LogError("CombatManager is null, cannot determine whose turn it is for bloodprice effect");
             }
         }
+
+
 
         // Continue with the rest of the effects
         foreach (var effectType in spellData.EffectTypes)
@@ -344,20 +347,26 @@ public class SpellEffectApplier : ISpellEffectApplier
         }
     }
 
-    private void ApplyDamageEffect(EntityManager target, int damage)
+    private void ApplyDamageEffect(EntityManager target, int damage, bool isBloodpriceEffect = false)
     {
         // Store health before damage to check if this kills the entity
         float healthBeforeDamage = target.GetHealth();
 
-        target.TakeDamage(damage);
-        _damageVisualizer?.CreateDamageNumber(target, damage, target.transform.position, _damageNumberPrefab);
+        // For Bloodprice, we don't need to do anything here since it's handled separately 
+        // in the ApplyEffectsToTarget method with the ApplyBloodPriceDamage call
+        if (!isBloodpriceEffect)
+        {
+            // Only apply damage for non-bloodprice effects
+            target.TakeDamage(damage);
+            _damageVisualizer?.CreateDamageNumber(target, damage, target.transform.position, _damageNumberPrefab);
+        }
 
         // Check if the spell killed the entity
         if (healthBeforeDamage > 0 && target.GetHealth() <= 0)
         {
             if (GraveYard.Instance != null)
             {
-                GraveYard.Instance.AddSpellKill(target, "Direct Damage Spell", damage);
+                GraveYard.Instance.AddSpellKill(target, isBloodpriceEffect ? "Blood Price Effect" : "Direct Damage Spell", damage);
             }
         }
     }

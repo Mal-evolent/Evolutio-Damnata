@@ -8,7 +8,6 @@ using EnemyInteraction.Models;
 using EnemyInteraction.Services;
 using EnemyInteraction.Extensions;
 using EnemyInteraction.Interfaces;
-using EnemyInteraction.MachineLearning;
 
 namespace EnemyInteraction
 {
@@ -22,8 +21,6 @@ namespace EnemyInteraction
         private ISpellEffectApplier _spellEffectApplier;
         private StackManager _stackManager;
         private AttackLimiter _attackLimiter;
-
-        private PlayerBehaviorPredictor _playerPredictor;
 
         // Public properties for controlled access
         public ICombatManager CombatManager { get => _combatManager; set => _combatManager = value; }
@@ -48,8 +45,6 @@ namespace EnemyInteraction
 
         private void Start()
         {
-            // Initialize predictor and other components
-            _playerPredictor = new PlayerBehaviorPredictor();
             _combatManager = FindObjectOfType<CombatManager>();
 
             // Subscribe to phase changes
@@ -67,7 +62,6 @@ namespace EnemyInteraction
         private void OnPhaseChanged(CombatPhase newPhase)
         {
             Debug.Log($"[EnemyActions] Phase changed to {newPhase}");
-            _playerPredictor?.PhaseSwitched(newPhase);
         }
 
         private void OnDestroy()

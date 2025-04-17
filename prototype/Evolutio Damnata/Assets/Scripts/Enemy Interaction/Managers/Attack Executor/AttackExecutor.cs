@@ -10,9 +10,6 @@ namespace EnemyInteraction.Managers
         private AttackLimiter _attackLimiter;
         private IEntityCacheManager _entityCacheManager;
         
-        [SerializeField, Range(0.2f, 2f), Tooltip("Base delay between attack actions in seconds")]
-        private float _baseAttackDelay = 0.6f;
-
         [SerializeField, Range(0f, 1f), Tooltip("Random variance in delay timing (percentage)")]
         private float _delayVariance = 0.3f;
         

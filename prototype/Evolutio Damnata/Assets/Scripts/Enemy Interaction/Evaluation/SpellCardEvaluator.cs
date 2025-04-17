@@ -41,7 +41,7 @@ namespace EnemyInteraction.Managers.Evaluation
             ApplyDrawBloodpriceEvaluation(card, boardState, ref totalScore, hasDrawEffect, hasBloodpriceEffect);
 
             // Extra bonus for Draw cards when hand is nearly empty
-            if (hasDrawEffect && boardState.enemyHandSize <= 1)
+            if (hasDrawEffect && boardState.EnemyHandSize <= 1)
             {
                 totalScore *= 1.5f;
                 Debug.Log($"[SpellCardEvaluator] Increased score for Draw card {card.CardName} due to low hand size");

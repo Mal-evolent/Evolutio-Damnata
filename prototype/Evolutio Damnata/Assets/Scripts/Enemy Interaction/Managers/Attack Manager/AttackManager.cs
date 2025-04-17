@@ -200,6 +200,18 @@ namespace EnemyInteraction.Managers
                 yield break;
             }
 
+            // Get board state before making any decisions
+            BoardState boardState = GetCurrentBoardState();
+
+            // Check if the AI should consider skipping this turn
+            if (ShouldConsiderSkippingTurn(boardState))
+            {
+                // If the decision is to skip, log this and exit
+                Debug.Log("[AttackManager] AI decided to skip this turn for strategic reasons");
+                yield return new WaitForSeconds(_attackExecutor.GetRandomizedDelay(_evaluationDelay * 1.5f));
+                yield break;
+            }
+
             // Use cached entities
             _entityCacheManager.RefreshEntityCaches();
             List<EntityManager> enemyEntities = _entityCacheManager.CachedEnemyEntities;
@@ -228,7 +240,6 @@ namespace EnemyInteraction.Managers
             // Delay to simulate "thinking" about attack strategy
             yield return new WaitForSeconds(_attackExecutor.GetRandomizedDelay(_evaluationDelay));
 
-            BoardState boardState = GetCurrentBoardState();
             var attackOrder = _attackStrategyManager.GetAttackOrder(enemyEntities, playerEntities, playerHealthIcon, boardState);
 
             StrategicMode mode = _attackStrategyManager.DetermineStrategicMode(boardState);
@@ -283,6 +294,87 @@ namespace EnemyInteraction.Managers
             // Final delay after attack sequence completes
             yield return new WaitForSeconds(_attackExecutor.GetRandomizedDelay(_evaluationDelay));
             Debug.Log("[AttackManager] Attack completed");
+        }
+
+        /// <summary>
+        /// Determines if the AI should consider skipping its attack turn
+        /// based on strategic considerations and board state.
+        /// </summary>
+        /// <param name="boardState">Current state of the game board</param>
+        /// <returns>True if the AI should skip this turn</returns>
+        private bool ShouldConsiderSkippingTurn(BoardState boardState)
+        {
+            // First, check if we should even consider skipping (random chance)
+            if (Random.value > _skipTurnConsiderationChance)
+                return false;
+
+            Debug.Log("[AttackManager] Considering whether to skip turn...");
+
+            // Check if board state is available
+            if (boardState == null)
+                return false;
+
+            // Calculate the enemy's board advantage
+            float enemyBoardAdvantage = boardState.EnemyBoardControl /
+                (boardState.PlayerBoardControl > 0 ? boardState.PlayerBoardControl : 1);
+
+            // Check if the enemy has sufficient board advantage to consider skipping
+            bool hasSufficientAdvantage = enemyBoardAdvantage >= _skipTurnBoardAdvantageThreshold;
+
+            // Check if player will go first next turn (if we can determine this)
+            bool playerGoesNextTurn = boardState.IsNextTurnPlayerFirst;
+
+            // Check if player is at low health (making a skip less advisable)
+            bool playerAtLowHealth = boardState.PlayerHealth <= 10;
+
+            // Late game considerations (don't skip in late game)
+            bool isLateGame = boardState.TurnCount >= 5;
+
+            // Strategic mode from the strategy manager
+            StrategicMode currentStrategy = _attackStrategyManager.DetermineStrategicMode(boardState);
+
+            // Don't skip if we're in aggressive mode
+            if (currentStrategy == StrategicMode.Aggro)
+            {
+                Debug.Log("[AttackManager] Won't skip turn - current strategy is aggressive");
+                return false;
+            }
+
+            // Don't skip if player is at low health
+            if (playerAtLowHealth)
+            {
+                Debug.Log("[AttackManager] Won't skip turn - player health is low, should press advantage");
+                return false;
+            }
+
+            // Don't skip in late game
+            if (isLateGame)
+            {
+                Debug.Log("[AttackManager] Won't skip turn - game is in later stages");
+                return false;
+            }
+
+            // If enemy has significant board advantage and is in defensive mode,
+            // consider skipping to preserve board position
+            if (hasSufficientAdvantage && currentStrategy == StrategicMode.Defensive)
+            {
+                // If player goes next turn, higher chance to skip (preserve board for their turn)
+                if (playerGoesNextTurn)
+                {
+                    Debug.Log($"[AttackManager] Skipping turn - enemy has board advantage of {enemyBoardAdvantage:F2} and player goes next");
+                    return true;
+                }
+
+                // Even if we go next, still consider skipping with a good advantage
+                if (enemyBoardAdvantage >= _skipTurnBoardAdvantageThreshold * 1.5f)
+                {
+                    Debug.Log($"[AttackManager] Skipping turn - enemy has strong board advantage of {enemyBoardAdvantage:F2}");
+                    return true;
+                }
+            }
+
+            Debug.Log("[AttackManager] Decided not to skip turn");
+            return false;
         }
 
         private bool ValidateCombatState()
