@@ -2,6 +2,7 @@ using EnemyInteraction.Managers.Targeting;
 using EnemyInteraction.Models;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace EnemyInteraction.Managers.Execution
@@ -50,26 +51,25 @@ namespace EnemyInteraction.Managers.Execution
 
                 if (card.CardType.IsMonsterCard)
                 {
-                    playedSuccessfully = PlayMonsterCard(card, boardState);
+                    // For monster cards, use the coroutine to wait for any fading out entities
+                    yield return PlayMonsterCardWithFadeCheck(card, enemyDeck, boardState);
 
-                    if (playedSuccessfully)
-                    {
-                        _combatManager.EnemyMana -= card.CardType.ManaCost;
-                        enemyDeck.RemoveCard(card);
-                    }
+                    // No need to handle mana and card removal here as it's done in the coroutine
+                    playedSuccessfully = true;
                 }
                 else
                 {
                     // For spell cards, check if we can play it
-                    playedSuccessfully = CanPlaySpellCard(card);
-                    if (playedSuccessfully)
+                    bool canPlay = CanPlaySpellCard(card);
+                    if (canPlay)
                     {
-                        // First remove the card and deduct mana
+                        // First deduct mana and remove the card
                         _combatManager.EnemyMana -= card.CardType.ManaCost;
                         enemyDeck.RemoveCard(card);
 
-                        // Then play the spell effect
-                        yield return PlaySpellCardWithDelay(card);
+                        // Then play the spell effect with fade-out checking
+                        yield return PlaySpellCardWithFadeCheck(card);
+                        playedSuccessfully = true;
                     }
                 }
 
@@ -82,6 +82,29 @@ namespace EnemyInteraction.Managers.Execution
 
                 // Additional delay after the card effect is applied
                 yield return new WaitForSeconds(_actionDelay * 0.5f);
+            }
+        }
+
+        private IEnumerator PlayMonsterCardWithFadeCheck(Card card, Deck enemyDeck, BoardState boardState)
+        {
+            int position = _monsterPositionSelector.FindOptimalMonsterPosition(card, boardState);
+            if (position < 0)
+            {
+                Debug.Log($"[CardPlayExecutor] No valid position for {card.CardName}");
+                yield break;
+            }
+
+            // Check for entities that are fading out at the selected position
+            yield return WaitForFadeOutAtPosition(position);
+
+            // Now that we've waited for any fading out entities, play the card
+            bool success = _combatStage.EnemyCardSpawner.SpawnCard(card.CardName, position);
+            if (success)
+            {
+                // Deduct mana and remove card from hand on success
+                _combatManager.EnemyMana -= card.CardType.ManaCost;
+                enemyDeck.RemoveCard(card);
+                Debug.Log($"[CardPlayExecutor] Played {card.CardName} at position {position}");
             }
         }
 
@@ -128,43 +151,59 @@ namespace EnemyInteraction.Managers.Execution
             return true;
         }
 
-        public IEnumerator PlaySpellCardWithDelay(Card card)
+        private IEnumerator PlaySpellCardWithFadeCheck(Card card)
         {
             // Small pause before applying the effect
             yield return new WaitForSeconds(_actionDelay * 0.5f);
 
+            // Check if it's a Draw/Bloodprice only card
+            bool isUtilitySpell = _spellTargetSelector.ContainsOnlyDrawAndBloodpriceEffects(card.CardType);
+            EntityManager target = null;
+
+            if (isUtilitySpell)
+            {
+                // For Draw/Bloodprice effects, we can use any valid entity as the target
+                target = _spellTargetSelector.GetDummyTarget();
+                if (target == null)
+                {
+                    Debug.LogError($"[CardPlayExecutor] Could not find any target for utility spell {card.CardName}");
+                    yield break;
+                }
+            }
+            else
+            {
+                // For spells that target specific entities
+                target = _spellTargetSelector.GetBestSpellTarget(card.CardType);
+                if (target == null)
+                {
+                    Debug.LogError($"[CardPlayExecutor] Target was null for spell {card.CardName}");
+                    yield break;
+                }
+
+                // Wait for any potential targets that might be fading out
+                // Only do this for non-utility spells that target entities
+                yield return WaitForTargetsFadeOut(card.CardType);
+            }
+
+            // Now that we've waited, apply the spell effect in a try-catch block
+            // without any yields inside
+            ApplySpellEffect(card, target, isUtilitySpell);
+        }
+
+        private void ApplySpellEffect(Card card, EntityManager target, bool isUtilitySpell)
+        {
             try
             {
-                // Check if it's a Draw/Bloodprice only card
-                if (_spellTargetSelector.ContainsOnlyDrawAndBloodpriceEffects(card.CardType))
+                if (isUtilitySpell)
                 {
-                    // For Draw/Bloodprice effects, we can use any valid entity as the target
-                    // since the SpellEffectApplier will handle these effects appropriately
-                    var dummyTarget = _spellTargetSelector.GetDummyTarget();
-                    if (dummyTarget != null)
-                    {
-                        Debug.Log($"[CardPlayExecutor] Casting utility spell {card.CardName}");
-                        _spellEffectApplier.ApplySpellEffectsAI(dummyTarget, card.CardType, 0);
-                    }
-                    else
-                    {
-                        Debug.LogError($"[CardPlayExecutor] Could not find any target for utility spell {card.CardName}");
-                    }
+                    Debug.Log($"[CardPlayExecutor] Casting utility spell {card.CardName}");
                 }
                 else
                 {
-                    // For spells that target specific entities
-                    var target = _spellTargetSelector.GetBestSpellTarget(card.CardType);
-                    if (target != null)
-                    {
-                        Debug.Log($"[CardPlayExecutor] Casting {card.CardName} on {target.name}");
-                        _spellEffectApplier.ApplySpellEffectsAI(target, card.CardType, 0);
-                    }
-                    else
-                    {
-                        Debug.LogError($"[CardPlayExecutor] Target was null for spell {card.CardName}");
-                    }
+                    Debug.Log($"[CardPlayExecutor] Casting {card.CardName} on {target.name}");
                 }
+
+                _spellEffectApplier.ApplySpellEffectsAI(target, card.CardType, 0);
             }
             catch (System.Exception e)
             {
@@ -172,9 +211,120 @@ namespace EnemyInteraction.Managers.Execution
             }
         }
 
+        public IEnumerator PlaySpellCardWithDelay(Card card)
+        {
+            // Small pause before applying the effect
+            yield return new WaitForSeconds(_actionDelay * 0.5f);
+
+            EntityManager target = null;
+            bool isUtilitySpell = _spellTargetSelector.ContainsOnlyDrawAndBloodpriceEffects(card.CardType);
+
+            if (isUtilitySpell)
+            {
+                target = _spellTargetSelector.GetDummyTarget();
+                if (target == null)
+                {
+                    Debug.LogError($"[CardPlayExecutor] Could not find any target for utility spell {card.CardName}");
+                    yield break;
+                }
+            }
+            else
+            {
+                target = _spellTargetSelector.GetBestSpellTarget(card.CardType);
+                if (target == null)
+                {
+                    Debug.LogError($"[CardPlayExecutor] Target was null for spell {card.CardName}");
+                    yield break;
+                }
+            }
+
+            // Now apply the spell effect without yields in the try-catch
+            ApplySpellEffect(card, target, isUtilitySpell);
+        }
+
         public bool ContainsOnlyDrawAndBloodpriceEffects(CardData cardData)
         {
             return _spellTargetSelector.ContainsOnlyDrawAndBloodpriceEffects(cardData);
+        }
+
+        private IEnumerator WaitForFadeOutAtPosition(int position)
+        {
+            if (_combatStage == null || position < 0)
+                yield break;
+
+            var enemyEntities = _combatStage.SpritePositioning.EnemyEntities;
+            if (position < enemyEntities.Count)
+            {
+                var entityAtPosition = enemyEntities[position];
+                if (entityAtPosition != null)
+                {
+                    var entityManager = entityAtPosition.GetComponent<EntityManager>();
+                    if (entityManager != null && entityManager.IsFadingOut)
+                    {
+                        Debug.Log($"[CardPlayExecutor] Waiting for entity at position {position} to finish fading out");
+
+                        // Wait until IsFadingOut becomes false
+                        float maxWaitTime = 7.0f; // Slightly longer than fade duration (6.5s)
+                        float elapsedTime = 0f;
+
+                        while (entityManager.IsFadingOut && elapsedTime < maxWaitTime)
+                        {
+                            yield return null;
+                            elapsedTime += Time.deltaTime;
+                        }
+
+                        Debug.Log($"[CardPlayExecutor] Entity at position {position} finished fading out (waited {elapsedTime:F2}s)");
+
+                        // Add a small delay after fade completes for visual clarity
+                        yield return new WaitForSeconds(0.2f);
+                    }
+                }
+            }
+        }
+
+        private IEnumerator WaitForTargetsFadeOut(CardData spellCard)
+        {
+            if (spellCard.EffectTypes == null || spellCard.EffectTypes.Count == 0)
+                yield break;
+
+            // For area effects and multi-target spells, we need to wait for any potential target
+            // that's currently fading out
+            var allPotentialTargets = new List<EntityManager>();
+
+            foreach (var effect in spellCard.EffectTypes)
+            {
+                var targetsForEffect = _spellTargetSelector.GetAllValidTargets(effect);
+                if (targetsForEffect != null && targetsForEffect.Count > 0)
+                {
+                    allPotentialTargets.AddRange(targetsForEffect);
+                }
+            }
+
+            // Remove duplicates
+            allPotentialTargets = allPotentialTargets.Distinct().ToList();
+
+            // Check if any targets are fading out
+            bool anyFadingOut = allPotentialTargets.Any(t => t != null && t.IsFadingOut);
+
+            if (anyFadingOut)
+            {
+                Debug.Log($"[CardPlayExecutor] Waiting for targets of spell to finish fading out");
+
+                // Wait until all relevant targets finish fading out
+                float maxWaitTime = 7.0f;
+                float elapsedTime = 0f;
+
+                while (allPotentialTargets.Any(t => t != null && t.IsFadingOut) && elapsedTime < maxWaitTime)
+                {
+                    yield return null;
+                    elapsedTime += Time.deltaTime;
+                }
+
+                Debug.Log($"[CardPlayExecutor] All spell targets finished fading out (waited {elapsedTime:F2}s)");
+
+                // Add a small delay after fade completes for visual clarity
+                yield return new WaitForSeconds(0.2f);
+            }
         }
     }
 }
