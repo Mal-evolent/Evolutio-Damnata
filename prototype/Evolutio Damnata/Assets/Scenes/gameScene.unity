@@ -2533,10 +2533,10 @@ MonoBehaviour:
   _evaluationDelay: 0.4
   _skipTurnConsiderationChance: 0.25
   _skipTurnBoardAdvantageThreshold: 1.5
-  _suboptimalTargetChance: 0.15
-  _delayRandomizationFactor: 0.3
-  _strategyChangeChance: 0.1
-  _attackOrderRandomizationChance: 0.2
+  _suboptimalTargetChance: 0.1
+  _delayRandomizationFactor: 0.1
+  _strategyChangeChance: 0.05
+  _attackOrderRandomizationChance: 0.05
   _missedAttackChance: 0.05
   _targetReconsiderationChance: 0.15
   _reconsiderationDelay: 1.2
@@ -3772,6 +3772,231 @@ MonoBehaviour:
     BloodpriceValue: 6
     IsSpellCard: 1
     IsMonsterCard: 0
+  - CardName: Thornling Scout
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 1
+    AttackPower: 1
+    Health: 1
+    Keywords: 02000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Gutterclaw Imp
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 1
+    AttackPower: 2
+    Health: 1
+    Keywords: 04000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Mossgrip Protector
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 2
+    AttackPower: 1
+    Health: 3
+    Keywords: 01000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Cracked Huskwalker
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 2
+    AttackPower: 2
+    Health: 2
+    Keywords: 03000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Ruinshot Archer
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 2
+    AttackPower: 2
+    Health: 1
+    Keywords: 02000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Bloodspire Bully
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 3
+    AttackPower: 3
+    Health: 2
+    Keywords: 04000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Shieldsword Adept
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 3
+    AttackPower: 2
+    Health: 4
+    Keywords: 03000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Emberfang Sentry
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 3
+    AttackPower: 2
+    Health: 2
+    Keywords: 0200000004000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Bastion Ratguard
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 2
+    AttackPower: 1
+    Health: 4
+    Keywords: 0100000003000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Wraithhide Skulker
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 3
+    AttackPower: 3
+    Health: 1
+    Keywords: 0200000003000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Cindermaw Cub
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 2
+    AttackPower: 2
+    Health: 2
+    Keywords: 04000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Ironhide Stomper
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 3
+    AttackPower: 3
+    Health: 4
+    Keywords: 04000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Bloodcrest Ravager
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 4
+    AttackPower: 5
+    Health: 4
+    Keywords: 04000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Grotesque Juggernaut
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 5
+    AttackPower: 6
+    Health: 6
+    Keywords: 04000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
+  - CardName: Titan of Woe
+    _cardImage: {fileID: 0}
+    Description: 
+    ManaCost: 6
+    AttackPower: 8
+    Health: 8
+    Keywords: 04000000
+    EffectTypes: 
+    EffectValue: 0
+    Duration: 0
+    EffectValuePerRound: 0
+    DrawValue: 0
+    BloodpriceValue: 0
+    IsSpellCard: 0
+    IsMonsterCard: 1
   _defaultCardSprite: {fileID: 21300000, guid: 7aeec1cbde0927e43b184ad00a19733b, type: 3}
 --- !u!4 &1159794894
 Transform:
@@ -5231,22 +5456,22 @@ MonoBehaviour:
   _suboptimalPlayChance: 0.1
   _evaluationVariance: 0.15
   _actionDelay: 0.5
-  _skipCardPlayChance: 0.15
-  _cardHoldBoardAdvantageThreshold: 1.3
+  _skipCardPlayChance: 0.05
+  _cardHoldBoardAdvantageThreshold: 1.8
   _futureValueMultiplier: 0.7
-  _strategicStopChance: 0.3
-  _earlyStopBoardAdvantageThreshold: 1.2
-  _lowValueCardThreshold: 60
+  _strategicStopChance: 0.1
+  _earlyStopBoardAdvantageThreshold: 1.8
+  _lowValueCardThreshold: 40
   _highValueCardThreshold: 70
   _playerLowHealthThreshold: 10
   _earlyGameExpensiveCardMultiplier: 1.5
-  _holdExpensiveCardChance: 0.6
-  _holdHighFutureValueChance: 0.5
+  _holdExpensiveCardChance: 0.2
+  _holdHighFutureValueChance: 0.15
   _futureToCurrentValueRatio: 0.7
   _maxInitializationAttempts: 30
   _initializationRetryDelay: 0.1
   _lowDeckSizeThreshold: 2
-  _lowDeckSizeConservationChance: 0.4
+  _lowDeckSizeConservationChance: 0.1
 --- !u!1001 &1580362483
 PrefabInstance:
   m_ObjectHideFlags: 0

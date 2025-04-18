@@ -34,16 +34,15 @@ namespace EnemyInteraction.Managers
         [SerializeField, Range(0.2f, 2f), Tooltip("Delay between enemy actions in seconds")]
         private float _actionDelay = 0.5f;
 
-        // Card skip settings
-        [Header("Card Play Skip Settings")]
-        [SerializeField, Range(0f, 1f), Tooltip("Base chance to consider skipping card plays")]
+        // REDUCE THESE VALUES
+        [SerializeField, Range(0f, 1f)]
         private float _skipCardPlayChance = 0.15f;
 
-        [SerializeField, Tooltip("Board advantage threshold where AI might hold cards")]
+        [SerializeField]
         private float _cardHoldBoardAdvantageThreshold = 1.3f;
 
-        [SerializeField, Range(0f, 1f), Tooltip("Value multiplier for cards held for future turns")]
-        private float _futureValueMultiplier = 0.7f;
+        [SerializeField, Range(0f, 1f)]
+        private float _futureValueMultiplier = 0.7f; 
 
         [Header("Strategic Gameplay Settings")]
         [SerializeField, Range(0f, 1f), Tooltip("Chance to stop playing cards when in advantageous position")]

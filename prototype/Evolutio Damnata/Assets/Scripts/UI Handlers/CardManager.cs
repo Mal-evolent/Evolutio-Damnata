@@ -188,32 +188,52 @@ public class CardManager : MonoBehaviour, ICardManager
                     attributesList.Add($"Effect: {string.Join(", ", cardData.EffectTypes)}");
                 }
 
-                // Only show non-zero values
-                if (cardData.EffectValue > 0)
+                // Special handling for different effect types
+                bool hasSpecialValueDisplayed = false;
+
+                // Add special values for specific effect types
+                if (cardData.EffectTypes.Contains(SpellEffect.Heal) && cardData.EffectValue > 0)
                 {
-                    attributesList.Add($"Value: {cardData.EffectValue}");
+                    attributesList.Add($"Heal: {cardData.EffectValue}");
+                    hasSpecialValueDisplayed = true;
                 }
 
-                if (cardData.Duration > 0)
+                if (cardData.EffectTypes.Contains(SpellEffect.Damage) && cardData.EffectValue > 0)
                 {
-                    attributesList.Add($"Duration: {cardData.Duration}");
-                }
-
-                if (cardData.EffectValuePerRound > 0)
-                {
-                    attributesList.Add($"Damage/Round: {cardData.EffectValuePerRound}");
+                    attributesList.Add($"Damage: {cardData.EffectValue}");
+                    hasSpecialValueDisplayed = true;
                 }
 
                 // Add Draw Value if the card has a Draw effect
                 if (cardData.EffectTypes.Contains(SpellEffect.Draw) && cardData.DrawValue > 0)
                 {
                     attributesList.Add($"Draw: {cardData.DrawValue}");
+                    hasSpecialValueDisplayed = true;
                 }
 
                 // Add Bloodprice Value if the card has a Bloodprice effect
                 if (cardData.EffectTypes.Contains(SpellEffect.Bloodprice) && cardData.BloodpriceValue > 0)
                 {
                     attributesList.Add($"Blood Price: {cardData.BloodpriceValue}");
+                    hasSpecialValueDisplayed = true;
+                }
+
+                // Only show generic Effect Value if no special value has been displayed
+                if (!hasSpecialValueDisplayed && cardData.EffectValue > 0)
+                {
+                    attributesList.Add($"Value: {cardData.EffectValue}");
+                }
+
+                // Show duration if present
+                if (cardData.Duration > 0)
+                {
+                    attributesList.Add($"Duration: {cardData.Duration}");
+                }
+
+                // Show damage per round if present
+                if (cardData.EffectValuePerRound > 0)
+                {
+                    attributesList.Add($"Damage/Round: {cardData.EffectValuePerRound}");
                 }
             }
             else
@@ -224,6 +244,7 @@ public class CardManager : MonoBehaviour, ICardManager
                     attributesList.Add($"Effect: {string.Join(", ", spellCard.EffectTypes)}");
                 }
 
+                // Add base fallback for effect value
                 if (spellCard.EffectValue > 0)
                 {
                     attributesList.Add($"Value: {spellCard.EffectValue}");
