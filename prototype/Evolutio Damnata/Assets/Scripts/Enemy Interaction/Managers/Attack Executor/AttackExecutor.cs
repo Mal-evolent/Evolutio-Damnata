@@ -9,19 +9,26 @@ namespace EnemyInteraction.Managers
         private CombatStage _combatStage;
         private AttackLimiter _attackLimiter;
         private IEntityCacheManager _entityCacheManager;
-        
+
         [SerializeField, Range(0f, 1f), Tooltip("Random variance in delay timing (percentage)")]
         private float _delayVariance = 0.3f;
-        
+
         public void Initialize(CombatStage combatStage, AttackLimiter attackLimiter, IEntityCacheManager entityCacheManager)
         {
             _combatStage = combatStage;
             _attackLimiter = attackLimiter;
             _entityCacheManager = entityCacheManager;
         }
-        
+
         public IEnumerator ExecuteAttack(EntityManager attacker, EntityManager target)
         {
+            // Skip attack execution if attacker has 0 attack
+            if (attacker != null && attacker.GetAttack() <= 0)
+            {
+                Debug.Log($"[AttackExecutor] Skipping attack with {attacker.name} as it has 0 attack (defensive unit)");
+                yield break;
+            }
+
             _combatStage.HandleMonsterAttack(attacker, target);
 
             if (_attackLimiter != null)
@@ -36,11 +43,18 @@ namespace EnemyInteraction.Managers
             // Brief pause after attack execution to let animation play
             yield return new WaitForSeconds(0.2f);
         }
-        
+
         public bool AttackPlayerHealthIcon(EntityManager attacker, HealthIconManager healthIcon)
         {
             if (attacker == null || healthIcon == null || _combatStage == null)
                 return false;
+
+            // Skip attack if attacker has 0 attack
+            if (attacker.GetAttack() <= 0)
+            {
+                Debug.Log($"[AttackExecutor] Skipping health icon attack with {attacker.name} as it has 0 attack (defensive unit)");
+                return false;
+            }
 
             if ((_entityCacheManager as EntityCacheManager)?.HasEntitiesOnField(true) ?? false)
             {
@@ -65,7 +79,8 @@ namespace EnemyInteraction.Managers
                 return false;
             }
         }
-        
+
+
         public float GetRandomizedDelay(float baseDelay)
         {
             if (_delayVariance <= 0) return baseDelay;

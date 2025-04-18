@@ -29,11 +29,32 @@ namespace EnemyInteraction.Managers
             _targetEvaluator = targetEvaluator;
             _entityCacheManager = entityCacheManager;
         }
-        
+
         public List<EntityManager> GetAttackOrder(List<EntityManager> enemies, List<EntityManager> players,
                                              HealthIconManager healthIcon, BoardState boardState)
         {
-            var order = enemies.ToList();
+            // Filter out entities with 0 attack - they are defensive units and shouldn't attack
+            var validAttackers = enemies.Where(e => e != null && e.GetAttack() > 0).ToList();
+
+            // Log information about defensive units being excluded
+            var defensiveUnits = enemies.Where(e => e != null && e.GetAttack() == 0).ToList();
+            if (defensiveUnits.Any())
+            {
+                Debug.Log($"[AttackStrategyManager] Excluding {defensiveUnits.Count} defensive units with 0 attack from attack order");
+                foreach (var unit in defensiveUnits)
+                {
+                    Debug.Log($"[AttackStrategyManager] - {unit.name} is a defensive unit (0 attack)");
+                }
+            }
+
+            // If no valid attackers after filtering, return empty list
+            if (validAttackers.Count == 0)
+            {
+                Debug.Log("[AttackStrategyManager] No valid attackers with attack > 0 available");
+                return new List<EntityManager>();
+            }
+
+            var order = validAttackers.ToList();
 
             if (Random.value < _attackOrderRandomizationChance && order.Count > 1)
             {
@@ -72,6 +93,7 @@ namespace EnemyInteraction.Managers
 
             return order;
         }
+
 
         public EntityManager SelectTarget(EntityManager attacker, List<EntityManager> playerEntities,
                                      HealthIconManager playerHealthIcon, BoardState boardState, StrategicMode mode)
