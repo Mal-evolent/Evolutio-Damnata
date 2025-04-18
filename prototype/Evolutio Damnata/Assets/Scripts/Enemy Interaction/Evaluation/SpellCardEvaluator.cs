@@ -69,6 +69,28 @@ namespace EnemyInteraction.Managers.Evaluation
                 {
                     totalScore *= 1.3f; // Increase healing value 
                     Debug.Log($"[SpellCardEvaluator] Boosting heal spell {card.CardName} since player goes first next turn");
+
+                    // Special case for heal + bloodprice combination
+                    if (hasBloodpriceEffect)
+                    {
+                        // Calculate heal-to-bloodprice ratio
+                        float healAmount = card.CardType.EffectValue;
+                        float bloodpriceAmount = card.CardType.BloodpriceValue;
+                        float ratio = bloodpriceAmount > 0 ? healAmount / bloodpriceAmount : 0;
+
+                        if (ratio >= 2.0f)
+                        {
+                            // Very efficient healing - worth the bloodprice
+                            totalScore *= 1.2f;
+                            Debug.Log($"[SpellCardEvaluator] Heal/Bloodprice card {card.CardName} is efficient with ratio {ratio:F2}");
+                        }
+                        else if (ratio < 1.0f && boardState.EnemyHealth < boardState.EnemyMaxHealth * 0.4f)
+                        {
+                            // Inefficient healing at low health is dangerous
+                            totalScore *= 0.6f;
+                            Debug.Log($"[SpellCardEvaluator] Heal/Bloodprice card {card.CardName} is too risky at low health");
+                        }
+                    }
                 }
 
                 // Card draw less valuable with player going first next turn
@@ -100,6 +122,13 @@ namespace EnemyInteraction.Managers.Evaluation
                 {
                     totalScore *= 1.25f;
                     Debug.Log($"[SpellCardEvaluator] Boosting burn spell {card.CardName} since we can follow-up next turn");
+                }
+
+                // We can be slightly more aggressive with bloodprice when we go next
+                if (hasBloodpriceEffect && hasHealEffect && boardState.EnemyHealth > boardState.EnemyMaxHealth * 0.3f)
+                {
+                    totalScore *= 1.1f;
+                    Debug.Log($"[SpellCardEvaluator] More willing to use Heal/Bloodprice card {card.CardName} when we go first next turn");
                 }
             }
         }

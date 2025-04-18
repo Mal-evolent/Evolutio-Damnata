@@ -18,7 +18,6 @@ namespace EnemyInteraction.Managers
         public Dictionary<GameObject, EntityManager> EntityManagerCache => _entityManagerCache;
         public List<EntityManager> CachedPlayerEntities => _cachedPlayerEntities;
         public List<EntityManager> CachedEnemyEntities => _cachedEnemyEntities;
-        // Add to EntityCacheManager.cs
         public static EntityCacheManager Instance { get; private set; }
 
         public void Initialize(SpritePositioning spritePositioning, AttackLimiter attackLimiter)
