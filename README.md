@@ -1,6 +1,6 @@
 # Damnata
 
-### License
+# License
 
 © Black Bulwark, 2025. All Rights Reserved.
 
@@ -8,7 +8,7 @@ This project is protected by copyright. You may not copy, distribute, modify, or
 
 This repository is provided for personal reference and demonstration purposes only.
 
-### Development Logs
+# Development Logs
 
 Dev log 0: This is no longer a cannon event as it was a very bad video.
 
