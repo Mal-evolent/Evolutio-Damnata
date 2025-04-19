@@ -73,19 +73,15 @@ namespace EnemyInteraction.Managers.Execution
                     }
                 }
 
-                if (playedSuccessfully)
-                {
-                    // Update board state after successful play
-                    // We'll need to update this via callback since we're in a separate class now
-                    if (_combatManager.EnemyMana < 1) break;
-                }
+                if (playedSuccessfully && _combatManager.EnemyMana < 1)
+                    break;
 
                 // Additional delay after the card effect is applied
                 yield return new WaitForSeconds(_actionDelay * 0.5f);
             }
         }
 
-        private IEnumerator PlayMonsterCardWithFadeCheck(Card card, Deck enemyDeck, BoardState boardState)
+        public IEnumerator PlayMonsterCardWithFadeCheck(Card card, Deck enemyDeck, BoardState boardState)
         {
             int position = _monsterPositionSelector.FindOptimalMonsterPosition(card, boardState);
             if (position < 0)
@@ -106,23 +102,6 @@ namespace EnemyInteraction.Managers.Execution
                 enemyDeck.RemoveCard(card);
                 Debug.Log($"[CardPlayExecutor] Played {card.CardName} at position {position}");
             }
-        }
-
-        public bool PlayMonsterCard(Card card, BoardState boardState)
-        {
-            int position = _monsterPositionSelector.FindOptimalMonsterPosition(card, boardState);
-            if (position < 0)
-            {
-                Debug.Log($"[CardPlayExecutor] No valid position for {card.CardName}");
-                return false;
-            }
-
-            bool success = _combatStage.EnemyCardSpawner.SpawnCard(card.CardName, position);
-            if (success)
-            {
-                Debug.Log($"[CardPlayExecutor] Played {card.CardName} at position {position}");
-            }
-            return success;
         }
 
         public bool CanPlaySpellCard(Card card)
@@ -167,7 +146,26 @@ namespace EnemyInteraction.Managers.Execution
 
             // Check if it's a Draw/Bloodprice only card
             bool isUtilitySpell = _spellTargetSelector.ContainsOnlyDrawAndBloodpriceEffects(card.CardType);
-            EntityManager target = null;
+            EntityManager target = GetSpellTarget(card, isUtilitySpell);
+
+            if (target == null)
+                yield break;
+
+            if (!isUtilitySpell)
+            {
+                // Wait for any potential targets that might be fading out
+                // Only do this for non-utility spells that target entities
+                yield return WaitForTargetsFadeOut(card.CardType);
+            }
+
+            // Now that we've waited, apply the spell effect
+            ApplySpellEffect(card, target, isUtilitySpell);
+        }
+
+        // Helper method to get the appropriate spell target
+        private EntityManager GetSpellTarget(Card card, bool isUtilitySpell)
+        {
+            EntityManager target;
 
             if (isUtilitySpell)
             {
@@ -176,7 +174,7 @@ namespace EnemyInteraction.Managers.Execution
                 if (target == null)
                 {
                     Debug.LogError($"[CardPlayExecutor] Could not find any target for utility spell {card.CardName}");
-                    yield break;
+                    return null;
                 }
             }
             else
@@ -186,17 +184,11 @@ namespace EnemyInteraction.Managers.Execution
                 if (target == null)
                 {
                     Debug.LogError($"[CardPlayExecutor] Target was null for spell {card.CardName}");
-                    yield break;
+                    return null;
                 }
-
-                // Wait for any potential targets that might be fading out
-                // Only do this for non-utility spells that target entities
-                yield return WaitForTargetsFadeOut(card.CardType);
             }
 
-            // Now that we've waited, apply the spell effect in a try-catch block
-            // without any yields inside
-            ApplySpellEffect(card, target, isUtilitySpell);
+            return target;
         }
 
         private void ApplySpellEffect(Card card, EntityManager target, bool isUtilitySpell)
@@ -225,29 +217,13 @@ namespace EnemyInteraction.Managers.Execution
             // Small pause before applying the effect
             yield return new WaitForSeconds(_actionDelay * 0.5f);
 
-            EntityManager target = null;
             bool isUtilitySpell = _spellTargetSelector.ContainsOnlyDrawAndBloodpriceEffects(card.CardType);
+            EntityManager target = GetSpellTarget(card, isUtilitySpell);
 
-            if (isUtilitySpell)
-            {
-                target = _spellTargetSelector.GetDummyTarget();
-                if (target == null)
-                {
-                    Debug.LogError($"[CardPlayExecutor] Could not find any target for utility spell {card.CardName}");
-                    yield break;
-                }
-            }
-            else
-            {
-                target = _spellTargetSelector.GetBestSpellTarget(card.CardType);
-                if (target == null)
-                {
-                    Debug.LogError($"[CardPlayExecutor] Target was null for spell {card.CardName}");
-                    yield break;
-                }
-            }
+            if (target == null)
+                yield break;
 
-            // Now apply the spell effect without yields in the try-catch
+            // Now apply the spell effect
             ApplySpellEffect(card, target, isUtilitySpell);
         }
 

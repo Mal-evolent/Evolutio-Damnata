@@ -196,7 +196,7 @@ namespace EnemyInteraction.Evaluation
                     // So we need to evaluate it in context of enemy's health
 
                     // Value Blood Price less negatively when enemy has high health
-                    float healthPercentage = boardState.EnemyHealth / 100.0f;  // Assuming max health around 100
+                    float healthPercentage = boardState.EnemyHealth / boardState.EnemyMaxHealth;
 
                     // If enemy health is high, the penalty is reduced
                     if (healthPercentage > 0.7f)

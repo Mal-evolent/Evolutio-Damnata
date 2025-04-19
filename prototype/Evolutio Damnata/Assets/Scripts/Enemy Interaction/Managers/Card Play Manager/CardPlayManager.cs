@@ -34,7 +34,6 @@ namespace EnemyInteraction.Managers
         [SerializeField, Range(0.2f, 2f), Tooltip("Delay between enemy actions in seconds")]
         private float _actionDelay = 0.5f;
 
-        // REDUCE THESE VALUES
         [SerializeField, Range(0f, 1f)]
         private float _skipCardPlayChance = 0.15f;
 
@@ -42,7 +41,7 @@ namespace EnemyInteraction.Managers
         private float _cardHoldBoardAdvantageThreshold = 1.3f;
 
         [SerializeField, Range(0f, 1f)]
-        private float _futureValueMultiplier = 0.7f; 
+        private float _futureValueMultiplier = 0.7f;
 
         [Header("Strategic Gameplay Settings")]
         [SerializeField, Range(0f, 1f), Tooltip("Chance to stop playing cards when in advantageous position")]
@@ -87,7 +86,7 @@ namespace EnemyInteraction.Managers
 
         private Dictionary<GameObject, EntityManager> _entityCache;
 
-        // New components
+        // Component references
         private ICardEvaluator _cardEvaluator;
         private MonsterPositionSelector _monsterPositionSelector;
         private SpellTargetSelector _spellTargetSelector;
@@ -292,8 +291,12 @@ namespace EnemyInteraction.Managers
 
             // Get current board state for decision making
             var boardState = GetCurrentBoardState();
+            if (boardState == null)
+            {
+                yield break;
+            }
 
-            // Check if we should skip playing cards this turn
+            // Strategic decision making
             if (ShouldSkipCardPlay(playableCards, boardState))
             {
                 Debug.Log("[CardPlayManager] AI decided to hold cards for strategic reasons");
@@ -310,6 +313,7 @@ namespace EnemyInteraction.Managers
                 yield break;
             }
 
+            // Execute the card play strategy
             yield return _cardPlayExecutor.PlayCardsInOrder(cardsToPlay, enemyDeck, boardState);
 
             // Final delay after all cards are played
@@ -317,56 +321,37 @@ namespace EnemyInteraction.Managers
             Debug.Log("[CardPlayManager] Completed playing cards");
         }
 
-        /// <summary>
-        /// Determines if the AI should skip playing any cards this turn based on
-        /// strategic considerations of the board state and future potential.
-        /// </summary>
         private bool ShouldSkipCardPlay(List<Card> playableCards, BoardState boardState)
         {
-            // First, consider basic random chance
+            // Base chance check
             if (Random.value > _skipCardPlayChance)
                 return false;
 
             Debug.Log("[CardPlayManager] Considering whether to skip playing cards...");
 
-            // Skip if board state is unavailable
-            if (boardState == null)
-                return false;
-
-            // Calculate our board advantage
-            float enemyBoardAdvantage = boardState.EnemyBoardControl /
-                (boardState.PlayerBoardControl > 0 ? boardState.PlayerBoardControl : 1);
-
-            // Check if we have sufficient board advantage to consider skipping
+            // Calculate board advantage
+            float enemyBoardAdvantage = CalculateBoardAdvantage(boardState);
             bool hasBoardAdvantage = enemyBoardAdvantage >= _cardHoldBoardAdvantageThreshold;
 
-            // Check if we're in a defensive or late game position
+            // Game state checks
             bool isLateGame = boardState.TurnCount >= 5;
-            bool isDefensive = boardState.EnemyHealth < boardState.PlayerHealth;
             bool playerLowHealth = boardState.PlayerHealth <= _playerLowHealthThreshold;
 
-            // Don't skip if player is at critically low health - press the advantage
+            // Always press advantage when player is at low health
             if (playerLowHealth)
             {
                 Debug.Log("[CardPlayManager] Won't skip - player health is low, pressing advantage");
                 return false;
             }
 
-            // More likely to skip in early game if we have board advantage
-            if (!isLateGame && hasBoardAdvantage)
+            // Early game with board advantage - consider skipping
+            if (!isLateGame && hasBoardAdvantage && Random.value < 0.7f)
             {
-                // In early game with board advantage, high chance to skip
-                float skipChance = 0.7f;
-                bool shouldSkip = Random.value < skipChance;
-
-                if (shouldSkip)
-                {
-                    Debug.Log($"[CardPlayManager] Skipping card play - early game with board advantage of {enemyBoardAdvantage:F2}");
-                    return true;
-                }
+                Debug.Log($"[CardPlayManager] Skipping card play - early game with board advantage of {enemyBoardAdvantage:F2}");
+                return true;
             }
 
-            // Consider skipping if we see only low-value cards
+            // Skip if cards have low value but we have board advantage
             float averageCardValue = playableCards.Average(c => _cardEvaluator.EvaluateCardPlay(c, boardState));
             if (averageCardValue < _lowValueCardThreshold && hasBoardAdvantage)
             {
@@ -374,122 +359,140 @@ namespace EnemyInteraction.Managers
                 return true;
             }
 
-            // Always play cards in late game unless we have overwhelming advantage
+            // Late game strategy - almost always play cards
             if (isLateGame && enemyBoardAdvantage < 2.0f)
             {
                 Debug.Log("[CardPlayManager] Won't skip - late game requires playing available cards");
                 return false;
             }
 
-            // Consider card conservation based on deck size and hand quality
-            if (boardState.EnemyDeck != null && boardState.EnemyDeckSize < _lowDeckSizeThreshold)
+            // Deck conservation strategy
+            if (boardState.EnemyDeckSize < _lowDeckSizeThreshold)
             {
-                // If we're running low on cards, be more strategic about using them
                 Debug.Log("[CardPlayManager] Low on cards in deck, being more selective");
                 return Random.value < _lowDeckSizeConservationChance;
             }
 
-            Debug.Log("[CardPlayManager] Decided not to skip playing cards this turn");
             return false;
         }
 
-        /// <summary>
-        /// Gets the optimal subset of cards to play this turn, considering future value
-        /// </summary>
+        private float CalculateBoardAdvantage(BoardState boardState)
+        {
+            if (boardState.PlayerBoardControl <= 0)
+                return boardState.EnemyBoardControl > 0 ? 999f : 1f;
+
+            return boardState.EnemyBoardControl / boardState.PlayerBoardControl;
+        }
+
         private List<Card> GetOptimalCardsToPlay(List<Card> playableCards, BoardState boardState)
         {
-            // First, evaluate and rank all playable cards
-            var evaluatedCards = playableCards
-                .Select(card => new
-                {
-                    Card = card,
-                    Score = _cardEvaluator.EvaluateCardPlay(card, boardState),
-                    // Higher mana cost cards generally have higher strategic value
-                    FutureValue = card.CardType.ManaCost * _futureValueMultiplier *
-                                 (boardState.TurnCount < 3 ? _earlyGameExpensiveCardMultiplier : 1.0f)
-                })
-                .OrderByDescending(c => c.Score)
-                .ToList();
-
+            // Evaluate and rank cards
+            var evaluatedCards = EvaluateCards(playableCards, boardState);
             var selectedCards = new List<Card>();
             int remainingMana = _combatManager.EnemyMana;
 
             // Process cards in order of their value
             foreach (var cardData in evaluatedCards)
             {
-                // If we don't have enough mana for this card, skip it
+                // Skip if not enough mana
                 if (cardData.Card.CardType.ManaCost > remainingMana)
                     continue;
 
-                // For high-cost cards in early game, consider if they're worth playing now
-                bool isExpensiveCard = cardData.Card.CardType.ManaCost >= 4;
-                bool isEarlyGame = boardState.TurnCount <= 3;
+                // Strategic card holding logic
+                if (ShouldHoldCard(cardData, boardState))
+                    continue;
 
-                if (isExpensiveCard && isEarlyGame)
-                {
-                    // In early game, consider holding expensive cards for future turns if:
-                    // 1. Their immediate score isn't very high
-                    // 2. We have board advantage
-                    // 3. Random chance factor for decision variance
-
-                    float boardAdvantage = boardState.EnemyBoardControl /
-                        (boardState.PlayerBoardControl > 0 ? boardState.PlayerBoardControl : 1);
-
-                    if (boardAdvantage > _earlyStopBoardAdvantageThreshold &&
-                        cardData.Score < _highValueCardThreshold &&
-                        Random.value < _holdExpensiveCardChance)
-                    {
-                        Debug.Log($"[CardPlayManager] Holding expensive card '{cardData.Card.CardName}' for future turns");
-                        continue;
-                    }
-                }
-
-                // If a card has higher future value than current value and we're in a good position,
-                // consider holding it for later
-                if (cardData.FutureValue > cardData.Score * _futureToCurrentValueRatio &&
-                    boardState.EnemyBoardControl > boardState.PlayerBoardControl)
-                {
-                    // Apply randomness to the decision
-                    if (Random.value < _holdHighFutureValueChance)
-                    {
-                        Debug.Log($"[CardPlayManager] Holding card '{cardData.Card.CardName}' for higher future value");
-                        continue;
-                    }
-                }
-
-                // Add this card to our play selection and deduct its mana cost
+                // Add card to play list
                 selectedCards.Add(cardData.Card);
                 remainingMana -= cardData.Card.CardType.ManaCost;
 
-                // If we're out of mana, stop playing cards
+                // Stop if out of mana
                 if (remainingMana <= 0)
-                {
                     break;
-                }
 
-                // Only consider stopping after 2+ cards if:
-                // 1. The remaining cards have low value
-                // 2. We have a reasonable board advantage
-                if (selectedCards.Count >= 2)
-                {
-                    float boardAdvantage = boardState.EnemyBoardControl /
-                        (boardState.PlayerBoardControl > 0 ? boardState.PlayerBoardControl : 1);
-
-                    bool hasGoodAdvantage = boardAdvantage > _earlyStopBoardAdvantageThreshold;
-                    bool remainingCardsLowValue = evaluatedCards
-                        .Where(c => c.Card.CardType.ManaCost <= remainingMana)
-                        .All(c => c.Score < _lowValueCardThreshold);
-
-                    if (hasGoodAdvantage && remainingCardsLowValue && Random.value < _strategicStopChance)
-                    {
-                        Debug.Log("[CardPlayManager] Stopping card play with strategic advantage and low-value remaining cards");
-                        break;
-                    }
-                }
+                // Consider strategic stopping after playing multiple cards
+                if (ShouldStopPlaying(selectedCards, evaluatedCards, remainingMana, boardState))
+                    break;
             }
 
             Debug.Log($"[CardPlayManager] Selected {selectedCards.Count} cards to play out of {playableCards.Count} playable cards");
             return selectedCards;
+        }
+
+        private IEnumerable<CardEvaluation> EvaluateCards(List<Card> playableCards, BoardState boardState)
+        {
+            return playableCards
+                .Select(card => new CardEvaluation
+                {
+                    Card = card,
+                    Score = _cardEvaluator.EvaluateCardPlay(card, boardState),
+                    FutureValue = CalculateFutureValue(card, boardState)
+                })
+                .OrderByDescending(c => c.Score)
+                .ToList();
+        }
+
+        private float CalculateFutureValue(Card card, BoardState boardState)
+        {
+            // Higher mana cost cards generally have higher strategic future value
+            float baseMultiplier = boardState.TurnCount < 3 ? _earlyGameExpensiveCardMultiplier : 1.0f;
+            return card.CardType.ManaCost * _futureValueMultiplier * baseMultiplier;
+        }
+
+        private bool ShouldHoldCard(CardEvaluation cardData, BoardState boardState)
+        {
+            // Check for expensive card in early game
+            bool isExpensiveCard = cardData.Card.CardType.ManaCost >= 4;
+            bool isEarlyGame = boardState.TurnCount <= 3;
+
+            if (isExpensiveCard && isEarlyGame)
+            {
+                float boardAdvantage = CalculateBoardAdvantage(boardState);
+
+                if (boardAdvantage > _earlyStopBoardAdvantageThreshold &&
+                    cardData.Score < _highValueCardThreshold &&
+                    Random.value < _holdExpensiveCardChance)
+                {
+                    Debug.Log($"[CardPlayManager] Holding expensive card '{cardData.Card.CardName}' for future turns");
+                    return true;
+                }
+            }
+
+            // Check for card with high future value
+            if (cardData.FutureValue > cardData.Score * _futureToCurrentValueRatio &&
+                boardState.EnemyBoardControl > boardState.PlayerBoardControl &&
+                Random.value < _holdHighFutureValueChance)
+            {
+                Debug.Log($"[CardPlayManager] Holding card '{cardData.Card.CardName}' for higher future value");
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool ShouldStopPlaying(
+            List<Card> selectedCards,
+            IEnumerable<CardEvaluation> evaluatedCards,
+            int remainingMana,
+            BoardState boardState)
+        {
+            if (selectedCards.Count < 2)
+                return false;
+
+            float boardAdvantage = CalculateBoardAdvantage(boardState);
+            bool hasGoodAdvantage = boardAdvantage > _earlyStopBoardAdvantageThreshold;
+
+            bool remainingCardsLowValue = evaluatedCards
+                .Where(c => c.Card.CardType.ManaCost <= remainingMana)
+                .All(c => c.Score < _lowValueCardThreshold);
+
+            if (hasGoodAdvantage && remainingCardsLowValue && Random.value < _strategicStopChance)
+            {
+                Debug.Log("[CardPlayManager] Stopping card play with strategic advantage and low-value remaining cards");
+                return true;
+            }
+
+            return false;
         }
 
         private bool IsValidPlayState =>
@@ -514,40 +517,54 @@ namespace EnemyInteraction.Managers
             if (boardState == null)
             {
                 Debug.LogWarning("[CardPlayManager] Using fallback BoardState creation");
-                boardState = new BoardState
-                {
-                    EnemyMana = _combatManager.EnemyMana,
-                    TurnCount = _combatManager.TurnCount,
-                    EnemyHealth = _combatManager.EnemyHealth,
-                    PlayerHealth = _combatManager.PlayerHealth,
-                    EnemyMaxHealth = _combatManager.MaxHealth,
-                    PlayerMaxHealth = _combatManager.MaxHealth,
-                    EnemyMonsters = new List<EntityManager>(),
-                    PlayerMonsters = new List<EntityManager>(),
-                    CardAdvantage = 0,
-                    EnemyBoardControl = 0,
-                    PlayerBoardControl = 0
-                };
-
-                // Try to get entity collections if _spritePositioning is available
-                if (_spritePositioning != null)
-                {
-                    // Build minimal entity lists (without full caching logic)
-                    boardState.EnemyMonsters = _spritePositioning.EnemyEntities
-                        .Where(e => e != null)
-                        .Select(e => e.GetComponent<EntityManager>())
-                        .Where(e => e != null && e.placed && !e.dead && !e.IsFadingOut)
-                        .ToList();
-
-                    boardState.PlayerMonsters = _spritePositioning.PlayerEntities
-                        .Where(e => e != null)
-                        .Select(e => e.GetComponent<EntityManager>())
-                        .Where(e => e != null && e.placed && !e.dead && !e.IsFadingOut)
-                        .ToList();
-                }
+                boardState = CreateFallbackBoardState();
             }
 
             return boardState;
+        }
+
+        private BoardState CreateFallbackBoardState()
+        {
+            if (_combatManager == null) return null;
+
+            var boardState = new BoardState
+            {
+                EnemyMana = _combatManager.EnemyMana,
+                TurnCount = _combatManager.TurnCount,
+                EnemyHealth = _combatManager.EnemyHealth,
+                PlayerHealth = _combatManager.PlayerHealth,
+                EnemyMaxHealth = _combatManager.MaxHealth,
+                PlayerMaxHealth = _combatManager.MaxHealth,
+                EnemyMonsters = new List<EntityManager>(),
+                PlayerMonsters = new List<EntityManager>(),
+                CardAdvantage = 0,
+                EnemyBoardControl = 0,
+                PlayerBoardControl = 0
+            };
+
+            if (_spritePositioning != null)
+            {
+                boardState.EnemyMonsters = GetValidEntities(_spritePositioning.EnemyEntities);
+                boardState.PlayerMonsters = GetValidEntities(_spritePositioning.PlayerEntities);
+            }
+
+            return boardState;
+        }
+
+        private List<EntityManager> GetValidEntities(IEnumerable<GameObject> entities)
+        {
+            return entities
+                .Where(e => e != null)
+                .Select(e => e.GetComponent<EntityManager>())
+                .Where(e => e != null && e.placed && !e.dead && !e.IsFadingOut)
+                .ToList();
+        }
+
+        private class CardEvaluation
+        {
+            public Card Card { get; set; }
+            public float Score { get; set; }
+            public float FutureValue { get; set; }
         }
     }
 }

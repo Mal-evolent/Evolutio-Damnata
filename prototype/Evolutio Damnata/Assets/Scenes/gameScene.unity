@@ -5470,7 +5470,7 @@ MonoBehaviour:
   _futureToCurrentValueRatio: 0.7
   _maxInitializationAttempts: 30
   _initializationRetryDelay: 0.1
-  _lowDeckSizeThreshold: 2
+  _lowDeckSizeThreshold: 10
   _lowDeckSizeConservationChance: 0.1
 --- !u!1001 &1580362483
 PrefabInstance:

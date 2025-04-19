@@ -105,13 +105,11 @@ public class BoardState
 
         // Update mana
         EnemyMana = combatManager.EnemyMana;
+        PlayerMana = combatManager.PlayerMana;
 
         // Update card counts
         PlayerHandSize = combatManager.PlayerHandSize;
         EnemyHandSize = combatManager.EnemyHandSize;
-
-        //player mana
-        PlayerMana = combatManager.PlayerMana;
 
         // Update deck references if needed
         if (_playerDeck != combatManager.PlayerDeck || _enemyDeck != combatManager.EnemyDeck)
@@ -121,6 +119,7 @@ public class BoardState
     }
 
     // Calculate board control metrics
+    // NOTE: This could be moved to BoardStateEvaluator, but it's kept here for data model completeness
     public void UpdateBoardControlMetrics()
     {
         // Calculate total attack and health for player monsters
@@ -128,7 +127,7 @@ public class BoardState
         float playerHealthSum = 0f;
         foreach (var monster in PlayerMonsters)
         {
-            if (monster != null && !monster.dead && monster.placed)
+            if (IsEntityValid(monster))
             {
                 playerAttackSum += monster.GetAttack();
                 playerHealthSum += monster.GetHealth();
@@ -140,7 +139,7 @@ public class BoardState
         float enemyHealthSum = 0f;
         foreach (var monster in EnemyMonsters)
         {
-            if (monster != null && !monster.dead && monster.placed)
+            if (IsEntityValid(monster))
             {
                 enemyAttackSum += monster.GetAttack();
                 enemyHealthSum += monster.GetHealth();
@@ -187,22 +186,28 @@ public class BoardState
         return boardState;
     }
 
-    // Helper to get all monsters
+    // Helper utility method to check if an entity is valid
+    private static bool IsEntityValid(EntityManager entity)
+    {
+        return entity != null && !entity.dead && entity.placed && !entity.IsFadingOut;
+    }
+
+    // Helper to get all monsters (consolidated with IsEntityValid)
     public List<EntityManager> GetAllMonsters()
     {
         var allMonsters = new List<EntityManager>();
-        allMonsters.AddRange(PlayerMonsters.Where(m => m != null && !m.dead && m.placed));
-        allMonsters.AddRange(EnemyMonsters.Where(m => m != null && !m.dead && m.placed));
+        allMonsters.AddRange(PlayerMonsters.Where(IsEntityValid));
+        allMonsters.AddRange(EnemyMonsters.Where(IsEntityValid));
         return allMonsters;
     }
 
     // Calculate the estimated number of turns until game end
     public int EstimateRemainingTurns()
     {
-        float playerDamagePerTurn = PlayerMonsters.Where(m => m != null && !m.dead && m.placed)
+        float playerDamagePerTurn = PlayerMonsters.Where(IsEntityValid)
                                                 .Sum(m => m.GetAttack());
 
-        float enemyDamagePerTurn = EnemyMonsters.Where(m => m != null && !m.dead && m.placed)
+        float enemyDamagePerTurn = EnemyMonsters.Where(IsEntityValid)
                                                .Sum(m => m.GetAttack());
 
         // Avoid division by zero
@@ -221,8 +226,8 @@ public class BoardState
         return $"BoardState: Turn={TurnCount}, " +
                $"Phase={CurrentPhase}, " +
                $"Health={EnemyHealth}/{EnemyMaxHealth} vs {PlayerHealth}/{PlayerMaxHealth}, " +
-               $"Monsters={EnemyMonsters.Count(m => m != null && !m.dead && m.placed)} vs " +
-               $"{PlayerMonsters.Count(m => m != null && !m.dead && m.placed)}, " +
+               $"Monsters={EnemyMonsters.Count(IsEntityValid)} vs " +
+               $"{PlayerMonsters.Count(IsEntityValid)}, " +
                $"Control={EnemyBoardControl:F1} vs {PlayerBoardControl:F1}";
     }
 }

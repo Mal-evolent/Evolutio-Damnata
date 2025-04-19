@@ -10,13 +10,17 @@ namespace EnemyInteraction.Managers
     {
         private readonly ICombatManager _combatManager;
         private readonly BoardStateSettings _settings;
-        
+
         public BoardStateEvaluator(ICombatManager combatManager, BoardStateSettings settings)
         {
             _combatManager = combatManager;
             _settings = settings;
         }
-        
+
+        /// <summary>
+        /// Calculates the overall board control value for a set of entities
+        /// Focuses on the raw strength of units on the board, without card-specific evaluations
+        /// </summary>
         public float CalculateBoardControl(List<EntityManager> entities, bool isEnemy)
         {
             if (entities == null || entities.Count == 0) return 0f;
@@ -25,33 +29,31 @@ namespace EnemyInteraction.Managers
             float totalValue = 0f;
             int entityCount = entities.Count;
 
-            // Non-linear scaling with entity count
+            // Apply non-linear scaling with entity count
             float countMultiplier = Mathf.Sqrt(entityCount);
 
             foreach (var entity in entities)
             {
                 if (entity == null) continue;
 
-                // Calculate base value with attack weighted slightly higher
+                // Calculate base value of the entity's stats
                 float attackValue = entity.GetAttack() * 1.2f;
                 float healthValue = entity.GetHealth();
                 float baseValue = attackValue + healthValue;
 
-                // Apply keyword bonuses with enhanced valuation
+                // Apply keyword value multipliers - this is a board-wide evaluation
+                // rather than a card-specific one
                 float keywordValue = CalculateKeywordValue(entity);
 
                 // Health ratio influences entity value
                 float healthRatio = entity.GetHealth() / entity.GetMaxHealth();
                 float healthFactor = healthRatio < 0.5f ? 0.7f + (0.6f * healthRatio) : 1f;
 
-                // Remaining attacks consideration
+                // Consider available attacks
                 float attacksFactor = entity.GetRemainingAttacks() > 0 ? 1.2f : 1f;
 
-                // Apply turn order specific adjustments
-                float turnOrderFactor = CalculateTurnOrderValueFactor(entity, playerGoesFirstNextTurn, isEnemy);
-
-                // Combine all factors
-                float entityValue = baseValue * keywordValue * healthFactor * attacksFactor * turnOrderFactor;
+                // Combine all factors 
+                float entityValue = baseValue * keywordValue * healthFactor * attacksFactor;
                 totalValue += entityValue;
 
                 // Debug for significant entities
@@ -66,6 +68,11 @@ namespace EnemyInteraction.Managers
             return totalValue * countMultiplier;
         }
 
+        /// <summary>
+        /// Calculate the core value of keywords for a board entity - 
+        /// This evaluates the absolute contribution to board strength,
+        /// not the card-specific evaluation done by KeywordEvaluator
+        /// </summary>
         public float CalculateKeywordValue(EntityManager entity)
         {
             float multiplier = 1f;
@@ -108,41 +115,10 @@ namespace EnemyInteraction.Managers
             return multiplier;
         }
 
-        private float CalculateTurnOrderValueFactor(EntityManager entity, bool playerGoesFirstNextTurn, bool isEnemy)
-        {
-            // Determine if this entity will act first or second
-            bool entityGoesFirst = (isEnemy && !playerGoesFirstNextTurn) || (!isEnemy && playerGoesFirstNextTurn);
-            float modifier = 1f;
-
-            if (entityGoesFirst)
-            {
-                // Units that go first can leverage their attack immediately
-                modifier += 0.2f;
-
-                // Attack-focused keywords are more valuable when going first
-                if (entity.HasKeyword(Keywords.MonsterKeyword.Ranged))
-                    modifier += 0.15f;
-
-                if (entity.HasKeyword(Keywords.MonsterKeyword.Overwhelm))
-                    modifier += 0.2f;
-            }
-            else
-            {
-                // Units going second need survivability to be valuable
-                if (entity.GetHealth() > 5)
-                    modifier += 0.15f;
-
-                // Defensive keywords are more valuable when going second
-                if (entity.HasKeyword(Keywords.MonsterKeyword.Tough))
-                    modifier += 0.15f;
-
-                if (entity.HasKeyword(Keywords.MonsterKeyword.Taunt))
-                    modifier += 0.1f;
-            }
-
-            return modifier;
-        }
-        
+        /// <summary>
+        /// Applies tactical formation bonuses to board control
+        /// This evaluates synergies between units on the board
+        /// </summary>
         public void ApplyBoardPositioningFactors(BoardState state)
         {
             int enemyCount = state.EnemyMonsters.Count;
@@ -172,6 +148,10 @@ namespace EnemyInteraction.Managers
             }
         }
 
+        /// <summary>
+        /// Applies resource advantage factors to board control
+        /// This is unique to the overall board evaluation and doesn't duplicate card evaluations
+        /// </summary>
         public void ApplyResourceAdvantages(BoardState state)
         {
             if (state == null)
@@ -205,7 +185,6 @@ namespace EnemyInteraction.Managers
                 }
                 catch (System.Exception ex)
                 {
-                    // This provides better diagnostics than just catching NullReferenceException
                     Debug.LogWarning($"[BoardStateEvaluator] Error applying card advantage: {ex.Message}");
                 }
             }
@@ -226,8 +205,10 @@ namespace EnemyInteraction.Managers
             }
         }
 
-
-
+        /// <summary>
+        /// Applies health factors to the board state evaluation, focusing on
+        /// the general impact of health on gameplay rather than card-specific evaluations
+        /// </summary>
         public void ApplyHealthBasedFactors(BoardState state)
         {
             // Calculate health ratios
@@ -247,24 +228,20 @@ namespace EnemyInteraction.Managers
             {
                 // Late game - health becomes more critical
                 baseHealthFactor *= 1.5f;
-
-                // Even more critical at very low health
-                if (state.EnemyHealth < state.EnemyMaxHealth * 0.3f)
-                {
-                    baseHealthFactor *= 2.0f;
-                }
             }
 
-            // Apply the adjusted factor for health importance
+            // Store the health importance factor for use by other evaluators
             state.HealthImportanceFactor = baseHealthFactor;
 
             // Base health influence using the importance factor
             float healthFactor = _settings.HealthInfluenceFactor * baseHealthFactor;
 
+            // Add raw health values to board control, scaled by health factor
             state.EnemyBoardControl += state.EnemyHealth * healthFactor;
             state.PlayerBoardControl += state.PlayerHealth * healthFactor;
 
-            // Critical health thresholds
+            // Critical health thresholds - apply these to board control only,
+            // card evaluators will handle specific card evaluations
             if (enemyHealthRatio < _settings.CriticalHealthThreshold)
             {
                 float penalty = 0.2f * (1f - (enemyHealthRatio / _settings.CriticalHealthThreshold));
@@ -279,7 +256,7 @@ namespace EnemyInteraction.Managers
                 Debug.Log($"[BoardStateManager] Player at critical health ({playerHealthRatio:P0}), increasing enemy advantage by {bonus:P0}");
             }
 
-            // Lethal detection
+            // Lethal detection - this is a board-wide assessment
             float totalEnemyAttack = state.EnemyMonsters.Sum(e => e.GetAttack());
             if (totalEnemyAttack >= state.PlayerHealth && !state.IsNextTurnPlayerFirst)
             {
@@ -288,47 +265,34 @@ namespace EnemyInteraction.Managers
                 Debug.Log("[BoardStateManager] Enemy has potential lethal next turn - critical advantage");
             }
         }
-        
+
+        /// <summary>
+        /// Applies overall turn order influence to board control
+        /// Focuses on strategic board advantage, not card-specific evaluations
+        /// </summary>
         public void ApplyTurnOrderInfluence(BoardState state)
         {
-            // Strategic turn order assessment
+            // Apply basic turn order advantage/disadvantage
             if (!state.IsNextTurnPlayerFirst)
             {
-                // Enemy goes first next turn - assess if this creates opportunities
-                float potentialDamage = state.EnemyMonsters.Sum(e => e.GetAttack());
+                // Enemy goes first - apply a basic advantage factor
+                state.EnemyBoardControl *= 1.15f;
+                Debug.Log("[BoardStateManager] Enemy goes first next turn - applying basic turn advantage factor");
 
-                // If enemy can deal significant damage, this is a big advantage
+                // Only calculate lethal potential here, card-specific evaluations happen elsewhere
+                float potentialDamage = state.EnemyMonsters.Sum(e => e.GetAttack());
                 if (potentialDamage > state.PlayerHealth * 0.35f)
                 {
                     float advantage = Mathf.Min(0.25f, potentialDamage / state.PlayerHealth);
                     state.EnemyBoardControl *= (1f + advantage);
-                    Debug.Log($"[BoardStateManager] Enemy going first can deal {potentialDamage} damage ({(potentialDamage / state.PlayerHealth):P0} of player health)");
-                }
-                else
-                {
-                    // Standard first-turn advantage
-                    state.EnemyBoardControl *= 1.15f;
-                    Debug.Log("[BoardStateManager] Enemy goes first next turn - boosting EnemyBoardControl by 15%");
+                    Debug.Log($"[BoardStateManager] Enemy going first with lethal potential: {potentialDamage} damage");
                 }
             }
             else
             {
-                // Player goes first next turn - assess our vulnerability
-                bool hasThreatened = state.EnemyMonsters.Any(e =>
-                    e.HasKeyword(Keywords.MonsterKeyword.Taunt) && e.GetHealth() <= 3);
-
-                if (hasThreatened)
-                {
-                    // Key units are vulnerable
-                    state.EnemyBoardControl *= 0.85f;
-                    Debug.Log("[BoardStateManager] Player goes first next turn with vulnerable key units - reducing EnemyBoardControl by 15%");
-                }
-                else
-                {
-                    // Standard disadvantage when player goes first
-                    state.EnemyBoardControl *= 0.9f;
-                    Debug.Log("[BoardStateManager] Player goes first next turn - reducing EnemyBoardControl by 10%");
-                }
+                // Player goes first - apply a basic disadvantage factor
+                state.EnemyBoardControl *= 0.9f;
+                Debug.Log("[BoardStateManager] Player goes first next turn - applying basic turn disadvantage factor");
             }
         }
     }
