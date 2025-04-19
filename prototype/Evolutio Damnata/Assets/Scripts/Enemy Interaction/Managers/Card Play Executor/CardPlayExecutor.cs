@@ -148,6 +148,15 @@ namespace EnemyInteraction.Managers.Execution
                 return false;
             }
 
+            // Check if this is a heal card and the target is already at full health
+            if (card.CardType.EffectTypes != null &&
+                card.CardType.EffectTypes.Contains(SpellEffect.Heal) &&
+                Mathf.Approximately(target.GetHealth(), target.GetMaxHealth()))
+            {
+                Debug.Log($"[CardPlayExecutor] Target for heal spell {card.CardName} already has full health. Skipping to avoid wasting mana.");
+                return false;
+            }
+
             return true;
         }
 
