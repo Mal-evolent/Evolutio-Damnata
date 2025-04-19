@@ -95,12 +95,14 @@ namespace EnemyInteraction.Evaluation
 
             var evaluation = _effectEvaluations[effect];
             float score = evaluation.BaseScore;
+            float additionalScore = 0f; // Using additive bonus instead of multiplicative
 
             if (isOwnCard)
             {
+                // Stackable effects bonus (reduced from 1.4x multiplier)
                 if (evaluation.IsStackable && HasOngoingEffect(target, effect))
                 {
-                    score *= 1.4f;
+                    additionalScore += score * 0.25f;
                 }
 
                 if (evaluation.IsDamaging)
@@ -111,118 +113,131 @@ namespace EnemyInteraction.Evaluation
                         // Player health icon - prioritize if player health is low
                         if (healthIcon.IsPlayerIcon)
                         {
-                            // Significantly higher score for targeting player health icon when it's below 30%
                             float healthRatio = healthIcon.CurrentHealth / healthIcon.MaxHealth;
-                            if (healthRatio <= 0.3f)
-                                score *= 2.5f;
-                            else if (healthRatio <= 0.5f)
-                                score *= 1.8f;
 
-                            // Extra bonus in late game (turn 10+)
+                            // Cap the health-based bonus to avoid excessive prioritization
+                            if (healthRatio <= 0.3f)
+                                additionalScore += score * 0.6f; // Reduced from 2.5x
+                            else if (healthRatio <= 0.5f)
+                                additionalScore += score * 0.4f; // Reduced from 1.8x
+
+                            // Late game bonus (capped)
                             if (boardState.TurnCount >= 10)
-                                score *= 1.5f;
+                                additionalScore += score * 0.3f; // Reduced from 1.5x
                         }
                         // Own (enemy) health icon - don't target with damage
                         else
                         {
-                            score = 0f; // Don't damage our own health icon
+                            score = 0f;
                         }
                     }
-                    else
+                    else if (target != null)
                     {
                         // Normal entity damage evaluation
                         float damageRatio = target.GetHealth() / target.GetMaxHealth();
-                        if (damageRatio < 0.5f) score *= 1.3f;
+                        if (damageRatio < 0.5f)
+                            additionalScore += score * 0.2f; // Reduced from 1.3x
                     }
                 }
 
-                if (boardState.HealthAdvantage < 0)
+                // Non-damaging effects are slightly more valuable when at health disadvantage
+                if (boardState.HealthAdvantage < 0 && !evaluation.IsDamaging)
                 {
-                    if (!evaluation.IsDamaging) score *= 1.2f;
+                    additionalScore += score * 0.1f; // Reduced from 1.2x
                 }
 
                 // Special handling for Draw effect
                 if (effect == SpellEffect.Draw)
                 {
-                    // Higher value when hand is nearly empty
+                    float drawBonus = 0f;
                     int handSize = boardState.EnemyHandSize;
+
+                    // Hand size considerations - use additive bonuses instead of multipliers
                     if (handSize <= 1)
-                        score *= 2.0f;
+                        drawBonus += score * 0.5f; // Reduced from 2.0x
                     else if (handSize <= 2)
-                        score *= 1.5f;
+                        drawBonus += score * 0.3f; // Reduced from 1.5x
 
-                    // Lower value when hand is already full
-                    if (handSize >= 7)
-                        score *= 0.5f;
-
-                    // Higher value in early game to build card advantage
+                    // Early game bonus (capped)
                     if (boardState.TurnCount < 3)
-                        score *= 1.3f;
+                        drawBonus += score * 0.2f; // Reduced from 1.3x
 
-                    // Consider card advantage - more valuable when behind on cards
+                    // Card advantage bonus (normalized)
                     if (boardState.CardAdvantage < 0)
-                        score *= 1.0f + Math.Min(Math.Abs(boardState.CardAdvantage) * 0.1f, 0.5f);
+                    {
+                        float cardAdvantageBonus = Mathf.Min(Mathf.Abs(boardState.CardAdvantage) * 5f, 20f);
+                        drawBonus += cardAdvantageBonus;
+                    }
 
-                    // Consider mana availability - more valuable if we have mana to play drawn cards
+                    // Mana consideration (reduced)
                     if (boardState.EnemyMana >= 3)
-                        score *= 1.2f;
+                        drawBonus += 10f; // Fixed bonus instead of multiplier
 
-                    // Consider board state - more valuable when behind on board
+                    // Board control bonus (reduced)
                     if (boardState.BoardControlDifference < 0)
-                        score *= 1.2f;
+                        drawBonus += 10f; // Fixed bonus instead of multiplier
 
-                    // NEW: Check if we would overflow our hand with this card
+                    // Fix hand overflow calculation
                     if (cardData != null && cardData.DrawValue > 0)
                     {
-                        // Get available hand slots
-                        int maxHandSize = boardState.EnemyHandSize > 0 ? boardState.EnemyHandSize : boardState.EnemyHandSize;
+                        // Fix the bug in maxHandSize calculation
+                        int maxHandSize = 10; // Typical card game max hand size
                         int availableSlots = maxHandSize - boardState.EnemyHandSize;
 
-                        // If draw value exceeds available slots, apply a severe penalty
+                        // Severe penalty for overdrawing
                         if (cardData.DrawValue > availableSlots)
                         {
-                            score *= 0.2f; // Severe penalty
-                            Debug.Log($"[EffectEvaluator] Applied severe penalty to Draw card that would draw {cardData.DrawValue} cards with only {availableSlots} slots available");
+                            // Apply a severe, additive penalty instead of a multiplier
+                            drawBonus -= (cardData.DrawValue - availableSlots) * 20f;
+                            Debug.Log($"[EffectEvaluator] Applied draw overflow penalty: {(cardData.DrawValue - availableSlots) * -20f} for drawing {cardData.DrawValue} cards with only {availableSlots} slots");
                         }
                     }
 
-                    Debug.Log($"[EffectEvaluator] Draw effect score: {score} (hand size: {handSize}, card advantage: {boardState.CardAdvantage}, turn: {boardState.TurnCount})");
-                }
+                    // Add the capped draw bonus to score
+                    additionalScore += Mathf.Min(drawBonus, score * 0.8f);
 
+                    Debug.Log($"[EffectEvaluator] Draw effect: base={score}, bonus={additionalScore} (hand size: {handSize}, card advantage: {boardState.CardAdvantage})");
+                }
                 // Special handling for Blood Price effect
                 else if (effect == SpellEffect.Bloodprice)
                 {
-                    // Blood Price is usually part of a card with other positive effects
-                    // So we need to evaluate it in context of enemy's health
-
-                    // Value Blood Price less negatively when enemy has high health
                     float healthPercentage = boardState.EnemyHealth / boardState.EnemyMaxHealth;
+                    float bloodPriceModifier = 1.0f;
 
-                    // If enemy health is high, the penalty is reduced
+                    // Adjust the penalty based on health
                     if (healthPercentage > 0.7f)
-                        score *= 0.5f;  // Less negative (only half as bad)
+                        bloodPriceModifier = 0.7f;  // Less negative when health is high
                     else if (healthPercentage > 0.4f)
-                        score *= 0.8f;  // Somewhat less negative
+                        bloodPriceModifier = 0.9f;  // Slightly less negative
                     else if (healthPercentage < 0.2f)
-                        score *= 2.0f;  // Much more negative when at low health
+                        bloodPriceModifier = 1.5f;  // More negative when at low health
 
-                    // Consider the game state - Blood Price is more acceptable when winning
+                    // Health advantage consideration
                     if (boardState.HealthAdvantage > 10)
-                        score *= 0.7f;  // Less negative if we have health advantage
+                        bloodPriceModifier -= 0.2f;  // Less negative with health advantage
 
-                    // Blood Price is more risky in late game
+                    // Late game consideration
                     if (boardState.TurnCount > 8)
-                        score *= 1.2f;  // More negative in late game
+                        bloodPriceModifier += 0.1f;  // Slightly more negative in late game
 
-                    Debug.Log($"[EffectEvaluator] Blood Price effect score: {score} (health: {boardState.EnemyHealth}, health advantage: {boardState.HealthAdvantage})");
+                    // Apply the modifier to score directly, not as a multiplier
+                    score *= bloodPriceModifier;
+
+                    Debug.Log($"[EffectEvaluator] Blood Price score adjusted by {bloodPriceModifier} based on health and game state");
                 }
+
+                // Add the additional score instead of using multipliers
+                score += additionalScore;
             }
             else
             {
+                // Evaluating opponent's effects
                 score *= evaluation.IsPositive ? -1 : 1;
             }
 
-            return score;
+            // Apply a maximum cap to prevent extreme values
+            float scoreCap = evaluation.BaseScore * 3.0f;
+            return Mathf.Clamp(score, -scoreCap, scoreCap);
         }
 
         public EntityManager GetBestTargetForEffect(SpellEffect effect, bool isOwnCard, BoardState boardState)

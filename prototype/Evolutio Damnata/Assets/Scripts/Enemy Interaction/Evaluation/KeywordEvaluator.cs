@@ -74,25 +74,36 @@ namespace EnemyInteraction.Evaluation
 
             var evaluation = _keywordEvaluations[keyword];
             float score = evaluation.BaseScore;
+            float bonus = 0f;
 
             if (isOwnCard)
             {
                 if (boardState != null && boardState.HealthAdvantage < 0)
                 {
-                    if (evaluation.IsDefensive) score *= 1.5f;
-                    if (evaluation.IsOffensive) score *= 0.8f;
+                    // Use additive bonuses instead of multipliers
+                    if (evaluation.IsDefensive)
+                        bonus += score * 0.3f; // Reduced from 1.5x
+                    if (evaluation.IsOffensive)
+                        bonus -= score * 0.1f; // Less penalty than before
                 }
                 else
                 {
-                    if (evaluation.IsOffensive) score *= 1.3f;
+                    // Use additive bonuses for offensive keywords
+                    if (evaluation.IsOffensive)
+                        bonus += score * 0.2f; // Reduced from 1.3x
                 }
+
+                // Apply the bonus to the score
+                score += bonus;
             }
             else
             {
+                // Evaluating opponent's keywords
                 score *= evaluation.IsPositive ? -1 : 1;
             }
 
-            return score;
+            // Add a cap to prevent extreme values
+            return Mathf.Clamp(score, -evaluation.BaseScore * 2f, evaluation.BaseScore * 2f);
         }
 
         public float EvaluateKeywords(EntityManager attacker, EntityManager target)

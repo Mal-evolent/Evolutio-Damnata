@@ -70,10 +70,14 @@ namespace EnemyInteraction.Managers
                 }
             }
 
-            // Add randomness to simulate human decision making
-            score *= Random.Range(1f - _evaluationVariance, 1f + _evaluationVariance);
+            // Clamp the score to a reasonable range before adding variance
+            float clampedScore = Mathf.Clamp(score, -100f, 200f);
 
-            return score;
+            // Add randomness to simulate human decision making - use additive instead of multiplicative
+            float varianceAmount = Mathf.Min(Mathf.Abs(clampedScore) * _evaluationVariance, 20f);
+            float randomVariance = Random.Range(-varianceAmount, varianceAmount);
+
+            return clampedScore + randomVariance;
         }
         
         public float EvaluateTurnOrderConsiderations(EntityManager attacker, EntityManager target, BoardState boardState)
@@ -166,34 +170,37 @@ namespace EnemyInteraction.Managers
                 int potentialSplashKills = targetSideEntities.Count(e =>
                     e != target && !e.dead && !e.IsFadingOut && e.GetHealth() <= splashDamage);
 
-                // Add score based on potential splash damage value
-                score += splashDamage * splashTargets * 2.0f;
+                // Use balanced additive scoring instead of large multipliers
+                // Cap the splash damage value to avoid inflation
+                float splashDamageBonus = Mathf.Min(splashDamage * splashTargets * 0.8f, 30f);
+                score += splashDamageBonus;
 
-                // Add significant bonus for potential kills
-                score += potentialSplashKills * 40f;
+                // Cap the kill bonus to prevent score inflation with grouped targets
+                float killBonus = Mathf.Min(potentialSplashKills * 15f, 35f);
+                score += killBonus;
 
                 Debug.Log($"[TargetEvaluator] Evaluating Overwhelm: {splashTargets} splash targets, " +
-                          $"{potentialSplashKills} potential splash kills, adding {score} to score");
+                          $"{potentialSplashKills} potential splash kills, adding total {splashDamageBonus + killBonus} to score");
             }
 
             // Evaluate attacking against Tough defenders
             if (target.HasKeyword(Keywords.MonsterKeyword.Tough))
             {
                 // Tough reduces damage by half, making the target less attractive
-                score -= 20f;
+                score -= 15f; // Reduced penalty
 
                 float damageAfterTough = Mathf.Floor(attacker.GetAttack() / 2f);
                 if (damageAfterTough >= target.GetHealth())
                 {
-                    // We can still kill it despite Tough - high priority target
-                    score += 40f;
+                    // We can still kill it despite Tough - high priority target, but capped
+                    score += 25f; // Reduced from 40f
                     Debug.Log($"[TargetEvaluator] Can kill Tough entity {target.name} with {attacker.name}");
                 }
 
                 // If we have Overwhelm, targeting a Tough unit might still be good
                 if (attacker.HasKeyword(Keywords.MonsterKeyword.Overwhelm))
                 {
-                    score += 15f;
+                    score += 10f; // Reduced from 15f
                     Debug.Log($"[TargetEvaluator] Overwhelm attack against Tough target still valuable for splash");
                 }
             }
@@ -202,12 +209,12 @@ namespace EnemyInteraction.Managers
             if (attacker.HasKeyword(Keywords.MonsterKeyword.Tough))
             {
                 // Tough attackers take less counter damage
-                score += 15f;
+                score += 10f; // Reduced from 15f
 
                 // Extra value when attacking a high-attack target
                 if (target.GetAttack() >= 4)
                 {
-                    score += 20f;
+                    score += 15f; // Reduced from 20f
                     Debug.Log($"[TargetEvaluator] Using Tough attacker {attacker.name} against high-attack target {target.name}");
                 }
 
@@ -215,12 +222,13 @@ namespace EnemyInteraction.Managers
                 float counterDamage = Mathf.Floor(target.GetAttack() / 2f);
                 if (counterDamage < attacker.GetHealth())
                 {
-                    score += 30f;
+                    score += 20f; // Reduced from 30f
                     Debug.Log($"[TargetEvaluator] Tough attacker {attacker.name} will survive counter attack");
                 }
             }
 
-            return score;
+            // Apply a global cap to prevent extreme values from keyword interactions
+            return Mathf.Clamp(score, -60f, 60f);
         }
     }
 }

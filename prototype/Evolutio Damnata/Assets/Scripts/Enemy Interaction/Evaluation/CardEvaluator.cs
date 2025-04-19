@@ -48,15 +48,26 @@ namespace EnemyInteraction.Managers.Evaluation
 
         public float ApplyDecisionVariance(float baseScore)
         {
-            // Occasionally make suboptimal choices
+            float result = baseScore;
+
+            // Occasionally make suboptimal choices with a fixed penalty instead of percentage
             if (Random.value < _suboptimalPlayChance)
             {
-                baseScore *= Random.Range(0.5f, 0.8f);
-                Debug.Log("[AI] Making suboptimal play for variety");
+                // Apply a fixed penalty instead of a multiplier
+                float penalty = Mathf.Min(baseScore * 0.3f, 30f);
+                result -= penalty;
+                Debug.Log($"[AI] Making suboptimal play: reducing score by {penalty:F1}");
             }
 
-            // Add small random variance to scores
-            return baseScore * Random.Range(1f - _evaluationVariance, 1f + _evaluationVariance);
+            // Add variance as a small additive bonus/penalty instead of a multiplier
+            float variance = baseScore * _evaluationVariance;
+            float randomVariance = Random.Range(-variance, variance);
+
+            // Cap the maximum variance to prevent extreme values
+            float cappedVariance = Mathf.Clamp(randomVariance, -20f, 20f);
+            result += cappedVariance;
+
+            return result;
         }
 
         public List<Card> GetPlayableCards(IEnumerable<Card> hand)

@@ -64,7 +64,7 @@ namespace EnemyInteraction.Managers.Evaluation
         private void EvaluateToughKeyword(bool hasTough, Card card, BoardState boardState, ref float score)
         {
             if (!hasTough) return;
-            
+
             if (boardState.HealthAdvantage < 0)
             {
                 // When at health disadvantage, tough units help us stabilize
@@ -97,80 +97,96 @@ namespace EnemyInteraction.Managers.Evaluation
         private void EvaluateOverwhelmKeyword(bool hasOverwhelm, Card card, BoardState boardState, ref float score)
         {
             if (!hasOverwhelm) return;
-            
+
+            float overwhelmBonus = 0f;
+
+            // Limit health advantage bonus
             if (boardState.HealthAdvantage > 0)
             {
-                // When already ahead, Overwhelm helps close the game faster
-                score += 30f;
+                overwhelmBonus += 15f; // Reduced from 30f
             }
 
-            // High attack is more valuable with Overwhelm
+            // Cap the high attack bonus
             if (card.CardType.AttackPower >= 4)
             {
-                score += card.CardType.AttackPower * 2.5f;
+                // Use a fixed bonus instead of a multiplier
+                overwhelmBonus += 15f + Mathf.Min(card.CardType.AttackPower * 0.8f, 15f); // Capped at +30 total
             }
 
-            // Check if player has lots of low-health units that Overwhelm would be good against
+            // Low health units bonus (reduced)
             bool playerHasLowHealthUnits = boardState.PlayerMonsters != null &&
                                          boardState.PlayerMonsters.Any(m => m.GetHealth() <= 2);
             if (playerHasLowHealthUnits)
             {
-                score += 25f;
-                Debug.Log($"[MonsterCardEvaluator] Prioritizing Overwhelm unit {card.CardName} against low-health defenders");
+                overwhelmBonus += 15f; // Reduced from 25f
+                Debug.Log($"[MonsterCardEvaluator] Overwhelm unit {card.CardName} effective against low-health defenders");
             }
 
-            // Overwhelm is extremely valuable when player is low on health
+            // Low player health bonus (reduced)
             if (boardState.PlayerHealth <= 10)
             {
-                score += 40f;
-                Debug.Log($"[MonsterCardEvaluator] Prioritizing Overwhelm unit {card.CardName} for potential lethal damage");
+                overwhelmBonus += 20f; // Reduced from 40f
+                Debug.Log($"[MonsterCardEvaluator] Overwhelm unit {card.CardName} valuable for potential lethal damage");
             }
 
-            // Turn order consideration for Overwhelm
+            // Turn order bonus (reduced)
             if (!boardState.IsNextTurnPlayerFirst)
             {
-                // If we go first next turn, Overwhelm units can follow up with another attack
-                score += 30f;
-                Debug.Log($"[MonsterCardEvaluator] Prioritizing Overwhelm unit {card.CardName} for consecutive attacks next turn");
+                overwhelmBonus += 15f; // Reduced from 30f
+                Debug.Log($"[MonsterCardEvaluator] Overwhelm unit {card.CardName} valuable for consecutive attacks next turn");
             }
 
-            EvaluateSplashDamage(card, boardState, ref score);
+            // Add splash damage evaluation with capped values
+            float splashBonus = EvaluateSplashDamageBalanced(card, boardState);
+            overwhelmBonus += splashBonus;
+
+            // Cap the total Overwhelm bonus to avoid extreme values
+            float cappedBonus = Mathf.Min(overwhelmBonus, 60f);
+            score += cappedBonus;
+
+            if (cappedBonus < overwhelmBonus)
+            {
+                Debug.Log($"[MonsterCardEvaluator] Capped Overwhelm bonus from {overwhelmBonus} to {cappedBonus}");
+            }
         }
 
-        private void EvaluateSplashDamage(Card card, BoardState boardState, ref float score)
+        // New balanced splash damage evaluation method
+        private float EvaluateSplashDamageBalanced(Card card, BoardState boardState)
         {
-            if (boardState.PlayerMonsters == null || boardState.PlayerMonsters.Count == 0) return;
-            
-            // Estimate splash damage (assuming splash is 50% of attack)
+            if (boardState.PlayerMonsters == null || boardState.PlayerMonsters.Count == 0)
+                return 0f;
+
+            float splashBonus = 0f;
             float splashDamage = card.CardType.AttackPower * 0.5f;
 
-            // Count how many units would die to splash damage
-            int potentialSplashKills = boardState.PlayerMonsters.Count(m =>
-                m.GetHealth() <= splashDamage);
-
-            // Value multi-kill potential highly
+            // Count splash kill potential (with reduced value)
+            int potentialSplashKills = boardState.PlayerMonsters.Count(m => m.GetHealth() <= splashDamage);
             if (potentialSplashKills > 0)
             {
-                float splashKillBonus = potentialSplashKills * 20f;
-                score += splashKillBonus;
-                Debug.Log($"[MonsterCardEvaluator] Overwhelm unit {card.CardName} could kill {potentialSplashKills} units with splash damage! Adding {splashKillBonus} to score.");
+                // Cap the bonus per kill and the total bonus
+                float killBonus = Mathf.Min(potentialSplashKills * 10f, 25f);
+                splashBonus += killBonus;
+                Debug.Log($"[MonsterCardEvaluator] Overwhelm unit could kill {potentialSplashKills} units with splash damage, adding {killBonus} bonus");
             }
 
-            // Additional bonus if there are clustered low-health units (even if they won't die)
+            // Bonus for multiple low health units (reduced)
             int lowHealthUnits = boardState.PlayerMonsters.Count(m => m.GetHealth() <= splashDamage * 2);
             if (lowHealthUnits >= 2)
             {
-                float damageEfficiencyBonus = lowHealthUnits * 10f;
-                score += damageEfficiencyBonus;
-                Debug.Log($"[MonsterCardEvaluator] Overwhelm unit {card.CardName} effective against {lowHealthUnits} clustered low-health units. Adding {damageEfficiencyBonus} to score.");
+                // Cap the bonus for low health units
+                float healthBonus = Mathf.Min(lowHealthUnits * 5f, 15f);
+                splashBonus += healthBonus;
+                Debug.Log($"[MonsterCardEvaluator] Overwhelm unit effective against {lowHealthUnits} low-health units, adding {healthBonus} bonus");
             }
 
-            // Consider splash value against combinations of units and player health
+            // Strategic bonus for splash potential + player damage (reduced)
             if (boardState.PlayerHealth <= splashDamage * 2 && boardState.PlayerMonsters.Count >= 1)
             {
-                score += 50f;
-                Debug.Log($"[MonsterCardEvaluator] Overwhelm unit {card.CardName} could damage both units AND player with low health! Major strategic advantage.");
+                splashBonus += 20f; // Reduced from 50f
+                Debug.Log($"[MonsterCardEvaluator] Overwhelm unit can damage both units AND player with low health");
             }
+
+            return splashBonus;
         }
     }
 }
