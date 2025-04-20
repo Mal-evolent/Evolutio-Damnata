@@ -1903,7 +1903,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   dungeonRooms:
   - {fileID: 21300000, guid: 1aea5d2e17239ca44998ebd240f812c9, type: 3}
-  - {fileID: 21300000, guid: c612fa3b86974485e8605df19d6f8650, type: 3}
   monsters: []
   wizards: []
 --- !u!4 &671977324
