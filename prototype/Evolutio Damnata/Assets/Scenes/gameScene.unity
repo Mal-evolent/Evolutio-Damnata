@@ -2037,6 +2037,10 @@ MonoBehaviour:
   healthBar: {fileID: 0}
   damageVisualizer: {fileID: 389717233}
   damageNumberPrefab: {fileID: 7701005947219011525, guid: a68dba72d8724e94989227a650a79328, type: 3}
+  attackStatImage: {fileID: 0}
+  attackStatText: {fileID: 0}
+  defenceStatImage: {fileID: 0}
+  defenceStatText: {fileID: 0}
   allowedAttacks: 0
 --- !u!1 &825410029
 GameObject:
@@ -2280,6 +2284,10 @@ MonoBehaviour:
   healthBar: {fileID: 0}
   damageVisualizer: {fileID: 389717233}
   damageNumberPrefab: {fileID: 7701005947219011525, guid: a68dba72d8724e94989227a650a79328, type: 3}
+  attackStatImage: {fileID: 0}
+  attackStatText: {fileID: 0}
+  defenceStatImage: {fileID: 0}
+  defenceStatText: {fileID: 0}
   allowedAttacks: 0
 --- !u!1 &1011744913
 GameObject:
@@ -4120,6 +4128,10 @@ MonoBehaviour:
   healthBar: {fileID: 6675986941918603225, guid: 13811d77f45b76e46a27b229ca045f5e, type: 3}
   damageVisualizer: {fileID: 389717233}
   damageNumberPrefab: {fileID: 7701005947219011525, guid: a68dba72d8724e94989227a650a79328, type: 3}
+  attackStatImage: {fileID: 0}
+  attackStatText: {fileID: 0}
+  defenceStatImage: {fileID: 0}
+  defenceStatText: {fileID: 0}
   allowedAttacks: 1
 --- !u!1 &1187307910
 GameObject:

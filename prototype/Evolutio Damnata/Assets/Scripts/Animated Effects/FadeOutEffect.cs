@@ -11,6 +11,9 @@ public class FadeOutEffect : MonoBehaviour
         Slider healthBar = target.GetComponentInChildren<Slider>();
         Image healthBarImage = healthBar != null ? healthBar.GetComponentInChildren<Image>() : null;
 
+        // Get the EntityManager component
+        EntityManager entityManager = target.GetComponent<EntityManager>();
+
         Debug.Log($"Starting FadeOutAndDeactivate for {target.name}");
 
         if (spriteRenderer == null && uiImage == null && healthBarImage == null)
@@ -62,9 +65,14 @@ public class FadeOutEffect : MonoBehaviour
             healthBar.gameObject.SetActive(false);
         }
 
+        if (entityManager != null)
+        {
+            entityManager.toggleUIStatStates(false);
+        }
+
         target.SetActive(false);
         Debug.Log($"FadeOutAndDeactivate completed for {target.name}");
 
-        onComplete?.Invoke();
+        onComplete?.Invoke(); 
     }
 }

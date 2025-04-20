@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 using System.Resources;
+using TMPro;
 
 public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 {
@@ -34,7 +35,10 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     [SerializeField] private Slider healthBar;
     [SerializeField] private DamageVisualizer damageVisualizer;
     [SerializeField] private GameObject damageNumberPrefab;
-
+    [SerializeField] private Image attackStatImage;
+    [SerializeField] private TMP_Text attackStatText;
+    [SerializeField] private Image defenceStatImage;
+    [SerializeField] private TMP_Text defenceStatText;
     [Header("Attack Settings")]
     [SerializeField] private int allowedAttacks = 1;
     private int remainingAttacks;
@@ -132,6 +136,8 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
             dead = false;
             health = maxHealth;
             UpdateHealthUI();
+            GetUIStats();
+            toggleUIStatStates(true);
         }
     }
     #endregion
@@ -170,7 +176,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         lastDamageTaken = damageAmount;
         health = Mathf.Clamp(health - damageAmount, 0, maxHealth);
         UpdateHealthUI();
-
+        UpdateUIStats();
         ShowDamageNumber(damageAmount);
 
         if (health <= 0) Die();
@@ -182,6 +188,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 
         health = Mathf.Min(health + healAmount, maxHealth);
         UpdateHealthUI();
+        UpdateUIStats();
         ShowHealingNumber(healAmount);
     }
 
@@ -357,6 +364,95 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     public bool HasKeyword(Keywords.MonsterKeyword keyword)
     {
         return _cardData != null && _cardData.Keywords != null && _cardData.Keywords.Contains(keyword);
+    }
+
+    private void GetUIStats()
+    {
+        // Early return if this is a HealthIconManager (which doesn't have UI stat components)
+        if (this is HealthIconManager)
+            return;
+
+        if (attackStatImage != null)
+        {
+            attackStatText = attackStatImage.GetComponentInChildren<TMP_Text>();
+
+            // Flip text for enemy monsters by inverting X scale only
+            if (monsterType == MonsterType.Enemy && attackStatText != null)
+            {
+                // Preserve the original Y and Z scale values
+                Vector3 currentScale = attackStatText.transform.localScale;
+                attackStatText.transform.localScale = new Vector3(-1 * Mathf.Abs(currentScale.x), currentScale.y, currentScale.z);
+            }
+        }
+        else
+        {
+            Debug.LogError("Attack stat image not found!");
+        }
+
+        if (defenceStatImage != null)
+        {
+            defenceStatText = defenceStatImage.GetComponentInChildren<TMP_Text>();
+
+            // Flip text for enemy monsters by inverting X scale only
+            if (monsterType == MonsterType.Enemy && defenceStatText != null)
+            {
+                // Preserve the original Y and Z scale values
+                Vector3 currentScale = defenceStatText.transform.localScale;
+                defenceStatText.transform.localScale = new Vector3(-1 * Mathf.Abs(currentScale.x), currentScale.y, currentScale.z);
+            }
+        }
+        else
+        {
+            Debug.LogError("Defence stat image not found!");
+        }
+
+        UpdateUIStats();
+    }
+
+    private void UpdateUIStats()
+    {
+        // Early return if this is a HealthIconManager (which doesn't have UI stat components)
+        if (this is HealthIconManager)
+            return;
+
+        if (attackStatText != null)
+        {
+            attackStatText.text = atkDamage.ToString();
+        }
+
+        if (defenceStatText != null)
+        {
+            defenceStatText.text = health.ToString();
+        }
+        else
+        {
+            Debug.LogError("Defence stat text not found!");
+        }
+    }
+
+    public void toggleUIStatStates(bool state)
+    {
+        // Early return if this is a HealthIconManager (which doesn't have UI stat components)
+        if (this is HealthIconManager)
+            return;
+
+        if (attackStatImage != null)
+        {
+            attackStatImage.gameObject.SetActive(state);
+        }
+        else
+        {
+            Debug.LogError("Attack stat image not found!");
+        }
+
+        if (defenceStatImage != null)
+        {
+            defenceStatImage.gameObject.SetActive(state);
+        }
+        else
+        {
+            Debug.LogError("Defence stat image not found!");
+        }
     }
     #endregion
 }
