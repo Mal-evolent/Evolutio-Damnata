@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 using EnemyInteraction.Interfaces;
@@ -11,16 +11,25 @@ namespace EnemyInteraction.Managers
     {
         [SerializeField, Range(0f, 1f), Tooltip("Chance to make suboptimal decisions")]
         private float _decisionVariance = 0.10f;
-        
+
         [SerializeField, Range(0f, 0.2f), Tooltip("Chance to randomize attack order")]
         private float _attackOrderRandomizationChance = 0.10f;
-        
+
         [SerializeField, Tooltip("Health difference to switch strategies")]
         private float _healthThresholdForAggro = 8f;
-        
+
         [SerializeField, Tooltip("Turn count to become more aggressive")]
         private int _aggressiveTurnThreshold = 4;
-        
+
+        [SerializeField, Tooltip("Whether to avoid losing the last monster")]
+        private bool _avoidLosingLastMonster = true;
+
+        [SerializeField, Range(0f, 0.3f), Tooltip("Chance to ignore last monster protection")]
+        private float _lastMonsterIgnoreChance = 0.15f;
+
+        [SerializeField, Range(1f, 10f), Tooltip("Min value ratio for beneficial last monster trade")]
+        private float _valuableTradeRatio = 2.0f;
+
         private ITargetEvaluator _targetEvaluator;
         private IEntityCacheManager _entityCacheManager;
 
@@ -132,6 +141,14 @@ namespace EnemyInteraction.Managers
             bool playerLowHealth = boardState.PlayerHealth <= 15;
             bool enemyNextTurn = !boardState.IsNextTurnPlayerFirst;
 
+            // If we have only one monster, be more defensive generally, but not always
+            bool hasOnlyOneMonster = CountActiveEnemyMonsters() <= 1;
+            if (hasOnlyOneMonster && Random.value > 0.25f) // 75% chance to be defensive with one monster
+            {
+                Debug.Log("[AttackStrategyManager] Only one monster on field - adopting defensive strategy");
+                return StrategicMode.Defensive;
+            }
+
             // If we go first next turn, we can be more aggressive
             if (enemyNextTurn)
             {
@@ -161,6 +178,21 @@ namespace EnemyInteraction.Managers
         {
             if (attacker == null || playerHealthIcon == null)
                 return false;
+
+            // Occasionally make a mistake by ignoring last monster protection
+            if (Random.value < _lastMonsterIgnoreChance)
+            {
+                Debug.Log("[AttackStrategyManager] Making human-like mistake - ignoring last monster protection");
+                return AIUtilities.CanTargetHealthIcon(playerEntities);
+            }
+
+            // If this is our only monster, be more cautious about direct health attacks
+            if (_avoidLosingLastMonster && IsLastMonster(attacker) &&
+                playerHealthIcon.GetHealth() > attacker.GetAttack() * 1.5f)
+            {
+                Debug.Log("[AttackStrategyManager] Avoiding direct health attack with our only monster");
+                return false;
+            }
 
             // Consider turn order for direct health attacks
             bool playerGoesFirstNextTurn = boardState != null && boardState.IsNextTurnPlayerFirst;
@@ -240,6 +272,17 @@ namespace EnemyInteraction.Managers
             if (validTargets.Count == 1)
                 return validTargets[0];
 
+            // Check if this is our only monster and we would die from counterattack
+            bool isLastMonster = _avoidLosingLastMonster && IsLastMonster(attacker);
+
+            // Chance to ignore last monster protection (simulate human error)
+            bool ignoreLastMonsterProtection = Random.value < _lastMonsterIgnoreChance;
+            if (ignoreLastMonsterProtection && isLastMonster)
+            {
+                Debug.Log("[AttackStrategyManager] Occasionally ignoring last monster protection (simulating human error)");
+                isLastMonster = false;
+            }
+
             var targetScores = new Dictionary<EntityManager, float>();
             foreach (var target in validTargets)
             {
@@ -247,7 +290,35 @@ namespace EnemyInteraction.Managers
                 {
                     float score = _targetEvaluator.EvaluateTarget(attacker, target, boardState, mode);
 
-                    // NEW: Apply turn order considerations to target selection
+                    // If this is our only monster, consider preventing its death, but allow valuable trades
+                    if (isLastMonster)
+                    {
+                        // Check if the monster would die from counterattack
+                        bool wouldDieFromCounterattack =
+                            attacker.GetHealth() <= target.GetAttack() &&
+                            !attacker.HasKeyword(Keywords.MonsterKeyword.Ranged);
+
+                        if (wouldDieFromCounterattack)
+                        {
+                            // Check if this would be a valuable trade using the new gradual system
+                            bool isValuableTrade = IsValuableTrade(attacker, target, boardState);
+
+                            if (isValuableTrade)
+                            {
+                                // This is a good trade even for our last monster
+                                score += 50f;
+                                Debug.Log($"[AttackStrategyManager] Allowing valuable trade: {attacker.name} for {target.name}");
+                            }
+                            else
+                            {
+                                // Not valuable enough to sacrifice our last monster
+                                score -= 1000f;
+                                Debug.Log($"[AttackStrategyManager] Avoiding attacking {target.name} with our only monster - not worth the trade");
+                            }
+                        }
+                    }
+
+                    // Apply turn order considerations to target selection
                     if (boardState != null)
                     {
                         // If player goes first next turn
@@ -256,8 +327,25 @@ namespace EnemyInteraction.Managers
                             // Prioritize killing high-attack targets that could harm us next turn
                             if (target.GetAttack() >= 4 && target.GetHealth() <= attacker.GetAttack())
                             {
-                                score += 40f;
-                                Debug.Log($"[AttackStrategyManager] Prioritizing killing {target.name} before player's next turn");
+                                // If this is our only monster, be more cautious about trades unless it's valuable
+                                if (isLastMonster && attacker.GetHealth() <= target.GetAttack())
+                                {
+                                    if (IsValuableTrade(attacker, target, boardState))
+                                    {
+                                        // It's worth trading our last monster for this target
+                                        score += 30f;
+                                        Debug.Log($"[AttackStrategyManager] Worth trading our last monster to remove {target.name}");
+                                    }
+                                    else
+                                    {
+                                        score -= 30f; // Reduce priority of trading our only monster
+                                    }
+                                }
+                                else
+                                {
+                                    score += 40f;
+                                    Debug.Log($"[AttackStrategyManager] Prioritizing killing {target.name} before player's next turn");
+                                }
                             }
                             else if (target.GetAttack() >= 4 && target.GetHealth() > attacker.GetAttack())
                             {
@@ -270,7 +358,22 @@ namespace EnemyInteraction.Managers
                             // Slightly reduce priority on killing targets as we'll attack again soon
                             if (target.GetHealth() <= attacker.GetAttack())
                             {
-                                score += 20f;
+                                // If this is our only monster, still be cautious about trades unless valuable
+                                if (isLastMonster && attacker.GetHealth() <= target.GetAttack())
+                                {
+                                    if (IsValuableTrade(attacker, target, boardState))
+                                    {
+                                        score += 20f; // Valuable trade is still good even with our last monster
+                                    }
+                                    else
+                                    {
+                                        score -= 10f; // Less penalty because we'll go first next
+                                    }
+                                }
+                                else
+                                {
+                                    score += 20f;
+                                }
                             }
 
                             // Prioritize damaging high-health targets for next turn
@@ -281,6 +384,14 @@ namespace EnemyInteraction.Managers
                                 Debug.Log($"[AttackStrategyManager] Damaging {target.name} to finish next turn when we go first");
                             }
                         }
+                    }
+
+                    // Special case: if attacking this target would clear the board, consider it highly
+                    if (IsLastMonster(attacker) && WouldClearBoard(attacker, target, validTargets))
+                    {
+                        // If no monsters would remain after this trade, it could be advantageous
+                        score += 200f;
+                        Debug.Log($"[AttackStrategyManager] Trading last monster with {target.name} would clear the board - this is strategically valuable");
                     }
 
                     targetScores[target] = score;
@@ -296,13 +407,182 @@ namespace EnemyInteraction.Managers
             if (sortedTargets.Count == 0)
                 return null;
 
+            // Add human-like error by sometimes selecting a suboptimal target
             if (ShouldMakeSuboptimalDecision() && sortedTargets.Count > 1)
             {
                 int randomIndex = Random.Range(1, Mathf.Min(sortedTargets.Count, 3));
+                Debug.Log($"[AttackStrategyManager] Making suboptimal choice (human error simulation)");
                 return sortedTargets[randomIndex].Key;
             }
 
             return sortedTargets[0].Key;
+        }
+
+        // Helper method to determine if a trade is valuable enough to sacrifice our last monster
+        private bool IsValuableTrade(EntityManager attacker, EntityManager target, BoardState boardState = null)
+        {
+            // Calculate trade value based on stats and keywords
+            float attackerValue = CalculateEntityValue(attacker);
+            float targetValue = CalculateEntityValue(target);
+
+            // Calculate value ratio (target value / attacker value)
+            float valueRatio = targetValue / attackerValue;
+
+            // Special condition: High threat targets (with attack ≥ 6) are worth trading for
+            bool isHighThreatTarget = target.GetAttack() >= 6;
+            if (isHighThreatTarget)
+            {
+                Debug.Log($"[AttackStrategyManager] High threat target ({target.name} with {target.GetAttack()} attack) - worth trading for regardless of value ratio");
+                return true;
+            }
+
+            // Start with base acceptance threshold - less strict than the flat 2.0x
+            float acceptableRatio = 1.3f; // Base minimum ratio (instead of flat 2.0)
+
+            // Adjust based on board state if available
+            if (boardState != null)
+            {
+                // Calculate board advantage
+                float boardAdvantage = boardState.EnemyBoardControl / Mathf.Max(1f, boardState.PlayerBoardControl);
+
+                // 1. When we have strong board advantage, be more selective with trades
+                if (boardAdvantage > 1.5f)
+                {
+                    acceptableRatio += 0.3f; // Require better trades when ahead
+                    Debug.Log($"[AttackStrategyManager] Strong board advantage ({boardAdvantage:F2}x) - requiring better trades (+0.3)");
+                }
+                // When slightly ahead, be a bit more selective
+                else if (boardAdvantage > 1.2f)
+                {
+                    acceptableRatio += 0.15f;
+                    Debug.Log($"[AttackStrategyManager] Slight board advantage ({boardAdvantage:F2}x) - requiring somewhat better trades (+0.15)");
+                }
+
+                // 2. When behind, be more willing to trade
+                else if (boardAdvantage < 0.8f)
+                {
+                    acceptableRatio -= 0.2f; // Accept worse trades when behind
+                    Debug.Log($"[AttackStrategyManager] Board disadvantage ({boardAdvantage:F2}x) - accepting less favorable trades (-0.2)");
+                }
+
+                // 3. Turn count consideration - more aggressive in late game
+                if (boardState.TurnCount >= _aggressiveTurnThreshold)
+                {
+                    acceptableRatio -= 0.15f; // More willing to trade in late game
+                    Debug.Log($"[AttackStrategyManager] Late game (turn {boardState.TurnCount}) - accepting slightly worse trades (-0.15)");
+                }
+
+                // 4. Turn order considerations
+                if (!boardState.IsNextTurnPlayerFirst)
+                {
+                    // We go first next, can be more open to trades
+                    acceptableRatio -= 0.1f;
+                    Debug.Log("[AttackStrategyManager] Enemy goes first next turn - more willing to trade (-0.1)");
+                }
+                else
+                {
+                    // Player goes first next, be more cautious
+                    acceptableRatio += 0.1f;
+                    Debug.Log("[AttackStrategyManager] Player goes first next turn - more cautious about trades (+0.1)");
+                }
+
+                // 5. Health considerations
+                if (boardState.PlayerHealth <= 15)
+                {
+                    acceptableRatio -= 0.2f; // More aggressive when player is low
+                    Debug.Log($"[AttackStrategyManager] Player at low health ({boardState.PlayerHealth}) - more willing to trade (-0.2)");
+                }
+                else if (boardState.EnemyHealth <= 15)
+                {
+                    acceptableRatio += 0.2f; // More careful when we're low
+                    Debug.Log($"[AttackStrategyManager] Enemy at low health ({boardState.EnemyHealth}) - more careful about trades (+0.2)");
+                }
+
+                // 6. Consider if trading would create a cleared board situation
+                if (IsLastMonster(attacker) && WouldClearBoard(attacker, target,
+                    boardState.PlayerMonsters.Where(t => t != null && !t.dead && !t.IsFadingOut).ToList()))
+                {
+                    acceptableRatio -= 0.3f; // More willing to trade if it clears both sides
+                    Debug.Log("[AttackStrategyManager] Trade would clear the board - more willing to accept (-0.3)");
+                }
+            }
+
+            // Ensure the ratio stays within reasonable bounds (1.0 to max value)
+            acceptableRatio = Mathf.Clamp(acceptableRatio, 1.0f, _valuableTradeRatio);
+
+            // Log decision factors
+            string decision = valueRatio >= acceptableRatio ? "ACCEPT" : "REJECT";
+            Debug.Log($"[AttackStrategyManager] Trade evaluation: {attacker.name} ({attackerValue:F1}) for {target.name} ({targetValue:F1}), " +
+                      $"Ratio: {valueRatio:F2}, Required: {acceptableRatio:F2} - {decision}");
+
+            // Return final trade decision
+            return valueRatio >= acceptableRatio;
+        }
+
+        // Calculate a value score for an entity based on its stats and keywords
+        private float CalculateEntityValue(EntityManager entity)
+        {
+            if (entity == null) return 0;
+
+            float value = entity.GetAttack() * 2 + entity.GetHealth();
+
+            // Add value for important keywords
+            if (entity.HasKeyword(Keywords.MonsterKeyword.Taunt))
+                value += 3;
+
+            if (entity.HasKeyword(Keywords.MonsterKeyword.Ranged))
+                value += 4;
+
+            if (entity.HasKeyword(Keywords.MonsterKeyword.Overwhelm))
+                value += 3;
+
+            if (entity.HasKeyword(Keywords.MonsterKeyword.Tough))
+                value += 2;
+
+            return value;
+        }
+
+        // Check if this attack would result in an empty board (both sides)
+        private bool WouldClearBoard(EntityManager attacker, EntityManager target, List<EntityManager> allTargets)
+        {
+            // If this isn't the last monster, then the board won't be cleared
+            if (!IsLastMonster(attacker))
+                return false;
+
+            // Check if this would kill our attacker
+            bool attackerWouldDie = !attacker.HasKeyword(Keywords.MonsterKeyword.Ranged) &&
+                                   target.GetAttack() >= attacker.GetHealth();
+
+            // Check if this target is the last one and would die too
+            bool isLastTarget = allTargets.Count == 1;
+            bool targetWouldDie = attacker.GetAttack() >= target.GetHealth();
+
+            // Both sides would be cleared if:
+            // 1. Our attacker would die from counterattack AND
+            // 2. The target is the last one AND it would die
+            return attackerWouldDie && isLastTarget && targetWouldDie;
+        }
+
+        // New method to check if this is the last monster on the field
+        private bool IsLastMonster(EntityManager monster)
+        {
+            int activeMonsterCount = CountActiveEnemyMonsters();
+            return activeMonsterCount <= 1;
+        }
+
+        // New method to count active enemy monsters
+        private int CountActiveEnemyMonsters()
+        {
+            if (_entityCacheManager == null)
+                return 0;
+
+            _entityCacheManager.RefreshEntityCaches();
+            var enemies = _entityCacheManager.CachedEnemyEntities;
+
+            if (enemies == null)
+                return 0;
+
+            return enemies.Count(e => e != null && !e.dead && e.placed && !e.IsFadingOut);
         }
 
         private bool ShouldMakeSuboptimalDecision()
@@ -376,6 +656,41 @@ namespace EnemyInteraction.Managers
         {
             Debug.Log("[AttackStrategyManager] Optimizing attack order for lethal");
 
+            // If this gives us lethal but we would lose our only monster, reconsider (but with chance for error)
+            bool shouldIgnoreLastMonsterProtection = Random.value < _lastMonsterIgnoreChance;
+
+            if (_avoidLosingLastMonster && CountActiveEnemyMonsters() <= 1 && !shouldIgnoreLastMonsterProtection)
+            {
+                bool wouldLoseLastMonster = attackers.Any(a =>
+                    !a.HasKeyword(Keywords.MonsterKeyword.Ranged) &&
+                    playerEntities.Any(p => p.GetAttack() >= a.GetHealth() &&
+                                          p.HasKeyword(Keywords.MonsterKeyword.Taunt)));
+
+                if (wouldLoseLastMonster)
+                {
+                    // We'll be cautious but check if player health is very low (lethal next turn)
+                    if (playerEntities.Any(p => p.HasKeyword(Keywords.MonsterKeyword.Taunt) && p.GetAttack() >= 4))
+                    {
+                        // If there's a high-attack taunt, it might be worth sacrificing our monster
+                        Debug.Log("[AttackStrategyManager] Sacrificing last monster due to high-threat taunt target");
+                        return attackers.OrderByDescending(e => e.GetAttack()).ToList();
+                    }
+                    else
+                    {
+                        Debug.Log("[AttackStrategyManager] Lethal available but would lose our only monster - being cautious");
+                        return attackers.OrderByDescending(e => e.HasKeyword(Keywords.MonsterKeyword.Ranged) ? 1 : 0)
+                                      .ThenByDescending(e => e.GetAttack())
+                                      .ThenBy(e => e.GetHealth())
+                                      .ToList();
+                    }
+                }
+            }
+            else if (shouldIgnoreLastMonsterProtection && CountActiveEnemyMonsters() <= 1)
+            {
+                Debug.Log("[AttackStrategyManager] Human error: Ignoring last monster protection for lethal opportunity");
+            }
+
+            // Otherwise, optimize for lethal normally
             if (playerEntities != null && playerEntities.Any(e => e != null && e.HasKeyword(Keywords.MonsterKeyword.Taunt)))
             {
                 return attackers
