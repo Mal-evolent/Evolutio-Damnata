@@ -137,19 +137,34 @@ namespace EnemyInteraction.Managers.Targeting
                         .ToList();
                 }
 
-                // Add player entities to targets
-                targets.AddRange(playerEntities);
+                // Check for taunt units
+                var tauntUnits = playerEntities.Where(e => e.HasKeyword(Keywords.MonsterKeyword.Taunt)).ToList();
 
-                // Add player health icon ONLY when no player entities on the field
-                if (playerEntities.Count == 0)
+                // If there are taunt units, only they can be targeted
+                if (tauntUnits.Any())
                 {
-                    var playerHealth = GameObject.FindGameObjectWithTag("Player")?.GetComponent<HealthIconManager>();
-                    if (playerHealth != null) targets.Add(playerHealth);
+                    Debug.Log("[SpellTargetSelector] Restricting targeting to taunt units only");
+                    targets.AddRange(tauntUnits);
+                }
+                else
+                {
+                    // Add all player entities if no taunts
+                    targets.AddRange(playerEntities);
+
+                    // Add player health icon ONLY when no player entities on the field
+                    if (playerEntities.Count == 0)
+                    {
+                        var playerHealth = GameObject.FindGameObjectWithTag("Player")?.GetComponent<HealthIconManager>();
+                        if (playerHealth != null) targets.Add(playerHealth);
+                    }
                 }
             }
             // For healing effects, add enemy entities and enemy health icon
             else if (effect == SpellEffect.Heal)
             {
+                // For healing, we don't need to check for taunt since it only affects
+                // targeting of opposing units, and healing targets allied units
+
                 // Add enemy entities
                 if (_spritePositioning != null)
                 {

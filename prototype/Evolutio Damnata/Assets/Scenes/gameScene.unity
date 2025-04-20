@@ -2045,6 +2045,8 @@ MonoBehaviour:
   rangedIcon: {fileID: 0}
   overwhelmIcon: {fileID: 0}
   toughIcon: {fileID: 0}
+  keywordIconsContainer: {fileID: 0}
+  keywordIconSpacing: 1
   allowedAttacks: 0
 --- !u!1 &825410029
 GameObject:
@@ -2296,6 +2298,8 @@ MonoBehaviour:
   rangedIcon: {fileID: 0}
   overwhelmIcon: {fileID: 0}
   toughIcon: {fileID: 0}
+  keywordIconsContainer: {fileID: 0}
+  keywordIconSpacing: 1
   allowedAttacks: 0
 --- !u!1 &1011744913
 GameObject:
@@ -4144,6 +4148,8 @@ MonoBehaviour:
   rangedIcon: {fileID: 0}
   overwhelmIcon: {fileID: 0}
   toughIcon: {fileID: 0}
+  keywordIconsContainer: {fileID: 0}
+  keywordIconSpacing: 1
   allowedAttacks: 1
 --- !u!1 &1187307910
 GameObject:
