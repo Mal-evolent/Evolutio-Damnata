@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Resources;
 using TMPro;
+using System.Collections.Generic;
 
 public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 {
@@ -39,10 +40,15 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     [SerializeField] private TMP_Text attackStatText;
     [SerializeField] private Image defenceStatImage;
     [SerializeField] private TMP_Text defenceStatText;
+
+    [Header("Keyword Icons")]
     [SerializeField] private Image tauntIcon;
     [SerializeField] private Image rangedIcon;
     [SerializeField] private Image overwhelmIcon;
     [SerializeField] private Image toughIcon;
+    [SerializeField] private RectTransform keywordIconsContainer;
+    [SerializeField] private float keywordIconSpacing = 1f;
+
     [Header("Attack Settings")]
     [SerializeField] private int allowedAttacks = 1;
     private int remainingAttacks;
@@ -54,13 +60,44 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     private float turnDuration = 1.0f;
     private EntityManager killedBy;
     private float lastDamageTaken;
-    
+    private Dictionary<Keywords.MonsterKeyword, Image> keywordIconMap;
+    private List<Image> activeKeywordIcons = new List<Image>();
 
     public enum MonsterType { Friendly, Enemy }
 
+    #region Initialization
+    private void Awake()
+    {
+        InitializeKeywordSystem();
+    }
+
+    private void InitializeKeywordSystem()
+    {
+        keywordIconMap = new Dictionary<Keywords.MonsterKeyword, Image>()
+        {
+            { Keywords.MonsterKeyword.Taunt, tauntIcon },
+            { Keywords.MonsterKeyword.Ranged, rangedIcon },
+            { Keywords.MonsterKeyword.Overwhelm, overwhelmIcon },
+            { Keywords.MonsterKeyword.Tough, toughIcon }
+        };
+
+        // Configure container if it exists
+        if (keywordIconsContainer != null)
+        {
+            var layoutGroup = keywordIconsContainer.GetComponent<HorizontalLayoutGroup>();
+            if (layoutGroup == null)
+            {
+                layoutGroup = keywordIconsContainer.gameObject.AddComponent<HorizontalLayoutGroup>();
+            }
+
+            layoutGroup.spacing = keywordIconSpacing;
+            layoutGroup.childAlignment = TextAnchor.MiddleCenter;
+        }
+    }
+
     #region Attack Management
     public int GetRemainingAttacks() => remainingAttacks;
-    
+
     public void UseAttack()
     {
         if (dead || IsFadingOut)
@@ -68,7 +105,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
             Debug.Log($"[{name}] Cannot use attack: entity is dead or fading out");
             return;
         }
-        
+
         if (remainingAttacks > 0)
         {
             remainingAttacks--;
@@ -92,7 +129,6 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     }
     #endregion
 
-    #region Initialization
     public void InitializeMonster(MonsterType monsterType, float maxHealth, float atkDamage,
         Slider healthBarSlider, Image image, DamageVisualizer damageVisualizer,
         GameObject damageNumberPrefab, Sprite outlineSprite, AttackLimiter attackLimiter,
@@ -108,7 +144,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         this.outlineSprite = outlineSprite;
         this.attackLimiter = attackLimiter;
         this.ongoingEffectApplier = effectApplier;
-        
+
         remainingAttacks = allowedAttacks;
         Debug.Log($"[{name}] Initialized with {allowedAttacks} allowed attacks");
 
@@ -129,6 +165,37 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     }
     #endregion
 
+    #region Keyword Display
+    private void UpdateKeywordDisplay()
+    {
+        if (_cardData?.Keywords == null || keywordIconsContainer == null) return;
+
+        // Clear existing display
+        ClearKeywordDisplay();
+
+        // Create new display
+        foreach (var keyword in _cardData.Keywords)
+        {
+            if (keywordIconMap.TryGetValue(keyword, out var iconPrefab) && iconPrefab != null)
+            {
+                // Instantiate a copy of the icon prefab
+                Image newIcon = Instantiate(iconPrefab, keywordIconsContainer);
+                newIcon.gameObject.SetActive(true);
+                activeKeywordIcons.Add(newIcon);
+            }
+        }
+    }
+
+    private void ClearKeywordDisplay()
+    {
+        foreach (var icon in activeKeywordIcons)
+        {
+            if (icon != null) Destroy(icon.gameObject);
+        }
+        activeKeywordIcons.Clear();
+    }
+    #endregion
+
     #region Placement Control
     public void SetPlaced(bool isPlaced)
     {
@@ -142,6 +209,11 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
             UpdateHealthUI();
             GetUIStats();
             toggleUIStatStates(true);
+            UpdateKeywordDisplay(); // Show relevant keywords
+        }
+        else
+        {
+            ClearKeywordDisplay(); // Hide all keywords
         }
     }
     #endregion
@@ -247,7 +319,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 
     public virtual void Attack(int damage)
     {
-        if (dead || !placed || IsFadingOut) 
+        if (dead || !placed || IsFadingOut)
         {
             Debug.Log($"[{name}] Cannot attack: entity is dead, not placed, or fading out");
             return;
@@ -290,6 +362,8 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
         placed = false;
         IsFadingOut = true;
 
+        ClearKeywordDisplay(); // Clear keywords on death
+
         // Only record death in graveyard if it's from combat (killedBy is set)
         // Spell deaths are handled by SpellEffectApplier
         if (GraveYard.Instance != null && killedBy != null)
@@ -299,7 +373,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
 
         // First remove effects via our local effect applier
         RemoveAllOngoingEffects();
-        
+
         // As a fallback, also ask StackManager to remove effects directly
         // This handles cases where the effect applier is not working correctly
         if (StackManager.Instance != null)
@@ -307,7 +381,7 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
             StackManager.Instance.RemoveEffectsForEntity(this);
             Debug.Log($"[{name}] Directly removed effects from StackManager on death");
         }
-        
+
         DisableAllButtons();
         StartCoroutine(PlayDeathAnimation());
     }
