@@ -39,6 +39,10 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     [SerializeField] private TMP_Text attackStatText;
     [SerializeField] private Image defenceStatImage;
     [SerializeField] private TMP_Text defenceStatText;
+    [SerializeField] private Image tauntIcon;
+    [SerializeField] private Image rangedIcon;
+    [SerializeField] private Image overwhelmIcon;
+    [SerializeField] private Image toughIcon;
     [Header("Attack Settings")]
     [SerializeField] private int allowedAttacks = 1;
     private int remainingAttacks;

@@ -2041,6 +2041,10 @@ MonoBehaviour:
   attackStatText: {fileID: 0}
   defenceStatImage: {fileID: 0}
   defenceStatText: {fileID: 0}
+  tauntIcon: {fileID: 0}
+  rangedIcon: {fileID: 0}
+  overwhelmIcon: {fileID: 0}
+  toughIcon: {fileID: 0}
   allowedAttacks: 0
 --- !u!1 &825410029
 GameObject:
@@ -2288,6 +2292,10 @@ MonoBehaviour:
   attackStatText: {fileID: 0}
   defenceStatImage: {fileID: 0}
   defenceStatText: {fileID: 0}
+  tauntIcon: {fileID: 0}
+  rangedIcon: {fileID: 0}
+  overwhelmIcon: {fileID: 0}
+  toughIcon: {fileID: 0}
   allowedAttacks: 0
 --- !u!1 &1011744913
 GameObject:
@@ -4132,6 +4140,10 @@ MonoBehaviour:
   attackStatText: {fileID: 0}
   defenceStatImage: {fileID: 0}
   defenceStatText: {fileID: 0}
+  tauntIcon: {fileID: 0}
+  rangedIcon: {fileID: 0}
+  overwhelmIcon: {fileID: 0}
+  toughIcon: {fileID: 0}
   allowedAttacks: 1
 --- !u!1 &1187307910
 GameObject:

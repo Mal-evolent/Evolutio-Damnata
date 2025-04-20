@@ -123,6 +123,10 @@ MonoBehaviour:
   attackStatText: {fileID: 0}
   defenceStatImage: {fileID: 5653268971079208828}
   defenceStatText: {fileID: 0}
+  tauntIcon: {fileID: 5470812740955112434, guid: 1d484def60e497647b4861d245ee8f7f, type: 3}
+  rangedIcon: {fileID: 2925908056590875926, guid: 09870a3928838ed4c965aba4c242f865, type: 3}
+  overwhelmIcon: {fileID: 2325220000737611890, guid: d046667037a1de443be067c04baafa37, type: 3}
+  toughIcon: {fileID: 7535140679997194002, guid: e2d0e7a49257b6a479f7e3897f41a4c2, type: 3}
   allowedAttacks: 1
 --- !u!1001 &3274029624398733476
 PrefabInstance:
@@ -242,7 +246,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6046976079237000052, guid: b808322acca17e443aff5c5f11012a78, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -445,7 +449,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6478961332141037175, guid: e5faa5998d71be846892ab2c534a2d28, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7371754287178916031, guid: e5faa5998d71be846892ab2c534a2d28, type: 3}
       propertyPath: m_Pivot.x
