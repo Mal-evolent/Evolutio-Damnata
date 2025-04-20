@@ -126,19 +126,22 @@ namespace EnemyInteraction.Managers.Targeting
             // For damage effects, add player entities and player health icon
             if (effect == SpellEffect.Damage || effect == SpellEffect.Burn)
             {
-                // Add player entities
+                // Get all placed player entities first
+                var playerEntities = new List<EntityManager>();
                 if (_spritePositioning != null)
                 {
-                    targets.AddRange(
-                        _spritePositioning.PlayerEntities
-                            .Where(e => e != null)
-                            .Select(e => _entityCache.TryGetValue(e, out var em) ? em : null)
-                            .Where(e => e != null && e.placed)
-                    );
+                    playerEntities = _spritePositioning.PlayerEntities
+                        .Where(e => e != null)
+                        .Select(e => _entityCache.TryGetValue(e, out var em) ? em : null)
+                        .Where(e => e != null && e.placed)
+                        .ToList();
                 }
 
-                // Add player health icon only when no player entities on the field
-                if (targets.Count == 0)
+                // Add player entities to targets
+                targets.AddRange(playerEntities);
+
+                // Add player health icon ONLY when no player entities on the field
+                if (playerEntities.Count == 0)
                 {
                     var playerHealth = GameObject.FindGameObjectWithTag("Player")?.GetComponent<HealthIconManager>();
                     if (playerHealth != null) targets.Add(playerHealth);
@@ -173,36 +176,95 @@ namespace EnemyInteraction.Managers.Targeting
         {
             float score = 0f;
 
-            // Base threat value
+            // Check if this is a healing effect
+            bool isHealingEffect = cardType.EffectTypes != null &&
+                                   cardType.EffectTypes.Contains(SpellEffect.Heal);
+
+            // Calculate score based on target type
             if (target is HealthIconManager healthIcon)
             {
-                score = healthIcon.GetHealth() * 0.5f; // Prioritize low-health heroes
-                if (healthIcon.GetHealth() < 10) score += 100f; // Lethal priority
+                if (isHealingEffect)
+                {
+                    // Cast to float to ensure proper division
+                    float healthPercentage = (float)healthIcon.GetHealth() / (float)healthIcon.MaxHealth;
+
+                    // Higher score for more damaged health pools (scaled down)
+                    score = (1f - healthPercentage) * 80f;
+
+                    // Critical priority if health is below 25% (reduced slightly)
+                    if (healthPercentage < 0.25f)
+                        score += 60f;
+                }
+                else
+                {
+                    // Damage targeting logic (adjusted to be less aggressive)
+                    score = healthIcon.GetHealth() * 0.6f;
+
+                    // Critical priority for low health (reduced to balance with other priorities)
+                    if (healthIcon.GetHealth() < 10)
+                        score += 70f;
+                }
             }
             else
             {
-                score = target.GetAttack() * 1.2f + target.GetHealth() * 0.8f;
-            }
-
-            // Keyword modifiers
-            if (target.HasKeyword(Keywords.MonsterKeyword.Taunt))
-                score += 40f;
-
-            // Add threat assessment for other keywords
-            if (target.HasKeyword(Keywords.MonsterKeyword.Tough))
-            {
-                score += 25f; // Tough units are higher priority targets
-                if (cardType.EffectTypes != null && cardType.EffectTypes.Contains(SpellEffect.Damage))
+                // Regular entity
+                if (isHealingEffect)
                 {
-                    // Damage spells are less effective against Tough units
-                    score -= 15f;
+                    float missingHealth = target.GetMaxHealth() - target.GetHealth();
+                    float healthPercentage = target.GetHealth() / (float)target.GetMaxHealth();
+                    float entityValue = target.GetAttack() * 1.2f + target.GetMaxHealth();
+
+                    
+                    score = missingHealth * 8f + entityValue * (1f - healthPercentage) * 1.5f;
+
+                    // Bonus for high-value minions (slightly reduced)
+                    if (target.GetAttack() >= 5 || target.GetMaxHealth() >= 5)
+                        score += 25f;
+
+                    // Consistent keyword bonus values
+                    if (target.HasKeyword(Keywords.MonsterKeyword.Taunt))
+                        score += 30f;
+
+                    if (target.HasKeyword(Keywords.MonsterKeyword.Overwhelm))
+                        score += 25f;
+                }
+                else
+                {
+                    // Damage targeting logic (adjusted weights)
+                    score = target.GetAttack() * 1.5f + target.GetHealth() * 0.7f;
+
+                    // Keyword modifiers (more balanced values)
+                    if (target.HasKeyword(Keywords.MonsterKeyword.Taunt))
+                        score += 35f;
+
+                    if (target.HasKeyword(Keywords.MonsterKeyword.Tough))
+                    {
+                        score += 20f;
+                        if (cardType.EffectTypes != null && cardType.EffectTypes.Contains(SpellEffect.Damage))
+                        {
+                            score -= 10f; // Reduced penalty for damage spells against Tough
+                        }
+                    }
+
+                    if (target.HasKeyword(Keywords.MonsterKeyword.Overwhelm))
+                    {
+                        score += 30f; // Slightly reduced
+                    }
+
+                    if (target.HasKeyword(Keywords.MonsterKeyword.Ranged))
+                    {
+                        score += 25f; // Slightly reduced
+
+                        if (cardType.EffectTypes != null && cardType.EffectTypes.Contains(SpellEffect.Damage))
+                        {
+                            score += 15f; // Increased to make spell targeting ranged units more valuable
+                        }
+                    }
                 }
             }
 
-            if (target.HasKeyword(Keywords.MonsterKeyword.Overwhelm))
-            {
-                score += 35f; // Overwhelm units are high priority threats
-            }
+            // Add a small variance to prevent ties and make targeting less predictable
+            score += Random.Range(-2f, 2f);
 
             return score;
         }
