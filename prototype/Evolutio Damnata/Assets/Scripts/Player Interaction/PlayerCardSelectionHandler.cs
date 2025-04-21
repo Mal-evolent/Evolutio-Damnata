@@ -126,7 +126,7 @@ public class PlayerCardSelectionHandler : IPlayerCardHandler
 
     private void HandleMonsterCard(int index, CardData cardData)
     {
-        _cardSpawner.SpawnCard(_cardManager.CurrentSelectedCard.name, index);
+        _cardSpawner.SpawnCard(_cardManager.CurrentSelectedCard.name, cardData, index);
     }
 
     private void HandleSpellCard(int index, EntityManager entityManager, CardData cardData)

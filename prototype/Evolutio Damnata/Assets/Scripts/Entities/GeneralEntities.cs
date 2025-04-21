@@ -45,7 +45,7 @@ public class GeneralEntities : ICardSpawner
         _monsterType = monsterType;
     }
 
-    public bool SpawnCard(string cardName, int positionIndex)
+    public bool SpawnCard(string cardName, CardData cardData, int positionIndex)
     {
         if (string.IsNullOrEmpty(cardName))
         {
@@ -55,26 +55,34 @@ public class GeneralEntities : ICardSpawner
 
         try
         {
+            // Use the provided cardData if available, otherwise look it up
+            CardData resolvedCardData = cardData ?? GetCardData(cardName);
+
+            if (resolvedCardData == null)
+            {
+                Debug.LogError($"Card data not found for card: {cardName}");
+                return false;
+            }
+
             bool success = false;
             if (_monsterType == EntityManager.MonsterType.Friendly)
             {
-                success = SpawnPlayerCard(cardName, positionIndex);
+                success = SpawnPlayerCard(cardName, resolvedCardData, positionIndex);
             }
             else if (_monsterType == EntityManager.MonsterType.Enemy)
             {
-                success = SpawnEnemyCard(cardName, positionIndex);
+                success = SpawnEnemyCard(cardName, resolvedCardData, positionIndex);
             }
 
             // Record the card play in history if successful
             if (success)
             {
-                var cardData = GetCardData(cardName);
                 var playerType = _monsterType == EntityManager.MonsterType.Friendly ? "Player" : "Enemy";
-                var manaUsed = cardData?.ManaCost ?? 0;
+                var manaUsed = resolvedCardData.ManaCost;
                 var turnNumber = (_manaProvider as ICombatManager)?.TurnCount ?? 0;
 
                 CardHistory.Instance?.RecordCardPlay(
-                    CreateCardFromData(cardData),
+                    CreateCardFromData(resolvedCardData),
                     GetEntityManager(positionIndex),
                     turnNumber,
                     manaUsed
@@ -114,10 +122,9 @@ public class GeneralEntities : ICardSpawner
         return _cardLibrary.CardDataList.FirstOrDefault(data => data.CardName == cardName);
     }
 
-    private bool SpawnPlayerCard(string cardName, int positionIndex)
+    private bool SpawnPlayerCard(string cardName, CardData cardData, int positionIndex)
     {
         var placeholder = GetValidPlaceholder(positionIndex, _spritePositioning.PlayerEntities);
-        var cardData = GetCardData(cardName);
         var entityManager = InitializeEntity(placeholder, cardData);
 
         if (!cardData.IsSpellCard)
@@ -132,10 +139,9 @@ public class GeneralEntities : ICardSpawner
         return true;
     }
 
-    private bool SpawnEnemyCard(string cardName, int positionIndex)
+    private bool SpawnEnemyCard(string cardName, CardData cardData, int positionIndex)
     {
         var placeholder = GetValidPlaceholder(positionIndex, _spritePositioning.EnemyEntities);
-        var cardData = GetCardData(cardName);
 
         if (_manaProvider.EnemyMana < cardData.ManaCost)
         {

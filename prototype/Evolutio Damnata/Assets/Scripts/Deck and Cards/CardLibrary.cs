@@ -24,7 +24,7 @@ public class CardLibrary : MonoBehaviour, ICardLibrary
     [Header("Player Deck")]
     [SerializeField] private Deck _playerDeck;
 
-    [Header("Enemy Deck")]  // New header section
+    [Header("Enemy Deck")]
     [SerializeField] private Deck _enemyDeck;
 
     [Header("Card Data")]

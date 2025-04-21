@@ -4,6 +4,7 @@ using System.Collections;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using GeneralInteraction;
+using System.Linq;
 
 public class CombatStage : MonoBehaviour, ICombatStage
 {
@@ -277,7 +278,15 @@ public class CombatStage : MonoBehaviour, ICombatStage
 
     public void SpawnEnemyCard(string cardName, int position)
     {
-        _enemyCardSpawner.SpawnCard(cardName, position);
+        // Get CardData from CardLibrary
+        CardData cardData = null;
+        if (_cardLibrary != null && _cardLibrary.CardDataList != null)
+        {
+            cardData = _cardLibrary.CardDataList.FirstOrDefault(data => data.CardName == cardName);
+        }
+
+        // Call the updated SpawnCard method with the card data
+        _enemyCardSpawner.SpawnCard(cardName, cardData, position);
     }
 
     private void Update()

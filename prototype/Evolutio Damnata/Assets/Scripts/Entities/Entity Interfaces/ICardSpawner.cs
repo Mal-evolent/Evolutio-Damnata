@@ -4,5 +4,5 @@ public interface ICardSpawner
     /// Spawns a card entity on the battlefield
     /// </summary>
     /// <returns>True if card was successfully played</returns>
-    bool SpawnCard(string cardName, int whichOutline);
+    bool SpawnCard(string cardName, CardData cardData, int whichOutline);
 }

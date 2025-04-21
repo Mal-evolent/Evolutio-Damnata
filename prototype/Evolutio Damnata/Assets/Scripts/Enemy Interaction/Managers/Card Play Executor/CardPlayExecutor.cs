@@ -94,7 +94,8 @@ namespace EnemyInteraction.Managers.Execution
             yield return WaitForFadeOutAtPosition(position);
 
             // Now that we've waited for any fading out entities, play the card
-            bool success = _combatStage.EnemyCardSpawner.SpawnCard(card.CardName, position);
+            // Pass the CardData from the card to SpawnCard
+            bool success = _combatStage.EnemyCardSpawner.SpawnCard(card.CardName, card.CardType, position);
             if (success)
             {
                 // Deduct mana and remove card from hand on success
