@@ -1,9 +1,0 @@
-Team Name: Engima Games
-
-Website: https://sites.google.com/view/enigma-games/home
-Release Page: https://sites.google.com/view/enigma-games/games
-
-GitHub Repository: https://github.com/Ozzy-King/Damnatio
-Project Management (Trello): https://trello.com/invite/b/66f5eacfcdb30e35239cd83f/ATTI30a01db471d50da5b7dc90e28446252cB0A1C8A1/roguelike-card-game
-
-YouTube Trailer: https://youtu.be/8Xn0-aAUQqQ?si=FrUmTi6aX1Se_Pri
