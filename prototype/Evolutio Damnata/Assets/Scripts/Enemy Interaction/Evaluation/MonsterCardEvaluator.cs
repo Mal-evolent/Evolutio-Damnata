@@ -179,13 +179,6 @@ namespace EnemyInteraction.Managers.Evaluation
                 Debug.Log($"[MonsterCardEvaluator] Overwhelm unit effective against {lowHealthUnits} low-health units, adding {healthBonus} bonus");
             }
 
-            // Strategic bonus for splash potential + player damage (reduced)
-            if (boardState.PlayerHealth <= splashDamage * 2 && boardState.PlayerMonsters.Count >= 1)
-            {
-                splashBonus += 20f; // Reduced from 50f
-                Debug.Log($"[MonsterCardEvaluator] Overwhelm unit can damage both units AND player with low health");
-            }
-
             return splashBonus;
         }
     }
