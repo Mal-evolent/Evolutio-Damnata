@@ -12,7 +12,7 @@ namespace EnemyInteraction.Managers.Evaluation
         private const float LETHAL_REJECTION_SCORE = -1000000f;
         private const float LOW_PLAYER_HEALTH_THRESHOLD = 10f;
         private const float CRITICAL_ENEMY_HEALTH_THRESHOLD = 0.4f;
-        private const float LOW_ENEMY_HEALTH_THRESHOLD = 15f;
+        private const float LOW_ENEMY_HEALTH_THRESHOLD = 10f;
 
         public SpellCardEvaluator(IEffectEvaluator effectEvaluator)
         {
