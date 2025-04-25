@@ -4,6 +4,8 @@ using UnityEngine.UI;
 using System.Collections;
 using System;
 using EnemyInteraction;
+using GeneralInteraction;
+using GameManagement;
 
 public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
 {
@@ -161,11 +163,18 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
         OnPhaseChanged -= callback;
     }
 
+    // Update in Assets/Scripts/Combat/Phase Managers/CombatManager.cs
+    // Find the Awake method and add code to load the player health before any other initialization:
+
     private void Awake()
     {
         try
         {
             Debug.Log("[CombatManager] Initializing dependencies...");
+
+            // Load player health from GameStateManager if available
+            _playerHealth = GameStateManager.GetPlayerHealth();
+            Debug.Log($"[CombatManager] Loaded player health: {_playerHealth}");
 
             // Initialize core dependencies
             _uiManager = new UIManager(this);

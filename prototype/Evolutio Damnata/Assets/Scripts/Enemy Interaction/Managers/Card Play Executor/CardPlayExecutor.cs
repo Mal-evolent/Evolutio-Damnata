@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using EnemyInteraction.Services;
 
 namespace EnemyInteraction.Managers.Execution
 {
@@ -102,6 +103,10 @@ namespace EnemyInteraction.Managers.Execution
                 _combatManager.EnemyMana -= card.CardType.ManaCost;
                 enemyDeck.RemoveCard(card);
                 Debug.Log($"[CardPlayExecutor] Played {card.CardName} at position {position}");
+
+                // Refresh entity cache after monster placement
+                var entityCacheManager = AIServices.Instance?.EntityCacheManager as EntityCacheManager;
+                entityCacheManager?.RefreshAfterAction();
             }
         }
 
@@ -206,6 +211,10 @@ namespace EnemyInteraction.Managers.Execution
                 }
 
                 _spellEffectApplier.ApplySpellEffectsAI(target, card.CardType, 0);
+
+                // Refresh entity cache after spell effect
+                var entityCacheManager = AIServices.Instance?.EntityCacheManager as EntityCacheManager;
+                entityCacheManager?.RefreshAfterAction();
             }
             catch (System.Exception e)
             {

@@ -344,6 +344,10 @@ namespace EnemyInteraction.Managers
 
                     yield return _attackExecutor.ExecuteAttack(attacker, targetEntity);
 
+                    // Refresh entity cache after attack
+                    var entityCacheManager = _entityCacheManager as EntityCacheManager;
+                    entityCacheManager?.RefreshAfterAction();
+
                     if (targetEntity.dead)
                     {
                         // Add longer pause after killing a unit to emphasize the moment
@@ -366,6 +370,10 @@ namespace EnemyInteraction.Managers
                     yield return new WaitForSeconds(_attackExecutor.GetRandomizedDelay(_evaluationDelay * 0.5f));
 
                     _attackExecutor.AttackPlayerHealthIcon(attacker, playerHealthIcon);
+
+                    // Refresh entity cache after health icon attack
+                    var entityCacheManager = _entityCacheManager as EntityCacheManager;
+                    entityCacheManager?.RefreshAfterAction();
 
                     // Longer pause after attacking health icon to emphasize importance
                     yield return new WaitForSeconds(_attackExecutor.GetRandomizedDelay(_evaluationDelay * 1.5f));

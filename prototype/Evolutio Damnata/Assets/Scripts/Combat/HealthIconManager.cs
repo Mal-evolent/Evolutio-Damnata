@@ -1,6 +1,10 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+using System.Collections;
+using GameManagement;
 
+/// <summary>
 /// <summary>
 /// Manages the health icon representation for both player and enemy entities.
 /// Inherits from EntityManager to leverage health and damage functionality while
@@ -135,7 +139,14 @@ public class HealthIconManager : EntityManager, IHealthIconManager
         if (combatManagerRef == null) return;
 
         if (isPlayerIcon)
+        {
             combatManagerRef.PlayerHealth = (int)health;
+
+            // Each time player health is updated, also update in GameStateManager
+            // This ensures persistent health value is always current
+            GameStateManager.SavePlayerHealth((int)health);
+            Debug.Log($"[HealthIconManager] Updated player health in GameStateManager: {(int)health}");
+        }
         else
             combatManagerRef.EnemyHealth = (int)health;
     }
@@ -146,11 +157,55 @@ public class HealthIconManager : EntityManager, IHealthIconManager
     protected override void Die()
     {
         base.Die();
-        
+
         if (isPlayerIcon)
+        {
             Debug.Log("Player Defeated - Game Over!");
+
+            // Reset player health when the player dies
+            GameStateManager.ResetPlayerHealth();
+            Debug.Log("[HealthIconManager] Player died - health data reset");
+
+            // Wait a moment before changing scenes
+            StartCoroutine(LoadGameOverScene("DefeatedScene"));
+        }
         else
+        {
             Debug.Log("Enemy Defeated - Victory!");
+
+            // Wait a moment before changing scenes
+            StartCoroutine(LoadVictoryScene("victoryScene"));
+        }
+    }
+
+    /// <summary>
+    /// Coroutine to load the game over scene after a short delay
+    /// </summary>
+    /// <param name="sceneName">The name of the scene to load</param>
+    private IEnumerator LoadGameOverScene(string sceneName)
+    {
+        // Wait for death animation to play
+        yield return new WaitForSeconds(2f);
+
+        // Import SceneManager namespace at the top of your file:
+        // using UnityEngine.SceneManagement;
+        UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName);
+    }
+
+    private IEnumerator LoadVictoryScene(string sceneName)
+    {
+        // Save player health before loading victory scene
+        if (isPlayerIcon && combatManagerRef != null)
+        {
+            // Save the player's current health to GameStateManager
+            GameStateManager.SavePlayerHealth(combatManagerRef.PlayerHealth);
+            Debug.Log($"[HealthIconManager] Saved player health after victory: {combatManagerRef.PlayerHealth}");
+        }
+
+        // Wait for death animation to play
+        yield return new WaitForSeconds(2f);
+
+        UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName);
     }
 
     /// <summary>
@@ -219,4 +274,4 @@ public class HealthIconManager : EntityManager, IHealthIconManager
             Die();
     }
     #endregion
-} 
+}

@@ -352,6 +352,10 @@ namespace EnemyInteraction
                 yield break;
             }
 
+            // Refresh entity cache before playing cards
+            var entityCacheManager = AIServices.Instance?.EntityCacheManager as EntityCacheManager;
+            entityCacheManager?.RefreshAfterAction();
+
             // Get the coroutine outside the try block
             IEnumerator playCardsCoroutine = null;
             bool errorOccurred = false;

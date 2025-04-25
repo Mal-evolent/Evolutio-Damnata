@@ -289,6 +289,10 @@ namespace EnemyInteraction.Managers
             // Add delay before evaluating board state
             yield return new WaitForSeconds(_actionDelay);
 
+            // Refresh entity cache before getting board state
+            var entityCacheManager = AIServices.Instance?.EntityCacheManager as EntityCacheManager;
+            entityCacheManager?.RefreshAfterAction();
+
             // Get current board state for decision making
             var boardState = GetCurrentBoardState();
             if (boardState == null)

@@ -64,6 +64,13 @@ namespace EnemyInteraction.Managers
             }
         }
 
+        public void RefreshAfterAction()
+        {
+            Debug.Log("[EntityCacheManager] Forced refresh after monster placement");
+            BuildEntityManagerCache();
+            RefreshEntityCaches();
+        }
+
         public List<EntityManager> GetValidEntities(IEnumerable<GameObject> source, bool checkAttackLimiter)
         {
             if (source == null) return new List<EntityManager>();
