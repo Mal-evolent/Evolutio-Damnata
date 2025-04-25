@@ -414,6 +414,21 @@ namespace EnemyInteraction.Managers
         /// <returns>True if the AI should skip this turn</returns>
         private bool ShouldConsiderSkippingTurn(BoardState boardState)
         {
+            // Get the player health icon first to check if it's available as a target
+            HealthIconManager playerHealthIcon = GameObject.FindGameObjectWithTag("Player")?.GetComponent<HealthIconManager>();
+
+            // Get cached player entities to check if direct attack is possible
+            _entityCacheManager.RefreshEntityCaches();
+            List<EntityManager> playerEntities = _entityCacheManager.CachedPlayerEntities;
+
+            // If there are no player entities and player health icon is available,
+            // we should NEVER skip the turn - always take direct shots at player health
+            if (AIUtilities.CanTargetHealthIcon(playerEntities) && playerHealthIcon != null)
+            {
+                Debug.Log("[AttackManager] Player health icon is directly targetable - never skipping turn");
+                return false;
+            }
+
             // First, check if we should even consider skipping (random chance)
             if (Random.value > _skipTurnConsiderationChance)
                 return false;
