@@ -294,9 +294,11 @@ namespace EnemyInteraction.Managers
                     if (isLastMonster)
                     {
                         // Check if the monster would die from counterattack
+                        // Modified to check if target's attack is > 0
                         bool wouldDieFromCounterattack =
                             attacker.GetHealth() <= target.GetAttack() &&
-                            !attacker.HasKeyword(Keywords.MonsterKeyword.Ranged);
+                            !attacker.HasKeyword(Keywords.MonsterKeyword.Ranged) &&
+                            target.GetAttack() > 0; // Added check for target's attack > 0
 
                         if (wouldDieFromCounterattack)
                         {
@@ -315,6 +317,12 @@ namespace EnemyInteraction.Managers
                                 score -= 1000f;
                                 Debug.Log($"[AttackStrategyManager] Avoiding attacking {target.name} with our only monster - not worth the trade");
                             }
+                        }
+                        else if (target.GetAttack() == 0)
+                        {
+                            // Target has 0 attack - perfectly safe to attack with our last monster
+                            score += 100f;
+                            Debug.Log($"[AttackStrategyManager] Target {target.name} has 0 attack - safe to attack with our last monster");
                         }
                     }
 
@@ -550,7 +558,9 @@ namespace EnemyInteraction.Managers
                 return false;
 
             // Check if this would kill our attacker
+            // Modified to check if target's attack is > 0
             bool attackerWouldDie = !attacker.HasKeyword(Keywords.MonsterKeyword.Ranged) &&
+                                   target.GetAttack() > 0 &&
                                    target.GetAttack() >= attacker.GetHealth();
 
             // Check if this target is the last one and would die too

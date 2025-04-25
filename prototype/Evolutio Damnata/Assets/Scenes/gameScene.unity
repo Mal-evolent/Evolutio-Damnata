@@ -2552,12 +2552,12 @@ MonoBehaviour:
   _evaluationDelay: 0.4
   _skipTurnConsiderationChance: 0.25
   _skipTurnBoardAdvantageThreshold: 1.5
-  _suboptimalTargetChance: 0.1
+  _suboptimalTargetChance: 0.01
   _delayRandomizationFactor: 0.1
-  _strategyChangeChance: 0.05
-  _attackOrderRandomizationChance: 0.05
-  _missedAttackChance: 0.05
-  _targetReconsiderationChance: 0.15
+  _strategyChangeChance: 0.01
+  _attackOrderRandomizationChance: 0.01
+  _missedAttackChance: 0.01
+  _targetReconsiderationChance: 0.01
   _reconsiderationDelay: 1.2
 --- !u!1 &1159794892
 GameObject:
