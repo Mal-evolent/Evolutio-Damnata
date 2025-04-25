@@ -140,7 +140,7 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
             _combatStage,
             _manaChecker,
             _spellEffectApplier,
-            _entityManagerCache // Pass the entity manager cache
+            _entityManagerCache
         );
     }
 
@@ -525,6 +525,9 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
         if (_cardManager.CurrentSelectedCard == null)
         {
             Debug.LogWarning("Attack failed: No card is currently selected");
+            _cardOutlineManager.RemoveHighlight();
+            ResetAllMonsterTints();
+            _cardManager.CurrentSelectedCard = null;
             return;
         }
 
@@ -533,12 +536,18 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
         if (playerEntity == null)
         {
             Debug.LogWarning($"Attack failed: Selected card {_cardManager.CurrentSelectedCard.name} has no EntityManager component");
+            _cardOutlineManager.RemoveHighlight();
+            ResetAllMonsterTints();
+            _cardManager.CurrentSelectedCard = null;
             return;
         }
 
         if (!playerEntity.placed)
         {
             Debug.LogWarning($"Attack failed: Selected entity {playerEntity.name} is not placed on the field");
+            _cardOutlineManager.RemoveHighlight();
+            ResetAllMonsterTints();
+            _cardManager.CurrentSelectedCard = null;
             return;
         }
 
@@ -546,6 +555,9 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
         if (targetEntity == null)
         {
             Debug.LogError("Attack failed: Target entity is null");
+            _cardOutlineManager.RemoveHighlight();
+            ResetAllMonsterTints();
+            _cardManager.CurrentSelectedCard = null;
             return;
         }
 
@@ -563,6 +575,9 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
         if (!isInCache)
         {
             Debug.LogWarning($"Attack failed: Target entity {targetEntity.name} is not in the enemy entity cache");
+            _cardOutlineManager.RemoveHighlight();
+            ResetAllMonsterTints();
+            _cardManager.CurrentSelectedCard = null;
             // Attempt to refresh the cache
             BuildEntityCache();
             return;
@@ -572,12 +587,18 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
         if (playerEntity.dead || playerEntity.IsFadingOut)
         {
             Debug.LogWarning($"Attack failed: Attacker {playerEntity.name} is dead or fading out");
+            _cardOutlineManager.RemoveHighlight();
+            ResetAllMonsterTints();
+            _cardManager.CurrentSelectedCard = null;
             return;
         }
 
         if (targetEntity.dead || targetEntity.IsFadingOut)
         {
             Debug.LogWarning($"Attack failed: Target {targetEntity.name} is dead or fading out");
+            _cardOutlineManager.RemoveHighlight();
+            ResetAllMonsterTints();
+            _cardManager.CurrentSelectedCard = null;
             return;
         }
 
@@ -585,6 +606,9 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
         if (!_combatManager.IsPlayerCombatPhase())
         {
             Debug.LogWarning("Attack failed: Not in player combat phase");
+            _cardOutlineManager.RemoveHighlight();
+            ResetAllMonsterTints();
+            _cardManager.CurrentSelectedCard = null;
             return;
         }
 
@@ -601,6 +625,9 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
         if (attackLimiter != null && !attackLimiter.CanAttack(playerEntity))
         {
             Debug.LogWarning($"Attack failed: {playerEntity.name} has already used its attack this turn");
+            _cardOutlineManager.RemoveHighlight();
+            ResetAllMonsterTints();
+            _cardManager.CurrentSelectedCard = null;
             return;
         }
 
@@ -614,6 +641,9 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
                 if (!isTauntTarget)
                 {
                     Debug.LogWarning($"Attack failed: Cannot attack {targetEntity.name} while there are taunt units on the field");
+                    _cardOutlineManager.RemoveHighlight();
+                    ResetAllMonsterTints();
+                    _cardManager.CurrentSelectedCard = null;
 
                     // List all taunt units for debugging
                     string tauntUnitNames = string.Join(", ", tauntUnits.Select(u => u.name));
@@ -636,6 +666,9 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
         catch (System.Exception ex)
         {
             Debug.LogError($"Attack failed with exception: {ex.Message}\n{ex.StackTrace}");
+            _cardOutlineManager.RemoveHighlight();
+            ResetAllMonsterTints();
+            _cardManager.CurrentSelectedCard = null;
         }
     }
     // Add this method to CardSelectionHandler.cs
@@ -648,6 +681,9 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
         if (!isSpellCard || _cardManager.CurrentSelectedCard == null)
         {
             Debug.Log("Only spell cards can target your own health icon!");
+            _cardOutlineManager.RemoveHighlight();
+            ResetAllMonsterTints();
+            _cardManager.CurrentSelectedCard = null;
             return;
         }
 
@@ -655,6 +691,9 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
         if (!_combatManager.IsPlayerPrepPhase() && !_combatManager.IsPlayerCombatPhase())
         {
             Debug.Log("Spell cards can only be played during your turn!");
+            _cardOutlineManager.RemoveHighlight();
+            ResetAllMonsterTints();
+            _cardManager.CurrentSelectedCard = null;
             return;
         }
 
@@ -663,6 +702,9 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
         if (playerHealthIcon == null)
         {
             Debug.LogError("Could not find player health icon to target!");
+            _cardOutlineManager.RemoveHighlight();
+            ResetAllMonsterTints();
+            _cardManager.CurrentSelectedCard = null;
             return;
         }
 
@@ -675,6 +717,9 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
         if (_cardManager.CurrentSelectedCard == null)
         {
             Debug.Log("No spell card selected!");
+            _cardOutlineManager.RemoveHighlight();
+            ResetAllMonsterTints();
+            _cardManager.CurrentSelectedCard = null;
             return;
         }
 
@@ -682,6 +727,9 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
         if (cardUI == null || cardUI.Card == null || cardUI.Card.CardType == null)
         {
             Debug.LogError("Invalid card data!");
+            _cardOutlineManager.RemoveHighlight();
+            ResetAllMonsterTints();
+            _cardManager.CurrentSelectedCard = null;
             return;
         }
 
@@ -691,6 +739,8 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
         if (!_manaChecker.HasEnoughPlayerMana(spellData))
         {
             Debug.Log("Not enough mana to cast this spell!");
+            _cardManager.CurrentSelectedCard = null;
+            _cardOutlineManager.RemoveHighlight();
             return;
         }
 
