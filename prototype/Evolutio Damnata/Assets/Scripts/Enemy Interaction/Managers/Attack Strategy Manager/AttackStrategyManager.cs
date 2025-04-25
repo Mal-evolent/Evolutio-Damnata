@@ -186,10 +186,21 @@ namespace EnemyInteraction.Managers
                 return AIUtilities.CanTargetHealthIcon(playerEntities);
             }
 
-            // If this is our only monster, be more cautious about direct health attacks
+            // If this is our only monster, only be cautious about direct health attacks when it might result in loss
             if (_avoidLosingLastMonster && IsLastMonster(attacker) &&
                 playerHealthIcon.GetHealth() > attacker.GetAttack() * 1.5f)
             {
+                // Check if attacking the health icon would result in counterattack
+                // Since health icons typically don't counter-attack, this is likely always safe
+                bool wouldTakeCounterDamage = false; // Health icons don't counter
+
+                if (!wouldTakeCounterDamage)
+                {
+                    // Safe to attack - no counter damage from health icon
+                    Debug.Log("[AttackStrategyManager] Safe direct health attack with our only monster - no counterattack risk");
+                    return AIUtilities.CanTargetHealthIcon(playerEntities);
+                }
+
                 Debug.Log("[AttackStrategyManager] Avoiding direct health attack with our only monster");
                 return false;
             }
