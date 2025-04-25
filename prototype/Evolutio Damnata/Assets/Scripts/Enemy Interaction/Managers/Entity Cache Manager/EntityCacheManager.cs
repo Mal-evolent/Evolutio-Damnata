@@ -66,7 +66,7 @@ namespace EnemyInteraction.Managers
 
         public void RefreshAfterAction()
         {
-            Debug.Log("[EntityCacheManager] Forced refresh after monster placement");
+            Debug.Log("[EntityCacheManager] Forced refresh after monster action");
             BuildEntityManagerCache();
             RefreshEntityCaches();
         }
