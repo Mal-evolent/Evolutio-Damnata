@@ -21,63 +21,63 @@ namespace EnemyInteraction.Evaluation
         private void InitializeEvaluations()
         {
             _effectEvaluations = new Dictionary<SpellEffect, SpellEffectEvaluation>
-                {
                     {
-                        SpellEffect.Damage,
-                        new SpellEffectEvaluation
                         {
-                            BaseScore = 35f,
-                            IsPositive = false,
-                            IsStackable = false,
-                            RequiresTarget = true,
-                            IsDamaging = true
-                        }
-                    },
-                    {
-                        SpellEffect.Burn,
-                        new SpellEffectEvaluation
+                            SpellEffect.Damage,
+                            new SpellEffectEvaluation
+                            {
+                                BaseScore = 35f,
+                                IsPositive = false,
+                                IsStackable = false,
+                                RequiresTarget = true,
+                                IsDamaging = true
+                            }
+                        },
                         {
-                            BaseScore = 30f,
-                            IsPositive = false,
-                            IsStackable = true,
-                            RequiresTarget = true,
-                            IsDamaging = true
-                        }
-                    },
-                    {
-                        SpellEffect.Heal,
-                        new SpellEffectEvaluation
+                            SpellEffect.Burn,
+                            new SpellEffectEvaluation
+                            {
+                                BaseScore = 30f,
+                                IsPositive = false,
+                                IsStackable = true,
+                                RequiresTarget = true,
+                                IsDamaging = true
+                            }
+                        },
                         {
-                            BaseScore = 25f,
-                            IsPositive = true,
-                            IsStackable = false,
-                            RequiresTarget = true,
-                            IsDamaging = false
-                        }
-                    },
-                    {
-                        SpellEffect.Draw,
-                        new SpellEffectEvaluation
+                            SpellEffect.Heal,
+                            new SpellEffectEvaluation
+                            {
+                                BaseScore = 25f,
+                                IsPositive = true,
+                                IsStackable = false,
+                                RequiresTarget = true,
+                                IsDamaging = false
+                            }
+                        },
                         {
-                            BaseScore = 40f,
-                            IsPositive = true,
-                            IsStackable = false,
-                            RequiresTarget = false,
-                            IsDamaging = false
-                        }
-                    },
-                    {
-                        SpellEffect.Bloodprice,
-                        new SpellEffectEvaluation
+                            SpellEffect.Draw,
+                            new SpellEffectEvaluation
+                            {
+                                BaseScore = 40f,
+                                IsPositive = true,
+                                IsStackable = false,
+                                RequiresTarget = false,
+                                IsDamaging = false
+                            }
+                        },
                         {
-                            BaseScore = -15f,
-                            IsPositive = false,
-                            IsStackable = false,
-                            RequiresTarget = false,
-                            IsDamaging = true
+                            SpellEffect.Bloodprice,
+                            new SpellEffectEvaluation
+                            {
+                                BaseScore = -15f,
+                                IsPositive = false,
+                                IsStackable = false,
+                                RequiresTarget = false,
+                                IsDamaging = true
+                            }
                         }
-                    }
-                };
+                    };
         }
 
         public float EvaluateEffect(SpellEffect effect, bool isOwnCard, EntityManager target, BoardState boardState)
@@ -138,6 +138,57 @@ namespace EnemyInteraction.Evaluation
                         if (damageRatio < 0.5f)
                             additionalScore += score * 0.2f; // Reduced from 1.3x
                     }
+                }
+
+                // Special handling for Heal effect - including overheal penalty
+                if (effect == SpellEffect.Heal && target != null)
+                {
+                    // Get target's current health information
+                    float currentHealth = target.GetHealth();
+                    float maxHealth = target.GetMaxHealth();
+                    float missingHealth = maxHealth - currentHealth;
+                    float healthPercentage = currentHealth / maxHealth;
+
+                    // Calculate heal effectiveness
+                    float healAmount = cardData != null ? cardData.EffectValue : 0;
+                    float overHealAmount = Mathf.Max(0, healAmount - missingHealth);
+                    float healEfficiency = missingHealth > 0 ? Mathf.Min(1.0f, missingHealth / healAmount) : 0;
+
+                    // Apply bonuses for low health targets
+                    if (healthPercentage <= 0.3f)
+                        additionalScore += score * 0.5f;
+                    else if (healthPercentage <= 0.5f)
+                        additionalScore += score * 0.3f;
+
+                    // Apply penalty for overhealing
+                    if (overHealAmount > 0 && healAmount > 0)
+                    {
+                        float overHealPercentage = overHealAmount / healAmount;
+                        float wastePenalty = score * overHealPercentage * 0.8f;
+
+                        additionalScore -= wastePenalty;
+                        Debug.Log($"[EffectEvaluator] Overheal penalty: -{wastePenalty:F1} for wasting {overHealPercentage:P0} of heal on {target.name} ({currentHealth}/{maxHealth})");
+                    }
+
+                    // If completely or nearly full health, severely penalize heal
+                    if (healthPercentage > 0.95f)
+                    {
+                        additionalScore -= score * 0.75f;
+                        Debug.Log($"[EffectEvaluator] Target {target.name} is nearly at full health ({currentHealth}/{maxHealth}), significantly reducing heal value");
+                    }
+
+                    // Bonus if health is critical
+                    if (healthPercentage <= 0.2f && healEfficiency >= 0.8f)
+                    {
+                        additionalScore += score * 0.4f;
+                        Debug.Log($"[EffectEvaluator] Critical heal bonus for {target.name} with {currentHealth}/{maxHealth} health");
+                    }
+
+                    // Log heal evaluation
+                    Debug.Log($"[EffectEvaluator] Heal effect on {target.name}: base={score}, " +
+                              $"health={currentHealth}/{maxHealth} ({healthPercentage:P0}), " +
+                              $"efficiency={healEfficiency:P0}, " +
+                              $"final adjustment={additionalScore:F1}");
                 }
 
                 // Non-damaging effects are slightly more valuable when at health disadvantage
@@ -307,9 +358,14 @@ namespace EnemyInteraction.Evaluation
                     // For damaging effects, target highest threat
                     selectedTarget = validTargets.OrderByDescending(m => EvaluateTargetThreat(m, boardState)).FirstOrDefault();
                 }
+                else if (effect == SpellEffect.Heal)
+                {
+                    // For healing effects, use improved targeting that considers heal efficiency
+                    selectedTarget = GetOptimalHealTarget(validTargets);
+                }
                 else
                 {
-                    // For healing effects, target lowest health %
+                    // Default to lowest health % for other positive effects
                     selectedTarget = validTargets.OrderBy(m => m.GetHealth() / m.GetMaxHealth()).FirstOrDefault();
                 }
             }
@@ -330,6 +386,66 @@ namespace EnemyInteraction.Evaluation
             }
 
             return selectedTarget;
+        }
+
+        /// <summary>
+        /// Selects the optimal healing target by considering both missing health and efficiency
+        /// </summary>
+        private EntityManager GetOptimalHealTarget(List<EntityManager> targets)
+        {
+            if (targets == null || targets.Count == 0)
+                return null;
+
+            // Each target gets a heal score that combines:
+            // 1. How low their health % is (prioritize low health)
+            // 2. How much healing they can receive without overhealing
+            var scoredTargets = targets.Select(target =>
+            {
+                float currentHealth = target.GetHealth();
+                float maxHealth = target.GetMaxHealth();
+                float missingHealth = maxHealth - currentHealth;
+                float healthPercentage = currentHealth / maxHealth;
+
+                // Calculate base score from health percentage (lower = better)
+                float baseScore = 1.0f - healthPercentage;
+
+                // If nearly full health, severely reduce score
+                if (healthPercentage > 0.9f)
+                {
+                    baseScore *= 0.2f;
+                }
+
+                // If critically low, boost score
+                if (healthPercentage < 0.3f)
+                {
+                    baseScore *= 2.0f;
+                }
+
+                // Missing health factor - bigger gaps are better for healing
+                float missingHealthFactor = missingHealth / maxHealth;
+
+                // Combine factors
+                float finalScore = (baseScore * 0.7f) + (missingHealthFactor * 0.3f);
+
+                Debug.Log($"[EffectEvaluator] Heal target score for {target.name}: {finalScore:F2} " +
+                          $"(health: {currentHealth}/{maxHealth}, {healthPercentage:P0})");
+
+                return new { Target = target, Score = finalScore };
+            })
+            .OrderByDescending(x => x.Score)
+            .ToList();
+
+            // Get the best target
+            var bestTarget = scoredTargets.FirstOrDefault()?.Target;
+
+            if (bestTarget != null)
+            {
+                float healthPercentage = bestTarget.GetHealth() / bestTarget.GetMaxHealth();
+                Debug.Log($"[EffectEvaluator] Selected optimal heal target: {bestTarget.name} " +
+                          $"with {healthPercentage:P0} health ({bestTarget.GetHealth()}/{bestTarget.GetMaxHealth()})");
+            }
+
+            return bestTarget;
         }
 
         private float EvaluateTargetThreat(EntityManager target, BoardState boardState)
