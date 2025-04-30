@@ -160,17 +160,20 @@ namespace GeneralInteraction
         private void CreateEnemyButton(int index)
         {
             GameObject enemyEntity = _spritePositioning.EnemyEntities[index];
-            Vector3 originalWorldPos = enemyEntity.transform.position;
-            Vector3 originalScale = enemyEntity.transform.localScale;
-            Quaternion originalRotation = enemyEntity.transform.rotation;
 
-            // Create button as canvas child
+            // Disable raycast on placeholder image if it exists
+            if (enemyEntity.TryGetComponent(out Image placeholderImage))
+            {
+                placeholderImage.raycastTarget = false;
+            }
+
+            // Create button as child of enemy entity
             GameObject buttonObject = new GameObject($"Enemy_Button_Outline_{index}")
             {
                 transform =
                 {
-                    parent = _battleField.transform,
-                    position = originalWorldPos
+                    parent = enemyEntity.transform,
+                    localPosition = Vector3.zero
                 }
             };
 
@@ -184,12 +187,6 @@ namespace GeneralInteraction
             var buttonImage = buttonObject.AddComponent<Image>();
             buttonImage.color = new Color(1, 1, 1, 0);
             buttonImage.raycastTarget = true;
-
-            // Reparent enemy entity to button
-            enemyEntity.transform.SetParent(buttonObject.transform, false);
-            enemyEntity.transform.localPosition = buttonObject.transform.InverseTransformPoint(originalWorldPos);
-            enemyEntity.transform.localScale = originalScale;
-            enemyEntity.transform.rotation = originalRotation;
         }
     }
 }
