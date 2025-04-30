@@ -1,10 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/**
- * This class is used to position the sprites on the map.
- * It generates placeholders for the player and enemy entities.
- */
 
 public class EnemyRoomPositionsInitializer : MonoBehaviour
 {
@@ -14,9 +10,9 @@ public class EnemyRoomPositionsInitializer : MonoBehaviour
 
         enemyRoomPositions["Forgotten Tomb"] = new List<PositionData>
         {
-            new PositionData(new Vector2(142.94f, -353),new Vector2(613.7594f, 550.7698f), new Vector3(0.5826045f, 0.5826045f, 0.5826045f), Quaternion.Euler(0, 180, 0)),
-            new PositionData(new Vector2(306.88f, -164.1f),new Vector2(613.7594f, 550.7698f), new Vector3(0.5826045f, 0.5826045f, 0.5826045f), Quaternion.Euler(0, 180, 0)),
-            new PositionData(new Vector2(534, -353), new Vector2(613.7594f, 550.7698f), new Vector3(0.5826045f, 0.5826045f, 0.5826045f), Quaternion.Euler(0, 180, 0))
+            new PositionData(new Vector2(175f, -353),new Vector2(613.7594f, 550.7698f), new Vector3(0.4f, 0.4f, 0.4f), Quaternion.Euler(0, 180, 0)),
+            new PositionData(new Vector2(356f, -164.1f),new Vector2(613.7594f, 550.7698f), new Vector3(0.4f, 0.4f, 0.4f), Quaternion.Euler(0, 180, 0)),
+            new PositionData(new Vector2(530, -353), new Vector2(613.7594f, 550.7698f), new Vector3(0.4f, 0.4f, 0.4f), Quaternion.Euler(0, 180, 0))
         };
 
         return enemyRoomPositions;
