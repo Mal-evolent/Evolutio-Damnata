@@ -1,5 +1,6 @@
-using UnityEngine;
+#if UNITY_EDITOR
 using UnityEditor;
+using UnityEngine;
 
 [CustomPropertyDrawer(typeof(ReadOnlyAttribute))]
 public class ReadOnlyDrawer : PropertyDrawer
@@ -10,4 +11,5 @@ public class ReadOnlyDrawer : PropertyDrawer
         EditorGUI.PropertyField(position, property, label, true);
         GUI.enabled = true;
     }
-} 
+}
+#endif
