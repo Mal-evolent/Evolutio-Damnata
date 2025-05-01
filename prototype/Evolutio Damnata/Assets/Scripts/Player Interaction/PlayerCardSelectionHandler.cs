@@ -9,6 +9,7 @@ public class PlayerCardSelectionHandler : IPlayerCardHandler
     private readonly ICardSpawner _cardSpawner;
     private readonly ISpellEffectApplier _spellEffectApplier;
     private readonly ICombatManager _combatManager;
+    private readonly ISpritePositioning _spritePositioning;
 
     public PlayerCardSelectionHandler(
         ICardManager cardManager,
@@ -17,7 +18,8 @@ public class PlayerCardSelectionHandler : IPlayerCardHandler
         ICardRemover cardRemover,
         ICardOutlineManager cardOutlineManager,
         ICardSpawner cardSpawner,
-        ISpellEffectApplier spellEffectApplier)
+        ISpellEffectApplier spellEffectApplier,
+        ISpritePositioning spritePositioning)
     {
         _cardManager = cardManager;
         _combatManager = combatManager;
@@ -26,33 +28,50 @@ public class PlayerCardSelectionHandler : IPlayerCardHandler
         _cardOutlineManager = cardOutlineManager;
         _cardSpawner = cardSpawner;
         _spellEffectApplier = spellEffectApplier;
+        _spritePositioning = spritePositioning;
     }
 
     public void HandlePlayerCardSelection(int index, EntityManager entityManager)
     {
         if (!ValidateSelection(entityManager))
+        {
+            ResetCardSelection();
             return;
+        }
 
         var cardUI = _cardManager.CurrentSelectedCard.GetComponent<CardUI>();
-        var cardData = cardUI?.Card?.CardType;
-
-        if (cardData != null)
+        if (cardUI == null)
         {
-            // Early check for mana availability
-            if (_combatManager.PlayerMana < cardData.ManaCost)
-            {
-                Debug.Log($"Not enough mana. Required: {cardData.ManaCost}, Available: {_combatManager.PlayerMana}");
-                ResetCardSelection();
-                return;
-            }
+            Debug.LogError("Selected card has no CardUI component");
+            ResetCardSelection();
+            return;
+        }
 
-            // Check if the card is a spell with only Draw and/or Blood Price effects
-            bool isDrawOrBloodPriceOnlySpell = false;
-            if (cardData.IsSpellCard && !entityManager.placed)
-            {
-                bool hasOtherEffects = false;
-                bool hasDrawOrBloodPrice = false;
+        var cardData = cardUI.Card?.CardType;
+        if (cardData == null)
+        {
+            Debug.LogError("Selected card has no valid CardData");
+            ResetCardSelection();
+            return;
+        }
 
+        // Early check for mana availability
+        if (_combatManager.PlayerMana < cardData.ManaCost)
+        {
+            Debug.Log($"Not enough mana. Required: {cardData.ManaCost}, Available: {_combatManager.PlayerMana}");
+            ResetCardSelection();
+            return;
+        }
+
+        // Check if the card is a spell with only Draw and/or Blood Price effects
+        bool isDrawOrBloodPriceOnlySpell = false;
+        if (cardData.IsSpellCard && !entityManager.placed)
+        {
+            bool hasOtherEffects = false;
+            bool hasDrawOrBloodPrice = false;
+
+            if (cardData.EffectTypes != null)
+            {
                 foreach (var effect in cardData.EffectTypes)
                 {
                     if (effect == SpellEffect.Draw || effect == SpellEffect.Bloodprice)
@@ -65,22 +84,40 @@ public class PlayerCardSelectionHandler : IPlayerCardHandler
                         break;
                     }
                 }
-
-                // If it only has Draw and/or Blood Price effects, allow placement on empty spots
-                isDrawOrBloodPriceOnlySpell = hasDrawOrBloodPrice && !hasOtherEffects;
             }
-
-            // Standard validations for monster cards and spell cards
-            if (cardData.IsMonsterCard && entityManager.placed)
+            else
             {
-                Debug.LogWarning("Cannot place a monster on an already occupied space!");
+                Debug.LogWarning("Spell card has no effect types defined");
                 ResetCardSelection();
                 return;
             }
-            // Add exception for Draw/Blood Price only spell cards
-            else if (!cardData.IsMonsterCard && !entityManager.placed && !isDrawOrBloodPriceOnlySpell)
+
+            // If it only has Draw and/or Blood Price effects, allow placement on empty spots
+            isDrawOrBloodPriceOnlySpell = hasDrawOrBloodPrice && !hasOtherEffects;
+        }
+
+        // Standard validations for monster cards and spell cards
+        if (cardData.IsMonsterCard && entityManager.placed)
+        {
+            Debug.LogWarning("Cannot place a monster on an already occupied space!");
+            ResetCardSelection();
+            return;
+        }
+        // Add exception for Draw/Blood Price only spell cards
+        else if (!cardData.IsMonsterCard && !entityManager.placed && !isDrawOrBloodPriceOnlySpell)
+        {
+            Debug.LogWarning("Cannot cast a spell on an unoccupied space!");
+            ResetCardSelection();
+            return;
+        }
+
+        // Check for taunt targeting restrictions
+        if (cardData.IsSpellCard && !isDrawOrBloodPriceOnlySpell &&
+            entityManager.GetMonsterType() == EntityManager.MonsterType.Enemy)
+        {
+            if (HasEnemyTauntUnits() && !entityManager.HasKeyword(Keywords.MonsterKeyword.Taunt))
             {
-                Debug.LogWarning("Cannot cast a spell on an unoccupied space!");
+                Debug.LogWarning("You must target an enemy taunt unit with your spell!");
                 ResetCardSelection();
                 return;
             }
@@ -98,40 +135,92 @@ public class PlayerCardSelectionHandler : IPlayerCardHandler
 
     private bool ValidateSelection(EntityManager entityManager)
     {
-        if (_cardManager.CurrentSelectedCard != null)
-            return true;
-
-        if (!entityManager.placed)
+        if (_cardManager.CurrentSelectedCard == null)
+        {
             Debug.LogError("No card selected!");
+            return false;
+        }
 
+        if (entityManager == null)
+        {
+            Debug.LogError("Target entity is null");
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool HasEnemyTauntUnits()
+    {
+        if (_spritePositioning == null || _spritePositioning.EnemyEntities == null)
+            return false;
+
+        foreach (var entity in _spritePositioning.EnemyEntities)
+        {
+            if (entity == null) continue;
+
+            var entityManager = entity.GetComponent<EntityManager>();
+            if (entityManager != null &&
+                entityManager.placed &&
+                !entityManager.dead &&
+                !entityManager.IsFadingOut &&
+                entityManager.HasKeyword(Keywords.MonsterKeyword.Taunt))
+            {
+                return true;
+            }
+        }
         return false;
     }
 
     private void ProcessValidCard(int index, EntityManager entityManager, CardData cardData)
     {
+        // Double-check mana availability (in case it changed)
         if (_combatManager.PlayerMana < cardData.ManaCost)
         {
             Debug.Log($"Not enough mana. Required: {cardData.ManaCost}, Available: {_combatManager.PlayerMana}");
-            ResetCardSelection(); // Reset card selection if not enough mana
+            ResetCardSelection();
             return;
         }
 
-        if (cardData.IsMonsterCard)
-            HandleMonsterCard(index, cardData);
-        else
-            HandleSpellCard(index, entityManager, cardData);
+        try
+        {
+            if (cardData.IsMonsterCard)
+                HandleMonsterCard(index, cardData);
+            else
+                HandleSpellCard(index, entityManager, cardData);
 
-        FinalizeCardPlay(cardData);
+            FinalizeCardPlay(cardData);
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"Failed to process card: {ex.Message}");
+            ResetCardSelection();
+        }
     }
 
     private void HandleMonsterCard(int index, CardData cardData)
     {
-        _cardSpawner.SpawnCard(_cardManager.CurrentSelectedCard.name, cardData, index);
+        bool success = _cardSpawner.SpawnCard(_cardManager.CurrentSelectedCard.name, cardData, index);
+        if (!success)
+        {
+            Debug.LogError("Failed to spawn monster card");
+            ResetCardSelection();
+            throw new System.Exception("Card spawning failed");
+        }
     }
 
     private void HandleSpellCard(int index, EntityManager entityManager, CardData cardData)
     {
-        _spellEffectApplier.ApplySpellEffects(entityManager, cardData, index);
+        try
+        {
+            _spellEffectApplier.ApplySpellEffects(entityManager, cardData, index);
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"Failed to apply spell effects: {ex.Message}");
+            ResetCardSelection();
+            throw;
+        }
     }
 
     private void FinalizeCardPlay(CardData cardData)

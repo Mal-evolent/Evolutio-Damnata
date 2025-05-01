@@ -103,10 +103,30 @@ public class EnemyCardSelectionHandler : IEnemyCardHandler
         if (entityManager is HealthIconManager)
         {
             bool enemyEntitiesPresent = HasEntitiesOnField(false);
-            
+
             if (enemyEntitiesPresent)
             {
                 Debug.Log("Cannot target enemy health icon with spells while enemy monsters are on the field!");
+                ResetSelection();
+                return;
+            }
+        }
+
+        // Check if the card is a spell with only Draw and/or Blood Price effects
+        bool isDrawOrBloodPriceOnlySpell = false;
+        if (cardData.IsSpellCard && entityManager is HealthIconManager)
+        {
+            isDrawOrBloodPriceOnlySpell = IsDrawOrBloodPriceOnlySpell(cardData);
+        }
+
+        // Check for taunt targeting restrictions
+        // Only apply for enemy units and when it's not a utility-only spell
+        if (cardData.IsSpellCard && !isDrawOrBloodPriceOnlySpell &&
+            entityManager.GetMonsterType() == EntityManager.MonsterType.Enemy)
+        {
+            if (HasEnemyTauntUnits() && !entityManager.HasKeyword(Keywords.MonsterKeyword.Taunt))
+            {
+                Debug.LogWarning("You must target an enemy taunt unit with your spell!");
                 ResetSelection();
                 return;
             }
@@ -116,6 +136,53 @@ public class EnemyCardSelectionHandler : IEnemyCardHandler
         _manaChecker.DeductPlayerMana(cardData);
         RemoveCardFromHand();
         ResetSelection();
+    }
+
+    private bool HasEnemyTauntUnits()
+    {
+        if (_spritePositioning == null || _spritePositioning.EnemyEntities == null)
+            return false;
+
+        foreach (var entity in _spritePositioning.EnemyEntities)
+        {
+            if (entity == null) continue;
+
+            var entityManager = entity.GetComponent<EntityManager>();
+            if (entityManager != null &&
+                entityManager.placed &&
+                !entityManager.dead &&
+                !entityManager.IsFadingOut &&
+                entityManager.HasKeyword(Keywords.MonsterKeyword.Taunt))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private bool IsDrawOrBloodPriceOnlySpell(CardData cardData)
+    {
+        if (cardData.EffectTypes == null)
+            return false;
+
+        bool hasDrawOrBloodPrice = false;
+        bool hasOtherEffects = false;
+
+        foreach (var effect in cardData.EffectTypes)
+        {
+            if (effect == SpellEffect.Draw || effect == SpellEffect.Bloodprice)
+            {
+                hasDrawOrBloodPrice = true;
+            }
+            else
+            {
+                hasOtherEffects = true;
+                break;
+            }
+        }
+
+        // If it only has Draw and/or Blood Price effects
+        return hasDrawOrBloodPrice && !hasOtherEffects;
     }
 
     private void RemoveCardFromHand()

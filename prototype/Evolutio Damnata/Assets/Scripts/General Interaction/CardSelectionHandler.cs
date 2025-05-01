@@ -52,7 +52,7 @@ public class CardSelectionHandler : MonoBehaviour, ICardSelectionHandler
 
         _playerCardSelectionHandler = new PlayerCardSelectionHandler(
             _cardManager, _combatManager, cardValidator, cardRemover,
-            _cardOutlineManager, _playerCardSpawner, _spellEffectApplier);
+            _cardOutlineManager, _playerCardSpawner, _spellEffectApplier, _spritePositioning);
 
         _enemyCardSelectionHandler = new EnemyCardSelectionHandler(
             _cardManager, _combatManager, _cardOutlineManager, _spritePositioning,
