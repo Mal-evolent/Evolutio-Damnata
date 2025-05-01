@@ -15,8 +15,8 @@ namespace GeneralInteraction
         private ICardSelectionHandler _cardSelectionHandler;
 
         [Header("Button Settings")]
-        private readonly Vector2 _buttonSize = new Vector2(217.9854f, 322.7287f);
-        private readonly Vector2 _enemyButtonSize = new Vector2(114.2145f, 188.1686f);
+        private readonly Vector2 _buttonSize = new Vector2(114.2145f, 104.5f);
+        private readonly Vector2 _enemyButtonSize = new Vector2(114.2145f, 104.5f);
 
         private void Awake()
         {
