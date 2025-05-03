@@ -40,7 +40,7 @@ namespace EnemyInteraction.Services
                             if (_instance == null)
                             {
                                 GameObject aiServicesObj = new GameObject("AIServices");
-                                DontDestroyOnLoad(aiServicesObj);
+                                // DontDestroyOnLoad removed
                                 _instance = aiServicesObj.AddComponent<AIServices>();
                                 Debug.Log("[AIServices] Created new AIServices instance");
                             }
@@ -144,7 +144,7 @@ namespace EnemyInteraction.Services
             if (_instance == null)
             {
                 _instance = this;
-                DontDestroyOnLoad(gameObject);
+                // DontDestroyOnLoad removed
                 StartCoroutine(Initialize());
             }
             else if (_instance != this)
@@ -501,7 +501,7 @@ namespace EnemyInteraction.Services
                 else
                 {
                     Debug.LogWarning($"[AIServices] Cannot set parent for {serviceName} - AIServices transform is null");
-                    DontDestroyOnLoad(serviceObj);
+                    // DontDestroyOnLoad removed
                 }
 
                 // Add the component
@@ -593,4 +593,4 @@ namespace EnemyInteraction.Services
 
         #endregion
     }
-} 
+}

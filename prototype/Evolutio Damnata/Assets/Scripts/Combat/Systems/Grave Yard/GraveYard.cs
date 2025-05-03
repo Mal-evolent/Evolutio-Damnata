@@ -43,7 +43,6 @@ public class GraveYard : MonoBehaviour, IGraveYard
         }
 
         instance = this;
-        DontDestroyOnLoad(gameObject);
 
         if (!keepHistoryBetweenGames)
         {
