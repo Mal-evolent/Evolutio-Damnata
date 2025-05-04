@@ -350,6 +350,7 @@ public class CardHistory : MonoBehaviour, ICardHistory
         }
 
         instance = this;
+        DontDestroyOnLoad(gameObject);
 
         if (!keepHistoryBetweenGames)
         {
