@@ -143,7 +143,21 @@ public class EnemyCardSelectionHandler : IEnemyCardHandler
         if (_spritePositioning == null || _spritePositioning.EnemyEntities == null)
             return false;
 
-        return CombatRulesEngine.HasTauntUnits(_spritePositioning.EnemyEntities);
+        foreach (var entity in _spritePositioning.EnemyEntities)
+        {
+            if (entity == null) continue;
+
+            var entityManager = entity.GetComponent<EntityManager>();
+            if (entityManager != null &&
+                entityManager.placed &&
+                !entityManager.dead &&
+                !entityManager.IsFadingOut &&
+                entityManager.HasKeyword(Keywords.MonsterKeyword.Taunt))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     private bool IsDrawOrBloodPriceOnlySpell(CardData cardData)
