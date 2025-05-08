@@ -47,6 +47,8 @@ namespace EnemyInteraction.Managers
         private void Awake()
         {
             InitializeSingleton();
+            transform.SetParent(null);
+            DontDestroyOnLoad(gameObject);
         }
 
         private void InitializeSingleton()

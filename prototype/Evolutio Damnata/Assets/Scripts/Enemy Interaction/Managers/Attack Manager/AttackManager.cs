@@ -30,6 +30,10 @@ namespace EnemyInteraction.Managers
         private ITargetEvaluator _targetEvaluator;
         private IAttackExecutor _attackExecutor;
 
+        // Helper classes for refactored functionality
+        private AttackStrategyExecutor _attackStrategyExecutor;
+        private TurnSkipEvaluator _turnSkipEvaluator;
+
         // Delay control parameters
         [SerializeField, Range(0.1f, 1.5f), Tooltip("Initial delay before starting attack sequence")]
         private float _initialAttackDelay = 0.8f;
@@ -79,10 +83,49 @@ namespace EnemyInteraction.Managers
             }
 
             Instance = this;
+            transform.SetParent(null);
+            DontDestroyOnLoad(gameObject);
 
             // Instead of starting initialization here, 
             // register this instance with AIServices and let it handle initialization
             StartCoroutine(RegisterWithAIServices());
+        }
+
+        private void OnEnable()
+        {
+            // Register for scene load events
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        private void OnDisable()
+        {
+            // Unregister to prevent memory leaks
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
+
+        public void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+        {
+            Debug.Log($"[AttackManager] Scene loaded: {scene.name}");
+
+            // Find references again after scene load
+            StartCoroutine(ReacquireSceneReferences());
+        }
+
+        private IEnumerator ReacquireSceneReferences()
+        {
+            yield return new WaitForSeconds(0.5f); // Wait for scene to stabilize
+
+            Debug.Log("[AttackManager] Reacquiring scene references...");
+
+            // Clear references that might be stale
+            _combatManager = null;
+            _combatStage = null;
+            _spritePositioning = null;
+
+            // Reacquire references
+            yield return StartCoroutine(WaitForSceneDependencies());
+
+            Debug.Log("[AttackManager] Scene references reacquired");
         }
 
         private IEnumerator RegisterWithAIServices()
@@ -206,7 +249,6 @@ namespace EnemyInteraction.Managers
             }
 
             // Create and initialize AttackExecutor
-            // Create and initialize AttackExecutor
             if (_attackExecutor == null)
             {
                 var attackExecutorObj = gameObject.AddComponent<AttackExecutor>();
@@ -220,6 +262,19 @@ namespace EnemyInteraction.Managers
                 }
             }
 
+            // Initialize refactored helper classes
+            _turnSkipEvaluator = new TurnSkipEvaluator(_skipTurnConsiderationChance, _skipTurnBoardAdvantageThreshold);
+
+            _attackStrategyExecutor = new AttackStrategyExecutor(
+                _attackExecutor,
+                _entityCacheManager,
+                _attackStrategyManager,
+                _evaluationDelay,
+                _missedAttackChance,
+                _strategyChangeChance,
+                _targetReconsiderationChance,
+                _reconsiderationDelay,
+                _attackOrderRandomizationChance);
         }
 
         public IEnumerator Attack()
@@ -229,297 +284,71 @@ namespace EnemyInteraction.Managers
             // Initial delay before starting attack sequence - gives player time to prepare
             yield return new WaitForSeconds(_initialAttackDelay);
 
-            if (_combatManager == null || _spritePositioning == null)
+            // Validate prerequisites
+            if (!AttackValidator.ValidateAttackPrerequisites(_combatManager, _spritePositioning))
             {
                 yield return SimulatePlaceholderAttack();
                 yield break;
             }
 
-            if (!ValidateCombatState())
-            {
-                yield return new WaitForSeconds(_attackExecutor.GetRandomizedDelay(_evaluationDelay * 0.5f));
-                yield break;
-            }
-
-            // Get board state before making any decisions
+            // Get board state for decision making
             BoardState boardState = GetCurrentBoardState();
 
-            // Check if the AI should consider skipping this turn
-            if (ShouldConsiderSkippingTurn(boardState))
+            // Check if we should skip turn
+            if (_turnSkipEvaluator.ShouldSkipTurn(boardState, _entityCacheManager, _attackStrategyManager))
             {
-                // If the decision is to skip, log this and exit
-                Debug.Log("[AttackManager] AI decided to skip this turn for strategic reasons");
-                yield return new WaitForSeconds(_attackExecutor.GetRandomizedDelay(_evaluationDelay * 1.5f));
+                yield return PerformTurnSkip();
                 yield break;
             }
 
-            // Use cached entities
-            _entityCacheManager.RefreshEntityCaches();
-            List<EntityManager> enemyEntities = _entityCacheManager.CachedEnemyEntities;
-            List<EntityManager> playerEntities = _entityCacheManager.CachedPlayerEntities;
-            HealthIconManager playerHealthIcon = GameObject.FindGameObjectWithTag("Player")?.GetComponent<HealthIconManager>();
+            // Prepare attack context
+            AttackContext context = PrepareAttackContext(boardState);
 
-            bool setupSuccess = false;
-            string errorMessage = null;
-
-            try
-            {
-                setupSuccess = ValidateAttackScenario(enemyEntities, playerEntities, playerHealthIcon);
-            }
-            catch (System.Exception e)
-            {
-                errorMessage = e.Message;
-                Debug.LogError($"[AttackManager] Error in Attack: {errorMessage}");
-            }
-
-            if (!setupSuccess || errorMessage != null)
+            // Validate the context
+            if (!context.IsValid)
             {
                 yield return new WaitForSeconds(_attackExecutor.GetRandomizedDelay(_evaluationDelay * 0.5f));
                 yield break;
             }
 
-            // Delay to simulate "thinking" about attack strategy
-            yield return new WaitForSeconds(_attackExecutor.GetRandomizedDelay(_evaluationDelay));
+            // Execute the attack sequence
+            yield return _attackStrategyExecutor.ExecuteAttackSequence(context);
 
-            var attackOrder = _attackStrategyManager.GetAttackOrder(enemyEntities, playerEntities, playerHealthIcon, boardState);
-
-            // Apply attack order randomization based on chance
-            if (Random.value < _attackOrderRandomizationChance && attackOrder.Count > 1)
-            {
-                Debug.Log("[AttackManager] Applying attack order randomization (simulating human error)");
-                attackOrder = RandomizeAttackOrder(attackOrder);
-            }
-
-            StrategicMode mode = _attackStrategyManager.DetermineStrategicMode(boardState);
-            Debug.Log($"[AttackManager] Current strategy: {mode}");
-
-            // Brief pause after determining strategy before first attack
-            yield return new WaitForSeconds(_attackExecutor.GetRandomizedDelay(_evaluationDelay * 0.5f));
-
-            // Process each attack with appropriate delays
-            foreach (var attacker in attackOrder)
-            {
-                // Simulate "forgetting" to attack with this entity
-                if (Random.value < _missedAttackChance)
-                {
-                    Debug.Log($"[AttackManager] 'Forgot' to attack with {attacker.name} (simulating human error)");
-                    continue;
-                }
-
-                // Check if we should change strategy mid-turn
-                if (Random.value < _strategyChangeChance)
-                {
-                    mode = mode == StrategicMode.Aggro ? StrategicMode.Defensive : StrategicMode.Aggro;
-                    Debug.Log($"[AttackManager] Changed strategy mid-turn to: {mode} (simulating human error)");
-
-                    // Add extra "thinking" time after changing strategy
-                    yield return new WaitForSeconds(_attackExecutor.GetRandomizedDelay(_evaluationDelay * 0.8f));
-                }
-
-                // Delay before selecting target - simulates AI "thinking"
-                yield return new WaitForSeconds(_attackExecutor.GetRandomizedDelay(_evaluationDelay * 0.7f));
-
-                EntityManager targetEntity = _attackStrategyManager.SelectTarget(attacker, playerEntities, playerHealthIcon, boardState, mode);
-
-                // Simulate reconsidering the target
-                if (Random.value < _targetReconsiderationChance && targetEntity != null)
-                {
-                    Debug.Log($"[AttackManager] Reconsidering target selection (simulating human error)");
-                    yield return new WaitForSeconds(_attackExecutor.GetRandomizedDelay(_reconsiderationDelay));
-
-                    // 50% chance to actually change the target
-                    if (Random.value < 0.5f && playerEntities.Count > 1)
-                    {
-                        int currentIndex = playerEntities.IndexOf(targetEntity);
-                        int newIndex = (currentIndex + 1) % playerEntities.Count;
-                        targetEntity = playerEntities[newIndex];
-                        Debug.Log($"[AttackManager] Changed target to {targetEntity.name}");
-                    }
-                }
-
-                if (targetEntity != null)
-                {
-                    // Small delay between target selection and attack execution
-                    yield return new WaitForSeconds(_attackExecutor.GetRandomizedDelay(_evaluationDelay * 0.3f));
-
-                    yield return _attackExecutor.ExecuteAttack(attacker, targetEntity);
-
-                    // Refresh entity cache after attack
-                    var entityCacheManager = _entityCacheManager as EntityCacheManager;
-                    entityCacheManager?.RefreshAfterAction();
-
-                    if (targetEntity.dead)
-                    {
-                        // Add longer pause after killing a unit to emphasize the moment
-                        yield return new WaitForSeconds(_attackExecutor.GetRandomizedDelay(_evaluationDelay * 1.2f));
-
-                        _entityCacheManager.RefreshEntityCaches();
-                        playerEntities = _entityCacheManager.CachedPlayerEntities;
-                        if (playerEntities.Count == 0 && playerHealthIcon == null) break;
-                    }
-                    else
-                    {
-                        // Normal post-attack delay
-                        yield return new WaitForSeconds(_attackExecutor.GetRandomizedDelay(_evaluationDelay));
-                    }
-                }
-                else if (playerHealthIcon != null &&
-                         _attackStrategyManager.ShouldAttackHealthIcon(attacker, playerEntities, playerHealthIcon, boardState))
-                {
-                    // Dramatic pause before attacking health icon directly
-                    yield return new WaitForSeconds(_attackExecutor.GetRandomizedDelay(_evaluationDelay * 0.5f));
-
-                    _attackExecutor.AttackPlayerHealthIcon(attacker, playerHealthIcon);
-
-                    // Refresh entity cache after health icon attack
-                    var entityCacheManager = _entityCacheManager as EntityCacheManager;
-                    entityCacheManager?.RefreshAfterAction();
-
-                    // Longer pause after attacking health icon to emphasize importance
-                    yield return new WaitForSeconds(_attackExecutor.GetRandomizedDelay(_evaluationDelay * 1.5f));
-                }
-            }
-
-            // Final delay after attack sequence completes
-            yield return new WaitForSeconds(_attackExecutor.GetRandomizedDelay(_evaluationDelay));
             Debug.Log("[AttackManager] Attack completed");
         }
 
-        /// <summary>
-        /// Randomizes the attack order to simulate human imperfection in decision making
-        /// </summary>
-        private List<EntityManager> RandomizeAttackOrder(List<EntityManager> originalOrder)
+        private AttackContext PrepareAttackContext(BoardState boardState)
         {
-            List<EntityManager> randomizedOrder = new List<EntityManager>(originalOrder);
+            var context = new AttackContext();
+            context.BoardState = boardState;
 
-            // Simple shuffling algorithm
-            int n = randomizedOrder.Count;
-            while (n > 1)
-            {
-                n--;
-                int k = Random.Range(0, n + 1);
-                EntityManager temp = randomizedOrder[k];
-                randomizedOrder[k] = randomizedOrder[n];
-                randomizedOrder[n] = temp;
-            }
-
-            return randomizedOrder;
-        }
-
-        /// <summary>
-        /// Determines if the AI should consider skipping its attack turn
-        /// based on strategic considerations and board state.
-        /// </summary>
-        /// <param name="boardState">Current state of the game board</param>
-        /// <returns>True if the AI should skip this turn</returns>
-        private bool ShouldConsiderSkippingTurn(BoardState boardState)
-        {
-            // Get the player health icon first to check if it's available as a target
-            HealthIconManager playerHealthIcon = GameObject.FindGameObjectWithTag("Player")?.GetComponent<HealthIconManager>();
-
-            // Get cached player entities to check if direct attack is possible
+            // Refresh and get entity caches
             _entityCacheManager.RefreshEntityCaches();
-            List<EntityManager> playerEntities = _entityCacheManager.CachedPlayerEntities;
+            context.EnemyEntities = _entityCacheManager.CachedEnemyEntities;
+            context.PlayerEntities = _entityCacheManager.CachedPlayerEntities;
+            context.PlayerHealthIcon = GameObject.FindGameObjectWithTag("Player")?.GetComponent<HealthIconManager>();
 
-            // If there are no player entities and player health icon is available,
-            // we should NEVER skip the turn - always take direct shots at player health
-            if (AIUtilities.CanTargetHealthIcon(playerEntities) && playerHealthIcon != null)
+            try
             {
-                Debug.Log("[AttackManager] Player health icon is directly targetable - never skipping turn");
-                return false;
+                context.IsValid = AttackValidator.ValidateAttackScenario(
+                    context.EnemyEntities,
+                    context.PlayerEntities,
+                    context.PlayerHealthIcon);
+            }
+            catch (System.Exception e)
+            {
+                context.ErrorMessage = e.Message;
+                context.IsValid = false;
+                Debug.LogError($"[AttackManager] Error preparing attack context: {e.Message}");
             }
 
-            // First, check if we should even consider skipping (random chance)
-            if (Random.value > _skipTurnConsiderationChance)
-                return false;
-
-            Debug.Log("[AttackManager] Considering whether to skip turn...");
-
-            // Check if board state is available
-            if (boardState == null)
-                return false;
-
-            // Calculate the enemy's board advantage
-            float enemyBoardAdvantage = boardState.EnemyBoardControl /
-                (boardState.PlayerBoardControl > 0 ? boardState.PlayerBoardControl : 1);
-
-            // Check if the enemy has sufficient board advantage to consider skipping
-            bool hasSufficientAdvantage = enemyBoardAdvantage >= _skipTurnBoardAdvantageThreshold;
-
-            // Check if player will go first next turn (if we can determine this)
-            bool playerGoesNextTurn = boardState.IsNextTurnPlayerFirst;
-
-            // Check if player is at low health (making a skip less advisable)
-            bool playerAtLowHealth = boardState.PlayerHealth <= 10;
-
-            // Late game considerations (don't skip in late game)
-            bool isLateGame = boardState.TurnCount >= 5;
-
-            // Strategic mode from the strategy manager
-            StrategicMode currentStrategy = _attackStrategyManager.DetermineStrategicMode(boardState);
-
-            // Don't skip if we're in aggressive mode
-            if (currentStrategy == StrategicMode.Aggro)
-            {
-                Debug.Log("[AttackManager] Won't skip turn - current strategy is aggressive");
-                return false;
-            }
-
-            // Don't skip if player is at low health
-            if (playerAtLowHealth)
-            {
-                Debug.Log("[AttackManager] Won't skip turn - player health is low, should press advantage");
-                return false;
-            }
-
-            // Don't skip in late game
-            if (isLateGame)
-            {
-                Debug.Log("[AttackManager] Won't skip turn - game is in later stages");
-                return false;
-            }
-
-            // If enemy has significant board advantage and is in defensive mode,
-            // consider skipping to preserve board position
-            if (hasSufficientAdvantage && currentStrategy == StrategicMode.Defensive)
-            {
-                // If player goes next turn, higher chance to skip (preserve board for their turn)
-                if (playerGoesNextTurn)
-                {
-                    Debug.Log($"[AttackManager] Skipping turn - enemy has board advantage of {enemyBoardAdvantage:F2} and player goes next");
-                    return true;
-                }
-
-                // Even if we go next, still consider skipping with a good advantage
-                if (enemyBoardAdvantage >= _skipTurnBoardAdvantageThreshold * 1.5f)
-                {
-                    Debug.Log($"[AttackManager] Skipping turn - enemy has strong board advantage of {enemyBoardAdvantage:F2}");
-                    return true;
-                }
-            }
-
-            Debug.Log("[AttackManager] Decided not to skip turn");
-            return false;
+            return context;
         }
 
-        private bool ValidateCombatState()
+        private IEnumerator PerformTurnSkip()
         {
-            return _combatManager != null && _combatManager.IsEnemyCombatPhase();
-        }
-
-        private bool ValidateAttackScenario(List<EntityManager> enemyEntities, List<EntityManager> playerEntities,
-                                          HealthIconManager playerHealthIcon)
-        {
-            bool hasEnemyEntities = enemyEntities != null && enemyEntities.Count > 0;
-            bool hasTargets = (playerEntities != null && playerEntities.Count > 0) || playerHealthIcon != null;
-
-            if (!hasEnemyEntities)
-                Debug.Log("[AttackManager] No enemy entities available to attack");
-
-            if (!hasTargets)
-                Debug.Log("[AttackManager] No valid targets available");
-
-            return hasEnemyEntities && hasTargets;
+            Debug.Log("[AttackManager] AI decided to skip this turn for strategic reasons");
+            yield return new WaitForSeconds(_attackExecutor.GetRandomizedDelay(_evaluationDelay * 1.5f));
         }
 
         private BoardState GetCurrentBoardState()

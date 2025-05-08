@@ -11,6 +11,7 @@ using EnemyInteraction.Extensions;
 using EnemyInteraction.Interfaces;
 using EnemyInteraction.Services;
 using EnemyInteraction.Utilities;
+using UnityEngine.SceneManagement;
 
 namespace EnemyInteraction.Managers
 {
@@ -92,10 +93,71 @@ namespace EnemyInteraction.Managers
         private SpellTargetSelector _spellTargetSelector;
         private ICardPlayExecutor _cardPlayExecutor;
 
+        public static CardPlayManager Instance { get; private set; }
+
         private void Awake()
         {
+            // Implement singleton pattern
+            if (Instance != null && Instance != this)
+            {
+                Debug.LogWarning("[CardPlayManager] Another instance already exists, destroying this one");
+                Destroy(gameObject);
+                return;
+            }
+
+            Instance = this;
+            transform.SetParent(null);
+            DontDestroyOnLoad(gameObject);
+
+            // Initialize entity cache
             _entityCache = new Dictionary<GameObject, EntityManager>();
             StartCoroutine(Initialize());
+        }
+
+        private void OnEnable()
+        {
+            // Register for scene load events
+            SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        private void OnDisable()
+        {
+            // Unregister to prevent memory leaks
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
+
+        public void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            Debug.Log($"[CardPlayManager] Scene loaded: {scene.name}");
+
+            // Find references again after scene load
+            StartCoroutine(ReacquireSceneReferences());
+        }
+
+        private IEnumerator ReacquireSceneReferences()
+        {
+            yield return new WaitForSeconds(0.5f); // Wait for scene to stabilize
+
+            Debug.Log("[CardPlayManager] Reacquiring scene references...");
+
+            // Clear references that might be stale
+            _combatManager = null;
+            _combatStage = null;
+            _spritePositioning = null;
+            _spellEffectApplier = null;
+
+            // Clear entity cache
+            _entityCache.Clear();
+
+            // Reacquire references
+            yield return InitializeCriticalComponents();
+            yield return InitializeOptionalServices();
+
+            // Rebuild components with fresh references
+            InitializeCardPlayComponents();
+            BuildEntityCache();
+
+            Debug.Log("[CardPlayManager] Scene references reacquired");
         }
 
         private IEnumerator Initialize()
@@ -499,10 +561,34 @@ namespace EnemyInteraction.Managers
             return false;
         }
 
-        private bool IsValidPlayState =>
-            _combatManager != null &&
-            _spritePositioning != null &&
-            (_combatManager.IsEnemyPrepPhase() || _combatManager.IsEnemyCombatPhase());
+        private bool IsValidPlayState
+        {
+            get
+            {
+                // Check for null managers first
+                if (_combatManager == null || _spritePositioning == null)
+                {
+                    Debug.LogWarning("[CardPlayManager] Cannot validate play state: managers are null");
+                    return false;
+                }
+
+                // Check for valid phase
+                try
+                {
+                    bool isValidPhase = _combatManager.IsEnemyPrepPhase() || _combatManager.IsEnemyCombatPhase();
+                    if (!isValidPhase)
+                    {
+                        Debug.LogWarning($"[CardPlayManager] Not in a valid enemy phase. Current phase: {_combatManager.CurrentPhase}");
+                    }
+                    return isValidPhase;
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogWarning($"[CardPlayManager] Error checking phase: {e.Message}");
+                    return false;
+                }
+            }
+        }
 
         private IEnumerator SimulatePlaceholderAction()
         {
