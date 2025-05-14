@@ -367,39 +367,6 @@ namespace EnemyInteraction.Managers
             }
         }
 
-        /// <summary>
-        /// Gets an entity at the specified world position
-        /// </summary>
-        /// <param name="position">World position to check</param>
-        /// <param name="maxDistance">Maximum distance for entity detection</param>
-        /// <returns>The EntityManager at position or null if none found</returns>
-        public EntityManager GetEntityAtPosition(Vector3 position, float maxDistance = 1.0f)
-        {
-            if (_entityCacheManager?.EntityManagerCache == null)
-            {
-                Debug.LogWarning("[BoardStateManager] EntityManagerCache is null in GetEntityAtPosition");
-                return null;
-            }
-
-            // Find closest entity within max distance
-            EntityManager closestEntity = null;
-            float closestDistance = maxDistance;
-
-            foreach (var kvp in _entityCacheManager.EntityManagerCache)
-            {
-                if (kvp.Key == null) continue;
-
-                float distance = Vector3.Distance(kvp.Key.transform.position, position);
-                if (distance < closestDistance)
-                {
-                    closestDistance = distance;
-                    closestEntity = kvp.Value;
-                }
-            }
-
-            return closestEntity;
-        }
-
         private void OnDestroy()
         {
             // Unsubscribe from events
