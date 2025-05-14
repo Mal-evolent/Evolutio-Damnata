@@ -295,5 +295,29 @@ namespace EnemyInteraction.Managers
                 Debug.Log("[BoardStateManager] Player goes first next turn - applying basic turn disadvantage factor");
             }
         }
+
+        /// <summary>
+        /// Apply all evaluation factors to the board state in the correct sequence
+        /// </summary>
+        /// <param name="state">The board state to apply factors to</param>
+        public void ApplyAllFactors(BoardState state)
+        {
+            if (state == null)
+            {
+                Debug.LogError("[BoardStateEvaluator] Cannot apply factors to null board state");
+                return;
+            }
+
+            // Apply all evaluation factors in the appropriate order
+            ApplyBoardPositioningFactors(state);
+            ApplyResourceAdvantages(state);
+            ApplyHealthBasedFactors(state);
+            ApplyTurnOrderInfluence(state);
+
+            Debug.Log($"[BoardStateEvaluator] All evaluation factors applied. " +
+                $"Final enemy board control: {state.EnemyBoardControl:F2}, " +
+                $"player board control: {state.PlayerBoardControl:F2}");
+        }
+
     }
 }

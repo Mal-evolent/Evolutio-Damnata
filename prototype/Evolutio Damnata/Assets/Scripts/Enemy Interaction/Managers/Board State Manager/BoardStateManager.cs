@@ -1,4 +1,3 @@
-// Assets/Scripts/Enemy Interaction/Managers/Board State Manager/BoardStateManager.cs
 using UnityEngine;
 using System.Collections;
 using System.Linq;
@@ -28,20 +27,26 @@ namespace EnemyInteraction.Managers
         [SerializeField, Range(0.05f, 1f), Tooltip("Delay between initialization checks in seconds")]
         private float _initializationCheckDelay = 0.1f;
 
+        // Components
+        private BoardStateInitializer _initializer;
+        private BoardStateCache _cache;
+        private BoardStateDependencyValidator _dependencyValidator;
+
+        // References shared across components
         private ICombatManager _combatManager;
         private IEntityCacheManager _entityCacheManager;
         private BoardStateEvaluator _boardStateEvaluator;
-        private bool _isInitialized;
-
-        // Caching mechanism
-        private BoardState _cachedBoardState;
-        private float _lastUpdateTime;
 
         // Event for board state updates
         public event Action<BoardState> OnBoardStateUpdated;
 
+        /// <summary>
+        /// Gets the board state settings
+        /// </summary>
+        public BoardStateSettings Settings => _settings;
+
         // Properties to expose to other managers
-        public bool IsInitialized => _isInitialized;
+        public bool IsInitialized => _initializer?.IsInitialized ?? false;
         public Dictionary<GameObject, EntityManager> EntityCache => _entityCacheManager?.EntityManagerCache;
 
         private void Awake()
@@ -53,7 +58,6 @@ namespace EnemyInteraction.Managers
 
         private void InitializeSingleton()
         {
-            // Implement singleton pattern
             if (Instance != null && Instance != this)
             {
                 Debug.LogWarning("[BoardStateManager] Another instance already exists, destroying this one");
@@ -70,134 +74,32 @@ namespace EnemyInteraction.Managers
                 _settings = ScriptableObject.CreateInstance<BoardStateSettings>();
             }
 
-            StartCoroutine(Initialize());
+            // Initialize components
+            _initializer = new BoardStateInitializer(this, _initializationTimeout, _initializationCheckDelay);
+            _cache = new BoardStateCache(_cacheTimeout);
+            _dependencyValidator = new BoardStateDependencyValidator();
+
+            // Start initialization process
+            _initializer.Initialize();
         }
 
-        private IEnumerator Initialize()
+        // Called by the initializer when initialization is complete
+        public void OnInitializationComplete(ICombatManager combatManager,
+                                            IEntityCacheManager entityCacheManager,
+                                            SpritePositioning spritePositioning,
+                                            BoardStateEvaluator evaluator)
         {
-            Debug.Log("[BoardStateManager] Initializing...");
+            _combatManager = combatManager;
+            _entityCacheManager = entityCacheManager;
+            _spritePositioning = spritePositioning;
+            _boardStateEvaluator = evaluator;
 
-            yield return StartCoroutine(InitializeCombatManager());
-            yield return StartCoroutine(InitializeCombatStageAndPositioning());
-            yield return StartCoroutine(InitializeEntityCache());
-
-            // Initialize our evaluator component
-            _boardStateEvaluator = new BoardStateEvaluator(_combatManager, _settings);
-
-            _isInitialized = true;
             Debug.Log("[BoardStateManager] Initialization complete");
-        }
-
-        private IEnumerator InitializeCombatManager()
-        {
-            _combatManager = FindObjectOfType<CombatManager>();
-
-            // Wait for combat manager to be available
-            float timeout = Time.time + _initializationTimeout;
-            while (_combatManager == null)
-            {
-                if (Time.time > timeout)
-                {
-                    Debug.LogError("[BoardStateManager] Timeout while waiting for CombatManager");
-                    yield break;
-                }
-
-                yield return new WaitForSeconds(_initializationCheckDelay);
-                _combatManager = FindObjectOfType<CombatManager>();
-            }
-
-            // Subscribe to phase changes
-            _combatManager.SubscribeToPhaseChanges(OnPhaseChanged);
-        }
-
-        private IEnumerator InitializeCombatStageAndPositioning()
-        {
-            var combatStage = FindObjectOfType<CombatStage>();
-
-            // Wait for combat stage to be available
-            float timeout = Time.time + _initializationTimeout;
-            while (combatStage == null)
-            {
-                if (Time.time > timeout)
-                {
-                    Debug.LogError("[BoardStateManager] Timeout while waiting for CombatStage");
-                    yield break;
-                }
-
-                yield return new WaitForSeconds(_initializationCheckDelay);
-                combatStage = FindObjectOfType<CombatStage>();
-            }
-
-            // Wait for sprite positioning to be available
-            timeout = Time.time + _initializationTimeout / 2;
-            while (combatStage.SpritePositioning == null)
-            {
-                if (Time.time > timeout)
-                {
-                    Debug.LogError("[BoardStateManager] Timeout while waiting for SpritePositioning");
-                    yield break;
-                }
-
-                yield return new WaitForSeconds(_initializationCheckDelay);
-            }
-
-            _spritePositioning ??= combatStage.SpritePositioning as SpritePositioning;
-        }
-
-        private IEnumerator InitializeEntityCache()
-        {
-            // Get or create the EntityCacheManager singleton instance
-            _entityCacheManager = EntityCacheManager.Instance;
-
-            if (_entityCacheManager == null)
-            {
-                Debug.LogWarning("[BoardStateManager] EntityCacheManager singleton not found, creating one...");
-                var cacheManagerObj = new GameObject("EntityCacheManager");
-                _entityCacheManager = cacheManagerObj.AddComponent<EntityCacheManager>();
-
-                // Get the combat stage for attack limiter
-                var combatStage = FindObjectOfType<CombatStage>();
-                if (combatStage == null)
-                {
-                    Debug.LogError("[BoardStateManager] Could not find CombatStage for EntityCacheManager initialization");
-                    yield break;
-                }
-
-                // Create a new AttackLimiter instance
-                var attackLimiter = combatStage.GetAttackLimiter() ?? new AttackLimiter();
-
-                // Initialize the entity cache manager
-                (_entityCacheManager as EntityCacheManager).Initialize(_spritePositioning, attackLimiter);
-            }
-            else
-            {
-                Debug.Log("[BoardStateManager] Found existing EntityCacheManager instance");
-
-                // Ensure the entity cache is properly initialized with current references
-                if (_entityCacheManager.EntityManagerCache == null || _entityCacheManager.EntityManagerCache.Count == 0)
-                {
-                    var combatStage = FindObjectOfType<CombatStage>();
-                    if (combatStage == null)
-                    {
-                        Debug.LogError("[BoardStateManager] Could not find CombatStage for EntityCacheManager initialization");
-                        yield break;
-                    }
-
-                    var attackLimiter = combatStage.GetAttackLimiter() ?? new AttackLimiter();
-                    (_entityCacheManager as EntityCacheManager).Initialize(_spritePositioning, attackLimiter);
-                }
-                else
-                {
-                    // Just refresh caches to ensure they're up-to-date
-                    RefreshEntityCache();
-                }
-            }
         }
 
         private void OnEnable()
         {
-            // Ensure we're subscribed to phase changes if already initialized
-            if (_isInitialized && _combatManager != null)
+            if (IsInitialized && _combatManager != null)
             {
                 _combatManager.SubscribeToPhaseChanges(OnPhaseChanged);
             }
@@ -205,7 +107,6 @@ namespace EnemyInteraction.Managers
 
         private void OnDisable()
         {
-            // Unsubscribe from phase changes
             if (_combatManager != null)
             {
                 _combatManager.UnsubscribeFromPhaseChanges(OnPhaseChanged);
@@ -214,68 +115,54 @@ namespace EnemyInteraction.Managers
 
         private void OnPhaseChanged(CombatPhase newPhase)
         {
-            // Refresh entity cache and board state when phase changes
             RefreshEntityCache();
-
-            // Invalidate cached board state to force an update
-            _cachedBoardState = null;
+            _cache.Invalidate();
         }
 
         /// <summary>
         /// Gets the current board state, using cache if available and not expired
         /// </summary>
-        /// <param name="forceRefresh">Force recalculation of the board state</param>
-        /// <returns>Current BoardState</returns>
         public BoardState GetBoardState(bool forceRefresh = false)
         {
-            float currentTime = Time.time;
-
-            // If we need to refresh or don't have a cached state or cache is expired
-            if (forceRefresh || _cachedBoardState == null || (currentTime - _lastUpdateTime > _cacheTimeout))
+            if (forceRefresh || !_cache.IsValid(Time.time))
             {
-                _cachedBoardState = EvaluateBoardState();
-                _lastUpdateTime = currentTime;
-
-                // Trigger event
-                OnBoardStateUpdated?.Invoke(_cachedBoardState);
+                BoardState newState = EvaluateBoardState();
+                if (newState != null)
+                {
+                    _cache.UpdateCache(newState, Time.time);
+                    OnBoardStateUpdated?.Invoke(newState);
+                }
             }
 
-            return _cachedBoardState;
+            return _cache.GetCachedState();
         }
 
         /// <summary>
         /// Evaluates and creates a new board state based on current game conditions
         /// </summary>
-        /// <returns>Newly created board state or null if dependencies unavailable</returns>
         public BoardState EvaluateBoardState()
         {
-            if (!ValidateDependencies())
+            if (!_dependencyValidator.ValidateDependencies(_initializer.IsInitialized,
+                                                          _combatManager,
+                                                          _entityCacheManager,
+                                                          _spritePositioning,
+                                                          _boardStateEvaluator))
             {
-                Debug.LogError("[BoardStateManager] Evaluation failed - dependencies missing");
                 return null;
             }
 
-            // Refresh entity cache before evaluating
             _entityCacheManager.RefreshEntityCaches();
 
             try
             {
-                // Create a board state with deck references
                 BoardState state = CreateBoardStateWithDeckReferences();
-
-                // Update from combat manager (using BoardState's built-in method)
                 state.UpdateFromCombatManager(_combatManager);
-
-                // Update monster lists
                 state.UpdateMonsters(
                     _entityCacheManager.CachedPlayerEntities,
                     _entityCacheManager.CachedEnemyEntities);
-
-                // Calculate board control metrics
                 state.UpdateBoardControlMetrics();
 
-                // Apply evaluator factors that modify the base metrics
-                ApplyEvaluatorFactors(state);
+                _boardStateEvaluator.ApplyAllFactors(state);
 
                 return state;
             }
@@ -303,55 +190,6 @@ namespace EnemyInteraction.Managers
         }
 
         /// <summary>
-        /// Applies various evaluation factors to the board state
-        /// </summary>
-        private void ApplyEvaluatorFactors(BoardState state)
-        {
-            _boardStateEvaluator.ApplyBoardPositioningFactors(state);
-            _boardStateEvaluator.ApplyResourceAdvantages(state);
-            _boardStateEvaluator.ApplyHealthBasedFactors(state);
-            _boardStateEvaluator.ApplyTurnOrderInfluence(state);
-        }
-
-        /// <summary>
-        /// Validates that all required dependencies are available
-        /// </summary>
-        private bool ValidateDependencies()
-        {
-            if (!_isInitialized)
-            {
-                Debug.LogWarning("[BoardStateManager] Not yet initialized");
-                return false;
-            }
-
-            if (_combatManager == null)
-            {
-                Debug.LogWarning("[BoardStateManager] CombatManager reference missing");
-                return false;
-            }
-
-            if (_entityCacheManager == null)
-            {
-                Debug.LogWarning("[BoardStateManager] EntityCacheManager reference missing");
-                return false;
-            }
-
-            if (_spritePositioning == null)
-            {
-                Debug.LogWarning("[BoardStateManager] SpritePositioning reference missing");
-                return false;
-            }
-
-            if (_boardStateEvaluator == null)
-            {
-                Debug.LogWarning("[BoardStateManager] BoardStateEvaluator not initialized");
-                return false;
-            }
-
-            return true;
-        }
-
-        /// <summary>
         /// Refreshes the entity cache to ensure it's up to date
         /// </summary>
         public void RefreshEntityCache()
@@ -369,16 +207,25 @@ namespace EnemyInteraction.Managers
 
         private void OnDestroy()
         {
-            // Unsubscribe from events
             if (_combatManager != null)
             {
                 _combatManager.UnsubscribeFromPhaseChanges(OnPhaseChanged);
             }
 
-            // Only clear the static reference if this instance is being destroyed
             if (Instance == this)
             {
                 Instance = null;
+            }
+        }
+        // Add this method to BoardStateManager.cs
+        /// <summary>
+        /// Handles subscribing to combat phase changes
+        /// </summary>
+        public void SubscribeToCombatPhaseChanges(ICombatManager combatManager)
+        {
+            if (combatManager != null)
+            {
+                combatManager.SubscribeToPhaseChanges(OnPhaseChanged);
             }
         }
     }
