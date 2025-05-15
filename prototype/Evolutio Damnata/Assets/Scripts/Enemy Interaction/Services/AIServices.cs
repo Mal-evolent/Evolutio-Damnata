@@ -264,7 +264,7 @@ namespace EnemyInteraction.Services
         }
 
         /// <summary>
-        /// Injects scene dependencies and other required references into all services.
+        /// Injects dependencies into all services.
         /// </summary>
         private void InjectDependenciesIntoServices()
         {
@@ -287,15 +287,10 @@ namespace EnemyInteraction.Services
                         }
                     }
 
-                    // Inject into CardPlayManager
+                    // Inject into CardPlayManager with our new approach
                     if (_cardPlayManager != null)
                     {
-                        SetPrivateField(_cardPlayManager, "_combatManager", _combatManager);
-                        SetPrivateField(_cardPlayManager, "_combatStage", _combatStage);
-                        SetPrivateField(_cardPlayManager, "_spritePositioning", _spritePositioning);
-                        SetPrivateField(_cardPlayManager, "_keywordEvaluator", _keywordEvaluator);
-                        SetPrivateField(_cardPlayManager, "_effectEvaluator", _effectEvaluator);
-                        SetPrivateField(_cardPlayManager, "_boardStateManager", _boardStateManager);
+                        RegisterCardPlayManager(_cardPlayManager);
                     }
 
                     // Inject into AttackManager if it exists
@@ -424,12 +419,43 @@ namespace EnemyInteraction.Services
             // Inject dependencies if we're already initialized
             if (_isInitialized)
             {
-                SetPrivateField(cardPlayManager, "_combatManager", _combatManager);
-                SetPrivateField(cardPlayManager, "_combatStage", _combatStage);
-                SetPrivateField(cardPlayManager, "_spritePositioning", _spritePositioning);
-                SetPrivateField(cardPlayManager, "_keywordEvaluator", _keywordEvaluator);
-                SetPrivateField(cardPlayManager, "_effectEvaluator", _effectEvaluator);
-                SetPrivateField(cardPlayManager, "_boardStateManager", _boardStateManager);
+                // Get the DependencyProvider from CardPlayManager
+                var dependencyProviderField = cardPlayManager.GetType().GetField("_dependencyProvider",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+                if (dependencyProviderField != null)
+                {
+                    var dependencyProvider = dependencyProviderField.GetValue(cardPlayManager) as IDependencyProvider;
+
+                    if (dependencyProvider != null)
+                    {
+                        // Register our services with the dependency provider
+                        dependencyProvider.RegisterService(_combatManager);
+                        dependencyProvider.RegisterService(_combatStage);
+
+                        if (_spritePositioning != null)
+                            dependencyProvider.RegisterService(_spritePositioning);
+
+                        if (_keywordEvaluator != null)
+                            dependencyProvider.RegisterService(_keywordEvaluator);
+
+                        if (_effectEvaluator != null)
+                            dependencyProvider.RegisterService(_effectEvaluator);
+
+                        if (_boardStateManager != null)
+                            dependencyProvider.RegisterService(_boardStateManager);
+
+                        Debug.Log("[AIServices] Successfully registered services with CardPlayManager's DependencyProvider");
+                    }
+                    else
+                    {
+                        Debug.LogWarning("[AIServices] Couldn't get DependencyProvider from CardPlayManager");
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("[AIServices] Couldn't find _dependencyProvider field in CardPlayManager");
+                }
             }
         }
 
@@ -452,6 +478,11 @@ namespace EnemyInteraction.Services
                 else if (manager is EntityCacheManager entityCacheManager)
                 {
                     entityCacheManager.Initialize(_spritePositioning, _attackLimiter);
+                }
+                else if (manager is CardPlayManager cardPlayManager)
+                {
+                    // Use the updated method instead of direct field access
+                    RegisterCardPlayManager(cardPlayManager);
                 }
             }
         }
