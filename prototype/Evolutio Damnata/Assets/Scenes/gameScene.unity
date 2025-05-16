@@ -4461,7 +4461,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1284858366}
   m_HandleRect: {fileID: 1284858365}
   m_Direction: 2
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -4670,7 +4670,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _spritePositioning: {fileID: 0}
-  _settings: {fileID: 0}
+  _settings: {fileID: 11400000, guid: 16cbc3c3f6bd5db43a085182d89ad62d, type: 2}
   _cacheTimeout: 0.5
   _initializationTimeout: 10
   _initializationCheckDelay: 0.1
@@ -5510,26 +5510,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b22daaa5901f87b4b95d160fd195cacd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _spritePositioning: {fileID: 0}
-  _suboptimalPlayChance: 0.1
-  _evaluationVariance: 0.15
-  _actionDelay: 0.5
-  _skipCardPlayChance: 0.05
-  _cardHoldBoardAdvantageThreshold: 1.8
-  _futureValueMultiplier: 0.7
-  _strategicStopChance: 0.1
-  _earlyStopBoardAdvantageThreshold: 1.8
-  _lowValueCardThreshold: 40
-  _highValueCardThreshold: 70
-  _playerLowHealthThreshold: 10
-  _earlyGameExpensiveCardMultiplier: 1.5
-  _holdExpensiveCardChance: 0.2
-  _holdHighFutureValueChance: 0.15
-  _futureToCurrentValueRatio: 0.7
-  _maxInitializationAttempts: 30
-  _initializationRetryDelay: 0.1
-  _lowDeckSizeThreshold: 10
-  _lowDeckSizeConservationChance: 0.1
+  _settings:
+    SuboptimalPlayChance: 0.1
+    EvaluationVariance: 0.15
+    ActionDelay: 0.5
+    SkipCardPlayChance: 0.15
+    CardHoldBoardAdvantageThreshold: 1.3
+    FutureValueMultiplier: 0.7
+    StrategicStopChance: 0.3
+    EarlyStopBoardAdvantageThreshold: 1.2
+    LowValueCardThreshold: 60
+    HighValueCardThreshold: 70
+    PlayerLowHealthThreshold: 10
+    EarlyGameExpensiveCardMultiplier: 1.5
+    HoldExpensiveCardChance: 0.6
+    HoldHighFutureValueChance: 0.5
+    FutureToCurrentValueRatio: 0.7
+    MaxInitializationAttempts: 30
+    InitializationRetryDelay: 0.1
+    LowDeckSizeThreshold: 10
+    LowDeckSizeConservationChance: 0.4
 --- !u!1001 &1580362483
 PrefabInstance:
   m_ObjectHideFlags: 0

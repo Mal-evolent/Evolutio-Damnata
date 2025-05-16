@@ -13,7 +13,7 @@ namespace EnemyInteraction.Managers
         [Header("Advanced Board Control Settings")]
         [Range(0.1f, 0.5f)] public float BoardPresenceMultiplier = 0.25f;
         [Range(0.1f, 0.5f)] public float ResourceAdvantageWeight = 0.3f;
-        [Range(0.5f, 2.0f)] public float CriticalHealthThreshold = 0.3f;
+        [Range(0.0f, 1.0f)] public float CriticalHealthThreshold = 0.3f;
 
         [Header("Keyword Valuation")]
         [Range(1.1f, 1.5f)] public float TauntValue = 1.3f;

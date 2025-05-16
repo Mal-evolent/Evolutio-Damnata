@@ -2,6 +2,7 @@ using UnityEngine;
 using EnemyInteraction.Evaluation;
 using EnemyInteraction.Managers;
 using EnemyInteraction.Interfaces;
+using EnemyInteraction.Services.Interfaces;
 using System.Collections;
 using System.Collections.Generic;
 using System;
@@ -9,10 +10,10 @@ using System;
 namespace EnemyInteraction.Services
 {
     /// <summary>
-    /// Central service provider that manages all AI-related components and dependencies.
-    /// Implements the singleton pattern to ensure only one instance exists.
+    /// Central service registry and locator for AI-related components
+    /// Each class has a single responsibility following SOLID principles
     /// </summary>
-    public class AIServices : MonoBehaviour
+    public class AIServices : MonoBehaviour, IAIServiceLocator, IAIServiceRegistry
     {
         #region Singleton Implementation
 
@@ -54,90 +55,113 @@ namespace EnemyInteraction.Services
         /// <summary>
         /// Indicates whether the AIServices is fully initialized and ready to provide dependencies.
         /// </summary>
-        public static bool IsInitialized => _isInitialized;
+        public bool IsInitialized => _isInitialized;
 
         #endregion
 
-        #region Service References
+        // Dependencies and components
+        private readonly ServiceLocator _serviceLocator;
+        private readonly ServiceFactory _serviceFactory;
+        private readonly SceneDependencyManager _sceneDependencyManager;
+        private readonly DependencyInjector _dependencyInjector;
 
-        [SerializeField] private KeywordEvaluator _keywordEvaluator;
-        [SerializeField] private EffectEvaluator _effectEvaluator;
-        [SerializeField] private BoardStateManager _boardStateManager;
-        [SerializeField] private CardPlayManager _cardPlayManager;
-        [SerializeField] private AttackManager _attackManager;
-        [SerializeField] private EntityCacheManager _entityCacheManager;
+        // Constructor ensures components are created
+        public AIServices()
+        {
+            _serviceLocator = new ServiceLocator();
+            _serviceFactory = new ServiceFactory();
+            _sceneDependencyManager = new SceneDependencyManager();
+            _dependencyInjector = new DependencyInjector(_serviceLocator, _sceneDependencyManager);
+        }
 
-        // Scene dependencies
-        private ICombatManager _combatManager;
-        private CombatStage _combatStage;
-        private SpritePositioning _spritePositioning;
-        private AttackLimiter _attackLimiter;
+        #region IAIServiceLocator Implementation
 
-        // Track registered managers for dependency injection
-        private readonly HashSet<object> _registeredManagers = new HashSet<object>();
-        private readonly Dictionary<Type, Component> _serviceCache = new Dictionary<Type, Component>();
+        public IKeywordEvaluator KeywordEvaluator => _serviceLocator.GetService<IKeywordEvaluator>();
+        public IEffectEvaluator EffectEvaluator => _serviceLocator.GetService<IEffectEvaluator>();
+        public IBoardStateManager BoardStateManager => _serviceLocator.GetService<IBoardStateManager>();
+        public IEntityCacheManager EntityCacheManager => _serviceLocator.GetService<IEntityCacheManager>();
+        public CardPlayManager CardPlayManager => _serviceLocator.GetService<CardPlayManager>();
+        public AttackManager AttackManager => _serviceLocator.GetService<AttackManager>();
 
         #endregion
 
-        #region Public Service Access Properties
+        #region IAIServiceRegistry Implementation
 
-        /// <summary>
-        /// Gets or creates the KeywordEvaluator instance.
-        /// </summary>
-        public IKeywordEvaluator KeywordEvaluator
+        public void RegisterAttackManager(AttackManager attackManager)
         {
-            get => GetService<KeywordEvaluator, IKeywordEvaluator>(ref _keywordEvaluator);
+            if (attackManager == null) return;
+
+            Debug.Log("[AIServices] AttackManager registered");
+            _serviceLocator.RegisterService<AttackManager>(attackManager);
+            _serviceLocator.RegisterService<IAttackManager>(attackManager);
+
+            // Inject dependencies if we're already initialized
+            if (_isInitialized)
+            {
+                _dependencyInjector.InjectAttackManagerDependencies(attackManager);
+            }
         }
 
-        /// <summary>
-        /// Gets or creates the EffectEvaluator instance.
-        /// </summary>
-        public IEffectEvaluator EffectEvaluator
+        public void RegisterBoardStateManager(BoardStateManager boardStateManager)
         {
-            get => GetService<EffectEvaluator, IEffectEvaluator>(ref _effectEvaluator);
+            if (boardStateManager == null) return;
+
+            Debug.Log("[AIServices] BoardStateManager registered");
+            _serviceLocator.RegisterService<BoardStateManager>(boardStateManager);
+            _serviceLocator.RegisterService<IBoardStateManager>(boardStateManager);
+
+            // Inject dependencies if we're already initialized
+            if (_isInitialized)
+            {
+                _dependencyInjector.InjectBoardStateManagerDependencies(boardStateManager);
+            }
         }
 
-        /// <summary>
-        /// Gets or creates the BoardStateManager instance, checking for an existing singleton first.
-        /// </summary>
-        public IBoardStateManager BoardStateManager
+        public void RegisterEntityCacheManager(EntityCacheManager entityCacheManager)
         {
-            get => GetSingletonService<BoardStateManager, IBoardStateManager>(
-                ref _boardStateManager,
-                () => EnemyInteraction.Managers.BoardStateManager.Instance);
+            if (entityCacheManager == null) return;
+
+            Debug.Log("[AIServices] EntityCacheManager registered");
+            _serviceLocator.RegisterService<EntityCacheManager>(entityCacheManager);
+            _serviceLocator.RegisterService<IEntityCacheManager>(entityCacheManager);
+
+            // Inject dependencies if we're already initialized
+            if (_isInitialized)
+            {
+                _dependencyInjector.InjectEntityCacheManagerDependencies(entityCacheManager);
+            }
         }
 
-        /// <summary>
-        /// Gets or creates the EntityCacheManager instance.
-        /// </summary>
-        public IEntityCacheManager EntityCacheManager
+        public void RegisterCardPlayManager(CardPlayManager cardPlayManager)
         {
-            get => GetSingletonService<EntityCacheManager, IEntityCacheManager>(
-                ref _entityCacheManager,
-                () => EnemyInteraction.Managers.EntityCacheManager.Instance);
+            if (cardPlayManager == null) return;
+
+            Debug.Log("[AIServices] CardPlayManager registered");
+            _serviceLocator.RegisterService<CardPlayManager>(cardPlayManager);
+            _serviceLocator.RegisterService<ICardPlayManager>(cardPlayManager);
+
+            // Inject dependencies if we're already initialized
+            if (_isInitialized)
+            {
+                _dependencyInjector.InjectCardPlayManagerDependencies(cardPlayManager);
+            }
         }
 
-        /// <summary>
-        /// Gets or creates the CardPlayManager instance.
-        /// </summary>
-        public CardPlayManager CardPlayManager
+        public void RegisterService<T>(T service) where T : class
         {
-            get => GetService<CardPlayManager, CardPlayManager>(ref _cardPlayManager);
+            if (service == null) return;
+            _serviceLocator.RegisterService(service);
         }
 
-        /// <summary>
-        /// Gets or creates the AttackManager instance.
-        /// </summary>
-        public AttackManager AttackManager
+        // Exposes the ability to inject dependencies into an AttackManager for backward compatibility
+        public void InjectAttackManagerDependencies(AttackManager attackManager)
         {
-            get => GetSingletonService<AttackManager, AttackManager>(
-                ref _attackManager,
-                () => EnemyInteraction.Managers.AttackManager.Instance);
+            _dependencyInjector.InjectAttackManagerDependencies(attackManager);
         }
 
         #endregion
 
-        #region Lifecycle Methods
+        #region Unity Lifecycle Methods
 
         private void Awake()
         {
@@ -160,8 +184,6 @@ namespace EnemyInteraction.Services
             {
                 _instance = null;
                 _isInitialized = false;
-                _serviceCache.Clear();
-                _registeredManagers.Clear();
             }
         }
 
@@ -183,442 +205,95 @@ namespace EnemyInteraction.Services
             }
 
             // First, gather scene dependencies
-            yield return StartCoroutine(GatherSceneDependencies());
+            yield return StartCoroutine(_sceneDependencyManager.GatherSceneDependencies());
 
-            // Then initialize all core services in the correct order
-            InitializeServices();
+            // Register scene dependencies with the service locator
+            RegisterSceneDependencies();
+
+            // Initialize core services
+            InitializeCoreServices();
 
             // Wait a frame to ensure all references are set up
             yield return null;
 
             // Now inject dependencies into all services
-            InjectDependenciesIntoServices();
+            _dependencyInjector.InjectDependenciesIntoServices();
 
             _isInitialized = true;
             Debug.Log("[AIServices] Initialization complete");
         }
 
-        /// <summary>
-        /// Finds and caches essential scene dependencies.
-        /// </summary>
-        private IEnumerator GatherSceneDependencies()
+        private void RegisterSceneDependencies()
         {
-            Debug.Log("[AIServices] Gathering scene dependencies...");
-
-            int attempts = 0;
-            int maxAttempts = 50;
-
-            while ((_combatManager == null || _combatStage == null || _spritePositioning == null) && attempts < maxAttempts)
-            {
-                _combatManager = _combatManager ?? FindObjectOfType<CombatManager>();
-                _combatStage = _combatStage ?? FindObjectOfType<CombatStage>();
-
-                if (_combatStage != null)
-                {
-                    _spritePositioning = _spritePositioning ?? _combatStage.SpritePositioning as SpritePositioning;
-                    _attackLimiter = _attackLimiter ?? _combatStage.GetAttackLimiter();
-                }
-
-                if (_combatManager == null || _combatStage == null || _spritePositioning == null)
-                {
-                    yield return new WaitForSeconds(0.1f);
-                    attempts++;
-                }
-            }
-
-            if (_combatManager == null || _combatStage == null || _spritePositioning == null)
-            {
-                Debug.LogWarning("[AIServices] Could not find all required scene dependencies after multiple attempts");
-            }
-            else
-            {
-                Debug.Log("[AIServices] Scene dependencies gathered successfully");
-            }
+            // Register scene dependencies with the service locator
+            _serviceLocator.RegisterService(_sceneDependencyManager.CombatManager);
+            _serviceLocator.RegisterService(_sceneDependencyManager.CombatStage);
+            _serviceLocator.RegisterService(_sceneDependencyManager.SpritePositioning);
+            _serviceLocator.RegisterService(_sceneDependencyManager.AttackLimiter);
         }
 
-        /// <summary>
-        /// Initializes all core services, creating them if they don't exist.
-        /// </summary>
-        private void InitializeServices()
+        private void InitializeCoreServices()
         {
-            Debug.Log("[AIServices] Initializing services...");
-
             try
             {
-                // First initialize services that are needed by other services
-                var entityCache = EntityCacheManager;
-                var keywordEval = KeywordEvaluator;
-                var effectEval = EffectEvaluator;
-                var boardStateMgr = BoardStateManager;
+                // Create services if they don't exist yet
+                if (_serviceLocator.GetService<IEntityCacheManager>() == null)
+                {
+                    EntityCacheManager entityCache = _serviceFactory.CreateEntityCacheManager(this.gameObject);
+                    _serviceLocator.RegisterService<IEntityCacheManager>(entityCache);
+                    _serviceLocator.RegisterService<EntityCacheManager>(entityCache);
+                }
 
-                // Then initialize managers that depend on the above services
-                var cardPlayMgr = CardPlayManager;
-                var attackMgr = AttackManager;
+                if (_serviceLocator.GetService<IKeywordEvaluator>() == null)
+                {
+                    KeywordEvaluator keywordEval = _serviceFactory.CreateKeywordEvaluator(this.gameObject);
+                    _serviceLocator.RegisterService<IKeywordEvaluator>(keywordEval);
+                    _serviceLocator.RegisterService<KeywordEvaluator>(keywordEval);
+                }
 
-                Debug.Log("[AIServices] All services initialized successfully");
+                if (_serviceLocator.GetService<IEffectEvaluator>() == null)
+                {
+                    EffectEvaluator effectEval = _serviceFactory.CreateEffectEvaluator(this.gameObject);
+                    _serviceLocator.RegisterService<IEffectEvaluator>(effectEval);
+                    _serviceLocator.RegisterService<EffectEvaluator>(effectEval);
+                }
+
+                if (_serviceLocator.GetService<IBoardStateManager>() == null)
+                {
+                    // Fully qualify the class name with its namespace to avoid ambiguity
+                    BoardStateManager boardStateMgr = EnemyInteraction.Managers.BoardStateManager.Instance;
+                    if (boardStateMgr == null)
+                    {
+                        boardStateMgr = _serviceFactory.CreateBoardStateManager(this.gameObject);
+                    }
+                    _serviceLocator.RegisterService<IBoardStateManager>(boardStateMgr);
+                    _serviceLocator.RegisterService<BoardStateManager>(boardStateMgr);
+                }
+
+                if (_serviceLocator.GetService<CardPlayManager>() == null)
+                {
+                    CardPlayManager cardPlayMgr = _serviceFactory.CreateCardPlayManager(this.gameObject);
+                    _serviceLocator.RegisterService<CardPlayManager>(cardPlayMgr);
+                    _serviceLocator.RegisterService<ICardPlayManager>(cardPlayMgr);
+                }
+
+                if (_serviceLocator.GetService<AttackManager>() == null)
+                {
+                    // Try to find existing AttackManager singleton
+                    AttackManager attackMgr = AttackManager.Instance;
+                    if (attackMgr == null)
+                    {
+                        attackMgr = _serviceFactory.CreateAttackManager(this.gameObject);
+                    }
+                    _serviceLocator.RegisterService<AttackManager>(attackMgr);
+                    _serviceLocator.RegisterService<IAttackManager>(attackMgr);
+                }
+
+                Debug.Log("[AIServices] All core services created");
             }
             catch (Exception e)
             {
                 Debug.LogError($"[AIServices] Error initializing services: {e.Message}\n{e.StackTrace}");
-            }
-        }
-
-        /// <summary>
-        /// Injects dependencies into all services.
-        /// </summary>
-        private void InjectDependenciesIntoServices()
-        {
-            Debug.Log("[AIServices] Injecting dependencies into services...");
-
-            try
-            {
-                if (_combatManager != null && _combatStage != null && _spritePositioning != null)
-                {
-                    // Inject into BoardStateManager
-                    if (_boardStateManager != null)
-                    {
-                        SetPrivateField(_boardStateManager, "_combatManager", _combatManager);
-                        SetPrivateField(_boardStateManager, "_spritePositioning", _spritePositioning);
-
-                        // Also inject EntityCacheManager if available
-                        if (_entityCacheManager != null)
-                        {
-                            SetPrivateField(_boardStateManager, "_entityCacheManager", _entityCacheManager);
-                        }
-                    }
-
-                    // Inject into CardPlayManager with our new approach
-                    if (_cardPlayManager != null)
-                    {
-                        RegisterCardPlayManager(_cardPlayManager);
-                    }
-
-                    // Inject into AttackManager if it exists
-                    if (_attackManager != null)
-                    {
-                        InjectAttackManagerDependencies(_attackManager);
-                    }
-
-                    // Inject into any other registered managers
-                    InjectDependenciesToRegisteredManagers();
-                }
-                else
-                {
-                    Debug.LogWarning("[AIServices] Could not inject dependencies - scene dependencies missing");
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"[AIServices] Error during dependency injection: {e.Message}\n{e.StackTrace}");
-            }
-        }
-
-        #endregion
-
-        #region Service Registration and Dependency Injection
-
-        /// <summary>
-        /// Registers an AttackManager instance to receive dependencies from AIServices.
-        /// </summary>
-        public void RegisterAttackManager(AttackManager attackManager)
-        {
-            if (attackManager == null) return;
-
-            Debug.Log("[AIServices] AttackManager registered");
-
-            // Store the reference and register for dependency injection
-            _attackManager = attackManager;
-            _registeredManagers.Add(attackManager);
-
-            // Inject dependencies if we're already initialized
-            if (_isInitialized)
-            {
-                InjectAttackManagerDependencies(attackManager);
-            }
-        }
-
-        /// <summary>
-        /// Injects dependencies into the provided AttackManager instance.
-        /// </summary>
-        public void InjectAttackManagerDependencies(AttackManager attackManager)
-        {
-            Debug.Log("[AIServices] Injecting dependencies into AttackManager");
-
-            // Inject scene dependencies
-            SetPrivateField(attackManager, "_combatManager", _combatManager);
-            SetPrivateField(attackManager, "_combatStage", _combatStage);
-            SetPrivateField(attackManager, "_spritePositioning", _spritePositioning);
-
-            // Inject service dependencies
-            attackManager.InjectDependencies(
-                KeywordEvaluator,
-                BoardStateManager,
-                EntityCacheManager
-            );
-        }
-
-        /// <summary>
-        /// Registers a BoardStateManager instance to receive dependencies from AIServices.
-        /// </summary>
-        public void RegisterBoardStateManager(BoardStateManager boardStateManager)
-        {
-            if (boardStateManager == null) return;
-
-            Debug.Log("[AIServices] BoardStateManager registered");
-
-            // Store the reference and register for dependency injection
-            _boardStateManager = boardStateManager;
-            _registeredManagers.Add(boardStateManager);
-
-            // Inject dependencies if we're already initialized
-            if (_isInitialized && _combatManager != null && _spritePositioning != null)
-            {
-                SetPrivateField(boardStateManager, "_combatManager", _combatManager);
-                SetPrivateField(boardStateManager, "_spritePositioning", _spritePositioning);
-
-                if (_entityCacheManager != null)
-                {
-                    SetPrivateField(boardStateManager, "_entityCacheManager", _entityCacheManager);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Registers an EntityCacheManager instance to receive dependencies from AIServices.
-        /// </summary>
-        public void RegisterEntityCacheManager(EntityCacheManager entityCacheManager)
-        {
-            if (entityCacheManager == null) return;
-
-            Debug.Log("[AIServices] EntityCacheManager registered");
-
-            // Store the reference and register for dependency injection
-            _entityCacheManager = entityCacheManager;
-            _registeredManagers.Add(entityCacheManager);
-
-            // Inject dependencies if we're already initialized
-            if (_isInitialized && _spritePositioning != null && _attackLimiter != null)
-            {
-                entityCacheManager.Initialize(_spritePositioning, _attackLimiter);
-            }
-        }
-
-        /// <summary>
-        /// Registers a CardPlayManager instance to receive dependencies from AIServices.
-        /// </summary>
-        public void RegisterCardPlayManager(CardPlayManager cardPlayManager)
-        {
-            if (cardPlayManager == null) return;
-
-            Debug.Log("[AIServices] CardPlayManager registered");
-
-            // Store the reference and register for dependency injection
-            _cardPlayManager = cardPlayManager;
-            _registeredManagers.Add(cardPlayManager);
-
-            // Inject dependencies if we're already initialized
-            if (_isInitialized)
-            {
-                // Get the DependencyProvider from CardPlayManager
-                var dependencyProviderField = cardPlayManager.GetType().GetField("_dependencyProvider",
-                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-
-                if (dependencyProviderField != null)
-                {
-                    var dependencyProvider = dependencyProviderField.GetValue(cardPlayManager) as IDependencyProvider;
-
-                    if (dependencyProvider != null)
-                    {
-                        // Register our services with the dependency provider
-                        dependencyProvider.RegisterService(_combatManager);
-                        dependencyProvider.RegisterService(_combatStage);
-
-                        if (_spritePositioning != null)
-                            dependencyProvider.RegisterService(_spritePositioning);
-
-                        if (_keywordEvaluator != null)
-                            dependencyProvider.RegisterService(_keywordEvaluator);
-
-                        if (_effectEvaluator != null)
-                            dependencyProvider.RegisterService(_effectEvaluator);
-
-                        if (_boardStateManager != null)
-                            dependencyProvider.RegisterService(_boardStateManager);
-
-                        Debug.Log("[AIServices] Successfully registered services with CardPlayManager's DependencyProvider");
-                    }
-                    else
-                    {
-                        Debug.LogWarning("[AIServices] Couldn't get DependencyProvider from CardPlayManager");
-                    }
-                }
-                else
-                {
-                    Debug.LogWarning("[AIServices] Couldn't find _dependencyProvider field in CardPlayManager");
-                }
-            }
-        }
-
-        /// <summary>
-        /// Injects dependencies into all registered managers.
-        /// </summary>
-        private void InjectDependenciesToRegisteredManagers()
-        {
-            foreach (var manager in _registeredManagers)
-            {
-                if (manager is AttackManager attackManager)
-                {
-                    InjectAttackManagerDependencies(attackManager);
-                }
-                else if (manager is BoardStateManager boardStateManager)
-                {
-                    SetPrivateField(boardStateManager, "_combatManager", _combatManager);
-                    SetPrivateField(boardStateManager, "_spritePositioning", _spritePositioning);
-                }
-                else if (manager is EntityCacheManager entityCacheManager)
-                {
-                    entityCacheManager.Initialize(_spritePositioning, _attackLimiter);
-                }
-                else if (manager is CardPlayManager cardPlayManager)
-                {
-                    // Use the updated method instead of direct field access
-                    RegisterCardPlayManager(cardPlayManager);
-                }
-            }
-        }
-
-        #endregion
-
-        #region Service Creation and Access Helpers
-
-        /// <summary>
-        /// Generic helper to get or create a service component.
-        /// </summary>
-        private TInterface GetService<TComponent, TInterface>(ref TComponent serviceField)
-            where TComponent : Component, TInterface
-            where TInterface : class
-        {
-            if (serviceField != null)
-                return serviceField;
-
-            // Check if we've already cached this component type
-            if (_serviceCache.TryGetValue(typeof(TComponent), out var cachedComponent))
-            {
-                serviceField = cachedComponent as TComponent;
-                return serviceField;
-            }
-
-            try
-            {
-                // Check if the service already exists in the scene
-                var existingService = FindObjectOfType<TComponent>();
-                if (existingService != null)
-                {
-                    Debug.Log($"[AIServices] Found existing {typeof(TComponent).Name} in scene");
-                    serviceField = existingService;
-                    _serviceCache[typeof(TComponent)] = existingService;
-                    return serviceField;
-                }
-
-                // Create a child GameObject for the service
-                string serviceName = typeof(TComponent).Name;
-                GameObject serviceObj = new GameObject(serviceName);
-
-                // Ensure we have a valid transform before setting parent
-                if (this != null && this.transform != null)
-                {
-                    serviceObj.transform.SetParent(transform);
-                }
-                else
-                {
-                    Debug.LogWarning($"[AIServices] Cannot set parent for {serviceName} - AIServices transform is null");
-                    DontDestroyOnLoad(serviceObj);
-                }
-
-                // Add the component
-                serviceField = serviceObj.AddComponent<TComponent>();
-
-                if (serviceField != null)
-                {
-                    Debug.Log($"[AIServices] Created {serviceName}");
-                    _serviceCache[typeof(TComponent)] = serviceField;
-                }
-                else
-                {
-                    Debug.LogError($"[AIServices] Failed to create {serviceName}");
-                }
-
-                return serviceField;
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"[AIServices] Error creating service {typeof(TComponent).Name}: {e.Message}\n{e.StackTrace}");
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Gets or creates a service that implements the singleton pattern.
-        /// </summary>
-        private TInterface GetSingletonService<TComponent, TInterface>(
-            ref TComponent serviceField,
-            Func<TComponent> getSingletonInstance)
-            where TComponent : Component, TInterface
-            where TInterface : class
-        {
-            try
-            {
-                // First check if there's already a singleton instance
-                var existingSingleton = getSingletonInstance();
-
-                if (existingSingleton != null)
-                {
-                    // If we have a field reference that's different, destroy it
-                    if (serviceField != null && serviceField != existingSingleton)
-                    {
-                        Debug.LogWarning($"[AIServices] Found a different {typeof(TComponent).Name} singleton instance, using it instead");
-                        Destroy(serviceField.gameObject);
-                        serviceField = existingSingleton;
-                    }
-                    else if (serviceField == null)
-                    {
-                        serviceField = existingSingleton;
-                    }
-
-                    return serviceField;
-                }
-
-                // If no singleton exists, create and register a new one
-                return GetService<TComponent, TInterface>(ref serviceField);
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"[AIServices] Error getting {typeof(TComponent).Name}: {e.Message}");
-                return null;
-            }
-        }
-
-        #endregion
-
-        #region Utility Methods
-
-        /// <summary>
-        /// Helper method to set a private field using reflection.
-        /// </summary>
-        private void SetPrivateField(object target, string fieldName, object value)
-        {
-            if (target == null || value == null) return;
-
-            var field = target.GetType().GetField(fieldName,
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-
-            if (field != null)
-            {
-                field.SetValue(target, value);
-            }
-            else
-            {
-                Debug.LogWarning($"[AIServices] Field '{fieldName}' not found in {target.GetType().Name}");
             }
         }
 

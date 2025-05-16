@@ -73,9 +73,10 @@ namespace EnemyInteraction
             // Wait for AIServices
             yield return StartCoroutine(InitializationUtility.WaitForAIServicesInitialization());
 
-            if (!AIServices.IsInitialized)
+            // Check if AIServices instance exists and is initialized
+            if (AIServices.Instance == null || !AIServices.Instance.IsInitialized)
             {
-                Debug.LogError("[EnemyActions] AIServices initialization timed out");
+                Debug.LogError("[EnemyActions] AIServices initialization timed out or instance is null");
                 yield break;
             }
 
@@ -89,7 +90,7 @@ namespace EnemyInteraction
             }
 
             // Refresh entity cache before playing cards
-            var entityCacheManager = AIServices.Instance?.EntityCacheManager as EntityCacheManager;
+            var entityCacheManager = AIServices.Instance.EntityCacheManager as EntityCacheManager;
             entityCacheManager?.RefreshAfterAction();
 
             // Execute card playing
@@ -140,9 +141,10 @@ namespace EnemyInteraction
             // Wait for AIServices
             yield return StartCoroutine(InitializationUtility.WaitForAIServicesInitialization());
 
-            if (!AIServices.IsInitialized)
+            // Check if AIServices instance exists and is initialized
+            if (AIServices.Instance == null || !AIServices.Instance.IsInitialized)
             {
-                Debug.LogError("[EnemyActions] AIServices initialization timed out");
+                Debug.LogError("[EnemyActions] AIServices initialization timed out or instance is null");
                 yield break;
             }
 

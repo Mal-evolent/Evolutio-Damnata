@@ -72,43 +72,101 @@ namespace EnemyInteraction
             Debug.Log("[EnemyDependencyInitializer] Initialization completed");
         }
         
-        private IEnumerator InitializeAIServices()
+IEnumerator InitializeAIServices()
         {
+            Debug.Log("[EnemyDependencyInitializer] Waiting for AIServices to initialize...");
+
+            // Wait for AIServices instance to be available
+            float aiServicesTimeout = 5f;
+            float aiServicesTimer = 0f;
+
+            // Keep trying to get AIServices.Instance
+            while (AIServices.Instance == null && aiServicesTimer < aiServicesTimeout)
+            {
+                Debug.Log("[EnemyDependencyInitializer] Waiting for AIServices.Instance...");
+                yield return new WaitForSeconds(_componentWaitTime);
+                aiServicesTimer += _componentWaitTime;
+            }
+
+            if (AIServices.Instance == null)
+            {
+                Debug.LogError("[EnemyDependencyInitializer] Failed to get AIServices.Instance within timeout period");
+                yield break;
+            }
+
+            // Wait for AIServices to be fully initialized
+            aiServicesTimer = 0f;
+            while (!AIServices.Instance.IsInitialized && aiServicesTimer < aiServicesTimeout)
+            {
+                Debug.Log("[EnemyDependencyInitializer] Waiting for AIServices to finish initialization...");
+                yield return new WaitForSeconds(_componentWaitTime);
+                aiServicesTimer += _componentWaitTime;
+            }
+
+            if (!AIServices.Instance.IsInitialized)
+            {
+                Debug.LogError("[EnemyDependencyInitializer] AIServices initialization timed out");
+                yield break;
+            }
+
+            Debug.Log("[EnemyDependencyInitializer] AIServices is now initialized");
+
             // Get services from AIServices
             var services = AIServices.Instance;
-            
-            // Get all required services
-            if (services != null)
+
+            // Get all required services with retry attempts
+            int retryAttempts = 3;
+            for (int attempt = 0; attempt < retryAttempts; attempt++)
             {
                 _keywordEvaluator = services.KeywordEvaluator;
                 _effectEvaluator = services.EffectEvaluator;
                 _boardStateManager = services.BoardStateManager;
                 _cardPlayManager = services.CardPlayManager;
                 _attackManager = services.AttackManager;
-                
-                Debug.Log("[EnemyDependencyInitializer] Got available services from AIServices");
+
+                // Check if all critical services are available
+                bool allServicesAvailable =
+                    _keywordEvaluator != null &&
+                    _effectEvaluator != null &&
+                    _boardStateManager != null &&
+                    _cardPlayManager != null &&
+                    _attackManager != null;
+
+                if (allServicesAvailable)
+                {
+                    Debug.Log("[EnemyDependencyInitializer] Successfully retrieved all AI services");
+                    break;
+                }
+                else if (attempt < retryAttempts - 1)
+                {
+                    Debug.LogWarning($"[EnemyDependencyInitializer] Some services are missing, retrying (attempt {attempt + 1}/{retryAttempts})");
+                    yield return new WaitForSeconds(0.5f);
+                }
             }
-            else
-            {
-                Debug.LogError("[EnemyDependencyInitializer] Failed to get AIServices.Instance");
-                yield break;
-            }
-            
-            // Ensure all services are available
+
+            // Final check to ensure all critical services are available
             if (_keywordEvaluator == null || _effectEvaluator == null ||
                 _boardStateManager == null || _cardPlayManager == null || _attackManager == null)
             {
+                // Log which specific services are missing
+                if (_keywordEvaluator == null) Debug.LogError("[EnemyDependencyInitializer] KeywordEvaluator is missing");
+                if (_effectEvaluator == null) Debug.LogError("[EnemyDependencyInitializer] EffectEvaluator is missing");
+                if (_boardStateManager == null) Debug.LogError("[EnemyDependencyInitializer] BoardStateManager is missing");
+                if (_cardPlayManager == null) Debug.LogError("[EnemyDependencyInitializer] CardPlayManager is missing");
+                if (_attackManager == null) Debug.LogError("[EnemyDependencyInitializer] AttackManager is missing");
+
                 Debug.LogError("[EnemyDependencyInitializer] Critical AI services are missing, cannot continue");
                 yield break;
             }
-            
+
             // Find and cache StackManager instance
             _stackManager = StackManager.Instance;
             if (_stackManager == null)
             {
                 Debug.LogWarning("[EnemyDependencyInitializer] StackManager instance is null, effect stacking evaluations will not work");
             }
-            
+
+            Debug.Log("[EnemyDependencyInitializer] AI services initialization completed successfully");
             yield return null;
         }
         

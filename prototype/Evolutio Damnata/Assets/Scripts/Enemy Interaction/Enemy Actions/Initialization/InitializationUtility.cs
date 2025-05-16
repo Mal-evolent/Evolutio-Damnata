@@ -19,18 +19,35 @@ namespace EnemyInteraction.Utilities
                 }
             }
         }
-        
+
         public static IEnumerator WaitForAIServicesInitialization(float timeout = 3f)
         {
-            if (!AIServices.IsInitialized)
+            // Check if AIServices.Instance exists
+            if (AIServices.Instance == null)
+            {
+                Debug.Log("[InitializationUtility] AIServices instance not found");
+                yield break;
+            }
+
+            // Use the instance property instead of a static property
+            if (!AIServices.Instance.IsInitialized)
             {
                 Debug.Log("[InitializationUtility] Waiting for AIServices to initialize...");
                 float waitTime = 0f;
-                while (!AIServices.IsInitialized && waitTime < timeout)
+                while (AIServices.Instance != null && !AIServices.Instance.IsInitialized && waitTime < timeout)
                 {
                     yield return new WaitForSeconds(0.1f);
                     waitTime += 0.1f;
                 }
+            }
+
+            if (AIServices.Instance == null || !AIServices.Instance.IsInitialized)
+            {
+                Debug.LogWarning("[InitializationUtility] AIServices initialization timed out or instance was destroyed");
+            }
+            else
+            {
+                Debug.Log("[InitializationUtility] AIServices initialization completed");
             }
         }
     }
