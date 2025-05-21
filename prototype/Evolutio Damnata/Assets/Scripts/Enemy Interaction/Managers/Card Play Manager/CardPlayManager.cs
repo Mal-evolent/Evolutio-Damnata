@@ -15,12 +15,14 @@ using UnityEngine.SceneManagement;
 
 namespace EnemyInteraction.Managers
 {
+    // NOTE: Do NOT place this script on a GameObject in the scene. It should only be created by code.
     public class CardPlayManager : MonoBehaviour, ICardPlayManager
     {
         [SerializeField] private CardPlaySettings _settings;
         private IDependencyProvider _dependencyProvider;
         private ICardPlayInitializer _initializer;
         private ICardPlayStrategist _strategist;
+        private const string GAME_SCENE_NAME = "gameScene";
 
         public static CardPlayManager Instance { get; private set; }
 
@@ -61,11 +63,37 @@ namespace EnemyInteraction.Managers
         public void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             Debug.Log($"[CardPlayManager] Scene loaded: {scene.name}");
-            StartCoroutine(_initializer.ReacquireSceneReferences());
+            
+            // Only reacquire references if we're in the game scene
+            if (scene.name == GAME_SCENE_NAME)
+            {
+                StartCoroutine(_initializer.ReacquireSceneReferences());
+            }
+            else
+            {
+                Debug.Log("[CardPlayManager] Not in game scene, destroying singleton and cleaning up");
+                Destroy(gameObject); // This will trigger OnDestroy and clear Instance
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+                Debug.Log("[CardPlayManager] Singleton destroyed and static instance cleared");
+            }
         }
 
         public IEnumerator PlayCards()
         {
+            // Only play cards if we're in the game scene
+            if (SceneManager.GetActiveScene().name != GAME_SCENE_NAME)
+            {
+                Debug.LogWarning("[CardPlayManager] Attempted to play cards outside of game scene");
+                yield break;
+            }
+
             Debug.Log("[CardPlayManager] Starting card play sequence...");
             yield return _strategist.ExecuteCardPlayStrategy();
         }

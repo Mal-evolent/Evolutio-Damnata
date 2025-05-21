@@ -114,6 +114,7 @@ namespace EnemyInteraction.Managers
             }
 
             Instance = this;
+            transform.SetParent(null); // Ensure root
             DontDestroyOnLoad(gameObject);
         }
     }

@@ -106,9 +106,16 @@ namespace EnemyInteraction.Managers
         public void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
         {
             Debug.Log($"[AttackManager] Scene loaded: {scene.name}");
-
-            // Find references again after scene load
-            StartCoroutine(ReacquireSceneReferences());
+            // Only reacquire references if we're in the game scene
+            if (scene.name == "gameScene")
+            {
+                StartCoroutine(ReacquireSceneReferences());
+            }
+            else
+            {
+                Debug.Log("[AttackManager] Not in game scene, destroying singleton and cleaning up");
+                Destroy(gameObject); // This will trigger OnDestroy and clear Instance
+            }
         }
 
         private IEnumerator ReacquireSceneReferences()
@@ -372,10 +379,10 @@ namespace EnemyInteraction.Managers
         // Handle destruction cleanup for the singleton
         private void OnDestroy()
         {
-            // Only clear the static reference if this instance is being destroyed
             if (Instance == this)
             {
                 Instance = null;
+                Debug.Log("[AttackManager] Singleton destroyed and static instance cleared");
             }
         }
     }

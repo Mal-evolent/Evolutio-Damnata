@@ -4716,14 +4716,15 @@ MonoBehaviour:
   _manaSlider: {fileID: 1793571146}
   _manaText: {fileID: 1870554167}
   _turnCount: 0
-  _playerHealth: 30
+  _playerHealth: 1
   _playerHealthSlider: {fileID: 1474826039}
   _enemyHealth: 30
   _enemyHealthSlider: {fileID: 1580362485}
   _playerGoesFirst: 1
   _playerTurn: 0
   _currentPhase: 0
-  _maxHealth: 30
+  _maxPlayerHealth: 30
+  _maxEnemyHealth: 30
   _playerMana: 0
   _enemyMana: 0
   _maxMana: 0

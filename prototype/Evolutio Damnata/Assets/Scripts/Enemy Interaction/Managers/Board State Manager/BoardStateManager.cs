@@ -99,6 +99,7 @@ namespace EnemyInteraction.Managers
 
         private void OnEnable()
         {
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
             if (IsInitialized && _combatManager != null)
             {
                 _combatManager.SubscribeToPhaseChanges(OnPhaseChanged);
@@ -107,9 +108,24 @@ namespace EnemyInteraction.Managers
 
         private void OnDisable()
         {
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
             if (_combatManager != null)
             {
                 _combatManager.UnsubscribeFromPhaseChanges(OnPhaseChanged);
+            }
+        }
+
+        private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+        {
+            Debug.Log($"[BoardStateManager] Scene loaded: {scene.name}");
+            if (scene.name == "gameScene")
+            {
+                // Optionally reacquire references here if needed
+            }
+            else
+            {
+                Debug.Log("[BoardStateManager] Not in game scene, destroying singleton and cleaning up");
+                Destroy(gameObject); // This will trigger OnDestroy and clear Instance
             }
         }
 
@@ -199,9 +215,35 @@ namespace EnemyInteraction.Managers
                 _entityCacheManager.BuildEntityManagerCache();
                 _entityCacheManager.RefreshEntityCaches();
             }
+        }
+
+        /// <summary>
+        /// Refreshes the entity cache with retries. Only logs a warning if still null after all attempts.
+        /// </summary>
+        public void RefreshEntityCacheWithRetry(int maxAttempts = 10, float delay = 0.2f)
+        {
+            StartCoroutine(RefreshEntityCacheCoroutine(maxAttempts, delay));
+        }
+
+        private IEnumerator RefreshEntityCacheCoroutine(int maxAttempts, float delay)
+        {
+            int attempts = 0;
+            while (_entityCacheManager == null && attempts < maxAttempts)
+            {
+                yield return new WaitForSeconds(delay);
+                attempts++;
+                // Optionally, try to reacquire the reference here if it can appear dynamically
+                // _entityCacheManager = EntityCacheManager.Instance;
+            }
+
+            if (_entityCacheManager != null)
+            {
+                _entityCacheManager.BuildEntityManagerCache();
+                _entityCacheManager.RefreshEntityCaches();
+            }
             else
             {
-                Debug.LogWarning("[BoardStateManager] Cannot refresh entity cache - EntityCacheManager is null");
+                Debug.LogWarning("[BoardStateManager] Cannot refresh entity cache - EntityCacheManager is null after multiple attempts.");
             }
         }
 
@@ -215,6 +257,7 @@ namespace EnemyInteraction.Managers
             if (Instance == this)
             {
                 Instance = null;
+                Debug.Log("[BoardStateManager] Singleton destroyed and static instance cleared");
             }
         }
         // Add this method to BoardStateManager.cs

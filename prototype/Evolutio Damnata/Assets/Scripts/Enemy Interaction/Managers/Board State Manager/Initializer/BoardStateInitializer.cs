@@ -102,45 +102,51 @@ namespace EnemyInteraction.Managers
 
         private IEnumerator InitializeEntityCache()
         {
-            _entityCacheManager = EntityCacheManager.Instance;
-
-            if (_entityCacheManager == null)
+            float timeout = Time.time + _timeout;
+            while (EntityCacheManager.Instance == null)
             {
-                Debug.LogWarning("[BoardStateInitializer] EntityCacheManager singleton not found, creating one...");
-                var cacheManagerObj = new GameObject("EntityCacheManager");
-                _entityCacheManager = cacheManagerObj.AddComponent<EntityCacheManager>();
-
-                var combatStage = Object.FindObjectOfType<CombatStage>();
-                if (combatStage == null)
+                if (Time.time > timeout)
                 {
-                    Debug.LogError("[BoardStateInitializer] Could not find CombatStage for EntityCacheManager initialization");
+                    Debug.LogError("[BoardStateInitializer] Timeout while waiting for EntityCacheManager singleton instance");
                     yield break;
                 }
-
-                var attackLimiter = combatStage.GetAttackLimiter() ?? new AttackLimiter();
-                (_entityCacheManager as EntityCacheManager).Initialize(_spritePositioning, attackLimiter);
+                yield return new WaitForSeconds(_checkDelay);
             }
-            else
+            _entityCacheManager = EntityCacheManager.Instance;
+
+            // Wait for SpritePositioning to be available
+            timeout = Time.time + _timeout / 2;
+            while (_spritePositioning == null)
             {
-                Debug.Log("[BoardStateInitializer] Found existing EntityCacheManager instance");
-
-                if (_entityCacheManager.EntityManagerCache == null || _entityCacheManager.EntityManagerCache.Count == 0)
+                if (Time.time > timeout)
                 {
-                    var combatStage = Object.FindObjectOfType<CombatStage>();
-                    if (combatStage == null)
-                    {
-                        Debug.LogError("[BoardStateInitializer] Could not find CombatStage for EntityCacheManager initialization");
-                        yield break;
-                    }
-
-                    var attackLimiter = combatStage.GetAttackLimiter() ?? new AttackLimiter();
-                    (_entityCacheManager as EntityCacheManager).Initialize(_spritePositioning, attackLimiter);
+                    Debug.LogError("[BoardStateInitializer] Timeout while waiting for SpritePositioning before initializing EntityCacheManager");
+                    yield break;
                 }
-                else
-                {
-                    _manager.RefreshEntityCache();
-                }
+                yield return new WaitForSeconds(_checkDelay);
             }
+
+            var combatStage = Object.FindObjectOfType<CombatStage>();
+            if (combatStage == null)
+            {
+                Debug.LogError("[BoardStateInitializer] Could not find CombatStage for EntityCacheManager initialization");
+                yield break;
+            }
+            var attackLimiter = combatStage.GetAttackLimiter() ?? new AttackLimiter();
+            (_entityCacheManager as EntityCacheManager).Initialize(_spritePositioning, attackLimiter);
+
+            // Optionally, wait for EntityManagerCache to be populated
+            timeout = Time.time + _timeout / 2;
+            while (_entityCacheManager.EntityManagerCache == null || _entityCacheManager.EntityManagerCache.Count == 0)
+            {
+                if (Time.time > timeout)
+                {
+                    Debug.LogWarning("[BoardStateInitializer] EntityManagerCache is still empty after waiting, proceeding anyway");
+                    break;
+                }
+                yield return new WaitForSeconds(_checkDelay);
+            }
+            _manager.RefreshEntityCache();
         }
     }
 }

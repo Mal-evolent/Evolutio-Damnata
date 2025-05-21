@@ -6,6 +6,7 @@ using EnemyInteraction.Services.Interfaces;
 using System.Collections;
 using System.Collections.Generic;
 using System;
+using UnityEngine.SceneManagement;
 
 namespace EnemyInteraction.Services
 {
@@ -20,6 +21,7 @@ namespace EnemyInteraction.Services
         private static AIServices _instance;
         private static readonly object _lock = new object();
         private static bool _isInitialized = false;
+        private const string GAME_SCENE_NAME = "gameScene";
 
         /// <summary>
         /// Accesses the singleton instance, creating it if necessary.
@@ -184,6 +186,31 @@ namespace EnemyInteraction.Services
             {
                 _instance = null;
                 _isInitialized = false;
+                Debug.Log("[AIServices] Singleton destroyed and static instance cleared");
+            }
+        }
+
+        private void OnEnable()
+        {
+            SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        private void OnDisable()
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
+
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            Debug.Log($"[AIServices] Scene loaded: {scene.name}");
+            if (scene.name == GAME_SCENE_NAME)
+            {
+                StartCoroutine(ReinitializeServices());
+            }
+            else
+            {
+                Debug.Log("[AIServices] Not in game scene, destroying singleton and cleaning up");
+                Destroy(gameObject); // This will trigger OnDestroy and clear _instance
             }
         }
 
@@ -295,6 +322,32 @@ namespace EnemyInteraction.Services
             {
                 Debug.LogError($"[AIServices] Error initializing services: {e.Message}\n{e.StackTrace}");
             }
+        }
+
+        private IEnumerator ReinitializeServices()
+        {
+            Debug.Log("[AIServices] Reinitializing services for game scene...");
+            
+            // Wait for scene to stabilize
+            yield return new WaitForSeconds(0.5f);
+
+            // First, gather scene dependencies
+            yield return StartCoroutine(_sceneDependencyManager.GatherSceneDependencies());
+
+            // Register scene dependencies with the service locator
+            RegisterSceneDependencies();
+
+            // Initialize core services
+            InitializeCoreServices();
+
+            // Wait a frame to ensure all references are set up
+            yield return null;
+
+            // Now inject dependencies into all services
+            _dependencyInjector.InjectDependenciesIntoServices();
+
+            _isInitialized = true;
+            Debug.Log("[AIServices] Reinitialization complete");
         }
 
         #endregion

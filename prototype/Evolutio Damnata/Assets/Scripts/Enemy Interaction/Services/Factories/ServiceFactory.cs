@@ -106,7 +106,8 @@ namespace EnemyInteraction.Services
         private T CreateService<T>(string name, GameObject parent) where T : Component
         {
             GameObject serviceObj = new GameObject(name);
-            serviceObj.transform.SetParent(parent.transform);
+            // Do NOT parent this object; it must be root for DontDestroyOnLoad to work
+            // serviceObj.transform.SetParent(parent.transform);
 
             T service = serviceObj.AddComponent<T>();
             Debug.Log($"[ServiceFactory] Created {name}");
