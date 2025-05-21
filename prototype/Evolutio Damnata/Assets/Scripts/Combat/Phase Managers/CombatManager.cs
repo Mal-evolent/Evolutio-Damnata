@@ -33,7 +33,8 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     [SerializeField] private bool _playerGoesFirst = true;
     [SerializeField] private bool _playerTurn;
     [SerializeField] private CombatPhase _currentPhase = CombatPhase.None;
-    [SerializeField] private int _maxHealth = 30;
+    [SerializeField] private int _maxPlayerHealth = 30;
+    [SerializeField] private int _maxEnemyHealth = 30;
 
     // Mana fields - now the single source of truth
     [Header("Mana Settings")]
@@ -68,7 +69,7 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
             if (_playerHealthSlider != null)
             {
                 // Normalize the health value based on max health
-                _playerHealthSlider.value = (float)value / _maxHealth;
+                _playerHealthSlider.value = (float)value / _maxPlayerHealth;
             }
         }
     }
@@ -82,7 +83,7 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
             if (_enemyHealthSlider != null)
             {
                 // Normalize the health value based on max health
-                _enemyHealthSlider.value = (float)value / _maxHealth;
+                _enemyHealthSlider.value = (float)value / _maxEnemyHealth;
             }
         }
     }
@@ -116,7 +117,8 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     public TMP_Text TurnUIShadow => _turnUIShadow;
     public Slider PlayerHealthSlider => _playerHealthSlider;
     public Slider EnemyHealthSlider => _enemyHealthSlider;
-    public int MaxHealth => _maxHealth;
+    public int PlayerMaxHealth => _maxPlayerHealth;
+    public int EnemyMaxHealth => _maxEnemyHealth;
     public int PlayerHandSize => _playerDeck != null ? _playerDeck.HandSize : 0;
     public int EnemyHandSize => _enemyDeck != null ? _enemyDeck.HandSize : 0;
 

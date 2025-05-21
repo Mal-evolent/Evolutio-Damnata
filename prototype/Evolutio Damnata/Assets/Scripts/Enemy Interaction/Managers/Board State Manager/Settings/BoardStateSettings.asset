@@ -17,7 +17,7 @@ MonoBehaviour:
   HealthInfluenceFactor: 0.2
   BoardPresenceMultiplier: 0.25
   ResourceAdvantageWeight: 0.3
-  CriticalHealthThreshold: 2
+  CriticalHealthThreshold: 0.1
   TauntValue: 1.3
   RangedValue: 1.2
   ToughValue: 1.15

@@ -94,8 +94,8 @@ public class BoardState
         // Update health values
         PlayerHealth = combatManager.PlayerHealth;
         EnemyHealth = combatManager.EnemyHealth;
-        PlayerMaxHealth = combatManager.MaxHealth;
-        EnemyMaxHealth = combatManager.MaxHealth;
+        PlayerMaxHealth = combatManager.PlayerMaxHealth;
+        EnemyMaxHealth = combatManager.EnemyMaxHealth;
 
         // Update turn and phase info
         TurnCount = combatManager.TurnCount;

@@ -13,7 +13,8 @@ public interface ICombatManager
     int MaxMana { get; set; }
     int PlayerHealth { get; set; }
     int EnemyHealth { get; set; }
-    int MaxHealth { get; }
+    int PlayerMaxHealth { get; }
+    int EnemyMaxHealth { get; }
     bool PlayerTurn { get; set; }
     bool PlayerGoesFirst { get; set; }
     CombatPhase CurrentPhase { get; set; }
