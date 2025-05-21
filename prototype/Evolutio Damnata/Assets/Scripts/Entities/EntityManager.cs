@@ -132,11 +132,11 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     public void InitializeMonster(MonsterType monsterType, float maxHealth, float atkDamage,
         Slider healthBarSlider, Image image, DamageVisualizer damageVisualizer,
         GameObject damageNumberPrefab, Sprite outlineSprite, AttackLimiter attackLimiter,
-        OngoingEffectApplier effectApplier)
+        OngoingEffectApplier effectApplier, float? currentHealth = null)
     {
         this.monsterType = monsterType;
         this.maxHealth = maxHealth;
-        this.health = maxHealth;
+        this.health = currentHealth ?? maxHealth;  // Use provided current health or default to max
         this.atkDamage = atkDamage;
         this.spriteImage = image;
         this.damageVisualizer = damageVisualizer;

@@ -81,9 +81,13 @@ public class HealthIconManager : EntityManager, IHealthIconManager
     /// </summary>
     private void InitializeFromCombatManager()
     {
-        float maxHealthValue = isPlayerIcon ? combatManagerRef.PlayerHealth : combatManagerRef.EnemyHealth;
+        // Get the current health and max health values
+        float currentHealth = isPlayerIcon ? combatManagerRef.PlayerHealth : combatManagerRef.EnemyHealth;
+        float maxHealthValue = isPlayerIcon ? combatManagerRef.PlayerMaxHealth : combatManagerRef.EnemyMaxHealth;
         Slider healthBarRef = isPlayerIcon ? combatManagerRef.PlayerHealthSlider : combatManagerRef.EnemyHealthSlider;
-        InitializeWithValues(maxHealthValue, healthBarRef);
+        
+        // Initialize with current health instead of max health
+        InitializeWithValues(currentHealth, healthBarRef);
     }
 
     /// <summary>
@@ -91,14 +95,14 @@ public class HealthIconManager : EntityManager, IHealthIconManager
     /// </summary>
     /// <param name="maxHealth">Maximum health value</param>
     /// <param name="healthBar">Reference to the health bar UI element</param>
-    private void InitializeWithValues(float maxHealth, Slider healthBar)
+    private void InitializeWithValues(float currentHealth, Slider healthBar)
     {
-        this.maxHealth = maxHealth;
-        this.health = maxHealth;
+        this.maxHealth = isPlayerIcon ? combatManagerRef.PlayerMaxHealth : combatManagerRef.EnemyMaxHealth;
+        this.health = currentHealth;
 
         InitializeMonster(
             isPlayerIcon ? MonsterType.Friendly : MonsterType.Enemy,
-            maxHealth,
+            this.maxHealth,
             0f,
             healthBar,
             GetComponent<Image>(),
@@ -106,7 +110,8 @@ public class HealthIconManager : EntityManager, IHealthIconManager
             Resources.Load<GameObject>("Prefabs/numberVisual"),
             null,
             combatStageRef.GetAttackLimiter(),
-            combatStageRef.GetOngoingEffectApplier()
+            combatStageRef.GetOngoingEffectApplier(),
+            currentHealth  // Pass the current health
         );
 
         gameObject.SetActive(true);
@@ -141,11 +146,6 @@ public class HealthIconManager : EntityManager, IHealthIconManager
         if (isPlayerIcon)
         {
             combatManagerRef.PlayerHealth = (int)health;
-
-            // Each time player health is updated, also update in GameStateManager
-            // This ensures persistent health value is always current
-            GameStateManager.SavePlayerHealth((int)health);
-            Debug.Log($"[HealthIconManager] Updated player health in GameStateManager: {(int)health}");
         }
         else
             combatManagerRef.EnemyHealth = (int)health;
@@ -161,10 +161,6 @@ public class HealthIconManager : EntityManager, IHealthIconManager
         if (isPlayerIcon)
         {
             Debug.Log("Player Defeated - Game Over!");
-
-            // Reset player health when the player dies
-            GameStateManager.ResetPlayerHealth();
-            Debug.Log("[HealthIconManager] Player died - health data reset");
 
             // Wait a moment before changing scenes
             StartCoroutine(LoadGameOverScene("DefeatedScene"));
@@ -194,14 +190,6 @@ public class HealthIconManager : EntityManager, IHealthIconManager
 
     private IEnumerator LoadVictoryScene(string sceneName)
     {
-        // Save player health before loading victory scene
-        if (isPlayerIcon && combatManagerRef != null)
-        {
-            // Save the player's current health to GameStateManager
-            GameStateManager.SavePlayerHealth(combatManagerRef.PlayerHealth);
-            Debug.Log($"[HealthIconManager] Saved player health after victory: {combatManagerRef.PlayerHealth}");
-        }
-
         // Wait for death animation to play
         yield return new WaitForSeconds(2f);
 

@@ -26,15 +26,15 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
 
     [Header("Game State")]
     [SerializeField] private int _turnCount = 0;
-    [SerializeField] private int _playerHealth = 30;
+    [SerializeField] private int _playerHealth;
     [SerializeField] private Slider _playerHealthSlider;
-    [SerializeField] private int _enemyHealth = 30;
+    [SerializeField] private int _enemyHealth;
     [SerializeField] private Slider _enemyHealthSlider;
     [SerializeField] private bool _playerGoesFirst = true;
     [SerializeField] private bool _playerTurn;
     [SerializeField] private CombatPhase _currentPhase = CombatPhase.None;
-    [SerializeField] private int _maxPlayerHealth = 30;
-    [SerializeField] private int _maxEnemyHealth = 30;
+    [SerializeField] private int _maxPlayerHealth;
+    [SerializeField] private int _maxEnemyHealth;
 
     // Mana fields - now the single source of truth
     [Header("Mana Settings")]
@@ -173,10 +173,6 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
         try
         {
             Debug.Log("[CombatManager] Initializing dependencies...");
-
-            // Load player health from GameStateManager if available
-            _playerHealth = GameStateManager.GetPlayerHealth();
-            Debug.Log($"[CombatManager] Loaded player health: {_playerHealth}");
 
             // Initialize core dependencies
             _uiManager = new UIManager(this);
