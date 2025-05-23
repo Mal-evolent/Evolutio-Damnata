@@ -3,12 +3,31 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class Cell : MonoBehaviour
+public interface ICell
 {
-    public int index;
-    public int value;
+    int Index { get; set; }
+    int Value { get; set; }
+    void SetSpecialRoomSprite(Sprite icon);
+}
+
+public class Cell : MonoBehaviour, ICell
+{
+    [SerializeField] private int index;
+    [SerializeField] private int value;
 
     private Image cellImage;
+
+    public int Index
+    {
+        get => index;
+        set => index = value;
+    }
+
+    public int Value
+    {
+        get => value;
+        set => this.value = value;
+    }
 
     void Awake()
     {
