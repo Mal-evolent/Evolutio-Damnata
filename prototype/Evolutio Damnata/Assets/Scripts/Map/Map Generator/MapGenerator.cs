@@ -12,7 +12,7 @@ public class MapGenerator : MonoBehaviour
     [Tooltip("Parent transform for the generated map (usually a panel under Canvas)")]
     [SerializeField] private RectTransform mapContainer;
 
-    public Cell cellPrefab;
+    [SerializeField] private Cell cellPrefab;
 
     [Header("Sprite References")]
     [SerializeField] private Sprite itemSprite;
@@ -20,37 +20,66 @@ public class MapGenerator : MonoBehaviour
     [SerializeField] private Sprite bossSprite;
     [SerializeField] private Sprite secretSprite;
 
-    // Strategy implementations
-    private IMapGenerationStrategy mapGenerationStrategy;
-    private IRoomSelectionStrategy roomSelectionStrategy;
-    private IMapVisualizer mapVisualizer;
+    [Header("Strategy Dependencies")]
+    [SerializeField] private IMapGenerationStrategy mapGenerationStrategy;
+    [SerializeField] private IRoomSelectionStrategy roomSelectionStrategy;
+    [SerializeField] private IMapVisualizer mapVisualizer;
 
     private int[] floorPlan;
     private Dictionary<RoomType, int> specialRooms = new Dictionary<RoomType, int>();
 
-    void Awake()
+    private void ValidateConfiguration()
     {
-        // If no map container is assigned, use this object's RectTransform
+        if (config == null)
+        {
+            throw new System.ArgumentNullException(nameof(config), "MapGenerationConfig is required");
+        }
+
+        if (config.gridSize <= 0)
+        {
+            throw new System.ArgumentException("Grid size must be greater than 0", nameof(config.gridSize));
+        }
+
+        if (config.minRooms <= 0)
+        {
+            throw new System.ArgumentException("Minimum rooms must be greater than 0", nameof(config.minRooms));
+        }
+    }
+
+    private void ValidateDependencies()
+    {
         if (mapContainer == null)
         {
             mapContainer = GetComponent<RectTransform>();
-
             if (mapContainer == null)
             {
-                Debug.LogError("MapGenerator must be attached to a GameObject with a RectTransform or have a mapContainer assigned.");
+                throw new System.NullReferenceException("MapGenerator must be attached to a GameObject with a RectTransform or have a mapContainer assigned.");
             }
         }
 
-        // Initialize strategies
-        InitializeStrategies();
+        if (cellPrefab == null)
+        {
+            throw new System.NullReferenceException("Cell prefab must be assigned");
+        }
+
+        if (mapGenerationStrategy == null)
+        {
+            mapGenerationStrategy = new RandomDungeonGenerationStrategy();
+        }
+
+        if (roomSelectionStrategy == null)
+        {
+            roomSelectionStrategy = new StandardRoomSelectionStrategy(config);
+        }
+
+        if (mapVisualizer == null)
+        {
+            InitializeMapVisualizer();
+        }
     }
 
-    private void InitializeStrategies()
+    private void InitializeMapVisualizer()
     {
-        mapGenerationStrategy = new RandomDungeonGenerationStrategy();
-        roomSelectionStrategy = new StandardRoomSelectionStrategy(config);
-
-        // Set up sprite dictionary
         Dictionary<RoomType, Sprite> roomSprites = new Dictionary<RoomType, Sprite>
         {
             { RoomType.Boss, bossSprite },
@@ -61,6 +90,20 @@ public class MapGenerator : MonoBehaviour
 
         mapVisualizer = new UIMapVisualizer(cellPrefab, roomSprites);
         mapVisualizer.Initialize(mapContainer);
+    }
+
+    void Awake()
+    {
+        try
+        {
+            ValidateConfiguration();
+            ValidateDependencies();
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Failed to initialize MapGenerator: {e.Message}");
+            enabled = false;
+        }
     }
 
     void Start()
@@ -78,22 +121,50 @@ public class MapGenerator : MonoBehaviour
 
     public void GenerateMap()
     {
-        // Clear previous map
-        mapVisualizer.ClearMap();
+        try
+        {
+            // Clear previous map
+            mapVisualizer.ClearMap();
 
-        // Generate floor plan
-        List<int> endRooms;
-        floorPlan = mapGenerationStrategy.GenerateFloorPlan(config, out endRooms);
+            // Generate floor plan
+            List<int> endRooms;
+            floorPlan = mapGenerationStrategy.GenerateFloorPlan(config, out endRooms);
 
-        // Check if we have enough rooms
+            // Validate floor plan
+            if (!ValidateFloorPlan(endRooms))
+            {
+                GenerateMap();
+                return;
+            }
+
+            // Select and validate special rooms
+            if (!SelectAndValidateSpecialRooms(endRooms))
+            {
+                GenerateMap();
+                return;
+            }
+
+            // Visualize the map
+            VisualizeMap();
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Failed to generate map: {e.Message}");
+        }
+    }
+
+    private bool ValidateFloorPlan(List<int> endRooms)
+    {
         int roomCount = floorPlan.Count(cell => cell == 1);
         if (roomCount < config.minRooms)
         {
-            GenerateMap();
-            return;
+            return false;
         }
+        return true;
+    }
 
-        // Select special rooms
+    private bool SelectAndValidateSpecialRooms(List<int> endRooms)
+    {
         specialRooms = roomSelectionStrategy.SelectSpecialRooms(floorPlan, endRooms);
 
         // Find secret room
@@ -106,10 +177,14 @@ public class MapGenerator : MonoBehaviour
         // Verify all special rooms were assigned
         if (specialRooms.Values.Any(index => index == -1) || secretRoomIndex == -1)
         {
-            GenerateMap();
-            return;
+            Debug.LogWarning("Failed to assign all special rooms");
+            return false;
         }
+        return true;
+    }
 
+    private void VisualizeMap()
+    {
         // Visualize regular rooms
         for (int i = 0; i < floorPlan.Length; i++)
         {
