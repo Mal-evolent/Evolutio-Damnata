@@ -35,7 +35,7 @@ public class MapDropdownToggle : MonoBehaviour
     {
         // Get initial positions
         shownPos = mapPanel.anchoredPosition;
-        hiddenPos = shownPos + new Vector2(0, mapPanel.rect.height + 50); // Offset up
+        hiddenPos = shownPos + new Vector2(0, mapPanel.rect.height + 70); // Offset up
         mapPanel.anchoredPosition = hiddenPos; // Start hidden
     }
 
