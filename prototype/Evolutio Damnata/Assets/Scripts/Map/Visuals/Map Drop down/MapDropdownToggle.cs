@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// Controls the sliding animation of a map panel UI element.
@@ -10,13 +11,22 @@ public class MapDropdownToggle : MonoBehaviour
 {
     [Tooltip("Reference to the map panel that will be shown/hidden")]
     public RectTransform mapPanel;
-    
+
     [Tooltip("Speed at which the map panel slides in and out")]
     public float slideSpeed = 500f;
 
-    private Vector2 hiddenPos;
-    private Vector2 shownPos;
-    private bool isVisible = false;
+    [HideInInspector]
+    public Button showButton;
+
+    [HideInInspector]
+    public Button hideButton;
+
+    [HideInInspector]
+    public Vector2 hiddenPos;
+    [HideInInspector]
+    public Vector2 shownPos;
+    [HideInInspector]
+    public bool isVisible = false;
 
     /// <summary>
     /// Initializes positions and starts with the map hidden.
@@ -42,12 +52,34 @@ public class MapDropdownToggle : MonoBehaviour
 
     /// <summary>
     /// Toggles the visibility state of the map and initiates sliding animation.
+    /// Also updates button visibility states.
     /// </summary>
     public void ToggleMap()
     {
         isVisible = !isVisible;
         StopAllCoroutines();
         StartCoroutine(SlideMap(isVisible ? shownPos : hiddenPos));
+
+        // Update button visibility states
+        UpdateButtonStates();
+    }
+
+    /// <summary>
+    /// Updates the visibility of show/hide buttons based on the current map state
+    /// </summary>
+    private void UpdateButtonStates()
+    {
+        if (showButton != null)
+        {
+            showButton.gameObject.SetActive(!isVisible);
+            showButton.interactable = !isVisible;
+        }
+
+        if (hideButton != null)
+        {
+            hideButton.gameObject.SetActive(isVisible);
+            hideButton.interactable = isVisible;
+        }
     }
 
     /// <summary>
@@ -55,7 +87,7 @@ public class MapDropdownToggle : MonoBehaviour
     /// </summary>
     /// <param name="targetPos">The position to slide the map to</param>
     /// <returns>IEnumerator for coroutine execution</returns>
-    System.Collections.IEnumerator SlideMap(Vector2 targetPos)
+    public IEnumerator SlideMap(Vector2 targetPos)
     {
         while (Vector2.Distance(mapPanel.anchoredPosition, targetPos) > 0.1f)
         {
