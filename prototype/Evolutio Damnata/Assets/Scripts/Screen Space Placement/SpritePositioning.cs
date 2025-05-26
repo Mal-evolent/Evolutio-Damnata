@@ -5,7 +5,7 @@ using UnityEngine;
 public class SpritePositioning : MonoBehaviour, ISpritePositioning
 {
     [SerializeField] private GameObject _placeHolderPrefab;
-    [SerializeField] private MapScript _mapScript;
+    [SerializeField] private MapGenerator _mapGenerator;
     [SerializeField] private Canvas _mainCanvas;
 
     public bool RoomReady { get; private set; }
@@ -54,25 +54,26 @@ public class SpritePositioning : MonoBehaviour, ISpritePositioning
 
     public IEnumerator WaitForRoomSelection()
     {
-        while (_mapScript.currentSelectedRoom == "None")
+        // Now using MapGenerator's currentSelectedRoom
+        while (_mapGenerator.currentSelectedRoom == "None")
         {
             yield return null;
         }
 
-        _playerPlaceholderManager.TogglePlaceHolders(true, _mapScript.currentSelectedRoom);
-        _enemyPlaceholderManager.DisplayPlaceHolders(_mapScript.currentSelectedRoom);
+        _playerPlaceholderManager.TogglePlaceHolders(true, _mapGenerator.currentSelectedRoom);
+        _enemyPlaceholderManager.DisplayPlaceHolders(_mapGenerator.currentSelectedRoom);
         RoomReady = true;
     }
 
     public List<PositionData> GetPlayerPositionsForCurrentRoom()
     {
-        string currentRoom = _mapScript.currentSelectedRoom;
+        string currentRoom = _mapGenerator.currentSelectedRoom;
         return GetPositionsForRoom(currentRoom, _roomPositions);
     }
 
     public List<PositionData> GetEnemyPositionsForCurrentRoom()
     {
-        string currentRoom = _mapScript.currentSelectedRoom;
+        string currentRoom = _mapGenerator.currentSelectedRoom;
         return GetPositionsForRoom(currentRoom, _enemyRoomPositions);
     }
 

@@ -1,9 +1,8 @@
-using JetBrains.Annotations;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Experimental.AI;
+using UnityEngine.UI;
 
 public class MapGenerator : MonoBehaviour
 {
@@ -25,8 +24,14 @@ public class MapGenerator : MonoBehaviour
     [SerializeField] private IRoomSelectionStrategy roomSelectionStrategy;
     [SerializeField] private IMapVisualizer mapVisualizer;
 
+    [Header("Background Settings")]
+    [SerializeField] private Canvas mainCanvas;
+    [Tooltip("Reference to the canvas that will receive the background image")]
+    public string currentSelectedRoom = "None";
+
     private int[] floorPlan;
     private Dictionary<RoomType, int> specialRooms = new Dictionary<RoomType, int>();
+    private RectTransform canvasRectTransform;
 
     private void ValidateConfiguration()
     {
@@ -43,6 +48,11 @@ public class MapGenerator : MonoBehaviour
         if (config.minRooms <= 0)
         {
             throw new System.ArgumentException("Minimum rooms must be greater than 0", nameof(config.minRooms));
+        }
+
+        if (mainCanvas == null)
+        {
+            Debug.LogWarning("Main canvas not assigned. Background image will not be generated.");
         }
     }
 
@@ -98,6 +108,11 @@ public class MapGenerator : MonoBehaviour
         {
             ValidateConfiguration();
             ValidateDependencies();
+
+            if (mainCanvas != null)
+            {
+                canvasRectTransform = mainCanvas.GetComponent<RectTransform>();
+            }
         }
         catch (System.Exception e)
         {
@@ -123,6 +138,9 @@ public class MapGenerator : MonoBehaviour
     {
         try
         {
+            // Generate background first (if canvas is assigned)
+            GenerateBackgroundImage();
+
             // Clear previous map
             mapVisualizer.ClearMap();
 
@@ -151,6 +169,34 @@ public class MapGenerator : MonoBehaviour
         {
             Debug.LogError($"Failed to generate map: {e.Message}");
         }
+    }
+
+    private void GenerateBackgroundImage()
+    {
+        if (mainCanvas == null || canvasRectTransform == null) return;
+
+        // Create initial texture
+        Texture2D drawOnTex = new Texture2D((int)canvasRectTransform.rect.width, (int)canvasRectTransform.rect.height, TextureFormat.ARGB4444, true);
+        Sprite textTex = Sprite.Create(drawOnTex, new Rect(0, 0, drawOnTex.width, drawOnTex.height), Vector2.zero);
+        mainCanvas.GetComponent<Image>().sprite = textTex;
+
+        // Set a random background image for the mainCanvas
+        GlobalResources globalResources = GameObject.Find("ResourceManagaer")?.GetComponent<GlobalResources>();
+        if (globalResources == null)
+        {
+            Debug.LogError("GlobalResources not found!");
+            return;
+        }
+
+        if (globalResources.dungeonRooms == null || globalResources.dungeonRooms.Count == 0)
+        {
+            Debug.LogError("Dungeon rooms list is null or empty!");
+            return;
+        }
+
+        Sprite newBackgroundImage = globalResources.dungeonRooms[Random.Range(0, globalResources.dungeonRooms.Count)];
+        currentSelectedRoom = newBackgroundImage.name;
+        mainCanvas.GetComponent<Image>().sprite = newBackgroundImage;
     }
 
     private bool ValidateFloorPlan(List<int> endRooms)
