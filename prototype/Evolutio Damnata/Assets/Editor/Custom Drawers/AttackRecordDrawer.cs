@@ -1,8 +1,11 @@
-﻿using UnityEditor;
+﻿// Assets/Editor/Custom Drawers/AttackRecordDrawer.cs
+#if UNITY_EDITOR
+using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
+using CardSystem.History;
 
-[CustomPropertyDrawer(typeof(CardHistory.AttackRecord))]
+[CustomPropertyDrawer(typeof(AttackRecord))]
 public class AttackRecordDrawer : PropertyDrawer
 {
     private static Texture2D damageBarTexture;
@@ -333,3 +336,4 @@ public class AttackRecordDrawer : PropertyDrawer
         }
     }
 }
+#endif

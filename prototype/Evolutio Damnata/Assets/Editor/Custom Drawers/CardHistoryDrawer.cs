@@ -1,9 +1,11 @@
+// Assets/Editor/Custom Drawers/CardHistoryDrawer.cs
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
+using CardSystem.History;
 
-[CustomPropertyDrawer(typeof(CardHistory.CardPlayRecord))]
+[CustomPropertyDrawer(typeof(CardPlayRecord))]
 public class CardPlayRecordDrawer : PropertyDrawer
 {
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
@@ -131,7 +133,7 @@ public class CardPlayRecordDrawer : PropertyDrawer
         if (property.isExpanded)
         {
             var cardDescription = property.FindPropertyRelative("cardDescription");
-            var targetName = property.FindPropertyRelative("targetName"); // Changed from playerName
+            var targetName = property.FindPropertyRelative("targetName");
             var keywords = property.FindPropertyRelative("keywords");
             var effectTargets = property.FindPropertyRelative("effectTargets");
 
@@ -155,7 +157,7 @@ public class CardPlayRecordDrawer : PropertyDrawer
     }
 }
 
-[CustomPropertyDrawer(typeof(CardHistory.OngoingEffectRecord))]
+[CustomPropertyDrawer(typeof(OngoingEffectRecord))]
 public class OngoingEffectRecordDrawer : PropertyDrawer
 {
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
@@ -244,7 +246,7 @@ public class OngoingEffectRecordDrawer : PropertyDrawer
     }
 }
 
-[CustomPropertyDrawer(typeof(CardHistory.OngoingEffectApplicationRecord))]
+[CustomPropertyDrawer(typeof(OngoingEffectApplicationRecord))]
 public class OngoingEffectApplicationRecordDrawer : PropertyDrawer
 {
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
