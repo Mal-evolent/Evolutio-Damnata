@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Sirenix.OdinInspector;
+using EnemyInteraction.Interfaces;
 
 public class Card : MonoBehaviour
 {

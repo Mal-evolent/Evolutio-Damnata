@@ -126,6 +126,18 @@ namespace EnemyInteraction.Managers
                 yield return new WaitForSeconds(_checkDelay);
             }
 
+            // Wait for room to be ready
+            timeout = Time.time + _timeout;
+            while (!_spritePositioning.RoomReady)
+            {
+                if (Time.time > timeout)
+                {
+                    Debug.LogError("[BoardStateInitializer] Timeout while waiting for room to be ready");
+                    yield break;
+                }
+                yield return new WaitForSeconds(_checkDelay);
+            }
+
             var combatStage = Object.FindObjectOfType<CombatStage>();
             if (combatStage == null)
             {
@@ -135,7 +147,7 @@ namespace EnemyInteraction.Managers
             var attackLimiter = combatStage.GetAttackLimiter() ?? new AttackLimiter();
             (_entityCacheManager as EntityCacheManager).Initialize(_spritePositioning, attackLimiter);
 
-            // Optionally, wait for EntityManagerCache to be populated
+            // Wait for EntityManagerCache to be populated
             timeout = Time.time + _timeout / 2;
             while (_entityCacheManager.EntityManagerCache == null || _entityCacheManager.EntityManagerCache.Count == 0)
             {

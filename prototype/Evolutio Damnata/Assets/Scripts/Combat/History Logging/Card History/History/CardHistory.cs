@@ -7,6 +7,9 @@ using CardSystem.History;
 
 public class CardHistory : MonoBehaviour, ICardHistory
 {
+    // Add event for history changes
+    public static event Action OnHistoryChanged;
+
     [Header("History Settings")]
     [SerializeField] private bool keepHistoryBetweenGames = true;
     [SerializeField] private int maxHistorySize = 100;
@@ -85,6 +88,8 @@ public class CardHistory : MonoBehaviour, ICardHistory
 
     // Records an additional effect target for the most recently played card
     // Useful for spells with multiple effects targeting different entities
+    // Records an additional effect target for the most recently played card
+    // Useful for spells with multiple effects targeting different entities
     public void RecordAdditionalEffectTarget(string effectName, string targetName)
     {
         if (cardHistory.Count == 0) return;
@@ -92,20 +97,11 @@ public class CardHistory : MonoBehaviour, ICardHistory
         var latestRecord = cardHistory[cardHistory.Count - 1];
         string effectInfo = $"{effectName} → {targetName}";
 
-        // Add to effectTargets through reflection (since the field is private)
-        var effectTargetsField = typeof(CardPlayRecord).GetField("effectTargets",
-            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-
-        if (effectTargetsField != null)
-        {
-            var effectTargets = effectTargetsField.GetValue(latestRecord) as List<string>;
-            if (effectTargets != null)
-            {
-                effectTargets.Add(effectInfo);
-                Debug.Log($"[CardHistory] Added effect target: {effectInfo} to card {latestRecord.CardName}");
-            }
-        }
+        // Use the AddEffectTarget method instead of reflection
+        latestRecord.AddEffectTarget(effectInfo);
+        Debug.Log($"[CardHistory] Added effect target: {effectInfo} to card {latestRecord.CardName}");
     }
+
 
     /// <summary>
     /// Records a new ongoing effect being applied to an entity
@@ -199,6 +195,9 @@ public class CardHistory : MonoBehaviour, ICardHistory
         }
 
         Debug.Log($"[CardHistory] {record.EditorSummary}");
+        
+        // Notify subscribers of history change
+        OnHistoryChanged?.Invoke();
     }
 
     private void AddOngoingEffectRecord(OngoingEffectRecord record)
@@ -312,6 +311,9 @@ public class CardHistory : MonoBehaviour, ICardHistory
         effectsByType.Clear();
 
         Debug.Log("[CardHistory] History cleared");
+        
+        // Notify subscribers of history change
+        OnHistoryChanged?.Invoke();
     }
 
     public int GetTotalCardsPlayed() => totalCardsPlayed;

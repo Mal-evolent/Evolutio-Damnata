@@ -4,8 +4,9 @@ using System.Collections;
 using System.Resources;
 using TMPro;
 using System.Collections.Generic;
+using EnemyInteraction.Interfaces;
 
-public class EntityManager : MonoBehaviour, IDamageable, IAttacker
+public class EntityManager : MonoBehaviour, ICombatEntity, IDamageable, IAttacker
 {
     // Public Variables
     public Sprite outlineSprite;
@@ -15,6 +16,11 @@ public class EntityManager : MonoBehaviour, IDamageable, IAttacker
     // HasAttacked property is a secondary tracking mechanism - prefer using AttackLimiter
     // through the GetRemainingAttacks(), UseAttack(), and ResetAttacks() methods for attack management
     public bool HasAttacked { get; set; } = false;
+
+    // Explicit implementation of ICombatEntity members
+    string ICombatEntity.Name => gameObject.name;
+    bool ICombatEntity.placed => placed;
+    bool ICombatEntity.dead => dead;
 
     // Serialized Fields
     [Header("Resource Management")]

@@ -121,6 +121,18 @@ namespace EnemyInteraction.Managers
             if (scene.name == "gameScene")
             {
                 // Optionally reacquire references here if needed
+
+                // Find and activate the Map Generator GameObject
+                GameObject mapGeneratorObject = GameObject.Find("Map Generator");
+                if (mapGeneratorObject != null)
+                {
+                    mapGeneratorObject.SetActive(true);
+                    Debug.Log("[BoardStateManager] Activated Map Generator GameObject");
+                }
+                else
+                {
+                    Debug.LogError("[BoardStateManager] Could not find 'Map Generator' GameObject in the scene.");
+                }
             }
             else
             {
