@@ -1,5 +1,4 @@
-﻿// Assets/Scripts/Combat/Systems/Card History/CardHistory.cs
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -88,8 +87,6 @@ public class CardHistory : MonoBehaviour, ICardHistory
 
     // Records an additional effect target for the most recently played card
     // Useful for spells with multiple effects targeting different entities
-    // Records an additional effect target for the most recently played card
-    // Useful for spells with multiple effects targeting different entities
     public void RecordAdditionalEffectTarget(string effectName, string targetName)
     {
         if (cardHistory.Count == 0) return;
@@ -100,8 +97,10 @@ public class CardHistory : MonoBehaviour, ICardHistory
         // Use the AddEffectTarget method instead of reflection
         latestRecord.AddEffectTarget(effectInfo);
         Debug.Log($"[CardHistory] Added effect target: {effectInfo} to card {latestRecord.CardName}");
-    }
 
+        // Notify subscribers of history change
+        OnHistoryChanged?.Invoke();
+    }
 
     /// <summary>
     /// Records a new ongoing effect being applied to an entity
@@ -168,6 +167,9 @@ public class CardHistory : MonoBehaviour, ICardHistory
         }
 
         Debug.Log($"[CardHistory] {record.EditorSummary}");
+
+        // Notify subscribers of history change
+        OnHistoryChanged?.Invoke();
     }
 
     private void AddCardRecord(CardPlayRecord record, string cardType)
@@ -195,7 +197,7 @@ public class CardHistory : MonoBehaviour, ICardHistory
         }
 
         Debug.Log($"[CardHistory] {record.EditorSummary}");
-        
+
         // Notify subscribers of history change
         OnHistoryChanged?.Invoke();
     }
@@ -222,6 +224,9 @@ public class CardHistory : MonoBehaviour, ICardHistory
         }
 
         Debug.Log($"[CardHistory] {record.EditorSummary}");
+
+        // Notify subscribers of history change
+        OnHistoryChanged?.Invoke();
     }
 
     private void UpdateTurnCount(int turnNumber)
@@ -285,6 +290,9 @@ public class CardHistory : MonoBehaviour, ICardHistory
         }
 
         Debug.Log($"[CardHistory] {record.EditorSummary}");
+
+        // Notify subscribers of history change
+        OnHistoryChanged?.Invoke();
     }
 
     public void ClearHistory()
@@ -311,7 +319,7 @@ public class CardHistory : MonoBehaviour, ICardHistory
         effectsByType.Clear();
 
         Debug.Log("[CardHistory] History cleared");
-        
+
         // Notify subscribers of history change
         OnHistoryChanged?.Invoke();
     }
