@@ -3,11 +3,30 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class CardPlayHistoryUI : MonoBehaviour
 {
-    [SerializeField] private Transform contentParent;
+    [Header("UI References")]
+    [SerializeField] private RectTransform contentParent;
     [SerializeField] private GameObject cardPlayEntryPrefab;
+
+    [Header("Layout Settings")]
+    [Tooltip("Padding at the top of the content area")]
+    [SerializeField] private float topPadding = 150f;
+    [Tooltip("Spacing between card entries")]
+    [SerializeField] private float entrySpacing = 10f;
+    [Tooltip("Bottom padding after the last card entry")]
+    [SerializeField] private float bottomPadding = 50f;
+
+    [Header("Card Appearance")]
+    [Tooltip("Height of the card entry prefab before scaling")]
+    [SerializeField] private float entryHeight = 1024.4f;
+    [Tooltip("Width of the card entry prefab before scaling")]
+    [SerializeField] private float entryWidth = 1024f;
+    [Tooltip("Scale factor for the card entries (1 = 100%)")]
+    [Range(0.1f, 1f)]
+    [SerializeField] private float scaleFactor = 0.3f;
 
     private void OnEnable()
     {
@@ -59,30 +78,45 @@ public class CardPlayHistoryUI : MonoBehaviour
 
         // Clear old entries
         foreach (Transform child in contentParent)
-        {
-            if (child != null)
-            {
-                Destroy(child.gameObject);
-            }
-        }
+            Destroy(child.gameObject);
 
-        // Re-populate
-        foreach (var record in history)
+        float verticalOffset = 0f;                     // Total vertical position offset
+        float scaledEntryHeight = entryHeight * scaleFactor; // Scaled height
+
+        // Add initial padding to ensure first card is fully visible
+        verticalOffset += topPadding;
+
+        for (int i = 0; i < history.Count; i++)
         {
+            var record = history[i];
             if (record == null) continue;
 
             GameObject entryGO = Instantiate(cardPlayEntryPrefab, contentParent);
-            var entryUI = entryGO.GetComponent<CardPlayEntryUI>();
+            RectTransform entryRT = entryGO.GetComponent<RectTransform>();
 
-            if (entryUI != null)
-            {
-                entryUI.Setup(record);
-            }
-            else
-            {
-                Debug.LogWarning("CardPlayEntryUI script missing on prefab!");
-            }
+            // Set scale according to the serialized scale factor
+            entryRT.localScale = new Vector3(scaleFactor, scaleFactor, scaleFactor);
+
+            // Center horizontally, position from top
+            entryRT.anchorMin = new Vector2(0.5f, 1f);
+            entryRT.anchorMax = new Vector2(0.5f, 1f);
+            entryRT.pivot = new Vector2(0.5f, 0.5f); // Center pivot for better positioning
+
+            // Set position manually (y goes down as offset grows)
+            entryRT.anchoredPosition = new Vector2(0f, -verticalOffset);
+
+            // Use serialized width and height
+            entryRT.sizeDelta = new Vector2(entryWidth, entryHeight);
+
+            // Apply data
+            var entryUI = entryGO.GetComponent<CardPlayEntryUI>();
+            if (entryUI != null) entryUI.Setup(record);
+
+            // Use scaled height for calculating offset
+            verticalOffset += scaledEntryHeight + entrySpacing;
         }
 
+        // Set content height to fit all entries plus bottom padding
+        contentParent.sizeDelta = new Vector2(contentParent.sizeDelta.x, verticalOffset + bottomPadding);
     }
 }
