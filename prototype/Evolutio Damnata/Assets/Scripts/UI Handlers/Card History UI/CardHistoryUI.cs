@@ -71,27 +71,18 @@ public class CardPlayHistoryUI : MonoBehaviour
         {
             if (record == null) continue;
 
-            GameObject entry = Instantiate(cardPlayEntryPrefab, contentParent);
-            if (entry == null)
+            GameObject entryGO = Instantiate(cardPlayEntryPrefab, contentParent);
+            var entryUI = entryGO.GetComponent<CardPlayEntryUI>();
+
+            if (entryUI != null)
             {
-                Debug.LogError("[CardPlayHistoryUI] Failed to instantiate card play entry prefab");
-                continue;
+                entryUI.Setup(record);
             }
-
-            var cardNameText = entry.transform.Find("CardNameText")?.GetComponent<TMP_Text>();
-            var turnText = entry.transform.Find("TurnText")?.GetComponent<TMP_Text>();
-            var ownerTag = entry.transform.Find("OwnerTag")?.GetComponent<TMP_Text>();
-            var effectTargetsText = entry.transform.Find("EffectTargetsText")?.GetComponent<TMP_Text>();
-
-            if (cardNameText != null) cardNameText.text = record.CardName;
-            if (turnText != null) turnText.text = $"Turn {record.TurnNumber}";
-            if (ownerTag != null) ownerTag.text = record.IsEnemyCard ? "Enemy" : "Player";
-            if (effectTargetsText != null)
+            else
             {
-                effectTargetsText.text = record.EffectTargets.Count > 0
-                    ? string.Join("\n", record.EffectTargets)
-                    : "";
+                Debug.LogWarning("CardPlayEntryUI script missing on prefab!");
             }
         }
+
     }
 }
