@@ -13,12 +13,11 @@ public class CardPlayEntryUI : MonoBehaviour
     {
         if (record == null) return;
 
-        cardNameText.text = record.CardName;
-        turnText.text = $"Turn {record.TurnNumber}";
-        ownerTag.text = record.IsEnemyCard ? "Enemy" : "Player";
-
+        cardNameText.text = $"Card Name: {record.CardName}";
+        turnText.text = $"turn: {record.TurnNumber}";
+        ownerTag.text = $"Owner: {(record.IsEnemyCard ? "Enemy" : "Player")}";
         effectTargetsText.text = record.EffectTargets.Count > 0
-            ? string.Join("\n", record.EffectTargets)
-            : "";
+            ? $"Effects:\n{string.Join("\n", record.EffectTargets)}"
+            : "Effects: None";
     }
 }

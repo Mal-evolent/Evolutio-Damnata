@@ -336,6 +336,8 @@ public class CardHistory : MonoBehaviour, ICardHistory
     public List<OngoingEffectApplicationRecord> GetEffectApplicationHistory() => effectApplicationHistory.ToList();
     public List<OngoingEffectRecord> GetPlayerOngoingEffects() => ongoingEffectHistory.Where(record => !record.IsEnemyEffect).ToList();
     public List<OngoingEffectRecord> GetEnemyOngoingEffects() => ongoingEffectHistory.Where(record => record.IsEnemyEffect).ToList();
+    public List<AttackRecord> GetAttackHistory() => attackHistory.ToList();
+
 
     public void LogAllCardHistory()
     {

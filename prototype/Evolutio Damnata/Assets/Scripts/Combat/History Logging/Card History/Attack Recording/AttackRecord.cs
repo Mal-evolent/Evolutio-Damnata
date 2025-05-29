@@ -29,6 +29,8 @@ namespace CardSystem.History
         public int TurnNumber => turnNumber;
         public float DamageDealt => damageDealt;
         public bool WasRangedAttack => wasRangedAttack;
+        public float CounterDamage => counterDamage;
+
         public IReadOnlyList<Keywords.MonsterKeyword> AttackerKeywords => attackerKeywords;
 
         public AttackRecord(EntityManager attacker, EntityManager target, int turn, float damage, float counterDamage, bool isRanged)
