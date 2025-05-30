@@ -15,7 +15,7 @@ public class CardPlayEntryUI : MonoBehaviour
 
         cardNameText.text = $"Card Name: {record.CardName}";
         turnText.text = $"turn: {record.TurnNumber}";
-        ownerTag.text = $"Owner: {(record.IsEnemyCard ? "Enemy" : "Player")}";
+        ownerTag.text = (record.IsEnemyCard ? "Enemy" : "Player");
         effectTargetsText.text = record.EffectTargets.Count > 0
             ? $"Effects:\n{string.Join("\n", record.EffectTargets)}"
             : "Effects: None";
