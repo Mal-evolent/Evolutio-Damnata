@@ -4628,7 +4628,7 @@ MonoBehaviour:
     gridSize: 10
     gridRows: 10
   mapContainer: {fileID: 1278218925}
-  cellPrefab: {fileID: 5440036730306273045, guid: 3f4d05d4022b0a043b8ace5cbe86d182, type: 3}
+  cellPrefab: {fileID: 8655351108753242128, guid: 3f4d05d4022b0a043b8ace5cbe86d182, type: 3}
   itemSprite: {fileID: 21300000, guid: 64cced849c50c7f4390c0639319f6ae1, type: 3}
   shopSprite: {fileID: 21300000, guid: 64cced849c50c7f4390c0639319f6ae1, type: 3}
   bossSprite: {fileID: 21300000, guid: 64cced849c50c7f4390c0639319f6ae1, type: 3}

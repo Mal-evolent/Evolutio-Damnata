@@ -1,3 +1,4 @@
+using Sirenix.OdinInspector.Editor.Validation;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -87,6 +88,13 @@ public class Cell : MonoBehaviour, ICell
 
         cellImage.sprite = icon;
     }
+
+    public void DisplayValue()
+    {
+        Debug.LogWarning($"Value: {value}");
+        // Do something with the index here
+    }
+
 
     public void Reset()
     {
