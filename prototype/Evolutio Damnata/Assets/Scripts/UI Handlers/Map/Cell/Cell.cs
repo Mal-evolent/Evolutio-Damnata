@@ -89,9 +89,9 @@ public class Cell : MonoBehaviour, ICell
         cellImage.sprite = icon;
     }
 
-    public void DisplayValue()
+    public void DisplayRoomType()
     {
-        Debug.LogWarning($"Value: {value}");
+        Debug.LogWarning($"Room type: {RoomType}");
         // Do something with the index here
     }
 

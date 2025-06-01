@@ -49,6 +49,7 @@ public class UIMapVisualizer : IMapVisualizer
         // Set cell properties
         newCell.Value = 1;
         newCell.Index = index;
+        newCell.RoomType = roomType;
 
         // Set special room sprite if applicable
         if (roomType != RoomType.Normal && roomSprites.ContainsKey(roomType))
