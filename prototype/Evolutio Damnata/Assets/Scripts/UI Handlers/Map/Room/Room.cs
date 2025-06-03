@@ -5,19 +5,14 @@ public class Room : MonoBehaviour
 {
     [Header("Room State")]
     [SerializeField] private RoomType roomType;
-    [SerializeField] private bool isVisited = false;
     [SerializeField] private bool isCurrentRoom = false;
+    [SerializeField] private bool isCleared = false;
     
     [Header("Visuals")]
     [SerializeField] private Image roomImage;
     [SerializeField] private Color normalColor = Color.white;
     [SerializeField] private Color currentRoomColor = Color.red;
-    [SerializeField] private Color visitedColor = Color.green;
-    
-    [Header("Room Criteria")]
-    [SerializeField] private int minLevel = 1;
-    [SerializeField] private int maxLevel = 10;
-    [SerializeField] private bool requiresKey = false;
+    [SerializeField] private Color clearedColor = Color.green;
     
     private Cell cellComponent;
     private static Room currentRoom;
@@ -46,29 +41,22 @@ public class Room : MonoBehaviour
 
     public void SetAsCurrentRoom()
     {
-        // If there was a previous current room, mark it as visited
+        // If there was a previous current room, mark it as cleared
         if (currentRoom != null && currentRoom != this)
         {
-            currentRoom.SetAsVisited();
+            currentRoom.SetAsCleared();
         }
         
         currentRoom = this;
         isCurrentRoom = true;
-        isVisited = true;
-        UpdateVisuals();
-    }
-
-    public void SetAsVisited()
-    {
-        isCurrentRoom = false;
-        isVisited = true;
+        // Don't override isCleared if it's already set
         UpdateVisuals();
     }
 
     public void ResetRoom()
     {
-        isVisited = false;
         isCurrentRoom = false;
+        isCleared = false;
         if (currentRoom == this)
         {
             currentRoom = null;
@@ -82,9 +70,9 @@ public class Room : MonoBehaviour
         {
             roomImage.color = currentRoomColor;
         }
-        else if (isVisited)
+        else if (isCleared)
         {
-            roomImage.color = visitedColor;
+            roomImage.color = clearedColor;
         }
         else
         {
@@ -92,26 +80,46 @@ public class Room : MonoBehaviour
         }
     }
 
-    public bool CanEnterRoom(int playerLevel)
+    public bool CanEnterRoom(Room fromRoom)
     {
-        // Allow entering any room that isn't the current room
-        if (isCurrentRoom) return false;
+        // Can't enter current room
+        if (isCurrentRoom)
+        {
+            Debug.LogWarning("Cannot enter current room");
+            return false;
+        }
         
-        // Check other criteria
-        if (playerLevel < minLevel || playerLevel > maxLevel) return false;
-        if (requiresKey && !HasKey()) return false;
-        return true;
+        // Can enter if this room is already cleared
+        if (isCleared) return true;
+        
+        // Can enter if coming from a cleared room and this room is adjacent
+        if (fromRoom != null && fromRoom.isCleared)
+        {
+            if (cellComponent.IsAdjacentTo(fromRoom.cellComponent))
+            {
+                return true;
+            }
+            else
+            {
+                Debug.LogWarning("Cannot enter room: Must be adjacent to a cleared room");
+                return false;
+            }
+        }
+        
+        Debug.LogWarning("Cannot enter room: Must be adjacent to a cleared room or the room must be cleared");
+        return false;
     }
 
-    private bool HasKey()
+    public void SetAsCleared()
     {
-        // TODO: Implement key checking logic
-        return true;
+        isCleared = true;
+        isCurrentRoom = false;
+        UpdateVisuals();
     }
 
     public void OnRoomEnter()
     {
-        if (!CanEnterRoom(1)) return; // TODO: Pass actual player level
+        if (!CanEnterRoom(currentRoom)) return;
 
         switch (roomType)
         {
@@ -121,18 +129,26 @@ public class Room : MonoBehaviour
                 {
                     TriggerCombat();
                 }
+                else
+                {
+                    // If no combat, room is automatically cleared
+                    SetAsCleared();
+                }
                 break;
             case RoomType.Boss:
                 TriggerCombat();
                 break;
             case RoomType.Shop:
                 // TODO: Implement shop logic
+                SetAsCleared(); // Shop is cleared when you leave it
                 break;
             case RoomType.Item:
                 // TODO: Implement item room logic
+                SetAsCleared(); // Item room is cleared when you get the item
                 break;
             case RoomType.Secret:
                 // TODO: Implement secret room logic
+                SetAsCleared(); // Secret room is cleared when you discover its secret
                 break;
         }
 

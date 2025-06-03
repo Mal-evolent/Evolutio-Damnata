@@ -231,6 +231,10 @@ public class MapGenerator : MonoBehaviour
 
     private void VisualizeMap()
     {
+        // Find the starting room (middle of the grid)
+        int startIndex = (config.gridRows / 2) * config.gridSize + (config.gridSize / 2);
+        Room startingRoom = null;
+
         // Visualize regular rooms
         for (int i = 0; i < floorPlan.Length; i++)
         {
@@ -238,7 +242,18 @@ public class MapGenerator : MonoBehaviour
             {
                 int x = i % config.gridSize;
                 int y = i / config.gridSize;
-                mapVisualizer.VisualizeRoom(i, x, y);
+                Cell cell = mapVisualizer.VisualizeRoom(i, x, y);
+                
+                // If this is the starting room, mark it as cleared
+                if (i == startIndex)
+                {
+                    startingRoom = cell.GetComponent<Room>();
+                    if (startingRoom != null)
+                    {
+                        startingRoom.SetAsCleared();
+                        startingRoom.SetAsCurrentRoom();
+                    }
+                }
             }
         }
 

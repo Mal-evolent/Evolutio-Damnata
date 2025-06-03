@@ -144,4 +144,24 @@ public class Cell : MonoBehaviour, ICell
             room.ResetRoom();
         }
     }
+
+    public bool IsAdjacentTo(Cell other)
+    {
+        if (other == null) return false;
+
+        // Get the positions of both cells
+        RectTransform thisRect = GetComponent<RectTransform>();
+        RectTransform otherRect = other.GetComponent<RectTransform>();
+
+        if (thisRect == null || otherRect == null) return false;
+
+        Vector2 thisPos = thisRect.anchoredPosition;
+        Vector2 otherPos = otherRect.anchoredPosition;
+
+        // Calculate the distance between cells
+        float distance = Vector2.Distance(thisPos, otherPos);
+
+        // Cells are adjacent if they are exactly 60 units apart (the grid spacing)
+        return Mathf.Approximately(distance, 60f);
+    }
 }

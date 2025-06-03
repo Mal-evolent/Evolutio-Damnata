@@ -29,9 +29,9 @@ public class UIMapVisualizer : IMapVisualizer
         spawnedCells.Clear();
     }
 
-    public void VisualizeRoom(int index, int x, int y, RoomType roomType = RoomType.Normal)
+    public Cell VisualizeRoom(int index, int x, int y, RoomType roomType = RoomType.Normal)
     {
-        if (container == null || cellPrefab == null) return;
+        if (container == null || cellPrefab == null) return null;
 
         // Create new cell as UI element
         Cell newCell = Object.Instantiate(cellPrefab, container);
@@ -58,6 +58,7 @@ public class UIMapVisualizer : IMapVisualizer
         }
 
         spawnedCells.Add(newCell);
+        return newCell;
     }
 
     public void CenterMapInContainer(float cellSize)
