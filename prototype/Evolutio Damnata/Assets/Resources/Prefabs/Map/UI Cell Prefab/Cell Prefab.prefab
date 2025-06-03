@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 1926326444498184897}
   - component: {fileID: 8655351108753242128}
   - component: {fileID: 4435524730209061248}
+  - component: {fileID: 2069996682289087729}
   m_Layer: 5
   m_Name: Cell Prefab
   m_TagString: Untagged
@@ -147,3 +148,25 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+--- !u!114 &2069996682289087729
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8426279024605553020}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e4c17c2c52db24142b6de71682b08832, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  roomType: 0
+  isVisited: 0
+  isCurrentRoom: 0
+  roomImage: {fileID: 0}
+  normalColor: {r: 1, g: 1, b: 1, a: 1}
+  currentRoomColor: {r: 1, g: 0, b: 0, a: 1}
+  visitedColor: {r: 0, g: 1, b: 0, a: 1}
+  minLevel: 1
+  maxLevel: 10
+  requiresKey: 0

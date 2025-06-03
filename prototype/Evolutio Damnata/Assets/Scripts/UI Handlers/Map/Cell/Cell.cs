@@ -21,6 +21,8 @@ public class Cell : MonoBehaviour, ICell
 
     private Image cellImage;
     private Sprite defaultSprite;
+    private Button button;
+    private Room room;
 
     public int Index
     {
@@ -53,13 +55,22 @@ public class Cell : MonoBehaviour, ICell
     public RoomType? RoomType
     {
         get => roomType;
-        set => roomType = value;
+        set
+        {
+            roomType = value;
+            if (room != null)
+            {
+                room.ResetRoom();
+            }
+        }
     }
 
     void Awake()
     {
         // Get reference to the Image component on this GameObject
         cellImage = GetComponent<Image>();
+        button = GetComponent<Button>();
+        room = GetComponent<Room>();
 
         if (cellImage == null)
         {
@@ -68,8 +79,33 @@ public class Cell : MonoBehaviour, ICell
             return;
         }
 
+        if (button == null)
+        {
+            Debug.LogError("Cell GameObject must have a Button component attached directly to it");
+            enabled = false;
+            return;
+        }
+
+        if (room == null)
+        {
+            Debug.LogError("Cell GameObject must have a Room component attached directly to it");
+            enabled = false;
+            return;
+        }
+
         // Store the default sprite for reset functionality
         defaultSprite = cellImage.sprite;
+
+        // Add click listener
+        button.onClick.AddListener(OnCellClicked);
+    }
+
+    private void OnCellClicked()
+    {
+        if (room != null)
+        {
+            room.OnRoomEnter();
+        }
     }
 
     public void SetSpecialRoomSprite(Sprite icon)
@@ -95,7 +131,6 @@ public class Cell : MonoBehaviour, ICell
         // Do something with the index here
     }
 
-
     public void Reset()
     {
         if (cellImage != null)
@@ -104,5 +139,9 @@ public class Cell : MonoBehaviour, ICell
         }
         value = 0;
         roomType = null;
+        if (room != null)
+        {
+            room.ResetRoom();
+        }
     }
 }
