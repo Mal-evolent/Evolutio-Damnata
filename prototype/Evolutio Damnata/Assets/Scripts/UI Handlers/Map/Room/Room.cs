@@ -5,17 +5,24 @@ public class Room : MonoBehaviour
 {
     [Header("Room State")]
     [SerializeField] private RoomType roomType;
-    [SerializeField] private bool isCurrentRoom = false;
-    [SerializeField] private bool isCleared = false;
     
     [Header("Visuals")]
     [SerializeField] private Image roomImage;
     [SerializeField] private Color normalColor = Color.white;
     [SerializeField] private Color currentRoomColor = Color.red;
     [SerializeField] private Color clearedColor = Color.green;
+
+    [Header("Debug State")]
+    [SerializeField, Tooltip("Is this room cleared? (Read-only)")]
+    private bool debugIsCleared;
+    [SerializeField, Tooltip("Is this the current room? (Read-only)")]
+    private bool debugIsCurrentRoom;
     
     private Cell cellComponent;
-    private static Room currentRoom;
+    private IRoomState roomState;
+    private IRoomVisuals roomVisuals;
+    private IRoomBehavior roomBehavior;
+    private ICombatTrigger combatTrigger;
 
     private void Awake()
     {
@@ -37,127 +44,64 @@ public class Room : MonoBehaviour
                 return;
             }
         }
-    }
 
-    public void SetAsCurrentRoom()
-    {
-        // If there was a previous current room, mark it as cleared
-        if (currentRoom != null && currentRoom != this)
-        {
-            currentRoom.SetAsCleared();
-        }
-        
-        currentRoom = this;
-        isCurrentRoom = true;
-        // Don't override isCleared if it's already set
-        UpdateVisuals();
-    }
+        InitializeComponents();
 
-    public void ResetRoom()
-    {
-        isCurrentRoom = false;
-        isCleared = false;
-        if (currentRoom == this)
+        // Subscribe to state changes for automatic visual updates
+        if (roomState is RoomState concreteState)
         {
-            currentRoom = null;
-        }
-        UpdateVisuals();
-    }
-
-    private void UpdateVisuals()
-    {
-        if (isCurrentRoom)
-        {
-            roomImage.color = currentRoomColor;
-        }
-        else if (isCleared)
-        {
-            roomImage.color = clearedColor;
-        }
-        else
-        {
-            roomImage.color = normalColor;
+            concreteState.OnStateChanged += UpdateVisuals;
         }
     }
 
-    public bool CanEnterRoom(Room fromRoom)
+    private void InitializeComponents()
     {
-        // Can't enter current room
-        if (isCurrentRoom)
-        {
-            Debug.LogWarning("Cannot enter current room");
-            return false;
-        }
-        
-        // Can enter if this room is already cleared
-        if (isCleared) return true;
-        
-        // Can enter if coming from a cleared room and this room is adjacent
-        if (fromRoom != null && fromRoom.isCleared)
-        {
-            if (cellComponent.IsAdjacentTo(fromRoom.cellComponent))
-            {
-                return true;
-            }
-            else
-            {
-                Debug.LogWarning("Cannot enter room: Must be adjacent to a cleared room");
-                return false;
-            }
-        }
-        
-        Debug.LogWarning("Cannot enter room: Must be adjacent to a cleared room or the room must be cleared");
-        return false;
+        roomState = new RoomState(cellComponent);
+        roomVisuals = new RoomVisuals(normalColor, currentRoomColor, clearedColor);
+        roomVisuals.SetRoomImage(roomImage);
+        combatTrigger = new CombatTrigger();
+        roomBehavior = CreateRoomBehavior();
     }
 
-    public void SetAsCleared()
+    private IRoomBehavior CreateRoomBehavior()
     {
-        isCleared = true;
-        isCurrentRoom = false;
-        UpdateVisuals();
+        return roomType switch
+        {
+            RoomType.Normal => new NormalRoomBehavior(roomState, cellComponent, combatTrigger),
+            RoomType.Boss => new BossRoomBehavior(roomState, cellComponent, combatTrigger),
+            RoomType.Shop => new ShopRoomBehavior(roomState, cellComponent, combatTrigger),
+            RoomType.Item => new ItemRoomBehavior(roomState, cellComponent, combatTrigger),
+            RoomType.Secret => new SecretRoomBehavior(roomState, cellComponent, combatTrigger),
+            _ => new NormalRoomBehavior(roomState, cellComponent, combatTrigger)
+        };
     }
 
     public void OnRoomEnter()
     {
-        if (!CanEnterRoom(currentRoom)) return;
-
-        switch (roomType)
-        {
-            case RoomType.Normal:
-                // Random chance to trigger combat
-                if (Random.value < 0.7f) // 70% chance
-                {
-                    TriggerCombat();
-                }
-                else
-                {
-                    // If no combat, room is automatically cleared
-                    SetAsCleared();
-                }
-                break;
-            case RoomType.Boss:
-                TriggerCombat();
-                break;
-            case RoomType.Shop:
-                // TODO: Implement shop logic
-                SetAsCleared(); // Shop is cleared when you leave it
-                break;
-            case RoomType.Item:
-                // TODO: Implement item room logic
-                SetAsCleared(); // Item room is cleared when you get the item
-                break;
-            case RoomType.Secret:
-                // TODO: Implement secret room logic
-                SetAsCleared(); // Secret room is cleared when you discover its secret
-                break;
-        }
-
-        SetAsCurrentRoom();
+        var currentRoom = RoomState.GetCurrentRoom();
+        roomBehavior.OnRoomEnter(currentRoom);
+        roomVisuals.UpdateVisuals(roomState.IsCurrentRoom, roomState.IsCleared);
     }
 
-    private void TriggerCombat()
+    public void ResetRoom()
     {
-        // TODO: Implement combat initialization
-        Debug.Log($"Triggering combat in room {cellComponent.Index}");
+        roomState.ResetRoom();
+        roomVisuals.UpdateVisuals(roomState.IsCurrentRoom, roomState.IsCleared);
+    }
+
+    private void UpdateVisuals()
+    {
+        roomVisuals.UpdateVisuals(roomState.IsCurrentRoom, roomState.IsCleared);
+        debugIsCleared = roomState.IsCleared;
+        debugIsCurrentRoom = roomState.IsCurrentRoom;
+    }
+
+    public void ForceClearAndSetCurrent()
+    {
+        if (roomState is RoomState concreteState)
+        {
+            concreteState.SetAsCleared();
+            concreteState.SetAsCurrentRoom();
+        }
     }
 } 

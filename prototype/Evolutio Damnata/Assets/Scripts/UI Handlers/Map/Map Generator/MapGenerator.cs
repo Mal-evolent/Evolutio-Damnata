@@ -244,14 +244,13 @@ public class MapGenerator : MonoBehaviour
                 int y = i / config.gridSize;
                 Cell cell = mapVisualizer.VisualizeRoom(i, x, y);
                 
-                // If this is the starting room, mark it as cleared
+                // If this is the starting room, mark it as cleared and current using the new API
                 if (i == startIndex)
                 {
                     startingRoom = cell.GetComponent<Room>();
                     if (startingRoom != null)
                     {
-                        startingRoom.SetAsCleared();
-                        startingRoom.SetAsCurrentRoom();
+                        startingRoom.ForceClearAndSetCurrent();
                     }
                 }
             }
