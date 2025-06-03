@@ -32,6 +32,7 @@ public class MapGenerator : MonoBehaviour
     private int[] floorPlan;
     private Dictionary<RoomType, int> specialRooms = new Dictionary<RoomType, int>();
     private RectTransform canvasRectTransform;
+    private HashSet<int> processedRoomIndices = new HashSet<int>();
 
     private void ValidateConfiguration()
     {
@@ -231,6 +232,9 @@ public class MapGenerator : MonoBehaviour
 
     private void VisualizeMap()
     {
+        // Clear the processed indices set
+        processedRoomIndices.Clear();
+
         // Find the starting room (middle of the grid)
         int startIndex = (config.gridRows / 2) * config.gridSize + (config.gridSize / 2);
         Room startingRoom = null;
@@ -242,7 +246,16 @@ public class MapGenerator : MonoBehaviour
             {
                 int x = i % config.gridSize;
                 int y = i / config.gridSize;
+                
+                // Skip if this room has already been processed
+                if (processedRoomIndices.Contains(i))
+                {
+                    Debug.LogWarning($"[MapGenerator] Room at index {i} (x:{x}, y:{y}) was already processed. Skipping duplicate.");
+                    continue;
+                }
+
                 Cell cell = mapVisualizer.VisualizeRoom(i, x, y);
+                processedRoomIndices.Add(i);
                 
                 // If this is the starting room, mark it as cleared and current using the new API
                 if (i == startIndex)
@@ -264,7 +277,16 @@ public class MapGenerator : MonoBehaviour
             {
                 int x = index % config.gridSize;
                 int y = index / config.gridSize;
+
+                // Skip if this room has already been processed
+                if (processedRoomIndices.Contains(index))
+                {
+                    Debug.LogWarning($"[MapGenerator] Special room {roomEntry.Key} at index {index} (x:{x}, y:{y}) was already processed. Skipping duplicate.");
+                    continue;
+                }
+
                 mapVisualizer.VisualizeRoom(index, x, y, roomEntry.Key);
+                processedRoomIndices.Add(index);
             }
         }
 

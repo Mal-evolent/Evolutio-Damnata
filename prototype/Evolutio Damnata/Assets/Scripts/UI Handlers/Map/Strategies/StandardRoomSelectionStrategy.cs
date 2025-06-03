@@ -14,12 +14,13 @@ public class StandardRoomSelectionStrategy : IRoomSelectionStrategy
     public Dictionary<RoomType, int> SelectSpecialRooms(int[] floorPlan, List<int> endRooms)
     {
         Dictionary<RoomType, int> roomAssignments = new Dictionary<RoomType, int>();
+        HashSet<int> assignedIndices = new HashSet<int>();
         
         // Create a list of normal room indices to potentially convert to special rooms
         List<int> normalRooms = new List<int>();
         for (int i = 0; i < floorPlan.Length; i++)
         {
-            if (floorPlan[i] == 1 && !endRooms.Contains(i))
+            if (floorPlan[i] == 1 && !endRooms.Contains(i) && !assignedIndices.Contains(i))
             {
                 normalRooms.Add(i);
             }
@@ -29,29 +30,48 @@ public class StandardRoomSelectionStrategy : IRoomSelectionStrategy
         normalRooms = normalRooms.OrderBy(_ => Random.value).ToList();
         
         // Assign rooms by priority
-        TryAssignRoom(RoomType.Boss, normalRooms, endRooms, roomAssignments);
-        TryAssignRoom(RoomType.Item, normalRooms, endRooms, roomAssignments);
-        TryAssignRoom(RoomType.Shop, normalRooms, endRooms, roomAssignments);
+        TryAssignRoom(RoomType.Boss, normalRooms, endRooms, roomAssignments, assignedIndices);
+        TryAssignRoom(RoomType.Item, normalRooms, endRooms, roomAssignments, assignedIndices);
+        TryAssignRoom(RoomType.Shop, normalRooms, endRooms, roomAssignments, assignedIndices);
 
         return roomAssignments;
     }
 
-    private void TryAssignRoom(RoomType roomType, List<int> normalRooms, List<int> endRooms, Dictionary<RoomType, int> assignments)
+    private void TryAssignRoom(RoomType roomType, List<int> normalRooms, List<int> endRooms, Dictionary<RoomType, int> assignments, HashSet<int> assignedIndices)
     {
-        if (normalRooms.Count > 0)
+        // Try normal rooms first
+        while (normalRooms.Count > 0)
         {
-            assignments[roomType] = normalRooms[0];
+            int index = normalRooms[0];
             normalRooms.RemoveAt(0);
+            
+            if (!assignedIndices.Contains(index))
+            {
+                assignments[roomType] = index;
+                assignedIndices.Add(index);
+                Debug.Log($"[RoomSelectionStrategy] Assigned {roomType} to normal room at index {index}");
+                return;
+            }
         }
-        else if (endRooms.Count > 0)
+
+        // If no normal rooms available, try end rooms
+        while (endRooms.Count > 0)
         {
-            assignments[roomType] = endRooms[0];
+            int index = endRooms[0];
             endRooms.RemoveAt(0);
+            
+            if (!assignedIndices.Contains(index))
+            {
+                assignments[roomType] = index;
+                assignedIndices.Add(index);
+                Debug.Log($"[RoomSelectionStrategy] Assigned {roomType} to end room at index {index}");
+                return;
+            }
         }
-        else
-        {
-            assignments[roomType] = -1;
-        }
+
+        // If no rooms available, assign -1
+        assignments[roomType] = -1;
+        Debug.LogWarning($"[RoomSelectionStrategy] Could not assign {roomType} - no available rooms");
     }
 
     public int FindSecretRoomLocation(int[] floorPlan, Dictionary<RoomType, int> specialRooms)
