@@ -264,11 +264,21 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
 
     private void Start()
     {
-        StartCoroutine(WaitForInitialization());
+        // Remove automatic initialization - it will be triggered by CombatTrigger instead
+        Debug.Log("[CombatManager] Ready for combat initialization");
     }
 
-    private IEnumerator WaitForInitialization()
+    public IEnumerator WaitForInitialization()
     {
+        Debug.Log("[CombatManager] Starting combat initialization...");
+        
+        // Reset initialization state
+        _isInitialized = false;
+        
+        // Start the manager initialization chain
+        StartCoroutine(InitializeManagers());
+        
+        // Wait for initialization to complete
         while (!_isInitialized)
         {
             yield return null;
@@ -276,6 +286,8 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
 
         InitializeManaUI();
         _roundManager.InitializeGame();
+        
+        Debug.Log("[CombatManager] Combat initialization complete");
     }
 
     private void InitializeManaUI()
