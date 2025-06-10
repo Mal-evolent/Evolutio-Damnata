@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using System.Collections;
 using System;
 using EnemyInteraction;
+using Combat.UI;
 using GeneralInteraction;
 using GameManagement;
 
@@ -23,6 +24,7 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     [Header("Mana UI References")]
     [SerializeField] private Slider _manaSlider;
     [SerializeField] private TMP_Text _manaText;
+    [SerializeField] private GameObject _uIContainerObject;
 
     [Header("Game State")]
     [SerializeField] private int _turnCount = 0;
@@ -47,6 +49,7 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     private IPlayerActions _playerActions;
     private IEnemyActions _enemyActions;
     private IUIManager _uiManager;
+    private CombatUIVisibilityManager _uiVisibilityManager;
 
     private bool _isInitialized = false;
 
@@ -122,6 +125,10 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     public int PlayerHandSize => _playerDeck != null ? _playerDeck.HandSize : 0;
     public int EnemyHandSize => _enemyDeck != null ? _enemyDeck.HandSize : 0;
 
+    // Changed to full property syntax to ensure proper accessibility
+    public Slider ManaSlider { get => _manaSlider; }
+    public TMP_Text ManaText { get => _manaText; }
+    public GameObject UIContainerObject { get => _uIContainerObject; }
 
     public int PlayerMana
     {
@@ -163,36 +170,6 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     public void UnsubscribeFromPhaseChanges(Action<CombatPhase> callback)
     {
         OnPhaseChanged -= callback;
-    }
-
-    // Update in Assets/Scripts/Combat/Phase Managers/CombatManager.cs
-    // Find the Awake method and add code to load the player health before any other initialization:
-
-    private void Awake()
-    {
-        try
-        {
-            Debug.Log("[CombatManager] Initializing dependencies...");
-
-            // Initialize core dependencies
-            _uiManager = new UIManager(this);
-            _playerActions = new PlayerActions(this);
-
-            // Validate combat stage before creating EnemyActions
-            if (_combatStage == null)
-            {
-                throw new NullReferenceException("CombatStage reference is not set in inspector");
-            }
-
-            // Start initialization coroutine
-            StartCoroutine(InitializeManagers());
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"[CombatManager] Initialization failed: {ex.Message}");
-            Debug.LogException(ex);
-            enabled = false; // Disable the component to prevent further errors
-        }
     }
 
     private IEnumerator InitializeManagers()
@@ -262,6 +239,41 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
         _isInitialized = true;
     }
 
+    private void Awake()
+    {
+        try
+        {
+            Debug.Log("[CombatManager] Initializing dependencies...");
+
+            // Initialize core dependencies
+            _uiManager = new UIManager(this);
+            _playerActions = new PlayerActions(this);
+
+            // Find or create CombatUIVisibilityManager
+            _uiVisibilityManager = GetComponent<CombatUIVisibilityManager>();
+            if (_uiVisibilityManager == null)
+            {
+                _uiVisibilityManager = gameObject.AddComponent<CombatUIVisibilityManager>();
+            }
+            _uiVisibilityManager.Initialize(this);
+
+            // Validate combat stage before creating EnemyActions
+            if (_combatStage == null)
+            {
+                throw new NullReferenceException("CombatStage reference is not set in inspector");
+            }
+
+            // Start initialization coroutine
+            StartCoroutine(InitializeManagers());
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[CombatManager] Initialization failed: {ex.Message}");
+            Debug.LogException(ex);
+            enabled = false; // Disable the component to prevent further errors
+        }
+    }
+
     private void Start()
     {
         // Remove automatic initialization - it will be triggered by CombatTrigger instead
@@ -271,13 +283,13 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     public IEnumerator WaitForInitialization()
     {
         Debug.Log("[CombatManager] Starting combat initialization...");
-        
+
         // Reset initialization state
         _isInitialized = false;
-        
+
         // Start the manager initialization chain
         StartCoroutine(InitializeManagers());
-        
+
         // Wait for initialization to complete
         while (!_isInitialized)
         {
@@ -285,8 +297,12 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
         }
 
         InitializeManaUI();
+
+        // Set UI visibility here AFTER initialization is complete
+        combatUIVisibility(true);
+
         _roundManager.InitializeGame();
-        
+
         Debug.Log("[CombatManager] Combat initialization complete");
     }
 
@@ -299,6 +315,11 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
             _manaSlider.value = PlayerMana;
         }
         UpdateAllManaUI();
+    }
+
+    public void combatUIVisibility(bool isVisible)
+    {
+        _uiVisibilityManager.SetCombatUIVisibility(isVisible);
     }
 
     // Consolidated mana UI updates
