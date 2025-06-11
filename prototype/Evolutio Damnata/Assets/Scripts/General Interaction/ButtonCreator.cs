@@ -5,6 +5,10 @@ using System.Collections;
 
 namespace GeneralInteraction
 {
+    /// <summary>
+    /// Creates and manages interactive buttons for player entities, enemy entities, and health icons.
+    /// Handles button placement, raycasting, and click event connections.
+    /// </summary>
     public class ButtonCreator : MonoBehaviour, IButtonCreator
     {
         [Header("Dependencies")]
@@ -14,17 +18,37 @@ namespace GeneralInteraction
 
         private ISpritePositioning _spritePositioning;
         private ICardSelectionHandler _cardSelectionHandler;
-        private CombatManager _combatManager;
 
         [Header("Button Settings")]
+        /// <summary>
+        /// Size of player entity buttons
+        /// </summary>
         private readonly Vector2 _buttonSize = new Vector2(114.2145f, 104.5f);
+
+        /// <summary>
+        /// Size of enemy entity buttons
+        /// </summary>
         private readonly Vector2 _enemyButtonSize = new Vector2(114.2145f, 104.5f);
+
+        /// <summary>
+        /// Size of health icon buttons
+        /// </summary>
         private readonly Vector2 _healthIconButtonSize = new Vector2(200f, 200f);
 
         [Header("Debug")]
+        /// <summary>
+        /// Toggles detailed debug logging for UI hierarchy and button creation
+        /// </summary>
         [SerializeField] private bool _debugMode = false;
+
+        /// <summary>
+        /// Tracks whether health icon buttons have been successfully created
+        /// </summary>
         private bool _healthButtonsCreated = false;
 
+        /// <summary>
+        /// Initializes dependencies
+        /// </summary>
         private void Awake()
         {
             // Initialize interface references
@@ -36,73 +60,38 @@ namespace GeneralInteraction
             if (_cardSelectionHandler == null) _cardSelectionHandler = FindObjectOfType<CardSelectionHandler>();
             if (_spritePositioning == null && _spritePositioningComponent == null)
                 _spritePositioning = FindObjectOfType<SpritePositioning>();
-
-            // Find the CombatManager reference
-            _combatManager = FindObjectOfType<CombatManager>();
-
-            // Subscribe to phase changes to know when combat is active
-            if (_combatManager != null)
-            {
-                _combatManager.SubscribeToPhaseChanges(OnCombatPhaseChanged);
-            }
-            else
-            {
-                Debug.LogWarning("[ButtonCreator] Could not find CombatManager");
-            }
         }
 
+        /// <summary>
+        /// Starts the delayed initialization coroutine
+        /// </summary>
         private void Start()
         {
             // Delay button creation to ensure UI hierarchy is fully loaded
             StartCoroutine(DelayedInitialization());
         }
 
+        /// <summary>
+        /// Delays button creation to ensure UI hierarchy is fully loaded
+        /// </summary>
+        /// <returns>IEnumerator for coroutine sequencing</returns>
         private IEnumerator DelayedInitialization()
         {
             // Wait for two frames to ensure UI is initialized
             yield return null;
             yield return null;
 
-            // Force check if we already have a combat phase
-            if (_combatManager != null && _combatManager.CurrentPhase != CombatPhase.None)
-            {
-                AddButtonsToHealthIcons();
-            }
-        }
-
-        private void OnDestroy()
-        {
-            // Clean up subscription when this object is destroyed
-            if (_combatManager != null)
-            {
-                _combatManager.UnsubscribeFromPhaseChanges(OnCombatPhaseChanged);
-            }
-        }
-
-        private void OnCombatPhaseChanged(CombatPhase phase)
-        {
-            // When combat begins (any phase except None), add buttons to health icons
-            if (phase != CombatPhase.None)
-            {
-                // Add a slight delay to ensure UI container is active
-                StartCoroutine(DelayedAddButtonsToHealthIcons());
-            }
-        }
-
-        private IEnumerator DelayedAddButtonsToHealthIcons()
-        {
-            // Small delay to ensure UI has been activated
-            yield return new WaitForSeconds(0.2f);
+            // Add buttons to health icons after a short delay
+            yield return new WaitForSeconds(0.5f);
             AddButtonsToHealthIcons();
-
-            // Make a second attempt if first one failed (containers might not be found)
-            if (!_healthButtonsCreated)
-            {
-                yield return new WaitForSeconds(0.5f);
-                TryFindAlternativeContainerPaths();
-            }
         }
 
+        /// <summary>
+        /// Initializes the ButtonCreator with external references
+        /// </summary>
+        /// <param name="battleField">The canvas containing UI elements</param>
+        /// <param name="spritePositioning">The sprite positioning service</param>
+        /// <param name="cardSelectionHandler">The card selection handler</param>
         public void Initialize(Canvas battleField, ISpritePositioning spritePositioning, ICardSelectionHandler cardSelectionHandler)
         {
             _battleField = battleField;
@@ -110,6 +99,9 @@ namespace GeneralInteraction
             _cardSelectionHandler = cardSelectionHandler;
         }
 
+        /// <summary>
+        /// Creates buttons for all player entities on the battlefield
+        /// </summary>
         public void AddButtonsToPlayerEntities()
         {
             if (_spritePositioning?.PlayerEntities == null)
@@ -129,6 +121,9 @@ namespace GeneralInteraction
             }
         }
 
+        /// <summary>
+        /// Creates buttons for all enemy entities on the battlefield
+        /// </summary>
         public void AddButtonsToEnemyEntities()
         {
             if (_spritePositioning?.EnemyEntities == null)
@@ -148,7 +143,10 @@ namespace GeneralInteraction
             }
         }
 
-        // Updated method with more logging and fallback paths
+        /// <summary>
+        /// Creates buttons for player and enemy health icons
+        /// Uses multiple fallback methods to locate health icons in UI hierarchy
+        /// </summary>
         public void AddButtonsToHealthIcons()
         {
             Debug.Log("[ButtonCreator] Adding buttons to health icons");
@@ -198,7 +196,11 @@ namespace GeneralInteraction
                 if (combatUIContainer == null)
                 {
                     Debug.LogError("[ButtonCreator] Combat UI Container not found under Canvas! Trying to find health icons by tag");
-                    TryCreateButtonsByTag();
+                    if (TryCreateButtonsByTag())
+                    {
+                        // If tag method succeeds, don't try other methods
+                        return;
+                    }
                     return;
                 }
                 else
@@ -242,9 +244,35 @@ namespace GeneralInteraction
             else
             {
                 Debug.LogError("[ButtonCreator] No health icon buttons were created!");
+                // If first attempt failed, try alternative methods
+                StartCoroutine(RetryButtonCreation());
             }
         }
 
+        /// <summary>
+        /// Retries button creation after a short delay
+        /// </summary>
+        /// <returns>IEnumerator for coroutine sequencing</returns>
+        private IEnumerator RetryButtonCreation()
+        {
+            // Only retry if buttons haven't been created yet
+            if (_healthButtonsCreated)
+                yield break;
+
+            yield return new WaitForSeconds(0.5f);
+
+            // Only try alternative paths if buttons haven't been created yet
+            if (!_healthButtonsCreated)
+                TryFindAlternativeContainerPaths();
+        }
+
+        /// <summary>
+        /// Processes a container to find health icons and create buttons for them
+        /// </summary>
+        /// <param name="container">The transform containing health icons</param>
+        /// <param name="buttonName">Name to give the created button</param>
+        /// <param name="isEnemyIcon">Whether this is an enemy health icon</param>
+        /// <returns>Number of buttons created</returns>
         private int ProcessIconContainer(Transform container, string buttonName, bool isEnemyIcon)
         {
             int buttonsCreated = 0;
@@ -293,28 +321,37 @@ namespace GeneralInteraction
             return buttonsCreated;
         }
 
-        private void TryFindAlternativeContainerPaths()
+        /// <summary>
+        /// Tries to find health icons using alternative container path patterns
+        /// </summary>
+        /// <returns>True if buttons were successfully created</returns>
+        private bool TryFindAlternativeContainerPaths()
         {
+            // Don't proceed if buttons were already created
+            if (_healthButtonsCreated)
+                return true;
+
             Debug.Log("[ButtonCreator] Attempting to find health icons through alternative paths");
 
             // List of potential container paths to check
             string[] playerPaths = new string[] {
-                    "CombatUIContainer/Player Icon",
-                    "CombatUIContainer/PlayerIcon",
-                    "CombatUI Container/PlayerIcon",
-                    "UI Container/Player Icon",
-                    "UIContainer/PlayerIcon"
-                };
+                                "CombatUIContainer/Player Icon",
+                                "CombatUIContainer/PlayerIcon",
+                                "CombatUI Container/PlayerIcon",
+                                "UI Container/Player Icon",
+                                "UIContainer/PlayerIcon"
+                            };
 
             string[] enemyPaths = new string[] {
-                    "CombatUIContainer/Enemy Icon",
-                    "CombatUIContainer/EnemyIcon",
-                    "CombatUI Container/EnemyIcon",
-                    "UI Container/Enemy Icon",
-                    "UIContainer/EnemyIcon"
-                };
+                                "CombatUIContainer/Enemy Icon",
+                                "CombatUIContainer/EnemyIcon",
+                                "CombatUI Container/EnemyIcon",
+                                "UI Container/Enemy Icon",
+                                "UIContainer/EnemyIcon"
+                            };
 
             bool foundAny = false;
+            int buttonsCreated = 0;
 
             // Try all player paths
             foreach (string path in playerPaths)
@@ -323,34 +360,49 @@ namespace GeneralInteraction
                 if (container != null)
                 {
                     Debug.Log($"[ButtonCreator] Found alternative player path: {path}");
-                    ProcessIconContainer(container, "Player_Health_Button", false);
-                    foundAny = true;
-                    break;
+                    buttonsCreated += ProcessIconContainer(container, "Player_Health_Button", false);
+                    foundAny = buttonsCreated > 0;
+                    if (foundAny) break;
                 }
             }
 
-            // Try all enemy paths
-            foreach (string path in enemyPaths)
+            // Try all enemy paths only if no player paths succeeded
+            if (!foundAny)
             {
-                Transform container = _battleField.transform.Find(path);
-                if (container != null)
+                foreach (string path in enemyPaths)
                 {
-                    Debug.Log($"[ButtonCreator] Found alternative enemy path: {path}");
-                    ProcessIconContainer(container, "Enemy_Health_Button", true);
-                    foundAny = true;
-                    break;
+                    Transform container = _battleField.transform.Find(path);
+                    if (container != null)
+                    {
+                        Debug.Log($"[ButtonCreator] Found alternative enemy path: {path}");
+                        buttonsCreated += ProcessIconContainer(container, "Enemy_Health_Button", true);
+                        foundAny = buttonsCreated > 0;
+                        if (foundAny) break;
+                    }
                 }
             }
+
+            _healthButtonsCreated = buttonsCreated > 0;
 
             if (!foundAny)
             {
                 Debug.LogError("[ButtonCreator] No alternative paths found, falling back to tag-based search");
-                TryCreateButtonsByTag();
+                return TryCreateButtonsByTag();
             }
+
+            return _healthButtonsCreated;
         }
 
-        private void TryCreateButtonsByTag()
+        /// <summary>
+        /// Last resort method that tries to find health icons by tag
+        /// </summary>
+        /// <returns>True if buttons were successfully created</returns>
+        private bool TryCreateButtonsByTag()
         {
+            // Don't proceed if buttons were already created
+            if (_healthButtonsCreated)
+                return true;
+
             // Last resort - find by tags
             Debug.Log("[ButtonCreator] Attempting to find health icons by tag");
 
@@ -382,8 +434,16 @@ namespace GeneralInteraction
             }
 
             _healthButtonsCreated = buttonsCreated > 0;
+            return _healthButtonsCreated;
         }
 
+        /// <summary>
+        /// Creates a button for a health icon
+        /// </summary>
+        /// <param name="icon">The GameObject with the HealthIconManager</param>
+        /// <param name="buttonName">Name to give the created button</param>
+        /// <param name="position">Position for the button</param>
+        /// <param name="isEnemyIcon">Whether this is an enemy health icon</param>
         private void CreateHealthIconButton(GameObject icon, string buttonName, Vector3 position, bool isEnemyIcon)
         {
             // Check if button already exists
@@ -398,10 +458,10 @@ namespace GeneralInteraction
             GameObject buttonObject = new GameObject(buttonName)
             {
                 transform =
-                        {
-                            parent = icon.transform,
-                            localPosition = Vector3.zero
-                        }
+                                    {
+                                        parent = icon.transform,
+                                        localPosition = Vector3.zero
+                                    }
             };
 
             // Set up button components
@@ -427,6 +487,10 @@ namespace GeneralInteraction
             Debug.Log($"[ButtonCreator] Created {buttonName} for {(isEnemyIcon ? "enemy" : "player")} health icon");
         }
 
+        /// <summary>
+        /// Creates a button for a player entity
+        /// </summary>
+        /// <param name="index">Index of the player entity in the PlayerEntities list</param>
         private void CreatePlayerButton(int index)
         {
             GameObject playerEntity = _spritePositioning.PlayerEntities[index];
@@ -441,10 +505,10 @@ namespace GeneralInteraction
             GameObject buttonObject = new GameObject($"Button_Outline_{index}")
             {
                 transform =
-                        {
-                            parent = playerEntity.transform,
-                            localPosition = Vector3.zero
-                        }
+                                    {
+                                        parent = playerEntity.transform,
+                                        localPosition = Vector3.zero
+                                    }
             };
 
             // Set up button components
@@ -459,6 +523,10 @@ namespace GeneralInteraction
             buttonImage.color = new Color(1, 1, 1, 0);
         }
 
+        /// <summary>
+        /// Creates a button for an enemy entity
+        /// </summary>
+        /// <param name="index">Index of the enemy entity in the EnemyEntities list</param>
         private void CreateEnemyButton(int index)
         {
             GameObject enemyEntity = _spritePositioning.EnemyEntities[index];
@@ -473,10 +541,10 @@ namespace GeneralInteraction
             GameObject buttonObject = new GameObject($"Enemy_Button_Outline_{index}")
             {
                 transform =
-                        {
-                            parent = enemyEntity.transform,
-                            localPosition = Vector3.zero
-                        }
+                                    {
+                                        parent = enemyEntity.transform,
+                                        localPosition = Vector3.zero
+                                    }
             };
 
             // Set up button components
