@@ -4,36 +4,101 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+/// Handles procedural generation and visualization of the dungeon map.
+/// </summary>
 public class MapGenerator : MonoBehaviour
 {
+    /// <summary>
+    /// Configuration settings for map generation.
+    /// </summary>
     [SerializeField] private MapGenerationConfig config = new MapGenerationConfig();
 
+    /// <summary>
+    /// Parent transform for the generated map (usually a panel under Canvas).
+    /// </summary>
     [Tooltip("Parent transform for the generated map (usually a panel under Canvas)")]
     [SerializeField] private RectTransform mapContainer;
 
+    /// <summary>
+    /// Prefab for individual cells that make up the map.
+    /// </summary>
     [SerializeField] private Cell cellPrefab;
 
     [Header("Sprite References")]
+    /// <summary>
+    /// Sprite used for item rooms.
+    /// </summary>
     [SerializeField] private Sprite itemSprite;
+
+    /// <summary>
+    /// Sprite used for shop rooms.
+    /// </summary>
     [SerializeField] private Sprite shopSprite;
+
+    /// <summary>
+    /// Sprite used for boss rooms.
+    /// </summary>
     [SerializeField] private Sprite bossSprite;
+
+    /// <summary>
+    /// Sprite used for secret rooms.
+    /// </summary>
     [SerializeField] private Sprite secretSprite;
 
     [Header("Strategy Dependencies")]
+    /// <summary>
+    /// Strategy that handles the generation of the floor plan.
+    /// </summary>
     [SerializeField] private IMapGenerationStrategy mapGenerationStrategy;
+
+    /// <summary>
+    /// Strategy that selects which rooms should be special rooms.
+    /// </summary>
     [SerializeField] private IRoomSelectionStrategy roomSelectionStrategy;
+
+    /// <summary>
+    /// Handler for visualizing the map in the UI.
+    /// </summary>
     [SerializeField] private IMapVisualizer mapVisualizer;
 
     [Header("Background Settings")]
+    /// <summary>
+    /// Canvas that will receive the background image.
+    /// </summary>
     [SerializeField] private Canvas mainCanvas;
+
+    /// <summary>
+    /// Currently selected room background image name.
+    /// </summary>
     [Tooltip("Reference to the canvas that will receive the background image")]
     public string currentSelectedRoom = "None";
 
+    /// <summary>
+    /// Array representation of the floor plan where 1 indicates a room.
+    /// </summary>
     private int[] floorPlan;
+
+    /// <summary>
+    /// Dictionary mapping room types to their indices in the floor plan.
+    /// </summary>
     private Dictionary<RoomType, int> specialRooms = new Dictionary<RoomType, int>();
+
+    /// <summary>
+    /// Reference to the canvas RectTransform for background generation.
+    /// </summary>
     private RectTransform canvasRectTransform;
+
+    /// <summary>
+    /// Set of room indices that have already been processed during visualization.
+    /// </summary>
     private HashSet<int> processedRoomIndices = new HashSet<int>();
 
+    /// <summary>
+    /// Validates that the map generation configuration is valid.
+    /// </summary>
+    /// <exception cref="System.ArgumentNullException">Thrown when config is null.</exception>
+    /// <exception cref="System.ArgumentException">Thrown when grid size or minimum rooms is invalid.</exception>
     private void ValidateConfiguration()
     {
         if (config == null)
@@ -57,6 +122,10 @@ public class MapGenerator : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Validates and initializes required dependencies for map generation.
+    /// </summary>
+    /// <exception cref="System.NullReferenceException">Thrown when required dependencies are missing.</exception>
     private void ValidateDependencies()
     {
         if (mapContainer == null)
@@ -89,6 +158,9 @@ public class MapGenerator : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Initializes the map visualizer with room sprites.
+    /// </summary>
     private void InitializeMapVisualizer()
     {
         Dictionary<RoomType, Sprite> roomSprites = new Dictionary<RoomType, Sprite>
@@ -103,6 +175,10 @@ public class MapGenerator : MonoBehaviour
         mapVisualizer.Initialize(mapContainer);
     }
 
+    /// <summary>
+    /// Called when the script instance is being loaded.
+    /// Validates configuration and dependencies.
+    /// </summary>
     void Awake()
     {
         try
@@ -122,11 +198,19 @@ public class MapGenerator : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Called on the frame when a script is enabled.
+    /// Generates the initial map.
+    /// </summary>
     void Start()
     {
         GenerateMap();
     }
 
+    /// <summary>
+    /// Called every frame.
+    /// Regenerates the map when space is pressed.
+    /// </summary>
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Space))
@@ -135,6 +219,9 @@ public class MapGenerator : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Generates a new procedural map with rooms.
+    /// </summary>
     public void GenerateMap()
     {
         try
@@ -172,6 +259,9 @@ public class MapGenerator : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Generates a random background image for the dungeon.
+    /// </summary>
     private void GenerateBackgroundImage()
     {
         if (mainCanvas == null || canvasRectTransform == null) return;
@@ -200,6 +290,11 @@ public class MapGenerator : MonoBehaviour
         mainCanvas.GetComponent<Image>().sprite = newBackgroundImage;
     }
 
+    /// <summary>
+    /// Validates that the generated floor plan meets minimum requirements.
+    /// </summary>
+    /// <param name="endRooms">List of room indices that are end rooms (dead ends).</param>
+    /// <returns>True if the floor plan is valid, false otherwise.</returns>
     private bool ValidateFloorPlan(List<int> endRooms)
     {
         int roomCount = floorPlan.Count(cell => cell == 1);
@@ -210,6 +305,11 @@ public class MapGenerator : MonoBehaviour
         return true;
     }
 
+    /// <summary>
+    /// Selects and validates which rooms should be special rooms (boss, item, shop, secret).
+    /// </summary>
+    /// <param name="endRooms">List of room indices that are end rooms (dead ends).</param>
+    /// <returns>True if all required special rooms were successfully assigned, false otherwise.</returns>
     private bool SelectAndValidateSpecialRooms(List<int> endRooms)
     {
         specialRooms = roomSelectionStrategy.SelectSpecialRooms(floorPlan, endRooms);
@@ -230,6 +330,9 @@ public class MapGenerator : MonoBehaviour
         return true;
     }
 
+    /// <summary>
+    /// Creates visual representations of rooms in the UI based on the floor plan.
+    /// </summary>
     private void VisualizeMap()
     {
         // Clear the processed indices set
@@ -246,7 +349,7 @@ public class MapGenerator : MonoBehaviour
             {
                 int x = i % config.gridSize;
                 int y = i / config.gridSize;
-                
+
                 // Skip if this room has already been processed
                 if (processedRoomIndices.Contains(i))
                 {
@@ -256,7 +359,7 @@ public class MapGenerator : MonoBehaviour
 
                 Cell cell = mapVisualizer.VisualizeRoom(i, x, y);
                 processedRoomIndices.Add(i);
-                
+
                 // If this is the starting room, mark it as cleared and current using the new API
                 if (i == startIndex)
                 {
