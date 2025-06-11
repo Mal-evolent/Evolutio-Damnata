@@ -47,6 +47,5 @@ namespace Combat.UI
                 Debug.LogWarning("[CombatUIVisibilityManager] UIContainerObject is null in CombatManager.");
             }
         }
-
     }
 }
