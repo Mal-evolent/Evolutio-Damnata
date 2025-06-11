@@ -2,12 +2,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
+
 public class UIMapVisualizer : IMapVisualizer
 {
     private RectTransform container;
     private Cell cellPrefab;
     private Dictionary<RoomType, Sprite> roomSprites;
     private List<Cell> spawnedCells = new List<Cell>();
+    private float cellSize = 60f;
 
     public UIMapVisualizer(Cell cellPrefab, Dictionary<RoomType, Sprite> roomSprites)
     {
@@ -18,6 +20,16 @@ public class UIMapVisualizer : IMapVisualizer
     public void Initialize(RectTransform container)
     {
         this.container = container;
+    }
+
+    public void SetCellSize(float cellSize)
+    {
+        if (cellSize <= 0)
+        {
+            Debug.LogWarning($"Attempted to set invalid cell size: {cellSize}");
+            return;
+        }
+        this.cellSize = cellSize;
     }
 
     public void ClearMap()
@@ -36,10 +48,13 @@ public class UIMapVisualizer : IMapVisualizer
         // Create new cell as UI element
         Cell newCell = Object.Instantiate(cellPrefab, container);
 
+        // Set the cell size for adjacency calculation
+        newCell.SetCellSize(cellSize);
+
         // Configure RectTransform
         RectTransform rectTransform = newCell.GetComponent<RectTransform>();
-        rectTransform.anchoredPosition = new Vector2(x * 60f, -y * 60f); // Using hardcoded 60f for now
-        rectTransform.sizeDelta = new Vector2(60f, 60f);
+        rectTransform.anchoredPosition = new Vector2(x * cellSize, -y * cellSize); // Use the configurable cellSize
+        rectTransform.sizeDelta = new Vector2(cellSize, cellSize);
 
         // Ensure the anchors are set properly for UI positioning
         rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
@@ -63,6 +78,9 @@ public class UIMapVisualizer : IMapVisualizer
 
     public void CenterMapInContainer(float cellSize)
     {
+        // Update internal cell size to match
+        this.cellSize = cellSize;
+
         if (spawnedCells.Count == 0) return;
 
         // Find bounds of the map

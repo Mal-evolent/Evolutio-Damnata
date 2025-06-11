@@ -173,6 +173,9 @@ public class MapGenerator : MonoBehaviour
 
         mapVisualizer = new UIMapVisualizer(cellPrefab, roomSprites);
         mapVisualizer.Initialize(mapContainer);
+
+        // Set the cell size from the configuration
+        mapVisualizer.SetCellSize(config.cellSize);
     }
 
     /// <summary>
@@ -189,6 +192,12 @@ public class MapGenerator : MonoBehaviour
             if (mainCanvas != null)
             {
                 canvasRectTransform = mainCanvas.GetComponent<RectTransform>();
+            }
+
+            // Make sure the map visualizer has the correct cell size
+            if (mapVisualizer != null)
+            {
+                mapVisualizer.SetCellSize(config.cellSize);
             }
         }
         catch (System.Exception e)
@@ -226,6 +235,9 @@ public class MapGenerator : MonoBehaviour
     {
         try
         {
+            // Ensure visualizer has the correct cell size
+            mapVisualizer.SetCellSize(config.cellSize);
+
             // Generate background first (if canvas is assigned)
             GenerateBackgroundImage();
 
@@ -393,7 +405,7 @@ public class MapGenerator : MonoBehaviour
             }
         }
 
-        // Center the map
+        // Center the map (will use the correct cell size)
         mapVisualizer.CenterMapInContainer(config.cellSize);
     }
 }

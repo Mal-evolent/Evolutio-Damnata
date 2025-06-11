@@ -11,6 +11,8 @@ public interface ICell
     RoomType? RoomType { get; set; }
     void SetSpecialRoomSprite(Sprite icon);
     void Reset();
+    void SetCellSize(float size);
+    float CellSize { get; }
 }
 
 public class Cell : MonoBehaviour, ICell
@@ -18,6 +20,9 @@ public class Cell : MonoBehaviour, ICell
     [SerializeField] private int index;
     [SerializeField] private int value;
     [SerializeField] private RoomType? roomType;
+
+    [Tooltip("Size of the cell in grid units. Used to determine adjacency.")]
+    [SerializeField] private float cellSize = 60f;
 
     private Image cellImage;
     private Sprite defaultSprite;
@@ -64,6 +69,25 @@ public class Cell : MonoBehaviour, ICell
             }
         }
     }
+
+    /// <summary>
+    /// Sets the cell size value used for adjacency calculations.
+    /// </summary>
+    /// <param name="size">The size of the cell in grid units</param>
+    public void SetCellSize(float size)
+    {
+        if (size <= 0)
+        {
+            Debug.LogWarning($"Attempted to set invalid cell size: {size}");
+            return;
+        }
+        cellSize = size;
+    }
+
+    /// <summary>
+    /// Gets the current cell size value.
+    /// </summary>
+    public float CellSize => cellSize;
 
     void Awake()
     {
@@ -145,6 +169,11 @@ public class Cell : MonoBehaviour, ICell
         }
     }
 
+    /// <summary>
+    /// Checks if this cell is adjacent to another cell based on the cell size.
+    /// </summary>
+    /// <param name="other">The cell to check adjacency with</param>
+    /// <returns>True if the cells are adjacent, false otherwise</returns>
     public bool IsAdjacentTo(Cell other)
     {
         if (other == null) return false;
@@ -161,7 +190,7 @@ public class Cell : MonoBehaviour, ICell
         // Calculate the distance between cells
         float distance = Vector2.Distance(thisPos, otherPos);
 
-        // Cells are adjacent if they are exactly 60 units apart (the grid spacing)
-        return Mathf.Approximately(distance, 60f);
+        // Cells are adjacent if they are exactly cellSize units apart
+        return Mathf.Approximately(distance, cellSize);
     }
 }
