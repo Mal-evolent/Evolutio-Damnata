@@ -5,19 +5,20 @@ public class Room : MonoBehaviour
 {
     [Header("Room State")]
     [SerializeField] private RoomType roomType;
-    
+
     [Header("Visuals")]
     [SerializeField] private Image roomImage;
     [SerializeField] private Color normalColor = Color.white;
     [SerializeField] private Color currentRoomColor = Color.red;
     [SerializeField] private Color clearedColor = Color.green;
+    [SerializeField] private Color currentClearedColor = new Color(0.5f, 0f, 0.5f, 1f);
 
     [Header("Debug State")]
     [SerializeField, Tooltip("Is this room cleared? (Read-only)")]
     private bool debugIsCleared;
     [SerializeField, Tooltip("Is this the current room? (Read-only)")]
     private bool debugIsCurrentRoom;
-    
+
     private Cell cellComponent;
     private IRoomState roomState;
     private IRoomVisuals roomVisuals;
@@ -57,7 +58,7 @@ public class Room : MonoBehaviour
     private void InitializeComponents()
     {
         roomState = new RoomState(cellComponent);
-        roomVisuals = new RoomVisuals(normalColor, currentRoomColor, clearedColor);
+        roomVisuals = new RoomVisuals(normalColor, currentRoomColor, clearedColor, currentClearedColor);
         roomVisuals.SetRoomImage(roomImage);
         combatTrigger = new CombatTrigger();
         roomBehavior = CreateRoomBehavior();
@@ -104,4 +105,4 @@ public class Room : MonoBehaviour
             concreteState.SetAsCurrentRoom();
         }
     }
-} 
+}

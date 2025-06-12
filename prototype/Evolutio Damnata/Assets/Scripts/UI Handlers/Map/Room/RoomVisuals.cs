@@ -7,12 +7,14 @@ public class RoomVisuals : IRoomVisuals
     private Color normalColor;
     private Color currentRoomColor;
     private Color clearedColor;
+    private Color currentClearedColor;
 
-    public RoomVisuals(Color normal, Color current, Color cleared)
+    public RoomVisuals(Color normal, Color current, Color cleared, Color currentCleared)
     {
         normalColor = normal;
         currentRoomColor = current;
         clearedColor = cleared;
+        currentClearedColor = currentCleared;
     }
 
     public void SetRoomImage(Image image)
@@ -24,17 +26,21 @@ public class RoomVisuals : IRoomVisuals
     {
         if (roomImage == null) return;
 
-        if (isCurrentRoom)
+        if (isCurrentRoom && isCleared)
         {
-            roomImage.color = currentRoomColor;
+            roomImage.color = currentClearedColor; // Purple for current cleared room
+        }
+        else if (isCurrentRoom)
+        {
+            roomImage.color = currentRoomColor; // Red for current uncleared room
         }
         else if (isCleared)
         {
-            roomImage.color = clearedColor;
+            roomImage.color = clearedColor; // Green for non-current cleared room
         }
         else
         {
-            roomImage.color = normalColor;
+            roomImage.color = normalColor; // White for normal room
         }
     }
-} 
+}

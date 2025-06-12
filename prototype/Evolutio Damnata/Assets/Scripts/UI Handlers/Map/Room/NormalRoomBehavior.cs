@@ -30,6 +30,16 @@ public class NormalRoomBehavior : BaseRoomBehavior
             if (RandomValue < CombatChance)
             {
                 combatTrigger.TriggerCombat(cellComponent.Index);
+                // Don't automatically clear the room - this will happen when combat ends
+            }
+            else
+            {
+                // No combat occurs, so mark the room as cleared immediately
+                // This allows the player to progress to adjacent rooms
+                Debug.Log($"[NormalRoomBehavior] No combat in room {cellComponent.Index}, marking as cleared");
+                roomState.SetAsCleared();
+                // Set it back as the current room since SetAsCleared() may reset it
+                roomState.SetAsCurrentRoom();
             }
         }
     }

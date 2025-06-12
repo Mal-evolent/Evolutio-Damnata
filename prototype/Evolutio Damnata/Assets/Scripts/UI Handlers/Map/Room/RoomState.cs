@@ -36,7 +36,6 @@ public class RoomState : IRoomState
     public void SetAsCleared()
     {
         isCleared = true;
-        isCurrentRoom = false;
         OnStateChanged?.Invoke();
     }
 
