@@ -2,11 +2,21 @@ using UnityEngine;
 
 namespace GameManagement
 {
-    /// <summary>
-    /// Static class that manages persistent game state between scenes
-    /// </summary>
     public static class GameStateManager
     {
-        // Add other game state management here as needed
+        private static bool isCombatActive = false;
+
+        public static bool IsCombatActive
+        {
+            get => isCombatActive;
+            set
+            {
+                if (isCombatActive != value)
+                {
+                    isCombatActive = value;
+                    Debug.Log($"[GameState] Combat active state changed to: {value}");
+                }
+            }
+        }
     }
 }

@@ -1,3 +1,4 @@
+using GameManagement;
 using UnityEngine;
 
 public class CombatTrigger : ICombatTrigger
@@ -11,11 +12,15 @@ public class CombatTrigger : ICombatTrigger
         // Store the current room reference
         currentCombatRoom = RoomState.GetCurrentRoom();
 
+        // Set the combat active flag to prevent room transitions during combat
+        GameStateManager.IsCombatActive = true;
+
         // Find the CombatManager in the scene
         var combatManager = Object.FindObjectOfType<CombatManager>();
         if (combatManager == null)
         {
             Debug.LogError("[CombatTrigger] Could not find CombatManager in the scene!");
+            GameStateManager.IsCombatActive = false; // Reset flag if manager not found
             return;
         }
 
@@ -38,6 +43,15 @@ public class CombatTrigger : ICombatTrigger
         if (currentCombatRoom != null)
         {
             currentCombatRoom.SetAsCleared();
+
+            // Make sure it's still current
+            if (currentCombatRoom is RoomState roomState)
+            {
+                roomState.SetAsCurrentRoom();
+            }
+
+            // Reset the combat active flag to allow room transitions
+            GameStateManager.IsCombatActive = false;
 
             // Unsubscribe from the event to avoid memory leaks
             var combatManager = Object.FindObjectOfType<CombatManager>();

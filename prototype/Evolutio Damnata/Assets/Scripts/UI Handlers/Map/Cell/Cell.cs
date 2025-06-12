@@ -126,6 +126,13 @@ public class Cell : MonoBehaviour, ICell
 
     private void OnCellClicked()
     {
+        // Check if combat is active - if it is, ignore cell clicks
+        if (GameManagement.GameStateManager.IsCombatActive)
+        {
+            Debug.Log("[Cell] Cannot move during combat");
+            return;
+        }
+
         if (room != null)
         {
             room.OnRoomEnter();
