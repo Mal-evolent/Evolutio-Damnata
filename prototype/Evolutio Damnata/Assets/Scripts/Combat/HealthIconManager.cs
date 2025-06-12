@@ -167,10 +167,7 @@ public class HealthIconManager : EntityManager, IHealthIconManager
         }
         else
         {
-            Debug.Log("Enemy Defeated - Victory!");
-
-            // Wait a moment before changing scenes
-            StartCoroutine(LoadVictoryScene("victoryScene"));
+            Debug.Log("Enemy Defeated - Room Cleared!");
         }
     }
 

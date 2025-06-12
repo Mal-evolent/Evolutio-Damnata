@@ -56,6 +56,9 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     // Event for phase changes
     public event Action<CombatPhase> OnPhaseChanged;
 
+    // New event for enemy defeat
+    public event Action OnEnemyDefeated;
+
     // Properties
     public int TurnCount
     {
@@ -82,11 +85,19 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
         get => _enemyHealth;
         set
         {
+            int previousHealth = _enemyHealth;
             _enemyHealth = value;
             if (_enemyHealthSlider != null)
             {
                 // Normalize the health value based on max health
                 _enemyHealthSlider.value = (float)value / _maxEnemyHealth;
+            }
+
+            // Check if enemy was just defeated
+            if (previousHealth > 0 && value <= 0)
+            {
+                Debug.Log("[CombatManager] Enemy defeated!");
+                OnEnemyDefeated?.Invoke();
             }
         }
     }

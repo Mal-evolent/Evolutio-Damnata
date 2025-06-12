@@ -23,9 +23,11 @@ public class RoomState : IRoomState
     {
         if (currentRoom != null && currentRoom != this)
         {
-            currentRoom.SetAsCleared();
+            // Instead of calling SetAsCleared(), just update the current room state
+            currentRoom.isCurrentRoom = false;
+            currentRoom.OnStateChanged?.Invoke();
         }
-        
+
         currentRoom = this;
         isCurrentRoom = true;
         OnStateChanged?.Invoke();
