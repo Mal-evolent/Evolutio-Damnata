@@ -28,7 +28,7 @@ public class RoomVisuals : IRoomVisuals
 
         if (isCurrentRoom && isCleared)
         {
-            roomImage.color = currentClearedColor; // Purple for current cleared room
+            roomImage.color = currentClearedColor; // Yellow for current cleared room
         }
         else if (isCurrentRoom)
         {

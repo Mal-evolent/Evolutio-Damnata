@@ -11,7 +11,7 @@ public class Room : MonoBehaviour
     [SerializeField] private Color normalColor = Color.white;
     [SerializeField] private Color currentRoomColor = Color.red;
     [SerializeField] private Color clearedColor = Color.green;
-    [SerializeField] private Color currentClearedColor = new Color(0.5f, 0f, 0.5f, 1f);
+    [SerializeField] private Color currentClearedColor = Color.yellow;
 
     [Header("Debug State")]
     [SerializeField, Tooltip("Is this room cleared? (Read-only)")]
