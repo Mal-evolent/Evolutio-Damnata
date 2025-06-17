@@ -10,6 +10,9 @@ public class RoundManager : IRoundManager
     private readonly IEnemyActions _enemyActions;
     private readonly IUIManager _uiManager;
     private IPhaseManager _phaseManager;
+    
+    // Add flag to prevent duplicate rounds
+    private bool _isProcessingRound = false;
 
     public RoundManager(
         ICombatManager combatManager,
@@ -48,8 +51,17 @@ public class RoundManager : IRoundManager
             _uiManager.SetButtonState(_combatManager.EndPhaseButton, true);
             _uiManager.SetButtonState(_combatManager.EndTurnButton, false);
 
-            _combatManager.PlayerTurn = _combatManager.PlayerGoesFirst;
-            ((MonoBehaviour)_combatManager).StartCoroutine(RoundStart());
+            // Set player to go first when initializing a game and mark it as first turn
+            _combatManager.PlayerGoesFirst = true;
+            _combatManager.PlayerTurn = true;
+            // _isFirstTurnAfterReset = true;
+            // _isSecondTurnAfterReset = false;
+            
+            // Reset the processing flag
+            _isProcessingRound = false;
+
+            // Start the first round
+            StartNextRound();
         }
         catch (Exception e)
         {
@@ -57,15 +69,39 @@ public class RoundManager : IRoundManager
             Debug.LogException(e);
         }
     }
+    
+    // New method for PhaseManager to call at the end of a round
+    public void StartNextRound()
+    {
+        // If already processing a round, don't start another one
+        if (_isProcessingRound)
+        {
+            Debug.LogWarning("[RoundManager] Already processing a round, ignoring StartNextRound request");
+            return;
+        }
+        
+        Debug.Log("[RoundManager] Starting next round...");
+        ((MonoBehaviour)_combatManager).StartCoroutine(RoundStart());
+    }
 
     public IEnumerator RoundStart()
     {
-        Debug.Log("[RoundManager] ===== ROUND START =====");
+        // Check if we're already processing a round
+        if (_isProcessingRound)
+        {
+            Debug.LogWarning("[RoundManager] Already processing a round, ignoring RoundStart request");
+            yield break;
+        }
+        
+        _isProcessingRound = true;
+        
+        Debug.Log($"[RoundManager] ===== ROUND START - Current Turn: {_combatManager.TurnCount} =====");
 
         // Phase 1: Validate Managers
         if (!ValidateEssentialReferences())
         {
             Debug.LogError("[RoundManager] Critical references missing - aborting round");
+            _isProcessingRound = false;
             yield break;
         }
 
@@ -75,10 +111,26 @@ public class RoundManager : IRoundManager
         // Phase 3: Mana Update
         yield return HandlePhaseSafely(HandleManaUpdate(), "Mana update failed");
 
-        // Phase 5: Prep Phase
-        yield return HandlePhaseSafely(HandlePrepPhase(), "Prep phase failed");
+        // Debug turn state for diagnosis
+        Debug.Log($"[RoundManager] Turn {_combatManager.TurnCount} setup complete - " +
+                 $"PlayerGoesFirst: {_combatManager.PlayerGoesFirst}, PlayerTurn: {_combatManager.PlayerTurn}");
 
-        Debug.Log("[RoundManager] ===== ROUND COMPLETE =====");
+        // Phase 4: Start the phase cycle from the Prep Phase
+        if (_phaseManager != null) 
+        {
+            // Start the phase cycle but don't wait for completion
+            ((MonoBehaviour)_combatManager).StartCoroutine(_phaseManager.PrepPhase());
+        }
+        else
+        {
+            Debug.LogError("[RoundManager] PhaseManager is null, cannot start phase cycle");
+        }
+
+        Debug.Log("[RoundManager] ===== ROUND INITIALIZATION COMPLETE =====");
+        
+        // Reset the processing flag after the round has been started
+        // We do this here since PrepPhase runs asynchronously
+        _isProcessingRound = false;
     }
 
     private IEnumerator HandlePhaseSafely(IEnumerator phase, string errorMessage)
@@ -170,22 +222,19 @@ public class RoundManager : IRoundManager
         Debug.Log($"[RoundManager] Mana set to {_combatManager.MaxMana}");
 
         _combatManager.PlayerTurn = _combatManager.PlayerGoesFirst;
+
+        // Normal alternation for third turn onwards
         _combatManager.PlayerGoesFirst = !_combatManager.PlayerGoesFirst;
-        Debug.Log($"[RoundManager] Turn order updated");
+        Debug.Log($"[RoundManager] Turn order updated - Next turn, player first: {_combatManager.PlayerGoesFirst}");
 
         yield return null;
     }
 
-    private IEnumerator HandlePrepPhase()
+    public void ResetTurnOrder()
     {
-        Debug.Log("[RoundManager] -- Starting Prep Phase --");
-
-        if (_phaseManager == null)
-        {
-            Debug.LogError("[RoundManager] PhaseManager is null in HandlePrepPhase");
-            yield break;
-        }
-
-        yield return _phaseManager.PrepPhase();
+        // When resetting the turn order, ensure player goes first
+        _combatManager.PlayerGoesFirst = true;
+        _combatManager.PlayerTurn = true;
+        Debug.Log("[RoundManager] Turn order reset: Player will go first next.");
     }
 }

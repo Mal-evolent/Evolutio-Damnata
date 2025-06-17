@@ -317,7 +317,7 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
         Debug.Log("[CombatManager] Combat initialization complete");
     }
 
-    private void InitializeManaUI()
+    public void InitializeManaUI()
     {
         if (_manaSlider != null)
         {
@@ -388,6 +388,11 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     {
         // Use the property to ensure event firing
         CurrentPhase = CombatPhase.None;
+    }
+
+    public void StartNextRound()
+    {
+        StartCoroutine(_roundManager.RoundStart());
     }
 
     // Phase checks

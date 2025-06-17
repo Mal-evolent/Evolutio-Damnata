@@ -81,4 +81,8 @@ public interface IRoundManager
 {
     void InitializeGame();
     IEnumerator RoundStart();
+    void ResetTurnOrder();
+    void StartNextRound();
 }
+
+

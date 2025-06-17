@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine.UI;
 using EnemyInteraction;
 using System.Collections;
+using Combat.Reset;
 
 namespace Combat.UI
 {
@@ -19,6 +20,7 @@ namespace Combat.UI
         [SerializeField] private float _delayBeforeFadeOut = 0.5f; // Delay before starting the fade-out
 
         private CanvasGroup _canvasGroup;
+        private CombatResetManager _resetManager;
 
         /// <summary>
         /// Initialize with a CombatManager reference.
@@ -28,6 +30,7 @@ namespace Combat.UI
         public void Initialize(CombatManager combatManager)
         {
             _combatManager = combatManager;
+            _resetManager = FindObjectOfType<CombatResetManager>();
 
             // Add CanvasGroup component if it doesn't exist
             if (_combatManager.UIContainerObject != null)
@@ -73,6 +76,7 @@ namespace Combat.UI
             {
                 Debug.LogWarning("[CombatUIVisibilityManager] Cannot fade out: CanvasGroup or UIContainer is null");
                 SetCombatUIVisibility(false); // Fall back to immediate hide
+                ResetCombatAfterFade();
                 yield break;
             }
 
@@ -92,6 +96,25 @@ namespace Combat.UI
             _combatManager.UIContainerObject.SetActive(false);
 
             Debug.Log("[CombatUIVisibilityManager] Combat UI fade-out complete");
+
+            // Reset combat after fade is complete
+            ResetCombatAfterFade();
+        }
+
+        /// <summary>
+        /// Resets the combat state after the UI fade is complete
+        /// </summary>
+        private void ResetCombatAfterFade()
+        {
+            if (_resetManager != null)
+            {
+                Debug.Log("[CombatUIVisibilityManager] Resetting combat after fade-out");
+                _resetManager.ResetCombat();
+            }
+            else
+            {
+                Debug.LogWarning("[CombatUIVisibilityManager] Cannot reset combat: CombatResetManager not found");
+            }
         }
 
         /// <summary>

@@ -48,19 +48,21 @@ public class PhaseManager : IPhaseManager
 
     public IEnumerator PrepPhase()
     {
-        Debug.Log("[PhaseManager] ===== ENTERING PREP PHASE =====");
+        Debug.Log($"[PhaseManager] ===== ENTERING PREP PHASE - Turn {_combatManager.TurnCount} =====");
+        Debug.Log($"[PhaseManager] PlayerTurn: {_combatManager.PlayerTurn}, PlayerGoesFirst: {_combatManager.PlayerGoesFirst}");
+        
         _combatManager.ResetPhaseState();
-        SetPhaseImage(CombatPhase.PlayerPrep);
+        SetPhaseImage(_combatManager.PlayerTurn ? CombatPhase.PlayerPrep : CombatPhase.EnemyPrep);
 
         if (_combatManager.PlayerTurn)
         {
+            Debug.Log("[PhaseManager] Running Player Prep Phase");
             yield return RunSafely(PlayerPrepPhase(), "Player Prep Phase");
-            yield return RunSafely(EnemyPrepPhase(), "Enemy Prep Phase");
         }
         else
         {
+            Debug.Log("[PhaseManager] Running Enemy Prep Phase");
             yield return RunSafely(EnemyPrepPhase(), "Enemy Prep Phase");
-            yield return RunSafely(PlayerPrepPhase(), "Player Prep Phase");
         }
 
         _combatManager.CurrentPhase = CombatPhase.None;
@@ -75,13 +77,27 @@ public class PhaseManager : IPhaseManager
 
         if (_combatManager.PlayerTurn)
         {
-            yield return RunSafely(PlayerCombatPhase(), "Player Combat Phase");
+            // Execute the other prep phase before combat begins
+            Debug.Log("[PhaseManager] Running Enemy Prep Phase (after Player Prep)");
+            yield return RunSafely(EnemyPrepPhase(), "Enemy Prep Phase");
+
+            // Combat phase for the current turn
+            Debug.Log("[PhaseManager] Running Enemy Combat Phase (Player started turn)");
             yield return RunSafely(EnemyCombatPhase(), "Enemy Combat Phase");
+            Debug.Log("[PhaseManager] Running Player Combat Phase (Player started turn)");
+            yield return RunSafely(PlayerCombatPhase(), "Player Combat Phase");
         }
         else
         {
-            yield return RunSafely(EnemyCombatPhase(), "Enemy Combat Phase");
+            // Execute the other prep phase before combat begins
+            Debug.Log("[PhaseManager] Running Player Prep Phase (after Enemy Prep)");
+            yield return RunSafely(PlayerPrepPhase(), "Player Prep Phase");
+
+            // Combat phase for the current turn
+            Debug.Log("[PhaseManager] Running Player Combat Phase (Enemy started turn)");
             yield return RunSafely(PlayerCombatPhase(), "Player Combat Phase");
+            Debug.Log("[PhaseManager] Running Enemy Combat Phase (Enemy started turn)");
+            yield return RunSafely(EnemyCombatPhase(), "Enemy Combat Phase");
         }
 
         _combatManager.CurrentPhase = CombatPhase.None;
@@ -106,7 +122,10 @@ public class PhaseManager : IPhaseManager
         // Continue with normal cleanup
         yield return DrawCards();
         yield return new WaitForSeconds(1);
-        yield return _roundManager.RoundStart();
+        
+        // Use the new StartNextRound method instead of directly starting RoundStart coroutine
+        Debug.Log("[PhaseManager] Clean-up phase complete, starting next round");
+        _roundManager.StartNextRound();
     }
 
     public void EndPhase()
