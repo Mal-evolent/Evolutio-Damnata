@@ -4,6 +4,10 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using EnemyInteraction;
 
+/// <summary>
+/// Manages the phases of combat including preparation, combat execution, and cleanup.
+/// Implements the IPhaseManager interface to control the flow of combat turns.
+/// </summary>
 public class PhaseManager : IPhaseManager
 {
     private readonly ICombatManager _combatManager;
@@ -17,6 +21,18 @@ public class PhaseManager : IPhaseManager
     private readonly Image _combatPhaseImage;
     private readonly Image _cleanupPhaseImage;
 
+    /// <summary>
+    /// Initializes a new instance of the PhaseManager class.
+    /// </summary>
+    /// <param name="combatManager">Manager handling combat state and interactions</param>
+    /// <param name="attackLimiter">Component that manages attack limitations</param>
+    /// <param name="uiManager">Manager handling UI interactions</param>
+    /// <param name="enemyActions">Component for enemy AI decisions and actions</param>
+    /// <param name="playerActions">Component handling player interactions</param>
+    /// <param name="roundManager">Manager for round progression</param>
+    /// <param name="prepPhaseImage">UI image shown during preparation phase</param>
+    /// <param name="combatPhaseImage">UI image shown during combat phase</param>
+    /// <param name="cleanupPhaseImage">UI image shown during cleanup phase</param>
     public PhaseManager(
         ICombatManager combatManager,
         AttackLimiter attackLimiter,
@@ -39,6 +55,10 @@ public class PhaseManager : IPhaseManager
         _cleanupPhaseImage = cleanupPhaseImage;
     }
 
+    /// <summary>
+    /// Updates the UI to show which phase is currently active.
+    /// </summary>
+    /// <param name="phase">The current combat phase</param>
     private void SetPhaseImage(CombatPhase phase)
     {
         _prepPhaseImage.enabled = (phase == CombatPhase.PlayerPrep || phase == CombatPhase.EnemyPrep);
@@ -46,11 +66,15 @@ public class PhaseManager : IPhaseManager
         _cleanupPhaseImage.enabled = (phase == CombatPhase.CleanUp);
     }
 
+    /// <summary>
+    /// Initiates the preparation phase of combat.
+    /// </summary>
+    /// <returns>IEnumerator for coroutine execution</returns>
     public IEnumerator PrepPhase()
     {
         Debug.Log($"[PhaseManager] ===== ENTERING PREP PHASE - Turn {_combatManager.TurnCount} =====");
         Debug.Log($"[PhaseManager] PlayerTurn: {_combatManager.PlayerTurn}, PlayerGoesFirst: {_combatManager.PlayerGoesFirst}");
-        
+
         _combatManager.ResetPhaseState();
         SetPhaseImage(_combatManager.PlayerTurn ? CombatPhase.PlayerPrep : CombatPhase.EnemyPrep);
 
@@ -69,6 +93,10 @@ public class PhaseManager : IPhaseManager
         yield return RunSafely(ExecuteCombatPhase(), "Execute Combat Phase");
     }
 
+    /// <summary>
+    /// Executes the combat phase where players and enemies can attack.
+    /// </summary>
+    /// <returns>IEnumerator for coroutine execution</returns>
     public IEnumerator ExecuteCombatPhase()
     {
         Debug.Log("[PhaseManager] ===== ENTERING COMBAT PHASE =====");
@@ -104,6 +132,11 @@ public class PhaseManager : IPhaseManager
         yield return RunSafely(CleanUpPhase(), "Clean Up Phase");
     }
 
+    /// <summary>
+    /// Executes the cleanup phase at the end of a combat round.
+    /// Processes entities, stack effects, and draws cards.
+    /// </summary>
+    /// <returns>IEnumerator for coroutine execution</returns>
     private IEnumerator CleanUpPhase()
     {
         Debug.Log("[PhaseManager] ===== ENTERING CLEAN-UP PHASE =====");
@@ -122,18 +155,25 @@ public class PhaseManager : IPhaseManager
         // Continue with normal cleanup
         yield return DrawCards();
         yield return new WaitForSeconds(1);
-        
+
         // Use the new StartNextRound method instead of directly starting RoundStart coroutine
         Debug.Log("[PhaseManager] Clean-up phase complete, starting next round");
         _roundManager.StartNextRound();
     }
 
+    /// <summary>
+    /// Ends the current phase of combat.
+    /// </summary>
     public void EndPhase()
     {
         Debug.Log("[PhaseManager] Ending current phase");
     }
 
     #region Phase Handlers
+    /// <summary>
+    /// Handles the player's preparation phase where they can play cards.
+    /// </summary>
+    /// <returns>IEnumerator for coroutine execution</returns>
     private IEnumerator PlayerPrepPhase()
     {
         _combatManager.CurrentPhase = CombatPhase.PlayerPrep;
@@ -143,12 +183,17 @@ public class PhaseManager : IPhaseManager
         _combatManager.PlayerTurn = true;
     }
 
+    /// <summary>
+    /// Handles the enemy's preparation phase where the AI plays cards.
+    /// Includes additional error checking and timeout handling.
+    /// </summary>
+    /// <returns>IEnumerator for coroutine execution</returns>
     private IEnumerator EnemyPrepPhase()
     {
         if (_enemyActions == null)
         {
             Debug.LogError("[PhaseManager] EnemyActions is null in EnemyPrepPhase!");
-            
+
             // Try to find it in the scene
             var enemyActionsObj = GameObject.FindObjectOfType<EnemyInteraction.EnemyActions>();
             if (enemyActionsObj != null)
@@ -167,13 +212,13 @@ public class PhaseManager : IPhaseManager
         // Wait for EnemyActions to be fully initialized
         float timeout = 5f; // 5 seconds timeout
         float timer = 0f;
-        
+
         // First check if the component is enabled
         while (!(_enemyActions as MonoBehaviour)?.enabled ?? false)
         {
             Debug.Log("[PhaseManager] Waiting for EnemyActions to be enabled...");
             yield return null;
-            
+
             timer += Time.deltaTime;
             if (timer > timeout)
             {
@@ -181,7 +226,7 @@ public class PhaseManager : IPhaseManager
                 yield break;
             }
         }
-        
+
         // Then check for initialization if possible
         if (_enemyActions is EnemyInteraction.EnemyActions enemyActionsImpl)
         {
@@ -196,7 +241,7 @@ public class PhaseManager : IPhaseManager
                     yield return null;
                     timer += Time.deltaTime;
                 }
-                
+
                 if (timer >= timeout)
                 {
                     Debug.LogWarning("[PhaseManager] Timeout waiting for EnemyActions to be fully initialized, proceeding anyway...");
@@ -207,12 +252,12 @@ public class PhaseManager : IPhaseManager
         _combatManager.PlayerTurn = false;
         _combatManager.CurrentPhase = CombatPhase.EnemyPrep;
         Debug.Log("[PhaseManager] Enemy's Prep Phase");
-        
+
         // Extra safety for PlayCards
         IEnumerator playCardsCoroutine = null;
         bool errorOccurred = false;
-        
-        try 
+
+        try
         {
             playCardsCoroutine = _enemyActions.PlayCards();
         }
@@ -221,17 +266,21 @@ public class PhaseManager : IPhaseManager
             Debug.LogError($"[PhaseManager] Error getting PlayCards coroutine: {e.Message}\n{e.StackTrace}");
             errorOccurred = true;
         }
-        
+
         if (playCardsCoroutine == null || errorOccurred)
         {
             Debug.LogError("[PhaseManager] _enemyActions.PlayCards() returned null or error occurred!");
             yield return new WaitForSeconds(0.5f); // Short delay to prevent freeze
             yield break;
         }
-        
+
         yield return RunSafely(playCardsCoroutine, "Enemy PlayCards");
     }
 
+    /// <summary>
+    /// Handles the player's combat phase where they can initiate attacks.
+    /// </summary>
+    /// <returns>IEnumerator for coroutine execution</returns>
     private IEnumerator PlayerCombatPhase()
     {
         _combatManager.PlayerTurn = true;
@@ -242,12 +291,17 @@ public class PhaseManager : IPhaseManager
         yield return new WaitUntil(() => _playerActions.PlayerTurnEnded);
     }
 
+    /// <summary>
+    /// Handles the enemy's combat phase where the AI initiates attacks.
+    /// Includes additional error checking and timeout handling.
+    /// </summary>
+    /// <returns>IEnumerator for coroutine execution</returns>
     private IEnumerator EnemyCombatPhase()
     {
         if (_enemyActions == null)
         {
             Debug.LogError("[PhaseManager] EnemyActions is null in EnemyCombatPhase!");
-            
+
             // Try to find it in the scene
             var enemyActionsObj = GameObject.FindObjectOfType<EnemyInteraction.EnemyActions>();
             if (enemyActionsObj != null)
@@ -266,13 +320,13 @@ public class PhaseManager : IPhaseManager
         // Wait for EnemyActions to be fully initialized - similar to EnemyPrepPhase
         float timeout = 5f; // 5 seconds timeout
         float timer = 0f;
-        
+
         // First check if the component is enabled
         while (!(_enemyActions as MonoBehaviour)?.enabled ?? false)
         {
             Debug.Log("[PhaseManager] Waiting for EnemyActions to be enabled...");
             yield return null;
-            
+
             timer += Time.deltaTime;
             if (timer > timeout)
             {
@@ -280,7 +334,7 @@ public class PhaseManager : IPhaseManager
                 yield break;
             }
         }
-        
+
         // Then check for initialization if possible
         if (_enemyActions is EnemyInteraction.EnemyActions enemyActionsImpl)
         {
@@ -295,7 +349,7 @@ public class PhaseManager : IPhaseManager
                     yield return null;
                     timer += Time.deltaTime;
                 }
-                
+
                 if (timer >= timeout)
                 {
                     Debug.LogWarning("[PhaseManager] Timeout waiting for EnemyActions to be fully initialized, proceeding anyway...");
@@ -306,13 +360,13 @@ public class PhaseManager : IPhaseManager
         _combatManager.PlayerTurn = false;
         _combatManager.CurrentPhase = CombatPhase.EnemyCombat;
         Debug.Log("[PhaseManager] Enemy's Combat Phase");
-        
+
         // First, let the AI play spell cards during combat phase
         Debug.Log("[PhaseManager] Enemy playing spell cards during combat phase");
         IEnumerator playCardsCoroutine = null;
         bool playCardsErrorOccurred = false;
-        
-        try 
+
+        try
         {
             playCardsCoroutine = _enemyActions.PlayCards();
         }
@@ -321,7 +375,7 @@ public class PhaseManager : IPhaseManager
             Debug.LogError($"[PhaseManager] Error getting PlayCards coroutine in combat phase: {e.Message}\n{e.StackTrace}");
             playCardsErrorOccurred = true;
         }
-        
+
         if (playCardsCoroutine != null && !playCardsErrorOccurred)
         {
             yield return RunSafely(playCardsCoroutine, "Enemy PlayCards during Combat");
@@ -331,13 +385,13 @@ public class PhaseManager : IPhaseManager
             Debug.LogError("[PhaseManager] _enemyActions.PlayCards() in combat phase returned null or error occurred!");
             yield return new WaitForSeconds(0.5f); // Short delay to prevent freeze
         }
-        
+
         // Now proceed with attacks
         // Extra safety for Attack
         IEnumerator attackCoroutine = null;
         bool attackErrorOccurred = false;
-        
-        try 
+
+        try
         {
             attackCoroutine = _enemyActions.Attack();
         }
@@ -346,29 +400,26 @@ public class PhaseManager : IPhaseManager
             Debug.LogError($"[PhaseManager] Error getting Attack coroutine: {e.Message}\n{e.StackTrace}");
             attackErrorOccurred = true;
         }
-        
+
         if (attackCoroutine == null || attackErrorOccurred)
         {
             Debug.LogError("[PhaseManager] _enemyActions.Attack() returned null or error occurred!");
             yield return new WaitForSeconds(0.5f); // Short delay to prevent freeze
             yield break;
         }
-        
+
         yield return RunSafely(attackCoroutine, "Enemy Attack");
     }
     #endregion
 
     #region Cleanup Processing
-    private IEnumerator ProcessPlayerEntities(List<GameObject> playerEntities)
-    {
-        yield return ProcessEntities(playerEntities, "Player", true);
-    }
-
-    private IEnumerator ProcessEnemyEntities(List<GameObject> enemyEntities)
-    {
-        yield return ProcessEntities(enemyEntities, "Enemy", true);
-    }
-
+    /// <summary>
+    /// Processes all entities in a collection, resetting attacks and optionally applying effects.
+    /// </summary>
+    /// <param name="entities">The collection of entities to process</param>
+    /// <param name="entityType">Type identifier for logging (e.g., "Player", "Enemy")</param>
+    /// <param name="applyEffects">Whether to apply ongoing effects to entities</param>
+    /// <returns>IEnumerator for coroutine execution</returns>
     private IEnumerator ProcessEntities(List<GameObject> entities, string entityType, bool applyEffects)
     {
         if (entities == null) yield break;
@@ -430,6 +481,12 @@ public class PhaseManager : IPhaseManager
     #endregion
 
     #region Helper Methods
+    /// <summary>
+    /// Safely executes a coroutine with exception handling.
+    /// </summary>
+    /// <param name="coroutine">The coroutine to execute safely</param>
+    /// <param name="context">Context description for logging if errors occur</param>
+    /// <returns>IEnumerator for coroutine execution</returns>
     private IEnumerator RunSafely(IEnumerator coroutine, string context)
     {
         if (coroutine == null)
@@ -456,6 +513,10 @@ public class PhaseManager : IPhaseManager
         }
     }
 
+    /// <summary>
+    /// Draws cards for both player and enemy decks.
+    /// </summary>
+    /// <returns>IEnumerator for coroutine execution</returns>
     private IEnumerator DrawCards()
     {
         Debug.Log("[PhaseManager] Drawing cards");
