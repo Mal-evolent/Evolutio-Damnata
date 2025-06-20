@@ -4355,6 +4355,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1178621649}
   - component: {fileID: 1178621650}
+  - component: {fileID: 1178621651}
   m_Layer: 0
   m_Name: Entity Manager
   m_TagString: Untagged
@@ -4428,6 +4429,18 @@ MonoBehaviour:
   keywordIconsContainer: {fileID: 0}
   keywordIconSpacing: 1
   allowedAttacks: 1
+--- !u!114 &1178621651
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1178621648}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b31de60f5fe2bb74790f5d2513d78932, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1187307910
 GameObject:
   m_ObjectHideFlags: 0
@@ -4946,6 +4959,7 @@ GameObject:
   - component: {fileID: 1394303771}
   - component: {fileID: 1394303773}
   - component: {fileID: 1394303774}
+  - component: {fileID: 1394303775}
   m_Layer: 0
   m_Name: CombatManager
   m_TagString: Untagged
@@ -5114,6 +5128,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _resetPriority: 1
+--- !u!114 &1394303775
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1394303770}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 101c26a33e4ac9f4f9206677d068ceff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  killAllEntitiesOnEnemyDefeated: 1
+  includeEnemyEntities: 1
+  includeFriendlyEntities: 1
+  combatManager: {fileID: 1394303771}
 --- !u!1 &1399385262
 GameObject:
   m_ObjectHideFlags: 0

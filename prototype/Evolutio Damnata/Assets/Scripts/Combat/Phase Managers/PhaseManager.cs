@@ -53,6 +53,9 @@ public class PhaseManager : IPhaseManager
         _prepPhaseImage = prepPhaseImage;
         _combatPhaseImage = combatPhaseImage;
         _cleanupPhaseImage = cleanupPhaseImage;
+
+        // Subscribe to phase changes to update the images automatically
+        _combatManager.SubscribeToPhaseChanges(SetPhaseImage);
     }
 
     /// <summary>
@@ -61,6 +64,7 @@ public class PhaseManager : IPhaseManager
     /// <param name="phase">The current combat phase</param>
     private void SetPhaseImage(CombatPhase phase)
     {
+        Debug.Log($"[PhaseManager] Setting phase image to: {phase}");
         _prepPhaseImage.enabled = (phase == CombatPhase.PlayerPrep || phase == CombatPhase.EnemyPrep);
         _combatPhaseImage.enabled = (phase == CombatPhase.PlayerCombat || phase == CombatPhase.EnemyCombat);
         _cleanupPhaseImage.enabled = (phase == CombatPhase.CleanUp);
@@ -76,7 +80,7 @@ public class PhaseManager : IPhaseManager
         Debug.Log($"[PhaseManager] PlayerTurn: {_combatManager.PlayerTurn}, PlayerGoesFirst: {_combatManager.PlayerGoesFirst}");
 
         _combatManager.ResetPhaseState();
-        SetPhaseImage(_combatManager.PlayerTurn ? CombatPhase.PlayerPrep : CombatPhase.EnemyPrep);
+        // Don't manually set phase image here - let the CurrentPhase property do it
 
         if (_combatManager.PlayerTurn)
         {
@@ -101,7 +105,7 @@ public class PhaseManager : IPhaseManager
     {
         Debug.Log("[PhaseManager] ===== ENTERING COMBAT PHASE =====");
         _combatManager.ResetPhaseState();
-        SetPhaseImage(CombatPhase.PlayerCombat);
+        // Don't manually set phase image here - let the CurrentPhase property do it
 
         if (_combatManager.PlayerTurn)
         {
@@ -141,7 +145,7 @@ public class PhaseManager : IPhaseManager
     {
         Debug.Log("[PhaseManager] ===== ENTERING CLEAN-UP PHASE =====");
         _combatManager.CurrentPhase = CombatPhase.CleanUp;
-        SetPhaseImage(CombatPhase.CleanUp);
+        // No need to call SetPhaseImage here - the subscription will handle it
 
         // Process all entities once, handling both attack resets and effects
         Debug.Log("[PhaseManager] Processing entities for cleanup");

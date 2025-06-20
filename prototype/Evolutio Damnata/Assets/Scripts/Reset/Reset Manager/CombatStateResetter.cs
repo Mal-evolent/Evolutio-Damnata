@@ -76,23 +76,14 @@ namespace Combat.Reset
         {
             // Reset turn counter and phase
             _combatManager.TurnCount = 0;
-            _combatManager.ResetPhaseState(); // Uses the existing method to reset phase
+            _combatManager.ResetPhaseState();
 
             // Always make sure player goes first
             _combatManager.PlayerGoesFirst = true;
             _combatManager.PlayerTurn = true;
 
-            // Reset the turn order in RoundManager
-            var roundManager = FindObjectOfType<MonoBehaviour>() as IRoundManager;
-            if (roundManager != null)
-            {
-                roundManager.ResetTurnOrder();
-                Debug.Log("[CombatStateResetter] Reset RoundManager turn order");
-            }
-            else
-            {
-                Debug.LogWarning("[CombatStateResetter] Could not find RoundManager to reset turn order");
-            }
+
+            Debug.Log("[CombatStateResetter] Reset player turn order. Player will go first.");
         }
 
         private void UpdateUIElements()

@@ -392,6 +392,27 @@ public class EntityManager : MonoBehaviour, ICombatEntity, IDamageable, IAttacke
         StartCoroutine(PlayDeathAnimation());
     }
 
+    public void SilentKill()
+    {
+        dead = true;
+        placed = false;
+        IsFadingOut = true;
+
+        ClearKeywordDisplay();
+
+        // Remove effects
+        RemoveAllOngoingEffects();
+
+        if (StackManager.Instance != null)
+        {
+            StackManager.Instance.RemoveEffectsForEntity(this);
+            Debug.Log($"[{name}] Directly removed effects from StackManager on death");
+        }
+
+        DisableAllButtons();
+        StartCoroutine(PlayDeathAnimation());
+    }
+
     private IEnumerator PlayDeathAnimation()
     {
         FadeOutEffect fadeOutEffect = gameObject.AddComponent<FadeOutEffect>();
