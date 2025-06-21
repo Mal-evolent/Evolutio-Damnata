@@ -108,15 +108,31 @@ namespace EnemyInteraction.Managers
                 return false;
             }
 
-            // Check for valid phase
             try
             {
+                // Check for valid phase
                 bool isValidPhase = combatManager.IsEnemyPrepPhase() || combatManager.IsEnemyCombatPhase();
+                
+                // IMPROVED: Explicitly check that it's NOT the player's turn
+                bool isEnemyTurn = !combatManager.PlayerTurn;
+                
+                // Log detailed phase and turn information for debugging
                 if (!isValidPhase)
                 {
                     Debug.LogWarning($"[CardPlayStrategist] Not in a valid enemy phase. Current phase: {combatManager.CurrentPhase}");
                 }
-                return isValidPhase;
+                
+                if (!isEnemyTurn)
+                {
+                    Debug.LogWarning($"[CardPlayStrategist] It's the player's turn (PlayerTurn: {combatManager.PlayerTurn}), enemy cannot play cards");
+                }
+                
+                // Log current state to help debugging
+                Debug.Log($"[CardPlayStrategist] Play state validation - Phase: {combatManager.CurrentPhase}, " +
+                          $"PlayerTurn: {combatManager.PlayerTurn}, Valid: {isValidPhase && isEnemyTurn}");
+                
+                // Both phase and turn must be correct to allow card play
+                return isValidPhase && isEnemyTurn;
             }
             catch (System.Exception e)
             {

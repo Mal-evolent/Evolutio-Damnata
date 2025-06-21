@@ -24,11 +24,44 @@ public class CombatTrigger : ICombatTrigger
             return;
         }
 
-        // Subscribe to enemy defeated event
+        // First stop all enemy-related coroutines to prevent stale execution
+        var enemyActions = Object.FindObjectOfType<EnemyInteraction.EnemyActions>();
+        if (enemyActions != null)
+        {
+            // Stop all coroutines on the EnemyActions to prevent stale state execution
+            ((MonoBehaviour)enemyActions).StopAllCoroutines();
+            Debug.Log("[CombatTrigger] Stopped all EnemyActions coroutines");
+
+            // Use the public method to reset state
+            enemyActions.ResetActionState();
+        }
+
+        // Also try to find and stop any AttackManager coroutines
+        var attackManager = Object.FindObjectOfType<EnemyInteraction.Managers.AttackManager>();
+        if (attackManager != null)
+        {
+            ((MonoBehaviour)attackManager).StopAllCoroutines();
+            Debug.Log("[CombatTrigger] Stopped all AttackManager coroutines");
+        }
+
+        // FIX: Ensure clean state for each new combat by stopping all old coroutines
+        // and resetting the state manually.
+        combatManager.StopAllCoroutines();
+        combatManager.TurnCount = 0;
+        combatManager.PlayerGoesFirst = true;
+        combatManager.PlayerTurn = true;
+        combatManager.ResetPhaseState(); // This sets CurrentPhase to None
+
+        // Now, resubscribe to the event after stopping coroutines
         combatManager.OnEnemyDefeated += OnEnemyDefeated;
 
+        Debug.Log("[CombatTrigger] Reset combat state for new room - PlayerGoesFirst: true");
+
+        // Log detailed combat state using our new helper
+        AttackValidator.LogCombatStateTransition(combatManager, $"Room {roomIndex} combat initialization");
+
         // Reset the combat manager's state
-        combatManager.ResetPhaseState();
+        // combatManager.ResetPhaseState(); // This is now called above
 
         // Start the initialization chain
         combatManager.StartCoroutine(combatManager.WaitForInitialization());

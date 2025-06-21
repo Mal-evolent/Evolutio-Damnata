@@ -19,6 +19,9 @@ namespace EnemyInteraction
         private bool _isInitialized = false;
         public bool IsInitialized => _isInitialized;
 
+        private CombatPhase _currentPhase = CombatPhase.None;
+        private bool _canTakeAction = false;
+
         private void Awake()
         {
             if (_dependencyInitializer == null)
@@ -45,9 +48,41 @@ namespace EnemyInteraction
             }
         }
 
+        public void ResetActionState()
+        {
+            Debug.Log("[EnemyActions] Externally requested action state reset");
+            // Use the existing private OnPhaseChanged method to reset state
+            OnPhaseChanged(CombatPhase.None);
+        }
+
         private void OnPhaseChanged(CombatPhase newPhase)
         {
-            Debug.Log($"[EnemyActions] Phase changed to {newPhase}");
+            _currentPhase = newPhase;
+
+            // Determine if enemy can act in this phase
+            var combatManager = _dependencyInitializer?.CombatManager;
+            if (combatManager != null)
+            {
+                bool isEnemyPhase = combatManager.IsEnemyPrepPhase() || combatManager.IsEnemyCombatPhase();
+                bool isEnemyTurn = !combatManager.PlayerTurn;
+                _canTakeAction = isEnemyPhase && isEnemyTurn;
+
+                Debug.Log($"[EnemyActions] Phase changed to {newPhase} - " +
+                          $"PlayerTurn: {combatManager.PlayerTurn}, " +
+                          $"Can take action: {_canTakeAction}");
+
+                // Additional validation when room transitions happen
+                if (newPhase == CombatPhase.None)
+                {
+                    _canTakeAction = false;
+                    Debug.Log("[EnemyActions] Combat reset detected, disabling enemy actions");
+                }
+            }
+            else
+            {
+                _canTakeAction = false;
+                Debug.LogWarning("[EnemyActions] Combat manager not available, disabling enemy actions");
+            }
         }
 
         private IEnumerator Initialize()
@@ -67,6 +102,28 @@ namespace EnemyInteraction
             if (!_isInitialized)
             {
                 Debug.LogError("[EnemyActions] Failed to initialize, cannot play cards");
+                yield break;
+            }
+
+            // IMPROVED: Check if enemy can take action based on current phase
+            var combatManager = _dependencyInitializer?.CombatManager;
+            if (combatManager != null)
+            {
+                bool isEnemyPhase = combatManager.IsEnemyPrepPhase() || combatManager.IsEnemyCombatPhase();
+                bool isEnemyTurn = !combatManager.PlayerTurn;
+
+                if (!isEnemyPhase || !isEnemyTurn)
+                {
+                    Debug.LogWarning($"[EnemyActions] Cannot play cards - Phase: {combatManager.CurrentPhase}, PlayerTurn: {combatManager.PlayerTurn}");
+                    yield break;
+                }
+
+                // Log state to help debugging
+                AttackValidator.LogCombatStateTransition(combatManager, "PlayCards validation");
+            }
+            else if (!_canTakeAction)
+            {
+                Debug.LogWarning("[EnemyActions] Cannot play cards - not in a valid enemy action phase");
                 yield break;
             }
 
@@ -135,6 +192,28 @@ namespace EnemyInteraction
             if (!_isInitialized)
             {
                 Debug.LogError("[EnemyActions] Failed to initialize, cannot perform attack");
+                yield break;
+            }
+
+            // IMPROVED: Check if enemy can take action based on current phase
+            var combatManager = _dependencyInitializer?.CombatManager;
+            if (combatManager != null)
+            {
+                bool isEnemyCombatPhase = combatManager.IsEnemyCombatPhase();
+                bool isEnemyTurn = !combatManager.PlayerTurn;
+
+                if (!isEnemyCombatPhase || !isEnemyTurn)
+                {
+                    Debug.LogWarning($"[EnemyActions] Cannot attack - Phase: {combatManager.CurrentPhase}, PlayerTurn: {combatManager.PlayerTurn}");
+                    yield break;
+                }
+
+                // Log state to help debugging
+                AttackValidator.LogCombatStateTransition(combatManager, "Attack validation");
+            }
+            else if (!_canTakeAction)
+            {
+                Debug.LogWarning("[EnemyActions] Cannot attack - not in a valid enemy action phase");
                 yield break;
             }
 
