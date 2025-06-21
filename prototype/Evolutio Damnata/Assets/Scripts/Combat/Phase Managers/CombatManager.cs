@@ -56,6 +56,9 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     // Event for phase changes
     public event Action<CombatPhase> OnPhaseChanged;
 
+    // Event for combat start
+    public event Action OnCombatStart;
+
     // New event for enemy defeat
     public event Action OnEnemyDefeated;
 
@@ -388,6 +391,11 @@ public class CombatManager : MonoBehaviour, ICombatManager, IManaProvider
     {
         // Use the property to ensure event firing
         CurrentPhase = CombatPhase.None;
+    }
+
+    public void TriggerCombatStart()
+    {
+        OnCombatStart?.Invoke();
     }
 
     public void StartNextRound()

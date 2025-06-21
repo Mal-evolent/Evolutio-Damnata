@@ -13,6 +13,17 @@ public class EntityManager : MonoBehaviour, ICombatEntity, IDamageable, IAttacke
     public bool dead = false;
     public bool placed = false;
     public bool IsFadingOut { get; private set; } = false;
+    public void ResetFadingState()
+    {
+        IsFadingOut = false;
+    }
+
+    public void ResetState()
+    {
+        dead = false;
+        ResetFadingState();
+    }
+
     // HasAttacked property is a secondary tracking mechanism - prefer using AttackLimiter
     // through the GetRemainingAttacks(), UseAttack(), and ResetAttacks() methods for attack management
     public bool HasAttacked { get; set; } = false;
@@ -423,8 +434,8 @@ public class EntityManager : MonoBehaviour, ICombatEntity, IDamageable, IAttacke
         }));
     }
 
-    private void DisableAllButtons() => SetButtonsInteractable(false);
-    private void EnableAllButtons() => SetButtonsInteractable(true);
+    protected void DisableAllButtons() => SetButtonsInteractable(false);
+    protected void EnableAllButtons() => SetButtonsInteractable(true);
 
     private void SetButtonsInteractable(bool interactable)
     {

@@ -42,6 +42,31 @@ public class HealthIconManager : EntityManager, IHealthIconManager
         InitializeReferences();
         InitializeFromCombatManager();
     }
+
+    private void OnEnable()
+    {
+        if (combatManagerRef != null)
+        {
+            combatManagerRef.OnCombatStart += ResetIconState;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (combatManagerRef != null)
+        {
+            combatManagerRef.OnCombatStart -= ResetIconState;
+        }
+    }
+
+    public void ResetIconState()
+    {
+        Debug.Log($"[{nameof(HealthIconManager)}] New combat detected. Resetting state for {gameObject.name}");
+        base.ResetState();
+        InitializeIcon();
+        InitializeFromCombatManager();
+        EnableAllButtons();
+    }
     #endregion
 
     #region Initialization
@@ -74,6 +99,10 @@ public class HealthIconManager : EntityManager, IHealthIconManager
             Debug.LogError($"[{nameof(HealthIconManager)}] Could not find CombatManager in scene!");
             return;
         }
+
+        // Subscribe here too, in case this is called before OnEnable
+        combatManagerRef.OnCombatStart -= ResetIconState;
+        combatManagerRef.OnCombatStart += ResetIconState;
     }
 
     /// <summary>

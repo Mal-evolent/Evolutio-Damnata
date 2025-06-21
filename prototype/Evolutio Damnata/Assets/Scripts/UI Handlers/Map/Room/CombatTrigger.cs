@@ -55,6 +55,9 @@ public class CombatTrigger : ICombatTrigger
         // Now, resubscribe to the event after stopping coroutines
         combatManager.OnEnemyDefeated += OnEnemyDefeated;
 
+        // Invoke the combat start event
+        combatManager.TriggerCombatStart();
+
         Debug.Log("[CombatTrigger] Reset combat state for new room - PlayerGoesFirst: true");
 
         // Log detailed combat state using our new helper
